@@ -1,10 +1,10 @@
 [package]
-name = "cgt_chess_engine"
+name = "partizan"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "cgt_chess_engine"
+name = "partizan"
 crate-type = ["cdylib"]
 
 [dependencies]

@@ -8,7 +8,7 @@ fn process_fen(fen: String) -> PyResult<String> {
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn cgt_chess_engine(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn partizan(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(process_fen, m)?)?;
     Ok(())
 }
