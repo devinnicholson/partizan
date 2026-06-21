@@ -1,0 +1,11 @@
+[package]
+name = "cgt_chess_engine"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "cgt_chess_engine"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.21", features = ["extension-module"] }
