@@ -9,6 +9,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f02882884d3e1bc524fb12c79f107f6ad0e1cfd498c536ffb494301740995dfe"
 
 [[package]]
+name = "astralbase"
+version = "0.1.0"
+dependencies = [
+ "shakmaty",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -19,6 +26,13 @@ name = "bitflags"
 version = "2.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4388bee8683e3d04af747c73422af53102d2bd24d9eadb6cbc100baef4b43f8"
+
+[[package]]
+name = "bitmesh"
+version = "0.1.0"
+dependencies = [
+ "shakmaty",
+]
 
 [[package]]
 name = "btoi"
@@ -66,8 +80,11 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 name = "partizan"
 version = "0.1.0"
 dependencies = [
+ "astralbase",
+ "bitmesh",
  "pyo3",
  "shakmaty",
+ "thermograph",
 ]
 
 [[package]]
@@ -209,6 +226,10 @@ name = "target-lexicon"
 version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adb6935a6f5c20170eeceb1a3835a49e12e19d792f6dd344ccc76a985ca5a6ca"
+
+[[package]]
+name = "thermograph"
+version = "0.1.0"
 
 [[package]]
 name = "unicode-ident"

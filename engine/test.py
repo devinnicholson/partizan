@@ -14,6 +14,13 @@ def main():
         print(f"Is Decomposable: {is_decomposable}")
         print(f"Number of Independent Sub-games: {components}")
         
+        print("\n--- Running comprehensive evaluation ---")
+        results = partizan.evaluate_position(fen)
+        print(f"Bitmesh partitions: {results['components']}")
+        print(f"Thermograph temperature: {results['temperature']}")
+        print(f"Thermograph mean value: {results['mean_value']}")
+        print(f"Astralbase retrograde expansions: {results['expanded_nodes']}")
+        
     except Exception as e:
         print(f"Rust engine error: {e}")
 
