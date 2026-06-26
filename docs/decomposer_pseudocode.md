@@ -1,6 +1,12 @@
-# The Decomposer Algorithm: Combinatorial Game Theory in Chess Endgames
+# The Decomposer Algorithm: Game-Structure Decomposition in Chess Endgames
 
-Based on Noam Elkies' application of Combinatorial Game Theory (CGT) to chess, certain endgames can be modeled as sums of independent combinatorial games. In normal chess, the mobility of pieces across the entire $8 \times 8$ board typically prevents this. However, locked pawn structures can act as topological barriers, partitioning the board into weakly-interacting or strictly independent sub-systems. 
+Certain endgames can be modeled as sums of independent local games. In normal chess, the mobility of pieces across the entire $8 \times 8$ board typically prevents this. However, locked pawn structures can act as topological barriers, partitioning the board into weakly-interacting or strictly independent sub-systems.
+
+For dataset generation, strict and weak decomposition must remain separate:
+
+- **Strict decomposition**: certified independence; eligible for exact labels.
+- **Weak decomposition**: heuristic coupling estimate; useful for discovery and
+  ablation, excluded from exact training labels by default.
 
 ## 1. Mathematical Logic and Graph-Theoretic Properties
 

@@ -1,0 +1,405 @@
+{
+  "program": "Partizan Research Agent Network",
+  "mission": "Build a NeurIPS-level research system for exact game-structure supervision, learned agency representations, computational aesthetics, and verifier-backed discovery in chess-derived domains.",
+  "operating_principles": [
+    "Exact labels outrank plausible labels; unsupported positions must fail loudly.",
+    "Every ML claim must be paired with a verifier, baseline, ablation, and held-out generalization test.",
+    "The paper is the product: code, datasets, metrics, and discovery artifacts exist to support falsifiable claims.",
+    "Aesthetics must be operationalized as measurable structure, then illustrated with verified positions.",
+    "Citations are included only when they support a concrete claim, construction, baseline, or related-work comparison."
+  ],
+  "global_gates": [
+    {
+      "id": "reproducibility",
+      "standard": "Every generated artifact records code commit, generator config, random seed, domain definition, label schema version, and verifier version."
+    },
+    {
+      "id": "label_integrity",
+      "standard": "No dataset row is released without exact-verifier status, unsupported/error status, or explicit exclusion reason."
+    },
+    {
+      "id": "baseline_integrity",
+      "standard": "Every reported model result is compared against scalar-supervised, material/handcrafted, and simple architecture baselines where applicable."
+    },
+    {
+      "id": "ood_integrity",
+      "standard": "Every main result includes at least one out-of-distribution split: composition, board scale, motif family, or value class."
+    },
+    {
+      "id": "aesthetic_verification",
+      "standard": "Every showcased position has a machine-checkable certificate: legal position, exact value/label, agency metrics, and minimality or compactness score."
+    }
+  ],
+  "agents": [
+    {
+      "id": "research_director",
+      "mission": "Own the central hypothesis, claim table, evaluation ladder, and NeurIPS-readiness bar.",
+      "owns": [
+        "docs/research_claims.md",
+        "docs/experiment_matrix.md",
+        "paper/outline.md"
+      ],
+      "deliverables": [
+        "One-page thesis with falsifiable claims",
+        "Reviewer-objection log",
+        "Go/no-go criteria for each phase"
+      ],
+      "verification": [
+        "Every claim links to a dataset, experiment, theorem, or verified gallery artifact",
+        "No paper claim depends on placeholder labels or unverified generator output"
+      ]
+    },
+    {
+      "id": "theory_steward",
+      "mission": "Formalize the restricted game domains, decomposition assumptions, agency metrics, and aesthetic scores.",
+      "owns": [
+        "docs/formal_domain.md",
+        "docs/agency_metrics.md",
+        "thermograph value specifications"
+      ],
+      "deliverables": [
+        "Domain definitions for the first exact benchmark",
+        "Agency and beauty metric definitions",
+        "Proof obligations for decomposition and value summation"
+      ],
+      "verification": [
+        "Definitions are executable or backed by tests",
+        "Each metric has known positive and negative control positions"
+      ]
+    },
+    {
+      "id": "exact_value_engineer",
+      "mission": "Implement exact finite-game algebra, canonicalization, thermographs, and value serialization.",
+      "owns": [
+        "../thermograph"
+      ],
+      "deliverables": [
+        "Exact value data model",
+        "Canonical finite acyclic game simplifier",
+        "Mean/temperature and fuzzy-class evaluator",
+        "Golden fixtures for known values"
+      ],
+      "verification": [
+        "cargo test",
+        "cargo clippy --all-targets -- -D warnings",
+        "Property tests for dominated/reversible option removal and value equivalence"
+      ]
+    },
+    {
+      "id": "topology_engineer",
+      "mission": "Own board partitioning, locked-structure detection, and decomposition certificates.",
+      "owns": [
+        "../bitmesh"
+      ],
+      "deliverables": [
+        "Barrier certificates",
+        "Component extraction with explicit assumptions",
+        "Counterexample suite for false decompositions"
+      ],
+      "verification": [
+        "Partition tests on synthetic barriers and chess positions",
+        "All decomposition claims emit machine-checkable certificates"
+      ]
+    },
+    {
+      "id": "retrograde_engineer",
+      "mission": "Own exact enumeration and retrograde labeling for the first constrained domain.",
+      "owns": [
+        "../astralbase"
+      ],
+      "deliverables": [
+        "Domain enumerator",
+        "Memoized exact solver",
+        "Round-trip legal predecessor tests",
+        "Label provenance records"
+      ],
+      "verification": [
+        "Every generated predecessor can legally reach its child",
+        "Expansion caps never consume work beyond the cap",
+        "Small domains exhaustively match brute-force search"
+      ]
+    },
+    {
+      "id": "dataset_foundry",
+      "mission": "Turn exact generators into versioned datasets with splits, metadata, compression, and error accounting.",
+      "owns": [
+        "engine/orchestrator.py",
+        "data manifests",
+        "dataset cards"
+      ],
+      "deliverables": [
+        "Dataset v0 manifest",
+        "Train/validation/test/OOD split definitions",
+        "Error and exclusion reports"
+      ],
+      "verification": [
+        "No silent row drops",
+        "Every row validates against the label schema",
+        "Dataset regeneration is deterministic from manifest"
+      ]
+    },
+    {
+      "id": "model_lab",
+      "mission": "Train and evaluate scalar, structured, and concept-bottleneck models against exact labels.",
+      "owns": [
+        "engine/ml_model.py",
+        "training scripts",
+        "experiment logs"
+      ],
+      "deliverables": [
+        "Baseline suite",
+        "Structured-output model suite",
+        "Ablation table",
+        "Representation probes for agency and temperature"
+      ],
+      "verification": [
+        "Every run logs config, seed, commit, dataset version, and metric schema",
+        "Scalar-supervised controls are trained and evaluated under matched compute"
+      ]
+    },
+    {
+      "id": "discovery_curator",
+      "mission": "Use learned models plus exact verification to find compact, surprising, agency-rich positions.",
+      "owns": [
+        "search scripts",
+        "verified gallery",
+        "aesthetic score reports"
+      ],
+      "deliverables": [
+        "Candidate generator",
+        "Verifier-backed gallery",
+        "Minimality and surprise analysis"
+      ],
+      "verification": [
+        "Every gallery position has exact labels and metric certificate",
+        "Generated positions are checked against training-set leakage"
+      ]
+    },
+    {
+      "id": "verifier_red_team",
+      "mission": "Attack every label, decomposition, metric, and experimental claim before it reaches the paper.",
+      "owns": [
+        "adversarial tests",
+        "negative controls",
+        "claim audit log"
+      ],
+      "deliverables": [
+        "Counterexample bank",
+        "Metric failure cases",
+        "Reproducibility audit"
+      ],
+      "verification": [
+        "Each phase has at least one adversarial test suite",
+        "Every failed assumption is either fixed, scoped out, or documented"
+      ]
+    },
+    {
+      "id": "paper_critic",
+      "mission": "Continuously pressure-test the framing, related work, novelty, and reviewer story.",
+      "owns": [
+        "paper/rebuttal_risks.md",
+        "paper/related_work.md",
+        "paper/figures.md"
+      ],
+      "deliverables": [
+        "Novelty memo",
+        "Related-work map",
+        "Figure and table plan",
+        "Reviewer-risk checklist"
+      ],
+      "verification": [
+        "No citation appears unless it supports a specific paper claim",
+        "Every figure has a corresponding experiment or certificate"
+      ]
+    }
+  ],
+  "phases": [
+    {
+      "id": "phase_0_research_spine",
+      "timebox": "week 1",
+      "lead": "research_director",
+      "goal": "Make the program executable: claim table, task ownership, gates, and first constrained domain.",
+      "tasks": [
+        {
+          "id": "p0_claim_table",
+          "owner": "research_director",
+          "output": "docs/research_claims.md",
+          "done_when": "Each proposed NeurIPS claim has required evidence, baseline, and failure mode."
+        },
+        {
+          "id": "p0_domain_choice",
+          "owner": "theory_steward",
+          "output": "docs/formal_domain.md",
+          "done_when": "The first benchmark domain is narrow enough for exact labels and broad enough for meaningful generalization."
+        },
+        {
+          "id": "p0_gate_checks",
+          "owner": "verifier_red_team",
+          "output": "docs/verification_gates.md",
+          "done_when": "Global gates are translated into CI-ready checks or explicit manual certificates."
+        }
+      ],
+      "exit_criteria": [
+        "One constrained domain is selected",
+        "Every agent has a first deliverable",
+        "No placeholder-label path remains in the data pipeline"
+      ]
+    },
+    {
+      "id": "phase_1_exact_labels",
+      "timebox": "weeks 2-5",
+      "lead": "retrograde_engineer",
+      "goal": "Produce exact, reproducible labels for a constrained but nontrivial domain.",
+      "tasks": [
+        {
+          "id": "p1_exact_value_model",
+          "owner": "exact_value_engineer",
+          "output": "../thermograph exact finite-game value module",
+          "done_when": "Golden integer, dyadic, switch, fuzzy, and simple infinitesimal fixtures pass."
+        },
+        {
+          "id": "p1_decomposition_certificates",
+          "owner": "topology_engineer",
+          "output": "../bitmesh decomposition certificate API",
+          "done_when": "Every decomposition returns assumptions, components, and counterexample checks."
+        },
+        {
+          "id": "p1_domain_solver",
+          "owner": "retrograde_engineer",
+          "output": "../astralbase constrained-domain solver",
+          "done_when": "Small domains match brute force and emit provenance for every label."
+        }
+      ],
+      "exit_criteria": [
+        "Dataset v0 can be generated with exact labels",
+        "Verifier red-team has at least 20 counterexamples or negative controls",
+        "All engine crates pass tests, clippy, and formatting"
+      ]
+    },
+    {
+      "id": "phase_2_dataset_and_benchmark",
+      "timebox": "weeks 6-8",
+      "lead": "dataset_foundry",
+      "goal": "Release an internal benchmark with train/test/OOD splits and agency/aesthetic metrics.",
+      "tasks": [
+        {
+          "id": "p2_schema",
+          "owner": "dataset_foundry",
+          "output": "dataset schema and manifest",
+          "done_when": "Rows validate exact label, domain, split, metrics, generator config, and verifier status."
+        },
+        {
+          "id": "p2_metrics",
+          "owner": "theory_steward",
+          "output": "docs/agency_metrics.md",
+          "done_when": "Agency and aesthetic metrics have formulas, controls, and expected ranges."
+        },
+        {
+          "id": "p2_ood_splits",
+          "owner": "dataset_foundry",
+          "output": "OOD split manifests",
+          "done_when": "At least composition, motif-family, and value-class OOD splits are defined."
+        }
+      ],
+      "exit_criteria": [
+        "Dataset v0 regenerates deterministically",
+        "All rows pass schema validation",
+        "Benchmark has nontrivial OOD splits"
+      ]
+    },
+    {
+      "id": "phase_3_modeling",
+      "timebox": "weeks 9-12",
+      "lead": "model_lab",
+      "goal": "Show whether exact structure supervision learns agency and temperature beyond scalar baselines.",
+      "tasks": [
+        {
+          "id": "p3_baselines",
+          "owner": "model_lab",
+          "output": "baseline experiment suite",
+          "done_when": "Scalar, material/feature, CNN, and structured models run on matched splits."
+        },
+        {
+          "id": "p3_probes",
+          "owner": "model_lab",
+          "output": "representation probe reports",
+          "done_when": "Probes measure agency, temperature, decomposition, and value class information."
+        },
+        {
+          "id": "p3_ablation_table",
+          "owner": "research_director",
+          "output": "docs/experiment_matrix.md",
+          "done_when": "Main claim has positive result, baseline comparison, and failure analysis."
+        }
+      ],
+      "exit_criteria": [
+        "At least one main hypothesis survives matched baselines",
+        "All experiments are reproducible from manifests",
+        "Failure modes are documented rather than hidden"
+      ]
+    },
+    {
+      "id": "phase_4_discovery_and_paper",
+      "timebox": "weeks 13-16",
+      "lead": "discovery_curator",
+      "goal": "Use models to discover verified agency-rich positions and turn results into a submission-ready story.",
+      "tasks": [
+        {
+          "id": "p4_model_guided_search",
+          "owner": "discovery_curator",
+          "output": "verified gallery candidates",
+          "done_when": "Candidate search improves verified aesthetic/agency scores over random and heuristic baselines."
+        },
+        {
+          "id": "p4_gallery_certificates",
+          "owner": "verifier_red_team",
+          "output": "gallery certificates",
+          "done_when": "Every showcased position has exact labels, metrics, and leakage checks."
+        },
+        {
+          "id": "p4_submission_spine",
+          "owner": "paper_critic",
+          "output": "paper outline and reviewer-risk memo",
+          "done_when": "Every section maps to evidence, figures, and a defensible novelty claim."
+        }
+      ],
+      "exit_criteria": [
+        "Discovery results are verified and baseline-beating",
+        "Paper outline has all required evidence slots filled or explicitly marked as blocked",
+        "Reviewer-risk memo has concrete responses"
+      ]
+    }
+  ],
+  "first_sprint": [
+    {
+      "id": "sprint_01_select_domain",
+      "owner": "theory_steward",
+      "task": "Write the first constrained domain spec with exact legality, board assumptions, move rules, terminal conditions, and excluded cases.",
+      "success_signal": "A verifier can reject unsupported positions before solving."
+    },
+    {
+      "id": "sprint_01_value_golden_set",
+      "owner": "exact_value_engineer",
+      "task": "Create a golden-value suite for simple finite games and the value classes the first benchmark will expose.",
+      "success_signal": "Tests fail if integer, dyadic, fuzzy, or switch simplification regresses."
+    },
+    {
+      "id": "sprint_01_label_schema",
+      "owner": "dataset_foundry",
+      "task": "Define the dataset row schema and manifest fields before generating more data.",
+      "success_signal": "The orchestrator can emit successes, errors, exclusions, and provenance uniformly."
+    },
+    {
+      "id": "sprint_01_claim_table",
+      "owner": "research_director",
+      "task": "Create the initial claim table with required baselines, metrics, and falsification conditions.",
+      "success_signal": "Every planned experiment has a reason it belongs in a NeurIPS paper."
+    },
+    {
+      "id": "sprint_01_counterexamples",
+      "owner": "verifier_red_team",
+      "task": "Build an initial bank of decomposition and label counterexamples.",
+      "success_signal": "At least ten known-bad examples are represented as tests or fixture rows."
+    }
+  ]
+}
