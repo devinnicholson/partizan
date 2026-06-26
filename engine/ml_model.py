@@ -77,3 +77,110 @@ def surreal_loss(pred_vector, target_vector, alpha=1.0, beta=1.0):
     temp_loss = F.mse_loss(pred_temp, target_temp)
     
     return alpha * mean_loss + beta * temp_loss
+
+import json
+from torch.utils.data import Dataset, DataLoader
+import torch.optim as optim
+
+def fen_to_tensor(fen: str) -> torch.Tensor:
+    """
+    Converts a FEN string into a 14x8x8 tensor representation.
+    (Simplified: 12 channels for pieces, 2 for auxiliary context).
+    """
+    pieces = {'P': 0, 'N': 1, 'B': 2, 'R': 3, 'Q': 4, 'K': 5,
+              'p': 6, 'n': 7, 'b': 8, 'r': 9, 'q': 10, 'k': 11}
+    
+    tensor = torch.zeros(14, 8, 8)
+    board_part = fen.split()[0]
+    
+    row, col = 0, 0
+    for char in board_part:
+        if char == '/':
+            row += 1
+            col = 0
+        elif char.isdigit():
+            col += int(char)
+        elif char in pieces:
+            channel = pieces[char]
+            tensor[channel, row, col] = 1.0
+            col += 1
+            
+    # Add some auxiliary features in the 12th/13th channels (e.g. turn flag)
+    if len(fen.split()) > 1:
+        turn = fen.split()[1]
+        tensor[12, :, :] = 1.0 if turn == 'w' else 0.0
+    tensor[13, :, :] = 1.0 # Board mask presence
+    
+    return tensor
+
+class CGTDataset(Dataset):
+    def __init__(self, jsonl_path):
+        self.data = []
+        with open(jsonl_path, 'r') as f:
+            for line in f:
+                if not line.strip(): continue
+                self.data.append(json.loads(line))
+                
+    def __len__(self):
+        return len(self.data)
+        
+    def __getitem__(self, idx):
+        item = self.data[idx]
+        fen = item['fen']
+        
+        # Target vector: [Mean, Temperature]
+        target = torch.tensor([
+            float(item['mean_value']), 
+            float(item['temperature'])
+        ], dtype=torch.float32)
+        
+        return fen_to_tensor(fen), target
+
+def train_partizan_net(dataset_path="cgt_dataset.jsonl", epochs=5, batch_size=128, lr=0.001):
+    print(f"🚀 Initializing PartizanNet Training Loop on {dataset_path}...")
+    
+    # 1. Load Data
+    dataset = CGTDataset(dataset_path)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    print(f"📦 Loaded {len(dataset)} combinatorial game states.")
+    
+    # 2. Initialize Model & Optimizer
+    # Dynamically detect hardware acceleration (MPS for Apple Silicon, CUDA for NVIDIA)
+    device = torch.device("mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu"))
+    print(f"⚡ Utilizing compute device: {device}")
+    
+    model = PartizanNet().to(device)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    
+    # 3. Training Loop
+    model.train()
+    for epoch in range(epochs):
+        total_loss = 0.0
+        for batch_idx, (features, targets) in enumerate(dataloader):
+            features, targets = features.to(device), targets.to(device)
+            
+            # Forward Pass
+            optimizer.zero_grad()
+            _, surreal_pred, _ = model(features)
+            
+            # Compute Surreal Loss (optimizing Mean & Temperature accuracy)
+            loss = surreal_loss(surreal_pred, targets, alpha=1.0, beta=2.0) # Weight temperature higher
+            
+            # Backward Pass
+            loss.backward()
+            optimizer.step()
+            
+            total_loss += loss.item()
+            
+        avg_loss = total_loss / len(dataloader)
+        print(f"Epoch [{epoch+1}/{epochs}] - Surreal Loss: {avg_loss:.4f}")
+        
+    print("✅ Training Complete! PartizanNet has acquired early CGT valuation parameters.")
+    return model
+
+if __name__ == "__main__":
+    import os
+    if os.path.exists("cgt_dataset.jsonl"):
+        train_partizan_net()
+    else:
+        print("Waiting for cgt_dataset.jsonl from Modal orchestrator...")
