@@ -45,7 +45,10 @@ def evaluate_fens_batch(fens: list[str]):
                 "expanded_nodes": data["expanded_nodes"]
             })
         except Exception as e:
-            pass # Ignore invalid FENs during bulk processing
+            results.append({
+                "fen": fen,
+                "error": str(e),
+            })
             
     return results
 
@@ -71,7 +74,9 @@ def main():
     for result_batch in evaluate_fens_batch.map(batches):
         evaluated_positions.extend(result_batch)
         
-    print(f"✅ Processing complete! Evaluated {len(evaluated_positions)} positions.")
+    failures = sum(1 for pos in evaluated_positions if "error" in pos)
+    successes = len(evaluated_positions) - failures
+    print(f"✅ Processing complete! Evaluated {successes} positions; {failures} failed.")
     
     dataset_path = "cgt_dataset.jsonl"
     with open(dataset_path, "w") as f:

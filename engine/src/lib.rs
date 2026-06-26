@@ -1,31 +1,48 @@
-use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use shakmaty::{Chess, Position};
 use shakmaty::fen::Fen;
+use shakmaty::{Chess, Position};
 use std::str::FromStr;
 
-use bitmesh::partition_board;
+use astralbase::{GameValue, RetrogradeEngine};
+use bitmesh::{find_subsystems, get_locked_pawns};
 use thermograph::CGTValue;
-use astralbase::{RetrogradeEngine, GameValue};
 
-mod decomposer;
+fn terminal_game_value(pos: &Chess) -> Option<GameValue> {
+    if pos.is_checkmate() {
+        Some(GameValue::Loss(0))
+    } else if pos.is_stalemate() {
+        Some(GameValue::Unknown)
+    } else {
+        None
+    }
+}
+
+fn thermograph_seed(value: GameValue) -> CGTValue {
+    match value {
+        GameValue::Win(_) => CGTValue::Integer(1),
+        GameValue::Loss(_) => CGTValue::Integer(-1),
+        GameValue::Unknown => CGTValue::Integer(0),
+    }
+}
 
 #[pyfunction]
 fn find_locked_pawns(fen_str: String) -> PyResult<Vec<String>> {
     let fen = Fen::from_str(&fen_str)
         .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {}", e)))?;
-    let pos: Chess = fen.into_position(shakmaty::CastlingMode::Standard)
+    let pos: Chess = fen
+        .into_position(shakmaty::CastlingMode::Standard)
         .map_err(|_| PyValueError::new_err("Could not parse position from FEN"))?;
-    
+
     let board = pos.board();
-    let locked = decomposer::get_locked_pawns(board);
-    
+    let locked = get_locked_pawns(board);
+
     let mut locked_squares = Vec::new();
     for sq in locked {
         locked_squares.push(sq.to_string());
     }
-    
+
     Ok(locked_squares)
 }
 
@@ -33,12 +50,13 @@ fn find_locked_pawns(fen_str: String) -> PyResult<Vec<String>> {
 fn analyze_subsystems(fen_str: String) -> PyResult<(bool, u8)> {
     let fen = Fen::from_str(&fen_str)
         .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {}", e)))?;
-    let pos: Chess = fen.into_position(shakmaty::CastlingMode::Standard)
+    let pos: Chess = fen
+        .into_position(shakmaty::CastlingMode::Standard)
         .map_err(|_| PyValueError::new_err("Could not parse position from FEN"))?;
-    
+
     let board = pos.board();
-    let (is_decomposable, num_components) = decomposer::find_subsystems(board);
-    
+    let (is_decomposable, num_components) = find_subsystems(board);
+
     Ok((is_decomposable, num_components))
 }
 
@@ -46,35 +64,36 @@ fn analyze_subsystems(fen_str: String) -> PyResult<(bool, u8)> {
 fn evaluate_position(py: Python<'_>, fen_str: String) -> PyResult<Py<PyDict>> {
     let fen = Fen::from_str(&fen_str)
         .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {}", e)))?;
-    let pos: Chess = fen.into_position(shakmaty::CastlingMode::Standard)
+    let pos: Chess = fen
+        .into_position(shakmaty::CastlingMode::Standard)
         .map_err(|_| PyValueError::new_err("Could not parse position from FEN"))?;
-    
+
     let board = pos.board();
-    
+
+    let terminal_value = terminal_game_value(&pos).ok_or_else(|| {
+        PyValueError::new_err(
+            "evaluate_position currently supports only terminal checkmate/stalemate FENs",
+        )
+    })?;
+
     // 1. BitMesh hook
-    let barrier = decomposer::get_locked_pawns(board);
-    let mut uf = partition_board(barrier);
-    let mut active_components = std::collections::HashSet::new();
-    for sq in board.occupied() & !barrier {
-        active_components.insert(uf.find(usize::from(sq)));
-    }
-    let num_components = active_components.len();
+    let (_, num_components) = find_subsystems(board);
 
     // 2. Thermograph hook
-    let therm = CGTValue::Integer(1);
+    let therm = thermograph_seed(terminal_value);
     let (temperature, mean_value) = therm.thermograph();
 
     // 3. AstralBase hook
     let mut engine = RetrogradeEngine::new();
-    engine.add_terminal(pos.clone(), GameValue::Loss(0));
+    engine.add_terminal(pos.clone(), terminal_value);
     let expanded_nodes = engine.solve(50);
-    
+
     let dict = PyDict::new(py);
     dict.set_item("components", num_components)?;
     dict.set_item("temperature", temperature)?;
     dict.set_item("mean_value", mean_value)?;
     dict.set_item("expanded_nodes", expanded_nodes)?;
-    
+
     Ok(dict.into())
 }
 
@@ -84,4 +103,31 @@ fn partizan(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(analyze_subsystems, m)?)?;
     m.add_function(wrap_pyfunction!(evaluate_position, m)?)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shakmaty::CastlingMode;
+
+    fn parse(fen: &str) -> Chess {
+        Fen::from_str(fen)
+            .unwrap()
+            .into_position(CastlingMode::Standard)
+            .unwrap()
+    }
+
+    #[test]
+    fn terminal_value_rejects_non_terminal_positions() {
+        let pos = parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+        assert_eq!(terminal_game_value(&pos), None);
+    }
+
+    #[test]
+    fn terminal_value_accepts_checkmate() {
+        let pos = parse("rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3");
+
+        assert_eq!(terminal_game_value(&pos), Some(GameValue::Loss(0)));
+    }
 }

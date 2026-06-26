@@ -119,7 +119,9 @@ class CGTDataset(Dataset):
         with open(jsonl_path, 'r') as f:
             for line in f:
                 if not line.strip(): continue
-                self.data.append(json.loads(line))
+                item = json.loads(line)
+                if 'mean_value' in item and 'temperature' in item:
+                    self.data.append(item)
                 
     def __len__(self):
         return len(self.data)
@@ -141,6 +143,9 @@ def train_partizan_net(dataset_path="cgt_dataset.jsonl", epochs=5, batch_size=12
     
     # 1. Load Data
     dataset = CGTDataset(dataset_path)
+    if len(dataset) == 0:
+        raise ValueError(f"No labeled positions found in {dataset_path}")
+
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     print(f"📦 Loaded {len(dataset)} combinatorial game states.")
     
