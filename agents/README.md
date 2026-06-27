@@ -14,6 +14,8 @@ python3 agents/network.py validate
 python3 agents/network.py summary
 python3 agents/network.py first-sprint
 python3 agents/network.py agent exact_value_engineer
+python3 agents/label_schema.py validate agents/fixtures/label_rows.valid.jsonl
+python3 agents/label_schema.py self-test
 ```
 
 ## Operating Model
@@ -24,6 +26,10 @@ python3 agents/network.py agent exact_value_engineer
 - agent roles and ownership boundaries
 - phase plans and exit criteria
 - first-sprint tasks
+
+`docs/dataset_label_schema.md` defines the first dataset-label row contract.
+`agents/label_schema.py` validates JSONL rows so exact, rejected, heuristic,
+and prediction payloads stay separated.
 
 The network is designed around four build lanes:
 
