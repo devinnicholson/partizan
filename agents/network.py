@@ -11,6 +11,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_NETWORK = ROOT / "research_network.json"
+DEFAULT_WAVE = ROOT / "waves" / "wave_03_vertical_slice.json"
 
 
 class NetworkError(ValueError):
@@ -18,6 +19,11 @@ class NetworkError(ValueError):
 
 
 def load_network(path: Path) -> dict[str, Any]:
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def load_wave_plan(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
 
@@ -80,6 +86,104 @@ def validate_network(network: dict[str, Any]) -> list[str]:
     return warnings
 
 
+def validate_wave_plan(
+    wave_plan: dict[str, Any], network: dict[str, Any]
+) -> list[str]:
+    required_top_level = {
+        "wave_id",
+        "objective",
+        "non_negotiables",
+        "dispatch_order",
+        "tasks",
+        "integration_gates",
+    }
+    missing = required_top_level - wave_plan.keys()
+    if missing:
+        raise NetworkError(f"wave missing top-level keys: {', '.join(sorted(missing))}")
+
+    warnings: list[str] = []
+    agent_ids = _agent_ids(network)
+    tasks = wave_plan["tasks"]
+    task_ids = {task["id"] for task in tasks}
+    if len(task_ids) != len(tasks):
+        raise NetworkError("wave task ids must be unique")
+
+    required_task_fields = {
+        "id",
+        "agent",
+        "repo",
+        "write_scope",
+        "depends_on",
+        "prompt",
+        "outputs",
+        "commands",
+        "acceptance",
+    }
+    for task in tasks:
+        missing_task_fields = required_task_fields - task.keys()
+        if missing_task_fields:
+            raise NetworkError(
+                f"wave task {task.get('id', '<unknown>')} missing fields: "
+                + ", ".join(sorted(missing_task_fields))
+            )
+        if task["agent"] not in agent_ids:
+            raise NetworkError(
+                f"wave task {task['id']} has unknown agent {task['agent']}"
+            )
+        if not task["write_scope"]:
+            raise NetworkError(f"wave task {task['id']} has empty write_scope")
+        if not task["outputs"]:
+            raise NetworkError(f"wave task {task['id']} has empty outputs")
+        if not task["commands"]:
+            warnings.append(f"wave task {task['id']} has no verification commands")
+        if not task["acceptance"]:
+            raise NetworkError(f"wave task {task['id']} has empty acceptance")
+        for dep in task["depends_on"]:
+            if dep not in task_ids:
+                raise NetworkError(
+                    f"wave task {task['id']} depends on unknown task {dep}"
+                )
+            if dep == task["id"]:
+                raise NetworkError(f"wave task {task['id']} depends on itself")
+
+    task_deps = {task["id"]: set(task["depends_on"]) for task in tasks}
+    dispatched: set[str] = set()
+    seen: set[str] = set()
+    for index, group in enumerate(wave_plan["dispatch_order"], start=1):
+        parallel = group.get("parallel")
+        if not isinstance(parallel, list) or not parallel:
+            raise NetworkError(f"dispatch group {index} must have non-empty parallel list")
+        for task_id in parallel:
+            if task_id not in task_ids:
+                raise NetworkError(f"dispatch group {index} references unknown task {task_id}")
+            if task_id in seen:
+                raise NetworkError(f"wave task {task_id} appears in dispatch_order twice")
+            missing_deps = task_deps[task_id] - dispatched
+            if missing_deps:
+                raise NetworkError(
+                    f"wave task {task_id} is dispatched before dependencies: "
+                    + ", ".join(sorted(missing_deps))
+                )
+            seen.add(task_id)
+        dispatched.update(parallel)
+
+    if seen != task_ids:
+        missing_dispatch = task_ids - seen
+        raise NetworkError(
+            "wave tasks missing from dispatch_order: "
+            + ", ".join(sorted(missing_dispatch))
+        )
+
+    for gate in wave_plan["integration_gates"]:
+        for field in ["id", "command", "success_signal"]:
+            if field not in gate:
+                raise NetworkError(
+                    f"integration gate {gate.get('id', '<unknown>')} missing {field}"
+                )
+
+    return warnings
+
+
 def print_summary(network: dict[str, Any]) -> None:
     print(network["program"])
     print("=" * len(network["program"]))
@@ -108,6 +212,60 @@ def print_first_sprint(network: dict[str, Any]) -> None:
         print(f"- {task['id']} [{task['owner']}]")
         print(f"  Task: {task['task']}")
         print(f"  Success: {task['success_signal']}")
+
+
+def print_wave_plan(wave_plan: dict[str, Any]) -> None:
+    print(wave_plan["wave_id"])
+    print("=" * len(wave_plan["wave_id"]))
+    print(wave_plan["objective"])
+    print()
+
+    print("Dispatch Order")
+    for index, group in enumerate(wave_plan["dispatch_order"], start=1):
+        print(f"- Group {index}: {', '.join(group['parallel'])}")
+
+    print()
+    print("Tasks")
+    for task in wave_plan["tasks"]:
+        deps = ", ".join(task["depends_on"]) if task["depends_on"] else "none"
+        print(f"- {task['id']} [{task['agent']}] repo={task['repo']} deps={deps}")
+
+    print()
+    print("Integration Gates")
+    for gate in wave_plan["integration_gates"]:
+        print(f"- {gate['id']}: {gate['command']}")
+
+
+def print_wave_task(wave_plan: dict[str, Any], task_id: str) -> None:
+    tasks = {task["id"]: task for task in wave_plan["tasks"]}
+    if task_id not in tasks:
+        raise NetworkError(f"unknown wave task: {task_id}")
+
+    task = tasks[task_id]
+    print(task["id"])
+    print("=" * len(task["id"]))
+    print(f"Agent: {task['agent']}")
+    print(f"Repo: {task['repo']}")
+    print(f"Depends on: {', '.join(task['depends_on']) if task['depends_on'] else 'none'}")
+    print()
+    print("Prompt")
+    print(task["prompt"])
+    print()
+    print("Write Scope")
+    for item in task["write_scope"]:
+        print(f"- {item}")
+    print()
+    print("Outputs")
+    for item in task["outputs"]:
+        print(f"- {item}")
+    print()
+    print("Commands")
+    for item in task["commands"]:
+        print(f"- {item}")
+    print()
+    print("Acceptance")
+    for item in task["acceptance"]:
+        print(f"- {item}")
 
 
 def print_agent(network: dict[str, Any], agent_id: str) -> None:
@@ -148,6 +306,30 @@ def main() -> None:
     subcommands.add_parser("first-sprint")
     agent_parser = subcommands.add_parser("agent")
     agent_parser.add_argument("agent_id")
+    validate_wave_parser = subcommands.add_parser("validate-wave")
+    validate_wave_parser.add_argument(
+        "wave",
+        nargs="?",
+        type=Path,
+        default=DEFAULT_WAVE,
+        help="Path to a wave plan JSON file.",
+    )
+    wave_plan_parser = subcommands.add_parser("wave-plan")
+    wave_plan_parser.add_argument(
+        "wave",
+        nargs="?",
+        type=Path,
+        default=DEFAULT_WAVE,
+        help="Path to a wave plan JSON file.",
+    )
+    wave_task_parser = subcommands.add_parser("wave-task")
+    wave_task_parser.add_argument("task_id")
+    wave_task_parser.add_argument(
+        "--wave",
+        type=Path,
+        default=DEFAULT_WAVE,
+        help="Path to a wave plan JSON file.",
+    )
 
     args = parser.parse_args()
     network = load_network(args.network)
@@ -163,6 +345,20 @@ def main() -> None:
         print_first_sprint(network)
     elif args.command == "agent":
         print_agent(network, args.agent_id)
+    elif args.command == "validate-wave":
+        wave_plan = load_wave_plan(args.wave)
+        wave_warnings = validate_wave_plan(wave_plan, network)
+        print(f"wave: ok ({args.wave})")
+        for warning in wave_warnings:
+            print(f"warning: {warning}")
+    elif args.command == "wave-plan":
+        wave_plan = load_wave_plan(args.wave)
+        validate_wave_plan(wave_plan, network)
+        print_wave_plan(wave_plan)
+    elif args.command == "wave-task":
+        wave_plan = load_wave_plan(args.wave)
+        validate_wave_plan(wave_plan, network)
+        print_wave_task(wave_plan, args.task_id)
 
 
 if __name__ == "__main__":

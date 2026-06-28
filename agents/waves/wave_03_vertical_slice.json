@@ -1,0 +1,265 @@
+{
+  "wave_id": "wave_03_vertical_slice",
+  "objective": "Build the first auditable end-to-end research slice: constrained chess position -> executable domain gate -> decomposition certificate -> canonical exact value label or explicit rejection -> schema-valid JSONL shard -> baseline-ready evaluation artifact.",
+  "non_negotiables": [
+    "No exact row may be emitted from a placeholder value, unchecked decomposition, or unversioned generator.",
+    "Rejected rows must carry machine-readable reasons and remain separate from exact labels.",
+    "Every digest must be stable across repeated runs on the same input.",
+    "Every agent must preserve unrelated user changes and must not revert work outside its write scope.",
+    "Claims about agency or aesthetics are out of scope for this wave unless backed by generated labels or explicit negative controls."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w3_thermograph_value_contract",
+        "w3_bitmesh_certificate_digest",
+        "w3_red_team_negative_controls"
+      ]
+    },
+    {
+      "parallel": [
+        "w3_astralbase_domain_gate_and_generator"
+      ]
+    },
+    {
+      "parallel": [
+        "w3_partizan_shard_runner"
+      ]
+    },
+    {
+      "parallel": [
+        "w3_baseline_eval_scaffold"
+      ]
+    },
+    {
+      "parallel": [
+        "w3_claim_ledger_update"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w3_thermograph_value_contract",
+      "agent": "exact_value_engineer",
+      "repo": "../thermograph",
+      "write_scope": [
+        "src/lib.rs",
+        "tests/canonical_identity.rs",
+        "tests/golden_values.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Own thermograph only. Add a stable public exact-value contract that astralbase can use in dataset labels: canonical serialization, stable digest, value class, and exact dyadic access for supported numeric values. Keep existing f32 thermograph APIs intact, document unsupported exactness boundaries in code/tests, and do not claim full CGT equivalence beyond the implemented canonical structural identity.",
+      "outputs": [
+        "Public method or type that returns canonical value payload fields suitable for partizan.dataset_label.v0 exact.value",
+        "Stable digest tests for integer, dyadic, star, up/down, and simple game tree values",
+        "Golden tests that distinguish supported exact values from unsupported/incomplete value computations"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets -- -D warnings"
+      ],
+      "acceptance": [
+        "Integer(1), Dyadic(2, 1), and Dyadic(4, 2) still share the same canonical identity",
+        "A caller can obtain value_class, canonical serialization, and digest without parsing display text",
+        "Tests make unsupported exactness explicit rather than silently treating approximate values as exact"
+      ]
+    },
+    {
+      "id": "w3_bitmesh_certificate_digest",
+      "agent": "topology_engineer",
+      "repo": "../bitmesh",
+      "write_scope": [
+        "src/lib.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Own bitmesh only. Add stable decomposition certificate serialization and digest support, with tests showing identical certificates hash identically and structurally different certificates hash differently. Strengthen validation where practical: status coherence, masks, active component count, barrier exclusion, component overlap, and cross-component adjacency. Do not claim legal-chess dynamic independence unless it is actually proven.",
+      "outputs": [
+        "Public decomposition certificate digest API",
+        "Canonical certificate payload or serialization suitable for label provenance",
+        "Tests for stable digest equality/difference and validation failure cases"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets -- -D warnings"
+      ],
+      "acceptance": [
+        "Digest is deterministic across repeated process runs",
+        "Certificate validation is run before digest/provenance use in tests or examples",
+        "Limitations distinguish structural certificates from full chess independence proofs"
+      ]
+    },
+    {
+      "id": "w3_red_team_negative_controls",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "agents/fixtures/wave_03_negative_controls.jsonl",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [],
+      "prompt": "Own only the listed partizan fixture/docs paths. Create negative controls for the vertical slice: mixed payload rows, exact rows without provenance, rejected rows without reasons, unsupported castling/en-passant examples, and decomposition/domain cases that must not enter exact training. Document which gate catches each failure. Do not edit engine code.",
+      "outputs": [
+        "JSONL fixture of invalid or excluded rows",
+        "Verification gate document mapping each negative control to the intended validator or future checker"
+      ],
+      "commands": [
+        "python3 agents/label_schema.py self-test",
+        "python3 agents/label_schema.py validate agents/fixtures/label_rows.valid.jsonl"
+      ],
+      "acceptance": [
+        "Each negative control has a documented expected rejection reason",
+        "Existing label schema self-test still passes",
+        "No negative-control row is represented as exact training data"
+      ]
+    },
+    {
+      "id": "w3_astralbase_domain_gate_and_generator",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "src/dataset_label.rs",
+        "src/domain.rs",
+        "src/lib.rs",
+        "src/main.rs",
+        "tests/"
+      ],
+      "depends_on": [
+        "w3_thermograph_value_contract",
+        "w3_bitmesh_certificate_digest"
+      ],
+      "prompt": "Own astralbase only. Replace the sample-only shard path with an executable vertical-slice generator. Add a domain gate for the first constrained mini-endgame domain, emit rejected rows automatically for unsupported positions, and emit exact rows only when the value/provenance path is real. If cross-crate dependencies are not yet wired as dependencies, mirror only the stable JSON contract at the boundary and leave integration TODOs as test-enforced limitations.",
+      "outputs": [
+        "Executable domain validator with structured rejection reasons",
+        "Generator command that emits a deterministic JSONL shard",
+        "Exact sample row whose value payload follows the thermograph contract",
+        "Rejected sample row produced by the domain gate rather than hand-written status alone"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets -- -D warnings",
+        "cargo run -- --sample-label-shard"
+      ],
+      "acceptance": [
+        "Default RetrogradeEngine demo behavior remains intact without flags",
+        "--sample-label-shard emits deterministic JSONL on repeated runs",
+        "The emitted JSONL validates with partizan/agents/label_schema.py",
+        "Unsupported positions cannot flow into exact rows"
+      ]
+    },
+    {
+      "id": "w3_partizan_shard_runner",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "engine/orchestrator.py",
+        "agents/waves/wave_03_vertical_slice.json",
+        "docs/dataset_label_schema.md",
+        "docs/dataset_v0_manifest.md"
+      ],
+      "depends_on": [
+        "w3_astralbase_domain_gate_and_generator"
+      ],
+      "prompt": "Own only the listed partizan files. Add an orchestrator command or documented runner that calls astralbase's shard generator, writes a deterministic local JSONL artifact, validates it with agents/label_schema.py, and records a dataset-v0 manifest with source commit, command, schema version, row counts, and rejection counts.",
+      "outputs": [
+        "Shard runner or orchestrator entrypoint",
+        "Dataset v0 manifest document",
+        "Updated schema notes if the vertical slice exposed contract gaps"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave",
+        "python3 agents/label_schema.py self-test"
+      ],
+      "acceptance": [
+        "The runner fails nonzero if generated rows fail schema validation",
+        "Manifest records exact/rejected row counts separately",
+        "Regenerating from the same command produces byte-identical JSONL"
+      ]
+    },
+    {
+      "id": "w3_baseline_eval_scaffold",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/experiment_matrix.md"
+      ],
+      "depends_on": [
+        "w3_partizan_shard_runner"
+      ],
+      "prompt": "Own only the listed partizan model/eval files. Add a tiny deterministic baseline evaluator over the validated JSONL shard. The first task is not novelty; it is plumbing: load rows, separate exact/rejected labels, derive simple board/material/string features, and report baseline metrics for value_class or exact-vs-rejected classification where meaningful.",
+      "outputs": [
+        "Baseline loader/evaluator for partizan.dataset_label.v0 JSONL",
+        "Smoke test or script showing deterministic metrics on the vertical-slice shard",
+        "Experiment matrix entry for the first baseline and what it does not yet prove"
+      ],
+      "commands": [
+        "python3 engine/test.py",
+        "python3 agents/label_schema.py self-test"
+      ],
+      "acceptance": [
+        "Exact and rejected rows are not mixed as the same supervised target",
+        "Metrics output includes dataset path, row counts, commit or manifest id, and seed if any randomness is used",
+        "Experiment notes avoid agency/aesthetic claims until labels and controls support them"
+      ]
+    },
+    {
+      "id": "w3_claim_ledger_update",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "docs/research_claims.md",
+        "docs/experiment_matrix.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w3_partizan_shard_runner",
+        "w3_baseline_eval_scaffold",
+        "w3_red_team_negative_controls"
+      ],
+      "prompt": "Own only the listed partizan docs. Update the claim ledger after the vertical slice exists. Mark which claims now have concrete evidence, which remain unproven, which are blocked by exactness or scale, and which reviewer risks the negative controls address. Do not add citations or names unless tied to a concrete related-work or theorem claim.",
+      "outputs": [
+        "Updated claim table with vertical-slice evidence status",
+        "Experiment matrix entries for shard generation, validation, and baseline smoke",
+        "Verification gate summary that points to negative controls"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave"
+      ],
+      "acceptance": [
+        "No claim is marked supported by placeholder output",
+        "Every newly active claim names required evidence, baseline, and falsification condition",
+        "Open limitations are explicit enough to guide the next wave"
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "network_and_wave_validate",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave",
+      "success_signal": "The standing network and this wave plan are internally consistent."
+    },
+    {
+      "id": "label_schema_self_test",
+      "command": "python3 agents/label_schema.py self-test",
+      "success_signal": "The dataset label validator accepts valid fixtures and rejects invalid fixtures."
+    },
+    {
+      "id": "astralbase_shard_contract",
+      "command": "cd ../astralbase && cargo run --quiet -- --sample-label-shard > /tmp/partizan-wave-03.jsonl && cd ../partizan && python3 agents/label_schema.py validate /tmp/partizan-wave-03.jsonl",
+      "success_signal": "The generated vertical-slice shard validates under partizan.dataset_label.v0."
+    },
+    {
+      "id": "engine_crate_quality",
+      "command": "cd ../thermograph && cargo test && cargo clippy --all-targets -- -D warnings && cd ../bitmesh && cargo test && cargo clippy --all-targets -- -D warnings && cd ../astralbase && cargo test && cargo clippy --all-targets -- -D warnings",
+      "success_signal": "All Rust engine crates pass tests and clippy after integration."
+    }
+  ]
+}
