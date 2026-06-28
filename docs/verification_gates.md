@@ -7,6 +7,21 @@ training shard. It intentionally mixes rows that the current schema validator
 must reject with schema-valid `rejected` rows that future domain and
 decomposition checkers must keep out of exact training.
 
+## Gate Summary
+
+Wave 3 uses negative controls to keep the claim ledger conservative:
+
+- Mixed payloads, missing exact provenance, and rejected rows without reasons
+  address the reviewer risk that placeholder, prediction, or heuristic output
+  could be mistaken for verified exact labels.
+- Castling, en-passant, and undeclared generalized-board rows address the risk
+  that the first constrained domain silently expands beyond the stated shard.
+- Weak and unchecked decomposition rows address the risk that decomposition
+  claims rest on ad hoc splits instead of strict, machine-checkable
+  certificates.
+- The exact-training split policy addresses the risk that rejected rows inflate
+  exact-value support or make the `exact.value_class` baseline look meaningful.
+
 ## Gate Responsibilities
 
 - `label_schema`: `agents/label_schema.py validate`; catches malformed or
@@ -44,3 +59,9 @@ No row in `wave_03_negative_controls.jsonl` is eligible as exact training data:
   rejected` or are schema-invalid.
 - Future loaders should treat this fixture as a negative-control artifact, not
   as a source shard, even when individual rejected rows are schema-valid.
+
+For the current vertical slice, the same policy applies to
+`/private/tmp/partizan-wave-03.jsonl`: only its single `label_kind: exact` row is
+eligible for exact supervision, and its `exact.value_class` support of 1 is not
+meaningful for a value-class baseline. The two schema-valid `rejected` rows are
+evidence for gate accounting only.
