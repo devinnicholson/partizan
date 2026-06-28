@@ -7,15 +7,15 @@ local Partizan runner.
 
 - Schema version: `partizan.dataset_label.v0`
 - JSONL artifact: `/private/tmp/partizan-wave-03.jsonl`
-- Artifact SHA-256: `6d5f3ac6e520fab355597eafccb80adc7b24f46cc6aef96166eb26eaf7a5266b`
-- Total rows: 3
-- Exact rows: 1
+- Artifact SHA-256: `5cc22df67075907fbcbae8f611bfdabcb39f5ad502e7880e51f61937acdb3a88`
+- Total rows: 4
+- Exact rows: 2
 - Rejected rows: 2
 
 ## Source
 
 - Source repo: `../astralbase`
-- Source commit: `9c45f5e35c8d634dd5badb8a245e3da28af47c97`
+- Source commit: `4117a61252a9dc49da48eb80848997de275b6f9b`
 - Generator command: `cd ../astralbase && cargo run --quiet -- --sample-label-shard`
 - Runner command: `python3 engine/orchestrator.py sample-label-shard`
 - Validator command: `python3 agents/label_schema.py validate /private/tmp/partizan-wave-03.jsonl`
@@ -23,7 +23,7 @@ local Partizan runner.
 
 ## Label Counts
 
-- `exact`: 1
+- `exact`: 2
 - `rejected`: 2
 
 ## Rejection Counts By Status
