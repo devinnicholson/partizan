@@ -1,191 +1,683 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+#!/usr/bin/env python3
+"""Partizan neural model utilities and tiny deterministic label baselines."""
 
-class ResidualBlock(nn.Module):
-    def __init__(self, channels):
-        super().__init__()
-        self.conv1 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(channels)
-        self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(channels)
+from __future__ import annotations
 
-    def forward(self, x):
-        residual = x
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = self.bn2(self.conv2(x))
-        x += residual
-        return F.relu(x)
-
-class PartizanNet(nn.Module):
-    """
-    A Neural Network designed to predict Combinatorial Game Theory (CGT) values.
-    Instead of outputting a scalar Win/Loss probability, it outputs a Surreal Vector.
-    """
-    def __init__(self, num_blocks=10, channels=128):
-        super().__init__()
-        # Input layer (e.g., 14 channels for pieces/colors/castling over 8x8)
-        self.conv_input = nn.Conv2d(14, channels, kernel_size=3, padding=1)
-        self.bn_input = nn.BatchNorm2d(channels)
-        
-        # Residual tower
-        self.res_blocks = nn.ModuleList([ResidualBlock(channels) for _ in range(num_blocks)])
-        
-        # Policy Head (Standard: predicts the best move)
-        self.policy_conv = nn.Conv2d(channels, 2, kernel_size=1)
-        self.policy_bn = nn.BatchNorm2d(2)
-        self.policy_fc = nn.Linear(2 * 8 * 8, 4096) # Simplified move vector
-        
-        # The Surreal Head (Novelty: predicts CGT Mean and Temperature)
-        self.surreal_conv = nn.Conv2d(channels, 1, kernel_size=1)
-        self.surreal_bn = nn.BatchNorm2d(1)
-        self.surreal_fc1 = nn.Linear(64, 64)
-        self.surreal_fc2 = nn.Linear(64, 2) # Outputs [Mean, Temperature]
-        
-        # The Infinitesimal Head (Predicts probabilities of *, ^, v, 0)
-        self.infinitesimal_fc = nn.Linear(64, 4)
-
-    def forward(self, x):
-        x = F.relu(self.bn_input(self.conv_input(x)))
-        for block in self.res_blocks:
-            x = block(x)
-            
-        # Policy
-        p = F.relu(self.policy_bn(self.policy_conv(x)))
-        p = p.view(p.size(0), -1)
-        policy_logits = self.policy_fc(p)
-        
-        # Surreal
-        s = F.relu(self.surreal_bn(self.surreal_conv(x)))
-        s = s.view(s.size(0), -1)
-        s_hidden = F.relu(self.surreal_fc1(s))
-        
-        surreal_vector = self.surreal_fc2(s_hidden) # [m(G), t(G)]
-        infinitesimal_logits = self.infinitesimal_fc(s_hidden)
-        
-        return policy_logits, surreal_vector, infinitesimal_logits
-
-def surreal_loss(pred_vector, target_vector, alpha=1.0, beta=1.0):
-    """
-    The Surreal Loss Function:
-    Penalizes network for incorrect Mean value and incorrect Temperature.
-    """
-    pred_mean, pred_temp = pred_vector[:, 0], pred_vector[:, 1]
-    target_mean, target_temp = target_vector[:, 0], target_vector[:, 1]
-    
-    mean_loss = F.mse_loss(pred_mean, target_mean)
-    temp_loss = F.mse_loss(pred_temp, target_temp)
-    
-    return alpha * mean_loss + beta * temp_loss
-
+import argparse
+from collections import Counter
+from pathlib import Path
+import hashlib
 import json
-from torch.utils.data import Dataset, DataLoader
-import torch.optim as optim
+import os
+import sys
+from typing import Any
 
-def fen_to_tensor(fen: str) -> torch.Tensor:
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    from torch.utils.data import DataLoader, Dataset
+    import torch.optim as optim
+except ModuleNotFoundError as exc:
+    torch = None
+    nn = None
+    F = None
+    DataLoader = None
+    Dataset = object
+    optim = None
+    _TORCH_IMPORT_ERROR = exc
+else:
+    _TORCH_IMPORT_ERROR = None
+
+
+SCHEMA_VERSION = "partizan.dataset_label.v0"
+EXACT_REJECTED_LABELS = ("exact", "rejected")
+PIECE_VALUES = {
+    "P": 1,
+    "N": 3,
+    "B": 3,
+    "R": 5,
+    "Q": 9,
+    "K": 0,
+}
+
+
+def _require_torch() -> None:
+    if torch is None:
+        raise ModuleNotFoundError(
+            "PyTorch is required for PartizanNet training, but it is not installed."
+        ) from _TORCH_IMPORT_ERROR
+
+
+if torch is not None:
+
+    class ResidualBlock(nn.Module):
+        def __init__(self, channels):
+            super().__init__()
+            self.conv1 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
+            self.bn1 = nn.BatchNorm2d(channels)
+            self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
+            self.bn2 = nn.BatchNorm2d(channels)
+
+        def forward(self, x):
+            residual = x
+            x = F.relu(self.bn1(self.conv1(x)))
+            x = self.bn2(self.conv2(x))
+            x += residual
+            return F.relu(x)
+
+
+    class PartizanNet(nn.Module):
+        """
+        A neural network designed to predict Combinatorial Game Theory values.
+
+        It outputs a move policy, a surreal [mean, temperature] vector, and
+        infinitesimal class logits.
+        """
+
+        def __init__(self, num_blocks=10, channels=128):
+            super().__init__()
+            self.conv_input = nn.Conv2d(14, channels, kernel_size=3, padding=1)
+            self.bn_input = nn.BatchNorm2d(channels)
+
+            self.res_blocks = nn.ModuleList(
+                [ResidualBlock(channels) for _ in range(num_blocks)]
+            )
+
+            self.policy_conv = nn.Conv2d(channels, 2, kernel_size=1)
+            self.policy_bn = nn.BatchNorm2d(2)
+            self.policy_fc = nn.Linear(2 * 8 * 8, 4096)
+
+            self.surreal_conv = nn.Conv2d(channels, 1, kernel_size=1)
+            self.surreal_bn = nn.BatchNorm2d(1)
+            self.surreal_fc1 = nn.Linear(64, 64)
+            self.surreal_fc2 = nn.Linear(64, 2)
+
+            self.infinitesimal_fc = nn.Linear(64, 4)
+
+        def forward(self, x):
+            x = F.relu(self.bn_input(self.conv_input(x)))
+            for block in self.res_blocks:
+                x = block(x)
+
+            p = F.relu(self.policy_bn(self.policy_conv(x)))
+            p = p.view(p.size(0), -1)
+            policy_logits = self.policy_fc(p)
+
+            s = F.relu(self.surreal_bn(self.surreal_conv(x)))
+            s = s.view(s.size(0), -1)
+            s_hidden = F.relu(self.surreal_fc1(s))
+
+            surreal_vector = self.surreal_fc2(s_hidden)
+            infinitesimal_logits = self.infinitesimal_fc(s_hidden)
+
+            return policy_logits, surreal_vector, infinitesimal_logits
+
+
+    def surreal_loss(pred_vector, target_vector, alpha=1.0, beta=1.0):
+        """Penalize incorrect mean value and temperature."""
+
+        pred_mean, pred_temp = pred_vector[:, 0], pred_vector[:, 1]
+        target_mean, target_temp = target_vector[:, 0], target_vector[:, 1]
+
+        mean_loss = F.mse_loss(pred_mean, target_mean)
+        temp_loss = F.mse_loss(pred_temp, target_temp)
+
+        return alpha * mean_loss + beta * temp_loss
+
+
+    def fen_to_tensor(fen: str) -> torch.Tensor:
+        """
+        Convert a FEN string into a 14x8x8 tensor representation.
+
+        The first 12 channels are piece planes. The final two channels hold
+        side-to-move and board-mask features.
+        """
+
+        pieces = {
+            "P": 0,
+            "N": 1,
+            "B": 2,
+            "R": 3,
+            "Q": 4,
+            "K": 5,
+            "p": 6,
+            "n": 7,
+            "b": 8,
+            "r": 9,
+            "q": 10,
+            "k": 11,
+        }
+
+        tensor = torch.zeros(14, 8, 8)
+        board_part = fen.split()[0]
+
+        row, col = 0, 0
+        for char in board_part:
+            if char == "/":
+                row += 1
+                col = 0
+            elif char.isdigit():
+                col += int(char)
+            elif char in pieces:
+                channel = pieces[char]
+                tensor[channel, row, col] = 1.0
+                col += 1
+
+        if len(fen.split()) > 1:
+            turn = fen.split()[1]
+            tensor[12, :, :] = 1.0 if turn == "w" else 0.0
+        tensor[13, :, :] = 1.0
+
+        return tensor
+
+
+    class CGTDataset(Dataset):
+        def __init__(self, jsonl_path):
+            self.data = []
+            with open(jsonl_path, "r", encoding="utf-8") as handle:
+                for line in handle:
+                    if not line.strip():
+                        continue
+                    item = json.loads(line)
+                    if "mean_value" in item and "temperature" in item:
+                        self.data.append(item)
+
+        def __len__(self):
+            return len(self.data)
+
+        def __getitem__(self, idx):
+            item = self.data[idx]
+            fen = item["fen"]
+
+            target = torch.tensor(
+                [
+                    float(item["mean_value"]),
+                    float(item["temperature"]),
+                ],
+                dtype=torch.float32,
+            )
+
+            return fen_to_tensor(fen), target
+
+else:
+
+    class ResidualBlock:
+        def __init__(self, *args, **kwargs):
+            _require_torch()
+
+
+    class PartizanNet:
+        def __init__(self, *args, **kwargs):
+            _require_torch()
+
+
+    class CGTDataset:
+        def __init__(self, *args, **kwargs):
+            _require_torch()
+
+
+    def surreal_loss(*args, **kwargs):
+        _require_torch()
+
+
+    def fen_to_tensor(*args, **kwargs):
+        _require_torch()
+
+
+def load_dataset_label_v0_jsonl(jsonl_path: str | Path) -> list[dict[str, Any]]:
+    """Load minimally validated partizan.dataset_label.v0 JSONL rows."""
+
+    path = Path(jsonl_path)
+    rows: list[dict[str, Any]] = []
+
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                raise ValueError(f"{path}:{line_number}: blank JSONL rows are invalid")
+
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as error:
+                raise ValueError(
+                    f"{path}:{line_number}: invalid JSON: {error.msg}"
+                ) from error
+
+            _validate_baseline_row(row, path, line_number)
+            rows.append(row)
+
+    return rows
+
+
+def _validate_baseline_row(row: Any, path: Path, line_number: int) -> None:
+    if not isinstance(row, dict):
+        raise ValueError(f"{path}:{line_number}: row must be a JSON object")
+    if row.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError(
+            f"{path}:{line_number}: schema_version must be {SCHEMA_VERSION!r}"
+        )
+
+    label_kind = row.get("label_kind")
+    if label_kind not in {"exact", "rejected", "heuristic", "prediction"}:
+        raise ValueError(f"{path}:{line_number}: unsupported label_kind {label_kind!r}")
+
+    position = row.get("position")
+    if not isinstance(position, dict):
+        raise ValueError(f"{path}:{line_number}: position must be an object")
+    if position.get("encoding") != "fen":
+        raise ValueError(f"{path}:{line_number}: only FEN positions are supported")
+    if not isinstance(position.get("text"), str) or not position["text"].strip():
+        raise ValueError(f"{path}:{line_number}: position.text must be non-empty")
+
+    if label_kind == "exact" and not isinstance(row.get("exact"), dict):
+        raise ValueError(f"{path}:{line_number}: exact row missing exact payload")
+    if label_kind == "rejected" and not isinstance(row.get("rejected"), dict):
+        raise ValueError(f"{path}:{line_number}: rejected row missing rejected payload")
+
+
+def split_label_rows(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """Separate rows by label kind so exact supervision is never mixed."""
+
+    return {
+        "exact": [row for row in rows if row.get("label_kind") == "exact"],
+        "rejected": [row for row in rows if row.get("label_kind") == "rejected"],
+        "heuristic": [row for row in rows if row.get("label_kind") == "heuristic"],
+        "prediction": [row for row in rows if row.get("label_kind") == "prediction"],
+    }
+
+
+def derive_position_features(row: dict[str, Any]) -> dict[str, Any]:
+    """Derive simple board, material, and FEN string features."""
+
+    fen = row["position"]["text"]
+    fields = fen.split()
+    board = fields[0] if fields else ""
+    side_to_move = fields[1] if len(fields) > 1 else "?"
+    castling = fields[2] if len(fields) > 2 else "?"
+
+    piece_counts: Counter[str] = Counter()
+    empty_square_count = 0
+    for char in board:
+        if char.isdigit():
+            empty_square_count += int(char)
+        elif char == "/":
+            continue
+        elif char.isalpha():
+            piece_counts[char] += 1
+
+    white_piece_count = sum(count for piece, count in piece_counts.items() if piece.isupper())
+    black_piece_count = sum(count for piece, count in piece_counts.items() if piece.islower())
+    piece_count = white_piece_count + black_piece_count
+
+    material_balance = 0
+    absolute_material = 0
+    for piece, count in piece_counts.items():
+        value = PIECE_VALUES.get(piece.upper(), 0) * count
+        absolute_material += value
+        material_balance += value if piece.isupper() else -value
+
+    return {
+        "fen_length": len(fen),
+        "fen_space_count": fen.count(" "),
+        "board_token_length": len(board),
+        "board_slash_count": board.count("/"),
+        "rank_count": board.count("/") + 1 if board else 0,
+        "side_to_move": side_to_move,
+        "castling_token": castling,
+        "has_castling_rights": castling not in {"-", "?"},
+        "castling_right_count": 0 if castling in {"-", "?"} else len(castling),
+        "empty_square_count": empty_square_count,
+        "piece_count": piece_count,
+        "white_piece_count": white_piece_count,
+        "black_piece_count": black_piece_count,
+        "king_count": piece_counts["K"] + piece_counts["k"],
+        "queen_count": piece_counts["Q"] + piece_counts["q"],
+        "rook_count": piece_counts["R"] + piece_counts["r"],
+        "bishop_count": piece_counts["B"] + piece_counts["b"],
+        "knight_count": piece_counts["N"] + piece_counts["n"],
+        "pawn_count": piece_counts["P"] + piece_counts["p"],
+        "material_balance": material_balance,
+        "absolute_material": absolute_material,
+        "piece_counts": dict(sorted(piece_counts.items())),
+    }
+
+
+def predict_exact_vs_rejected(features: dict[str, Any]) -> str:
     """
-    Converts a FEN string into a 14x8x8 tensor representation.
-    (Simplified: 12 channels for pieces, 2 for auxiliary context).
+    Deterministic Wave 3 gate baseline from FEN features only.
+
+    This intentionally avoids using rejected.reasons. It is a smoke-test rule,
+    not a claim about the domain boundary.
     """
-    pieces = {'P': 0, 'N': 1, 'B': 2, 'R': 3, 'Q': 4, 'K': 5,
-              'p': 6, 'n': 7, 'b': 8, 'r': 9, 'q': 10, 'k': 11}
-    
-    tensor = torch.zeros(14, 8, 8)
-    board_part = fen.split()[0]
-    
-    row, col = 0, 0
-    for char in board_part:
-        if char == '/':
-            row += 1
-            col = 0
-        elif char.isdigit():
-            col += int(char)
-        elif char in pieces:
-            channel = pieces[char]
-            tensor[channel, row, col] = 1.0
-            col += 1
-            
-    # Add some auxiliary features in the 12th/13th channels (e.g. turn flag)
-    if len(fen.split()) > 1:
-        turn = fen.split()[1]
-        tensor[12, :, :] = 1.0 if turn == 'w' else 0.0
-    tensor[13, :, :] = 1.0 # Board mask presence
-    
-    return tensor
 
-class CGTDataset(Dataset):
-    def __init__(self, jsonl_path):
-        self.data = []
-        with open(jsonl_path, 'r') as f:
-            for line in f:
-                if not line.strip(): continue
-                item = json.loads(line)
-                if 'mean_value' in item and 'temperature' in item:
-                    self.data.append(item)
-                
-    def __len__(self):
-        return len(self.data)
-        
-    def __getitem__(self, idx):
-        item = self.data[idx]
-        fen = item['fen']
-        
-        # Target vector: [Mean, Temperature]
-        target = torch.tensor([
-            float(item['mean_value']), 
-            float(item['temperature'])
-        ], dtype=torch.float32)
-        
-        return fen_to_tensor(fen), target
+    if features["has_castling_rights"]:
+        return "rejected"
+    if features["king_count"] == 2 and features["piece_count"] <= 2:
+        return "rejected"
+    return "exact"
 
-def train_partizan_net(dataset_path="cgt_dataset.jsonl", epochs=5, batch_size=128, lr=0.001):
-    print(f"🚀 Initializing PartizanNet Training Loop on {dataset_path}...")
-    
-    # 1. Load Data
+
+def evaluate_label_shard_baseline(jsonl_path: str | Path) -> dict[str, Any]:
+    """Evaluate deterministic baselines over a dataset-label v0 JSONL shard."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    splits = split_label_rows(rows)
+    features_by_row = [
+        {
+            "row_id": row.get("row_id"),
+            "label_kind": row.get("label_kind"),
+            "features": derive_position_features(row),
+        }
+        for row in rows
+    ]
+
+    source_commits = sorted(
+        {
+            str(row["provenance"]["code_commit"])
+            for row in splits["exact"]
+            if isinstance(row.get("provenance"), dict)
+            and row["provenance"].get("code_commit")
+        }
+    )
+    provenance_random_seeds = sorted(
+        {
+            row["provenance"]["random_seed"]
+            for row in splits["exact"]
+            if isinstance(row.get("provenance"), dict)
+            and "random_seed" in row["provenance"]
+        }
+    )
+
+    return {
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "commit_or_manifest_id": (
+            source_commits[0]
+            if len(source_commits) == 1
+            else f"sha256:{_sha256_file(path)}"
+        ),
+        "source_commits": source_commits,
+        "randomness": "none",
+        "seed": None,
+        "provenance_random_seeds": provenance_random_seeds,
+        "row_counts": {
+            "total": len(rows),
+            "exact": len(splits["exact"]),
+            "rejected": len(splits["rejected"]),
+            "heuristic": len(splits["heuristic"]),
+            "prediction": len(splits["prediction"]),
+        },
+        "feature_summary": _feature_summary(features_by_row),
+        "baselines": {
+            "exact_vs_rejected": _evaluate_exact_vs_rejected(rows, features_by_row),
+            "exact_value_class": _evaluate_exact_value_class(splits["exact"]),
+        },
+    }
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _feature_summary(features_by_row: list[dict[str, Any]]) -> dict[str, Any]:
+    numeric_keys = (
+        "fen_length",
+        "piece_count",
+        "white_piece_count",
+        "black_piece_count",
+        "king_count",
+        "queen_count",
+        "rook_count",
+        "pawn_count",
+        "material_balance",
+        "absolute_material",
+        "empty_square_count",
+        "castling_right_count",
+    )
+    summary: dict[str, Any] = {}
+
+    for key in numeric_keys:
+        values = [entry["features"][key] for entry in features_by_row]
+        if not values:
+            continue
+        summary[key] = {
+            "min": min(values),
+            "max": max(values),
+            "mean": sum(values) / len(values),
+        }
+
+    summary["side_to_move_counts"] = dict(
+        sorted(Counter(entry["features"]["side_to_move"] for entry in features_by_row).items())
+    )
+    summary["has_castling_rights_counts"] = {
+        str(key).lower(): value
+        for key, value in sorted(
+            Counter(
+                entry["features"]["has_castling_rights"] for entry in features_by_row
+            ).items()
+        )
+    }
+    return summary
+
+
+def _evaluate_exact_vs_rejected(
+    rows: list[dict[str, Any]],
+    features_by_row: list[dict[str, Any]],
+) -> dict[str, Any]:
+    eligible = [
+        (row, entry["features"])
+        for row, entry in zip(rows, features_by_row)
+        if row.get("label_kind") in EXACT_REJECTED_LABELS
+    ]
+    predictions = [predict_exact_vs_rejected(features) for _, features in eligible]
+    targets = [row["label_kind"] for row, _ in eligible]
+
+    return {
+        "baseline_id": "fen_string_material_gate_v0",
+        "target": "label_kind exact-vs-rejected",
+        "eligible_label_kinds": list(EXACT_REJECTED_LABELS),
+        "excluded_label_kinds": sorted(
+            {
+                str(row.get("label_kind"))
+                for row in rows
+                if row.get("label_kind") not in EXACT_REJECTED_LABELS
+            }
+        ),
+        "support": len(eligible),
+        **_classification_metrics(targets, predictions, EXACT_REJECTED_LABELS),
+    }
+
+
+def _classification_metrics(
+    targets: list[str],
+    predictions: list[str],
+    labels: tuple[str, ...],
+) -> dict[str, Any]:
+    confusion = {
+        label: {predicted: 0 for predicted in labels}
+        for label in labels
+    }
+    for target, prediction in zip(targets, predictions):
+        confusion[target][prediction] += 1
+
+    correct = sum(1 for target, prediction in zip(targets, predictions) if target == prediction)
+    support = len(targets)
+    per_class = {}
+    for label in labels:
+        true_positive = confusion[label][label]
+        false_positive = sum(
+            confusion[other][label] for other in labels if other != label
+        )
+        false_negative = sum(
+            confusion[label][other] for other in labels if other != label
+        )
+        precision = _safe_div(true_positive, true_positive + false_positive)
+        recall = _safe_div(true_positive, true_positive + false_negative)
+        f1 = _safe_div(2 * precision * recall, precision + recall)
+        per_class[label] = {
+            "precision": precision,
+            "recall": recall,
+            "f1": f1,
+            "support": sum(confusion[label].values()),
+        }
+
+    return {
+        "accuracy": _safe_div(correct, support),
+        "confusion_matrix": confusion,
+        "per_class": per_class,
+    }
+
+
+def _safe_div(numerator: float, denominator: float) -> float:
+    if denominator == 0:
+        return 0.0
+    return numerator / denominator
+
+
+def _evaluate_exact_value_class(exact_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    value_classes = [
+        str(row["exact"].get("value_class"))
+        for row in exact_rows
+        if isinstance(row.get("exact"), dict) and row["exact"].get("value_class")
+    ]
+    class_counts = dict(sorted(Counter(value_classes).items()))
+    report: dict[str, Any] = {
+        "baseline_id": "exact_majority_value_class_v0",
+        "target": "exact.value_class",
+        "eligible_label_kinds": ["exact"],
+        "support": len(value_classes),
+        "class_counts": class_counts,
+    }
+
+    if len(value_classes) < 2:
+        report.update(
+            {
+                "status": "not_meaningful",
+                "reason": "requires at least two exact rows for deterministic holdout metrics",
+            }
+        )
+        return report
+
+    predictions = []
+    for index, _target in enumerate(value_classes):
+        training_values = value_classes[:index] + value_classes[index + 1 :]
+        predictions.append(_majority_label(training_values))
+
+    report.update(
+        {
+            "status": "evaluated",
+            "validation": "leave_one_out_majority",
+            **_classification_metrics(
+                value_classes,
+                predictions,
+                tuple(sorted(class_counts)),
+            ),
+        }
+    )
+    return report
+
+
+def _majority_label(labels: list[str]) -> str:
+    counts = Counter(labels)
+    return sorted(counts, key=lambda label: (-counts[label], label))[0]
+
+
+def print_baseline_metrics(metrics: dict[str, Any]) -> None:
+    print(json.dumps(metrics, indent=2, sort_keys=True))
+
+
+def train_partizan_net(
+    dataset_path: str = "cgt_dataset.jsonl",
+    epochs: int = 5,
+    batch_size: int = 128,
+    lr: float = 0.001,
+):
+    _require_torch()
+
+    print(f"Initializing PartizanNet training loop on {dataset_path}...")
+
     dataset = CGTDataset(dataset_path)
     if len(dataset) == 0:
         raise ValueError(f"No labeled positions found in {dataset_path}")
 
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    print(f"📦 Loaded {len(dataset)} combinatorial game states.")
-    
-    # 2. Initialize Model & Optimizer
-    # Dynamically detect hardware acceleration (MPS for Apple Silicon, CUDA for NVIDIA)
-    device = torch.device("mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu"))
-    print(f"⚡ Utilizing compute device: {device}")
-    
+    print(f"Loaded {len(dataset)} combinatorial game states.")
+
+    device = torch.device(
+        "mps"
+        if torch.backends.mps.is_available()
+        else ("cuda" if torch.cuda.is_available() else "cpu")
+    )
+    print(f"Utilizing compute device: {device}")
+
     model = PartizanNet().to(device)
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    
-    # 3. Training Loop
+
     model.train()
     for epoch in range(epochs):
         total_loss = 0.0
-        for batch_idx, (features, targets) in enumerate(dataloader):
+        for features, targets in dataloader:
             features, targets = features.to(device), targets.to(device)
-            
-            # Forward Pass
+
             optimizer.zero_grad()
             _, surreal_pred, _ = model(features)
-            
-            # Compute Surreal Loss (optimizing Mean & Temperature accuracy)
-            loss = surreal_loss(surreal_pred, targets, alpha=1.0, beta=2.0) # Weight temperature higher
-            
-            # Backward Pass
+
+            loss = surreal_loss(surreal_pred, targets, alpha=1.0, beta=2.0)
             loss.backward()
             optimizer.step()
-            
+
             total_loss += loss.item()
-            
+
         avg_loss = total_loss / len(dataloader)
-        print(f"Epoch [{epoch+1}/{epochs}] - Surreal Loss: {avg_loss:.4f}")
-        
-    print("✅ Training Complete! PartizanNet has acquired early CGT valuation parameters.")
+        print(f"Epoch [{epoch + 1}/{epochs}] - Surreal Loss: {avg_loss:.4f}")
+
+    print("Training complete.")
     return model
 
-if __name__ == "__main__":
-    import os
+
+def _legacy_main() -> int:
     if os.path.exists("cgt_dataset.jsonl"):
         train_partizan_net()
     else:
         print("Waiting for cgt_dataset.jsonl from Modal orchestrator...")
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    subcommands = parser.add_subparsers(dest="command")
+
+    baseline_parser = subcommands.add_parser(
+        "baseline-eval",
+        help="Evaluate deterministic baselines over a dataset-label v0 JSONL shard.",
+    )
+    baseline_parser.add_argument("jsonl_path", type=Path)
+
+    return parser
+
+
+def cli_main(argv: list[str] | None = None) -> int:
+    args_list = sys.argv[1:] if argv is None else argv
+    if not args_list:
+        return _legacy_main()
+
+    parser = build_parser()
+    args = parser.parse_args(args_list)
+
+    if args.command == "baseline-eval":
+        metrics = evaluate_label_shard_baseline(args.jsonl_path)
+        print_baseline_metrics(metrics)
+        return 0
+
+    parser.error(f"unknown command: {args.command}")
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(cli_main())
