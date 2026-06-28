@@ -173,7 +173,8 @@
       "commands": [
         "python3 agents/network.py validate",
         "python3 agents/network.py validate-wave",
-        "python3 agents/label_schema.py self-test"
+        "python3 agents/label_schema.py self-test",
+        "python3 engine/orchestrator.py sample-label-shard"
       ],
       "acceptance": [
         "The runner fails nonzero if generated rows fail schema validation",
@@ -253,8 +254,8 @@
     },
     {
       "id": "astralbase_shard_contract",
-      "command": "cd ../astralbase && cargo run --quiet -- --sample-label-shard > /tmp/partizan-wave-03.jsonl && cd ../partizan && python3 agents/label_schema.py validate /tmp/partizan-wave-03.jsonl",
-      "success_signal": "The generated vertical-slice shard validates under partizan.dataset_label.v0."
+      "command": "python3 engine/orchestrator.py sample-label-shard",
+      "success_signal": "The local Partizan runner generates a byte-identical shard, validates it under partizan.dataset_label.v0, and records the dataset v0 manifest."
     },
     {
       "id": "engine_crate_quality",

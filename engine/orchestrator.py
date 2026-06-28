@@ -1,59 +1,111 @@
-import modal
-import os
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+from collections import Counter
+import hashlib
 import json
+import os
+from pathlib import Path
+import shlex
+import subprocess
+import sys
 
-app = modal.App("partizan-cgt-evaluator")
+try:
+    import modal
+except ModuleNotFoundError:
+    modal = None
 
-# Define the container environment
-# We need Rust, Cargo, and Maturin to compile our PyO3 engine in the cloud
-partizan_image = (
-    modal.Image.debian_slim(python_version="3.11")
-    .apt_install("curl", "libssl-dev", "pkg-config")
-    .run_commands("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
-    .env({"PATH": "/root/.cargo/bin:$PATH"})
-    .pip_install("maturin")
-    # To satisfy the Cargo.toml relative path dependencies (../../) we must mount the libraries accordingly:
-    # We put the engine in /root/partizan/engine so that ../../ resolves to /root
-    .add_local_dir(".", remote_path="/root/partizan/engine", copy=True)
-    .add_local_dir("../../thermograph", remote_path="/root/thermograph", copy=True)
-    .add_local_dir("../../bitmesh", remote_path="/root/bitmesh", copy=True)
-    .add_local_dir("../../astralbase", remote_path="/root/astralbase", copy=True)
-    # Compile the PyO3 module and install the wheel globally in the container
-    .run_commands("rm -rf /root/partizan/engine/.venv && cd /root/partizan/engine && maturin build --release && pip install target/wheels/partizan*.whl")
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_ASTRALBASE_DIR = ROOT.parent / "astralbase"
+DEFAULT_SHARD_PATH = Path("/tmp/partizan-wave-03.jsonl")
+DEFAULT_MANIFEST_PATH = ROOT / "docs" / "dataset_v0_manifest.md"
+LABEL_SCHEMA_PATH = ROOT / "agents" / "label_schema.py"
+SCHEMA_VERSION = "partizan.dataset_label.v0"
+ASTRALBASE_SHARD_COMMAND = (
+    "cargo",
+    "run",
+    "--quiet",
+    "--",
+    "--sample-label-shard",
 )
 
-@app.function(image=partizan_image)
-def evaluate_fens_batch(fens: list[str]):
-    """
-    This function runs in the cloud on thousands of parallel containers.
-    It takes a batch of FENs and processes them through our Rust engine.
-    """
-    import sys
-    sys.path.append("/root/partizan/engine")
-    import partizan
 
-    results = []
-    for fen in fens:
-        try:
-            # Our new PyO3 hook processes Bitmesh, Thermograph, and Astralbase at once
-            data = partizan.evaluate_position(fen)
-            results.append({
-                "fen": fen,
-                "components": data["components"],
-                "temperature": data["temperature"],
-                "mean_value": data["mean_value"],
-                "expanded_nodes": data["expanded_nodes"]
-            })
-        except Exception as e:
-            results.append({
-                "fen": fen,
-                "error": str(e),
-            })
-            
-    return results
+class ShardRunnerError(RuntimeError):
+    """Raised when the local dataset shard runner cannot complete."""
 
-@app.local_entrypoint()
-def main():
+
+if modal is not None:
+    app = modal.App("partizan-cgt-evaluator")
+
+    # Define the container environment. We need Rust, Cargo, and Maturin to
+    # compile our PyO3 engine in the cloud.
+    partizan_image = (
+        modal.Image.debian_slim(python_version="3.11")
+        .apt_install("curl", "libssl-dev", "pkg-config")
+        .run_commands(
+            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
+            "sh -s -- -y"
+        )
+        .env({"PATH": "/root/.cargo/bin:$PATH"})
+        .pip_install("maturin")
+        # To satisfy the Cargo.toml relative path dependencies (../../), mount
+        # the libraries so ../../ resolves to /root.
+        .add_local_dir(".", remote_path="/root/partizan/engine", copy=True)
+        .add_local_dir("../../thermograph", remote_path="/root/thermograph", copy=True)
+        .add_local_dir("../../bitmesh", remote_path="/root/bitmesh", copy=True)
+        .add_local_dir("../../astralbase", remote_path="/root/astralbase", copy=True)
+        .run_commands(
+            "rm -rf /root/partizan/engine/.venv && "
+            "cd /root/partizan/engine && "
+            "maturin build --release && "
+            "pip install target/wheels/partizan*.whl"
+        )
+    )
+else:
+    app = None
+    partizan_image = None
+
+
+if app is not None:
+
+    @app.function(image=partizan_image)
+    def evaluate_fens_batch(fens: list[str]):
+        """
+        This function runs in the cloud on thousands of parallel containers.
+        It takes a batch of FENs and processes them through our Rust engine.
+        """
+        import sys
+
+        sys.path.append("/root/partizan/engine")
+        import partizan
+
+        results = []
+        for fen in fens:
+            try:
+                data = partizan.evaluate_position(fen)
+                results.append(
+                    {
+                        "fen": fen,
+                        "components": data["components"],
+                        "temperature": data["temperature"],
+                        "mean_value": data["mean_value"],
+                        "expanded_nodes": data["expanded_nodes"],
+                    }
+                )
+            except Exception as e:
+                results.append(
+                    {
+                        "fen": fen,
+                        "error": str(e),
+                    }
+                )
+
+        return results
+
+
+def _run_modal_demo() -> None:
     print("🚀 Booting up the Partizan Modal Orchestrator...")
     
     # In a real scenario, we generate billions of FENs.
@@ -84,3 +136,310 @@ def main():
             f.write(json.dumps(pos) + "\n")
             
     print(f"💾 Saved raw dataset to {dataset_path} for PartizanNet training!")
+
+
+if app is not None:
+
+    @app.local_entrypoint()
+    def main():
+        _run_modal_demo()
+
+
+def _resolve_from_root(path: Path) -> Path:
+    if path.is_absolute():
+        return path
+    return ROOT / path
+
+
+def _display_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(ROOT))
+    except ValueError:
+        try:
+            return str(Path("..") / resolved.relative_to(ROOT.parent))
+        except ValueError:
+            return str(resolved)
+
+
+def _format_command(command: list[str] | tuple[str, ...]) -> str:
+    return " ".join(shlex.quote(part) for part in command)
+
+
+def _run_capture(
+    command: tuple[str, ...],
+    cwd: Path,
+    label: str,
+    env: dict[str, str] | None = None,
+) -> bytes:
+    result = subprocess.run(
+        command,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+        check=False,
+    )
+    if result.returncode != 0:
+        if result.stderr:
+            sys.stderr.write(result.stderr.decode("utf-8", errors="replace"))
+        raise ShardRunnerError(f"{label} failed with exit code {result.returncode}")
+    if result.stderr:
+        sys.stderr.write(result.stderr.decode("utf-8", errors="replace"))
+    return result.stdout
+
+
+def _git_head(path: Path) -> str:
+    result = subprocess.run(
+        ("git", "rev-parse", "HEAD"),
+        cwd=path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        if result.stderr:
+            sys.stderr.write(result.stderr)
+        raise ShardRunnerError(f"could not read git HEAD for {_display_path(path)}")
+    return result.stdout.strip()
+
+
+def _validate_with_label_schema(path: Path) -> None:
+    command = (
+        sys.executable,
+        str(LABEL_SCHEMA_PATH),
+        "validate",
+        str(path),
+    )
+    result = subprocess.run(command, cwd=ROOT, check=False)
+    if result.returncode != 0:
+        raise ShardRunnerError(
+            f"label schema validation failed with exit code {result.returncode}"
+        )
+
+
+def _summarize_jsonl(path: Path) -> dict[str, object]:
+    label_kind_counts: Counter[str] = Counter()
+    schema_versions: Counter[str] = Counter()
+    rejection_status_counts: Counter[str] = Counter()
+    rejection_reason_counts: Counter[str] = Counter()
+    row_count = 0
+
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            row_count += 1
+            row = json.loads(line)
+            schema_versions.update([str(row.get("schema_version"))])
+
+            label_kind = str(row.get("label_kind"))
+            label_kind_counts.update([label_kind])
+
+            if label_kind == "rejected":
+                rejected = row.get("rejected", {})
+                if isinstance(rejected, dict):
+                    rejection_status_counts.update([str(rejected.get("status"))])
+                    for reason in rejected.get("reasons", []):
+                        reason_text = str(reason)
+                        reason_code = reason_text.split(":", 1)[0]
+                        rejection_reason_counts.update([reason_code])
+
+    return {
+        "row_count": row_count,
+        "schema_versions": dict(sorted(schema_versions.items())),
+        "label_kind_counts": dict(sorted(label_kind_counts.items())),
+        "exact_rows": label_kind_counts.get("exact", 0),
+        "rejected_rows": label_kind_counts.get("rejected", 0),
+        "rejection_status_counts": dict(sorted(rejection_status_counts.items())),
+        "rejection_reason_counts": dict(sorted(rejection_reason_counts.items())),
+    }
+
+
+def _write_manifest(
+    manifest_path: Path,
+    output_path: Path,
+    output_sha256: str,
+    astralbase_dir: Path,
+    astralbase_commit: str,
+    runner_command: list[str],
+    summary: dict[str, object],
+) -> None:
+    label_kind_counts = summary["label_kind_counts"]
+    rejection_status_counts = summary["rejection_status_counts"]
+    rejection_reason_counts = summary["rejection_reason_counts"]
+
+    def bullet_counts(counts: dict[str, int]) -> str:
+        if not counts:
+            return "- none"
+        return "\n".join(f"- `{key}`: {value}" for key, value in counts.items())
+
+    manifest = f"""# Dataset v0 Manifest
+
+This manifest records the Wave 3 vertical-slice JSONL shard generated by the
+local Partizan runner.
+
+## Artifact
+
+- Schema version: `{SCHEMA_VERSION}`
+- JSONL artifact: `{_display_path(output_path)}`
+- Artifact SHA-256: `{output_sha256}`
+- Total rows: {summary["row_count"]}
+- Exact rows: {summary["exact_rows"]}
+- Rejected rows: {summary["rejected_rows"]}
+
+## Source
+
+- Source repo: `{_display_path(astralbase_dir)}`
+- Source commit: `{astralbase_commit}`
+- Generator command: `cd {_display_path(astralbase_dir)} && {_format_command(ASTRALBASE_SHARD_COMMAND)}`
+- Runner command: `{_format_command(runner_command)}`
+- Validator command: `python3 agents/label_schema.py validate {_display_path(output_path)}`
+- Determinism check: the runner compares two generator invocations before writing.
+
+## Label Counts
+
+{bullet_counts(label_kind_counts)}
+
+## Rejection Counts By Status
+
+{bullet_counts(rejection_status_counts)}
+
+## Rejection Counts By Reason
+
+{bullet_counts(rejection_reason_counts)}
+
+## Notes
+
+- Exact rows remain the only rows eligible as exact supervision targets.
+- Rejected rows stay in the shard so unsupported inputs are visible and counted.
+- The runner injects `ASTRALBASE_CODE_COMMIT` so exact-row provenance and this
+  manifest record the same astralbase Git commit.
+"""
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(manifest, encoding="utf-8")
+
+
+def run_sample_label_shard(args: argparse.Namespace) -> int:
+    astralbase_dir = _resolve_from_root(args.astralbase_dir)
+    output_path = _resolve_from_root(args.output)
+    manifest_path = _resolve_from_root(args.manifest)
+
+    if not astralbase_dir.exists():
+        raise ShardRunnerError(f"astralbase directory not found: {astralbase_dir}")
+
+    astralbase_commit = _git_head(astralbase_dir)
+    generator_env = {
+        **dict(os.environ),
+        "ASTRALBASE_CODE_COMMIT": astralbase_commit,
+    }
+
+    first = _run_capture(
+        ASTRALBASE_SHARD_COMMAND,
+        cwd=astralbase_dir,
+        label="astralbase sample label shard generation",
+        env=generator_env,
+    )
+    if not args.skip_determinism_check:
+        second = _run_capture(
+            ASTRALBASE_SHARD_COMMAND,
+            cwd=astralbase_dir,
+            label="astralbase sample label shard determinism check",
+            env=generator_env,
+        )
+        if first != second:
+            raise ShardRunnerError(
+                "astralbase sample label shard is not byte-identical across runs"
+            )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_bytes(first)
+
+    _validate_with_label_schema(output_path)
+
+    output_sha256 = hashlib.sha256(first).hexdigest()
+    summary = _summarize_jsonl(output_path)
+    runner_command = [
+        "python3",
+        "engine/orchestrator.py",
+        "sample-label-shard",
+    ]
+    if output_path != DEFAULT_SHARD_PATH:
+        runner_command.extend(["--output", _display_path(output_path)])
+    if manifest_path != DEFAULT_MANIFEST_PATH:
+        runner_command.extend(["--manifest", _display_path(manifest_path)])
+    if args.skip_determinism_check:
+        runner_command.append("--skip-determinism-check")
+
+    _write_manifest(
+        manifest_path=manifest_path,
+        output_path=output_path,
+        output_sha256=output_sha256,
+        astralbase_dir=astralbase_dir,
+        astralbase_commit=astralbase_commit,
+        runner_command=runner_command,
+        summary=summary,
+    )
+
+    print(
+        "sample-label-shard: ok "
+        f"({_display_path(output_path)}, "
+        f"rows={summary['row_count']}, "
+        f"exact={summary['exact_rows']}, "
+        f"rejected={summary['rejected_rows']})"
+    )
+    print(f"manifest: {_display_path(manifest_path)}")
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Partizan local orchestration tools.")
+    subcommands = parser.add_subparsers(dest="command", required=True)
+
+    shard_parser = subcommands.add_parser(
+        "sample-label-shard",
+        help="Generate, validate, and record the Wave 3 dataset-label shard.",
+    )
+    shard_parser.add_argument(
+        "--astralbase-dir",
+        type=Path,
+        default=DEFAULT_ASTRALBASE_DIR,
+        help="Path to the astralbase repository.",
+    )
+    shard_parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_SHARD_PATH,
+        help="JSONL artifact path to write.",
+    )
+    shard_parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_MANIFEST_PATH,
+        help="Dataset manifest path to write.",
+    )
+    shard_parser.add_argument(
+        "--skip-determinism-check",
+        action="store_true",
+        help="Run the astralbase generator once instead of comparing two runs.",
+    )
+
+    return parser
+
+
+def cli_main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    try:
+        if args.command == "sample-label-shard":
+            return run_sample_label_shard(args)
+    except ShardRunnerError as error:
+        print(f"sample-label-shard: error: {error}", file=sys.stderr)
+        return 1
+
+    parser.error(f"unknown command: {args.command}")
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(cli_main())
