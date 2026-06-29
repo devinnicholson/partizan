@@ -73,6 +73,7 @@ shard generated for Wave 12 material-family breadth validation.
 - Symmetry-hash KNK holdout symmetry-key cross-split violations: 0
 - Symmetry-hash KRK holdout frontier-mean train-majority accuracy: train
   1.000, dev 1.000, test 0.220
+- Symmetry-hash KRK holdout frontier-mean unseen test labels: `2`
 - Symmetry-hash KNK holdout FEN-gate baseline accuracy: train 0.202, dev
   0.179, test 0.200
 - Symmetry-hash KNK holdout geometry-probe accuracy: train 0.978, dev 0.975,

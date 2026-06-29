@@ -919,6 +919,15 @@ def evaluate_frontier_target_report(
         raise ValueError("frontier target report requires train exact targets")
     majority_prediction = _majority_label(train_targets)
     labels = tuple(sorted({example["target"] for example in examples}))
+    train_target_labels = set(train_targets)
+    split_target_labels = {
+        split: {
+            example["target"]
+            for example in examples
+            if example["split"] == split
+        }
+        for split in sorted({example["split"] for example in examples})
+    }
 
     split_metrics = {}
     for split in sorted({example["split"] for example in examples}):
@@ -945,6 +954,17 @@ def evaluate_frontier_target_report(
         "row_counts": _count_by(assignments, "split"),
         "target_labels": list(labels),
         "train_majority_prediction": majority_prediction,
+        "target_support_coverage": {
+            "train_labels": sorted(train_target_labels),
+            "split_labels": {
+                split: sorted(targets)
+                for split, targets in split_target_labels.items()
+            },
+            "unseen_labels_by_split": {
+                split: sorted(targets - train_target_labels)
+                for split, targets in split_target_labels.items()
+            },
+        },
         "split_metrics": split_metrics,
     }
     if holdout_family:

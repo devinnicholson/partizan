@@ -130,5 +130,29 @@
     "1",
     "2"
   ],
+  "target_support_coverage": {
+    "split_labels": {
+      "dev": [
+        "1"
+      ],
+      "test": [
+        "1",
+        "2"
+      ],
+      "train": [
+        "1"
+      ]
+    },
+    "train_labels": [
+      "1"
+    ],
+    "unseen_labels_by_split": {
+      "dev": [],
+      "test": [
+        "2"
+      ],
+      "train": []
+    }
+  },
   "train_majority_prediction": "1"
 }

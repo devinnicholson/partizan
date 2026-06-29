@@ -143,6 +143,7 @@ Wave 15 adds
 an exact-only report for `exact.value.frontier_mean` with KRK held out. Rejected
 rows are excluded from the target. The train-majority floor predicts
 `frontier_mean=1`, scores 1.000 on train/dev, and drops to 0.220 on KRK test
-because KRK exact rows include 156 `frontier_mean=2` cases. Frontier temperature
-is still constant on this shard, so this gate is a first option-structure audit,
-not a temperature-learning result.
+because KRK exact rows include 156 `frontier_mean=2` cases. The report must flag
+`2` under `target_support_coverage.unseen_labels_by_split.test`. Frontier
+temperature is still constant on this shard, so this gate is a first
+option-structure audit, not a temperature-learning result.

@@ -79,7 +79,8 @@ Wave 15 adds the first exact-only frontier metadata target report over the
 expanded shard. With KRK held out, KQK/KBK/KNK train and dev exact rows only
 show `frontier_mean=1`, while KRK test exact rows include 44 rows with
 `frontier_mean=1` and 156 rows with `frontier_mean=2`. The train-majority floor
-therefore scores 0.220 on KRK test. This creates a small certified
+therefore scores 0.220 on KRK test, and the report explicitly flags `2` as an
+unseen test label relative to train. This creates a small certified
 option-structure target, but frontier temperature is still constant at `-1` on
 the current shard.
 

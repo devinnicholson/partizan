@@ -415,6 +415,9 @@ def run_expanded_family_frontier_baseline_smoke():
         "1": 44,
         "2": 156,
     }
+    assert frontier_mean_report["target_support_coverage"]["unseen_labels_by_split"][
+        "test"
+    ] == ["2"]
     print(
         "Expanded family frontier baseline smoke ok: "
         f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "
