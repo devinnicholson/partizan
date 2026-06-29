@@ -651,6 +651,13 @@ def print_baseline_metrics(metrics: dict[str, Any]) -> None:
 
 def evaluate_split_report(jsonl_path: str | Path) -> dict[str, Any]:
     """Build a deterministic split and leakage report for a dataset-label shard."""
+    return evaluate_split_report_with_mode(jsonl_path, "position")
+
+
+def evaluate_split_report_with_mode(
+    jsonl_path: str | Path, split_key_mode: str
+) -> dict[str, Any]:
+    """Build a deterministic split report with the requested split-key policy."""
 
     path = Path(jsonl_path)
     rows = load_dataset_label_v0_jsonl(path)
@@ -659,20 +666,27 @@ def evaluate_split_report(jsonl_path: str | Path) -> dict[str, Any]:
     for row in rows:
         family = generator_family(row)
         position_key = position_key_for_row(row)
-        split_key = f"{family}|{position_key}"
+        symmetry_position_key = symmetry_position_key_for_row(row)
+        split_key = split_key_for_mode(
+            family, position_key, symmetry_position_key, split_key_mode
+        )
         split = split_for_key(split_key)
-        assignments.append(split_assignment_for_row(row, split, family, position_key))
+        assignments.append(
+            split_assignment_for_row(
+                row,
+                split,
+                family,
+                position_key,
+                symmetry_position_key,
+                split_key,
+            )
+        )
 
     return split_report_from_assignments(
         path,
         assignments,
-        "deterministic_generator_position_hash_v0",
-        {
-            "train": "sha256(split_key) % 100 < 80",
-            "dev": "80 <= sha256(split_key) % 100 < 90",
-            "test": "90 <= sha256(split_key) % 100",
-            "split_key": "generator_family|position.encoding:position.text",
-        },
+        split_report_id_for_mode(split_key_mode, family_holdout=False),
+        split_policy_for_mode(split_key_mode, family_holdout=False),
     )
 
 
@@ -680,6 +694,15 @@ def evaluate_family_holdout_report(
     jsonl_path: str | Path, holdout_family: str
 ) -> dict[str, Any]:
     """Build a family-held-out split report for a dataset-label shard."""
+    return evaluate_family_holdout_report_with_mode(
+        jsonl_path, holdout_family, "position"
+    )
+
+
+def evaluate_family_holdout_report_with_mode(
+    jsonl_path: str | Path, holdout_family: str, split_key_mode: str
+) -> dict[str, Any]:
+    """Build a family-held-out split report with the requested split-key policy."""
 
     path = Path(jsonl_path)
     rows = load_dataset_label_v0_jsonl(path)
@@ -688,31 +711,45 @@ def evaluate_family_holdout_report(
     for row in rows:
         family = generator_family(row)
         position_key = position_key_for_row(row)
+        symmetry_position_key = symmetry_position_key_for_row(row)
         if family == holdout_family:
             split = "test"
-        else:
             split_key = f"{family}|{position_key}"
+        else:
+            split_key = split_key_for_mode(
+                family, position_key, symmetry_position_key, split_key_mode
+            )
             split = train_dev_split_for_key(split_key)
-        assignments.append(split_assignment_for_row(row, split, family, position_key))
+        assignments.append(
+            split_assignment_for_row(
+                row,
+                split,
+                family,
+                position_key,
+                symmetry_position_key,
+                split_key,
+            )
+        )
 
     report = split_report_from_assignments(
         path,
         assignments,
-        "family_holdout_generator_position_hash_v0",
-        {
-            "train": "family != holdout_family and sha256(split_key) % 100 < 90",
-            "dev": "family != holdout_family and sha256(split_key) % 100 >= 90",
-            "test": "family == holdout_family",
-            "split_key": "generator_family|position.encoding:position.text",
-            "holdout_family": holdout_family,
-        },
+        split_report_id_for_mode(split_key_mode, family_holdout=True),
+        split_policy_for_mode(
+            split_key_mode, family_holdout=True, holdout_family=holdout_family
+        ),
     )
     report["holdout_family"] = holdout_family
     return report
 
 
 def split_assignment_for_row(
-    row: dict[str, Any], split: str, family: str, position_key: str
+    row: dict[str, Any],
+    split: str,
+    family: str,
+    position_key: str,
+    symmetry_position_key: str | None,
+    split_key: str,
 ) -> dict[str, Any]:
     exact = row.get("exact", {}) if isinstance(row.get("exact"), dict) else {}
     exact_value = exact.get("value", {}) if isinstance(exact.get("value"), dict) else {}
@@ -722,6 +759,8 @@ def split_assignment_for_row(
         "split": split,
         "generator_family": family,
         "position_key": position_key,
+        "symmetry_position_key": symmetry_position_key,
+        "split_key": split_key,
         "exact_certificate_digest": exact_certificate_digest(row),
         "exact_value_class": str(exact.get("value_class"))
         if exact.get("value_class")
@@ -741,6 +780,9 @@ def split_report_from_assignments(
     splitter_id: str,
     split_policy: dict[str, str],
 ) -> dict[str, Any]:
+    symmetry_assignments = [
+        item for item in assignments if item.get("symmetry_position_key")
+    ]
     return {
         "splitter_id": splitter_id,
         "dataset_path": str(path),
@@ -762,11 +804,15 @@ def split_report_from_assignments(
             assignments, "split", "frontier_value_class"
         ),
         "leakage_checks": {
+            "symmetry_position_key_eligible_rows": len(symmetry_assignments),
             "duplicate_row_ids": duplicate_total(
                 Counter(item["row_id"] for item in assignments)
             ),
             "duplicate_positions": duplicate_total(
                 Counter(item["position_key"] for item in assignments)
+            ),
+            "duplicate_symmetry_positions": duplicate_total(
+                Counter(item["symmetry_position_key"] for item in symmetry_assignments)
             ),
             "duplicate_exact_certificate_digests": duplicate_total(
                 Counter(
@@ -777,6 +823,9 @@ def split_report_from_assignments(
             ),
             "position_key_cross_split": cross_split_summary(
                 assignments, "position_key"
+            ),
+            "symmetry_position_key_cross_split": cross_split_summary(
+                symmetry_assignments, "symmetry_position_key"
             ),
             "exact_certificate_digest_cross_split": cross_split_summary(
                 [
@@ -808,6 +857,161 @@ def generator_family(row: dict[str, Any]) -> str:
 def position_key_for_row(row: dict[str, Any]) -> str:
     position = row["position"]
     return f"{position['encoding']}:{position['text']}"
+
+
+def symmetry_position_key_for_row(row: dict[str, Any]) -> str | None:
+    position = row["position"]
+    if position["encoding"] != FEN_GATE_POSITION_ENCODING:
+        return None
+    return fen_d4_symmetry_key(position["text"])
+
+
+def fen_d4_symmetry_key(fen: str) -> str | None:
+    fields = fen.split()
+    if len(fields) < 4:
+        return None
+
+    board_token = fields[0]
+    castling = fields[2]
+    en_passant = fields[3]
+    if castling != "-" or en_passant != "-":
+        return None
+
+    board = expand_fen_board(board_token)
+    if board is None:
+        return None
+
+    canonical_board = min(
+        compress_fen_board(transform_board(board, transform))
+        for transform in D4_TRANSFORMS
+    )
+    return f"fen_d4:{canonical_board} {' '.join(fields[1:])}"
+
+
+def expand_fen_board(board_token: str) -> list[list[str]] | None:
+    ranks = board_token.split("/")
+    if len(ranks) != 8:
+        return None
+
+    board: list[list[str]] = []
+    for rank in ranks:
+        squares: list[str] = []
+        for char in rank:
+            if char in "12345678":
+                squares.extend(["."] * int(char))
+            elif char.isalpha():
+                squares.append(char)
+            else:
+                return None
+        if len(squares) != 8:
+            return None
+        board.append(squares)
+    return board
+
+
+def compress_fen_board(board: list[list[str]]) -> str:
+    ranks = []
+    for row in board:
+        rank_parts = []
+        empty_count = 0
+        for square in row:
+            if square == ".":
+                empty_count += 1
+                continue
+            if empty_count:
+                rank_parts.append(str(empty_count))
+                empty_count = 0
+            rank_parts.append(square)
+        if empty_count:
+            rank_parts.append(str(empty_count))
+        ranks.append("".join(rank_parts))
+    return "/".join(ranks)
+
+
+def transform_board(
+    board: list[list[str]], transform: tuple[str, Any]
+) -> list[list[str]]:
+    _name, coordinate_map = transform
+    transformed = [["." for _ in range(8)] for _ in range(8)]
+    for row_index, row in enumerate(board):
+        for col_index, piece in enumerate(row):
+            new_row, new_col = coordinate_map(row_index, col_index)
+            transformed[new_row][new_col] = piece
+    return transformed
+
+
+D4_TRANSFORMS = (
+    ("identity", lambda row, col: (row, col)),
+    ("rotate_90", lambda row, col: (col, 7 - row)),
+    ("rotate_180", lambda row, col: (7 - row, 7 - col)),
+    ("rotate_270", lambda row, col: (7 - col, row)),
+    ("mirror_files", lambda row, col: (row, 7 - col)),
+    ("mirror_ranks", lambda row, col: (7 - row, col)),
+    ("main_diagonal", lambda row, col: (col, row)),
+    ("anti_diagonal", lambda row, col: (7 - col, 7 - row)),
+)
+
+
+def split_key_for_mode(
+    family: str,
+    position_key: str,
+    symmetry_position_key: str | None,
+    split_key_mode: str,
+) -> str:
+    if split_key_mode == "position":
+        return f"{family}|{position_key}"
+    if split_key_mode == "symmetry":
+        return f"{family}|{symmetry_position_key or position_key}"
+    raise ValueError(f"unsupported split_key_mode {split_key_mode!r}")
+
+
+def split_report_id_for_mode(split_key_mode: str, family_holdout: bool) -> str:
+    if split_key_mode == "position":
+        return (
+            "family_holdout_generator_position_hash_v0"
+            if family_holdout
+            else "deterministic_generator_position_hash_v0"
+        )
+    if split_key_mode == "symmetry":
+        return (
+            "family_holdout_generator_symmetry_hash_v0"
+            if family_holdout
+            else "deterministic_generator_symmetry_hash_v0"
+        )
+    raise ValueError(f"unsupported split_key_mode {split_key_mode!r}")
+
+
+def split_policy_for_mode(
+    split_key_mode: str,
+    family_holdout: bool,
+    holdout_family: str | None = None,
+) -> dict[str, str]:
+    split_key = "generator_family|position.encoding:position.text"
+    if split_key_mode == "symmetry":
+        split_key = (
+            "generator_family|fen_d4_canonical(position) for supported FEN rows; "
+            "generator_family|position.encoding:position.text otherwise"
+        )
+    elif split_key_mode != "position":
+        raise ValueError(f"unsupported split_key_mode {split_key_mode!r}")
+
+    if family_holdout:
+        policy = {
+            "train": "family != holdout_family and sha256(split_key) % 100 < 90",
+            "dev": "family != holdout_family and sha256(split_key) % 100 >= 90",
+            "test": "family == holdout_family",
+            "split_key": split_key,
+        }
+        if holdout_family is not None:
+            policy["holdout_family"] = holdout_family
+        return policy
+
+    return {
+        "train": "sha256(split_key) % 100 < 80",
+        "dev": "80 <= sha256(split_key) % 100 < 90",
+        "test": "90 <= sha256(split_key) % 100",
+        "split_key": split_key,
+    }
 
 
 def exact_certificate_digest(row: dict[str, Any]) -> str | None:
@@ -961,6 +1165,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Optional path to write the split report JSON.",
     )
+    split_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for split assignment.",
+    )
 
     holdout_parser = subcommands.add_parser(
         "family-holdout-report",
@@ -972,6 +1182,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         help="Optional path to write the holdout report JSON.",
+    )
+    holdout_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for train/dev assignment.",
     )
 
     return parser
@@ -990,7 +1206,9 @@ def cli_main(argv: list[str] | None = None) -> int:
         print_baseline_metrics(metrics)
         return 0
     if args.command == "split-report":
-        report = evaluate_split_report(args.jsonl_path)
+        report = evaluate_split_report_with_mode(
+            args.jsonl_path, args.split_key_mode
+        )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(
@@ -1000,7 +1218,9 @@ def cli_main(argv: list[str] | None = None) -> int:
         print_json_report(report)
         return 0
     if args.command == "family-holdout-report":
-        report = evaluate_family_holdout_report(args.jsonl_path, args.holdout_family)
+        report = evaluate_family_holdout_report_with_mode(
+            args.jsonl_path, args.holdout_family, args.split_key_mode
+        )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(

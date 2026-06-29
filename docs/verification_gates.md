@@ -75,20 +75,31 @@ only the 200 `label_kind: exact` rows are eligible for exact supervision. The
 and must not enter exact targets. The manifest records zero duplicate row IDs,
 zero duplicate positions, and zero duplicate exact certificate digests; any
 future split builder must preserve those leakage checks and add generator-family
-and symmetry-normalized split reports before OOD claims are active. The current
+and symmetry-normalized split reports before OOD claims are active. The
 `docs/frontier_wave_06_split_report.json` is a deterministic position-key split
 report only: it verifies no position or exact certificate crosses train/dev/test,
-but it does not yet prove OOD separation by family or symmetry.
+but exposes 70 D4 symmetry-key cross-split violations. The
+`docs/frontier_wave_06_symmetry_split_report.json` report uses D4-canonical FEN
+keys for supported rows and has zero symmetry-key cross-split violations.
 
 Wave 7 extends this policy to
 `/private/tmp/partizan-family-frontier-wave-07.jsonl`: only the 400 exact rows
 are eligible for exact supervision, while 1600 rejected rows remain boundary
 controls. `docs/family_frontier_wave_07_split_report.json` verifies zero
 position-key and exact-certificate cross-split violations across KQK and KRK
-families, but it still is not a family-held-out OOD split because both families
-appear in every split.
+families, but exposes 137 D4 symmetry-key cross-split violations and is not a
+family-held-out OOD split because both families appear in every split.
+`docs/family_frontier_wave_07_symmetry_split_report.json` removes the symmetry
+leakage for IID-style split evaluation, but still contains both families in all
+splits.
 
 Wave 8 adds `docs/family_frontier_wave_07_holdout_krk_report.json`, which holds
 all KRK rows in `test` and keeps KQK rows in `train`/`dev`. This is the first
-generator-family OOD split artifact. It still needs model scoring and
-symmetry-normalized leakage checks before supporting an OOD performance claim.
+generator-family OOD split artifact, but its KQK train/dev side has 38 D4
+symmetry-key cross-split violations.
+
+Wave 9 adds `docs/family_frontier_wave_07_holdout_krk_symmetry_report.json`,
+which holds all KRK rows in `test` and splits KQK train/dev by D4-canonical FEN
+key. It has zero position-key, symmetry-key, and exact-certificate cross-split
+violations. This is the current evaluation-ready OOD split artifact; it still
+needs model scoring before supporting an OOD performance claim.

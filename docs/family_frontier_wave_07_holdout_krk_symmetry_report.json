@@ -3,35 +3,35 @@
   "dataset_sha256": "46581eddc4ef5ff745722b5559615a5298d5dd5f003e61d66ff23bdb8e352e31",
   "exact_solver_scope_counts": {
     "dev": {
-      "immediate_terminal_frontier": 14
+      "immediate_terminal_frontier": 20
     },
     "test": {
       "immediate_terminal_frontier": 200
     },
     "train": {
-      "immediate_terminal_frontier": 186
+      "immediate_terminal_frontier": 180
     }
   },
   "exact_value_class_counts": {
     "dev": {
-      "number": 14
+      "number": 20
     },
     "test": {
       "number": 200
     },
     "train": {
-      "number": 186
+      "number": 180
     }
   },
   "frontier_value_class_counts": {
     "dev": {
-      "game_tree": 14
+      "game_tree": 20
     },
     "test": {
       "game_tree": 200
     },
     "train": {
-      "game_tree": 186
+      "game_tree": 180
     }
   },
   "generator_family_counts": {
@@ -48,16 +48,16 @@
   "holdout_family": "astralbase_krk_frontier_generator",
   "label_kind_counts": {
     "dev": {
-      "exact": 14,
-      "rejected": 79
+      "exact": 20,
+      "rejected": 73
     },
     "test": {
       "exact": 200,
       "rejected": 800
     },
     "train": {
-      "exact": 186,
-      "rejected": 721
+      "exact": 180,
+      "rejected": 727
     }
   },
   "leakage_checks": {
@@ -74,44 +74,8 @@
       "violation_count": 0
     },
     "symmetry_position_key_cross_split": {
-      "examples": [
-        {
-          "key": "fen_d4:1Q5K/8/8/7k/8/8/8/8 w - - 0 1",
-          "splits": [
-            "dev",
-            "train"
-          ]
-        },
-        {
-          "key": "fen_d4:1Q6/8/8/8/8/5k2/8/7K w - - 0 1",
-          "splits": [
-            "dev",
-            "train"
-          ]
-        },
-        {
-          "key": "fen_d4:1Q6/8/8/8/8/8/8/5k1K w - - 0 1",
-          "splits": [
-            "dev",
-            "train"
-          ]
-        },
-        {
-          "key": "fen_d4:2Q4K/4k3/8/8/8/8/8/8 w - - 0 1",
-          "splits": [
-            "dev",
-            "train"
-          ]
-        },
-        {
-          "key": "fen_d4:2Q4K/8/8/6k1/8/8/8/8 w - - 0 1",
-          "splits": [
-            "dev",
-            "train"
-          ]
-        }
-      ],
-      "violation_count": 38
+      "examples": [],
+      "violation_count": 0
     },
     "symmetry_position_key_eligible_rows": 2000
   },
@@ -124,9 +88,9 @@
   "split_policy": {
     "dev": "family != holdout_family and sha256(split_key) % 100 >= 90",
     "holdout_family": "astralbase_krk_frontier_generator",
-    "split_key": "generator_family|position.encoding:position.text",
+    "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
     "test": "family == holdout_family",
     "train": "family != holdout_family and sha256(split_key) % 100 < 90"
   },
-  "splitter_id": "family_holdout_generator_position_hash_v0"
+  "splitter_id": "family_holdout_generator_symmetry_hash_v0"
 }

@@ -1,0 +1,97 @@
+{
+  "dataset_path": "/private/tmp/partizan-family-frontier-wave-07.jsonl",
+  "dataset_sha256": "46581eddc4ef5ff745722b5559615a5298d5dd5f003e61d66ff23bdb8e352e31",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "immediate_terminal_frontier": 38
+    },
+    "test": {
+      "immediate_terminal_frontier": 38
+    },
+    "train": {
+      "immediate_terminal_frontier": 324
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "number": 38
+    },
+    "test": {
+      "number": 38
+    },
+    "train": {
+      "number": 324
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {
+      "game_tree": 38
+    },
+    "test": {
+      "game_tree": 38
+    },
+    "train": {
+      "game_tree": 324
+    }
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_kqk_frontier_generator": 90,
+      "astralbase_krk_frontier_generator": 93
+    },
+    "test": {
+      "astralbase_kqk_frontier_generator": 93,
+      "astralbase_krk_frontier_generator": 113
+    },
+    "train": {
+      "astralbase_kqk_frontier_generator": 817,
+      "astralbase_krk_frontier_generator": 794
+    }
+  },
+  "label_kind_counts": {
+    "dev": {
+      "exact": 38,
+      "rejected": 145
+    },
+    "test": {
+      "exact": 38,
+      "rejected": 168
+    },
+    "train": {
+      "exact": 324,
+      "rejected": 1287
+    }
+  },
+  "leakage_checks": {
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 414,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_eligible_rows": 2000
+  },
+  "row_counts": {
+    "dev": 183,
+    "test": 206,
+    "train": 1611
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_symmetry_hash_v0"
+}

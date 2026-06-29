@@ -2,8 +2,11 @@ from pathlib import Path
 
 from ml_model import (
     evaluate_family_holdout_report,
+    evaluate_family_holdout_report_with_mode,
     evaluate_label_shard_baseline,
     evaluate_split_report,
+    evaluate_split_report_with_mode,
+    fen_d4_symmetry_key,
 )
 
 try:
@@ -15,6 +18,13 @@ except ModuleNotFoundError:
 WAVE_3_SHARD = Path("/private/tmp/partizan-wave-03.jsonl")
 FRONTIER_WAVE_6_SHARD = Path("/private/tmp/partizan-frontier-wave-06.jsonl")
 FAMILY_FRONTIER_WAVE_7_SHARD = Path("/private/tmp/partizan-family-frontier-wave-07.jsonl")
+
+
+def run_symmetry_key_smoke():
+    fen = "7K/8/8/8/8/8/8/Q5k1 w - - 0 1"
+    mirrored_fen = "K7/8/8/8/8/8/8/1k5Q w - - 0 1"
+    assert fen_d4_symmetry_key(fen) == fen_d4_symmetry_key(mirrored_fen)
+    assert fen_d4_symmetry_key("7K/8/8/8/8/8/8/Q5k1 w K - 0 1") is None
 
 
 def run_baseline_smoke():
@@ -87,9 +97,41 @@ def run_frontier_baseline_smoke():
     assert split_report["leakage_checks"]["position_key_cross_split"][
         "violation_count"
     ] == 0
+    assert (
+        split_report["leakage_checks"]["symmetry_position_key_eligible_rows"] == 1000
+    )
+    assert split_report["leakage_checks"]["duplicate_symmetry_positions"] == 235
+    assert split_report["leakage_checks"]["symmetry_position_key_cross_split"][
+        "violation_count"
+    ] == 70
     assert split_report["leakage_checks"]["exact_certificate_digest_cross_split"][
         "violation_count"
     ] == 0
+
+    symmetry_split_report = evaluate_split_report_with_mode(
+        FRONTIER_WAVE_6_SHARD,
+        "symmetry",
+    )
+    assert symmetry_split_report["row_counts"] == {
+        "dev": 90,
+        "test": 93,
+        "train": 817,
+    }
+    assert symmetry_split_report["label_kind_counts"]["train"] == {
+        "exact": 165,
+        "rejected": 652,
+    }
+    assert symmetry_split_report["label_kind_counts"]["dev"] == {
+        "exact": 15,
+        "rejected": 75,
+    }
+    assert symmetry_split_report["label_kind_counts"]["test"] == {
+        "exact": 20,
+        "rejected": 73,
+    }
+    assert symmetry_split_report["leakage_checks"][
+        "symmetry_position_key_cross_split"
+    ]["violation_count"] == 0
     print(
         "Frontier baseline smoke ok: "
         f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "
@@ -138,6 +180,38 @@ def run_family_frontier_baseline_smoke():
     assert split_report["leakage_checks"]["position_key_cross_split"][
         "violation_count"
     ] == 0
+    assert (
+        split_report["leakage_checks"]["symmetry_position_key_eligible_rows"] == 2000
+    )
+    assert split_report["leakage_checks"]["duplicate_symmetry_positions"] == 414
+    assert split_report["leakage_checks"]["symmetry_position_key_cross_split"][
+        "violation_count"
+    ] == 137
+
+    symmetry_split_report = evaluate_split_report_with_mode(
+        FAMILY_FRONTIER_WAVE_7_SHARD,
+        "symmetry",
+    )
+    assert symmetry_split_report["row_counts"] == {
+        "dev": 183,
+        "test": 206,
+        "train": 1611,
+    }
+    assert symmetry_split_report["generator_family_counts"]["train"] == {
+        "astralbase_kqk_frontier_generator": 817,
+        "astralbase_krk_frontier_generator": 794,
+    }
+    assert symmetry_split_report["generator_family_counts"]["dev"] == {
+        "astralbase_kqk_frontier_generator": 90,
+        "astralbase_krk_frontier_generator": 93,
+    }
+    assert symmetry_split_report["generator_family_counts"]["test"] == {
+        "astralbase_kqk_frontier_generator": 93,
+        "astralbase_krk_frontier_generator": 113,
+    }
+    assert symmetry_split_report["leakage_checks"][
+        "symmetry_position_key_cross_split"
+    ]["violation_count"] == 0
 
     holdout_report = evaluate_family_holdout_report(
         FAMILY_FRONTIER_WAVE_7_SHARD,
@@ -156,6 +230,35 @@ def run_family_frontier_baseline_smoke():
     assert holdout_report["leakage_checks"]["position_key_cross_split"][
         "violation_count"
     ] == 0
+    assert holdout_report["leakage_checks"]["symmetry_position_key_cross_split"][
+        "violation_count"
+    ] == 38
+
+    symmetry_holdout_report = evaluate_family_holdout_report_with_mode(
+        FAMILY_FRONTIER_WAVE_7_SHARD,
+        "astralbase_krk_frontier_generator",
+        "symmetry",
+    )
+    assert symmetry_holdout_report["row_counts"] == {
+        "dev": 93,
+        "test": 1000,
+        "train": 907,
+    }
+    assert symmetry_holdout_report["label_kind_counts"]["train"] == {
+        "exact": 180,
+        "rejected": 727,
+    }
+    assert symmetry_holdout_report["label_kind_counts"]["dev"] == {
+        "exact": 20,
+        "rejected": 73,
+    }
+    assert symmetry_holdout_report["label_kind_counts"]["test"] == {
+        "exact": 200,
+        "rejected": 800,
+    }
+    assert symmetry_holdout_report["leakage_checks"][
+        "symmetry_position_key_cross_split"
+    ]["violation_count"] == 0
     print(
         "Family frontier baseline smoke ok: "
         f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "
@@ -192,6 +295,7 @@ def run_rust_engine_smoke():
 
 
 def main():
+    run_symmetry_key_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()

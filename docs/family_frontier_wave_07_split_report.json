@@ -66,6 +66,7 @@
     "duplicate_exact_certificate_digests": 0,
     "duplicate_positions": 0,
     "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 414,
     "exact_certificate_digest_cross_split": {
       "examples": [],
       "violation_count": 0
@@ -73,7 +74,48 @@
     "position_key_cross_split": {
       "examples": [],
       "violation_count": 0
-    }
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [
+        {
+          "key": "fen_d4:1Q5K/8/6k1/8/8/8/8/8 w - - 0 1",
+          "splits": [
+            "dev",
+            "train"
+          ]
+        },
+        {
+          "key": "fen_d4:1Q5K/8/8/5k2/8/8/8/8 w - - 0 1",
+          "splits": [
+            "dev",
+            "train"
+          ]
+        },
+        {
+          "key": "fen_d4:1Q5K/8/8/7k/8/8/8/8 w - - 0 1",
+          "splits": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "key": "fen_d4:1Q6/8/8/8/6k1/8/8/7K w - - 0 1",
+          "splits": [
+            "dev",
+            "train"
+          ]
+        },
+        {
+          "key": "fen_d4:1Q6/8/8/8/8/5k2/8/7K w - - 0 1",
+          "splits": [
+            "test",
+            "train"
+          ]
+        }
+      ],
+      "violation_count": 137
+    },
+    "symmetry_position_key_eligible_rows": 2000
   },
   "row_counts": {
     "dev": 201,

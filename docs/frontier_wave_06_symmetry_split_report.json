@@ -1,0 +1,94 @@
+{
+  "dataset_path": "/private/tmp/partizan-frontier-wave-06.jsonl",
+  "dataset_sha256": "4863eea78d53adcd7eca22bfdda55c5b5eb668c46065f3ad49c019ae3bf60792",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "immediate_terminal_frontier": 15
+    },
+    "test": {
+      "immediate_terminal_frontier": 20
+    },
+    "train": {
+      "immediate_terminal_frontier": 165
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "number": 15
+    },
+    "test": {
+      "number": 20
+    },
+    "train": {
+      "number": 165
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {
+      "game_tree": 15
+    },
+    "test": {
+      "game_tree": 20
+    },
+    "train": {
+      "game_tree": 165
+    }
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_kqk_frontier_generator": 90
+    },
+    "test": {
+      "astralbase_kqk_frontier_generator": 93
+    },
+    "train": {
+      "astralbase_kqk_frontier_generator": 817
+    }
+  },
+  "label_kind_counts": {
+    "dev": {
+      "exact": 15,
+      "rejected": 75
+    },
+    "test": {
+      "exact": 20,
+      "rejected": 73
+    },
+    "train": {
+      "exact": 165,
+      "rejected": 652
+    }
+  },
+  "leakage_checks": {
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 235,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_eligible_rows": 1000
+  },
+  "row_counts": {
+    "dev": 90,
+    "test": 93,
+    "train": 817
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_symmetry_hash_v0"
+}
