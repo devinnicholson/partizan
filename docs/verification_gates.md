@@ -109,3 +109,11 @@ scores `fen_string_material_gate_v0` on the Wave 9 split. The fixed baseline
 gets train/dev/test accuracy 0.198/0.215/0.200 and zero rejected recall because
 it predicts every row as `exact`. Future learned OOD claims must report against
 this same symmetry-safe split and beat this fixed floor.
+
+Wave 11 adds
+`docs/family_frontier_wave_07_holdout_krk_symmetry_geometry_probe_report.json`,
+which trains `fen_geometry_logistic_probe_v0` on KQK train rows and evaluates
+on held-out KRK test rows. It gets train/dev/test accuracy 0.942/0.935/0.928
+and KRK rejected recall 0.91. Future structured or neural claims must report
+against this same symmetry-safe split and beat this hand-feature probe, not only
+the fixed floor.

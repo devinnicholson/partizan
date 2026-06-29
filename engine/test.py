@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from ml_model import (
+    evaluate_geometry_probe_report,
     evaluate_family_holdout_report,
     evaluate_family_holdout_report_with_mode,
     evaluate_label_shard_baseline,
@@ -278,6 +279,23 @@ def run_family_frontier_baseline_smoke():
     assert baseline_report["split_metrics"]["test"]["confusion_matrix"]["rejected"] == {
         "exact": 800,
         "rejected": 0,
+    }
+
+    geometry_probe_report = evaluate_geometry_probe_report(
+        FAMILY_FRONTIER_WAVE_7_SHARD,
+        split_key_mode="symmetry",
+        holdout_family="astralbase_krk_frontier_generator",
+    )
+    assert (
+        geometry_probe_report["splitter_id"]
+        == "family_holdout_generator_symmetry_hash_v0"
+    )
+    assert geometry_probe_report["split_metrics"]["train"]["accuracy"] == 854 / 907
+    assert geometry_probe_report["split_metrics"]["dev"]["accuracy"] == 87 / 93
+    assert geometry_probe_report["split_metrics"]["test"]["accuracy"] == 0.928
+    assert geometry_probe_report["split_metrics"]["test"]["confusion_matrix"] == {
+        "exact": {"exact": 200, "rejected": 0},
+        "rejected": {"exact": 72, "rejected": 728},
     }
     print(
         "Family frontier baseline smoke ok: "

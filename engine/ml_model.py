@@ -765,6 +765,333 @@ def evaluate_split_baseline_report(
     return report
 
 
+GEOMETRY_PROBE_FEATURE_NAMES = (
+    "bias",
+    "white_king_row",
+    "white_king_col",
+    "black_king_row",
+    "black_king_col",
+    "attacker_row",
+    "attacker_col",
+    "white_black_chebyshev_distance",
+    "attacker_black_chebyshev_distance",
+    "white_attacker_chebyshev_distance",
+    "white_black_manhattan_distance",
+    "attacker_black_manhattan_distance",
+    "black_king_on_edge",
+    "black_king_in_corner",
+    "attacker_same_rank_as_black_king",
+    "attacker_same_file_as_black_king",
+    "attacker_same_diagonal_as_black_king",
+    "attacker_attacks_black_king",
+    "attacker_piece_value",
+    "attacker_is_queen",
+    "attacker_is_rook",
+    "attacker_is_bishop",
+    "attacker_is_knight",
+    "attacker_is_pawn",
+)
+
+
+def evaluate_geometry_probe_report(
+    jsonl_path: str | Path,
+    split_key_mode: str = "position",
+    holdout_family: str | None = None,
+    epochs: int = 2_000,
+    learning_rate: float = 0.05,
+    l2: float = 0.001,
+) -> dict[str, Any]:
+    """Train a small deterministic FEN-geometry logistic probe per split."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    if holdout_family:
+        assignments = family_holdout_assignments_for_rows(
+            rows, holdout_family, split_key_mode
+        )
+        splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=True)
+        split_policy = split_policy_for_mode(
+            split_key_mode, family_holdout=True, holdout_family=holdout_family
+        )
+    else:
+        assignments = split_assignments_for_rows(rows, split_key_mode)
+        splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=False)
+        split_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
+
+    examples = geometry_probe_examples(rows, assignments)
+    train_examples = [example for example in examples if example["split"] == "train"]
+    if not train_examples:
+        raise ValueError("geometry probe requires at least one train example")
+
+    model = train_geometry_logistic_probe(
+        [example["features"] for example in train_examples],
+        [example["target"] for example in train_examples],
+        epochs=epochs,
+        learning_rate=learning_rate,
+        l2=l2,
+    )
+
+    split_metrics = {}
+    for split in sorted({example["split"] for example in examples}):
+        split_examples = [example for example in examples if example["split"] == split]
+        targets = [
+            "exact" if example["target"] == 1 else "rejected"
+            for example in split_examples
+        ]
+        probabilities = [
+            geometry_probe_probability(model, example["features"])
+            for example in split_examples
+        ]
+        predictions = [
+            "exact" if probability >= 0.5 else "rejected"
+            for probability in probabilities
+        ]
+        split_metrics[split] = {
+            "support": len(split_examples),
+            "target_counts": dict(sorted(Counter(targets).items())),
+            "prediction_counts": dict(sorted(Counter(predictions).items())),
+            "mean_exact_probability": (
+                sum(probabilities) / len(probabilities) if probabilities else 0.0
+            ),
+            "brier_score": brier_score(
+                [example["target"] for example in split_examples],
+                probabilities,
+            ),
+            **_classification_metrics(targets, predictions, EXACT_REJECTED_LABELS),
+        }
+
+    report: dict[str, Any] = {
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "baseline_id": "fen_geometry_logistic_probe_v0",
+        "target": "label_kind exact-vs-rejected",
+        "eligible_label_kinds": list(EXACT_REJECTED_LABELS),
+        "included_position_encoding": FEN_GATE_POSITION_ENCODING,
+        "splitter_id": splitter_id,
+        "split_policy": split_policy,
+        "row_counts": _count_by(assignments, "split"),
+        "feature_names": list(GEOMETRY_PROBE_FEATURE_NAMES),
+        "training": {
+            "train_split": "train",
+            "epochs": epochs,
+            "learning_rate": learning_rate,
+            "l2": l2,
+            "optimizer": "full_batch_gradient_descent",
+            "threshold": 0.5,
+            "standardization": "train_split_mean_std_except_bias",
+        },
+        "split_metrics": split_metrics,
+    }
+    if holdout_family:
+        report["holdout_family"] = holdout_family
+    return report
+
+
+def geometry_probe_examples(
+    rows: list[dict[str, Any]], assignments: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    examples = []
+    for row, assignment in zip(rows, assignments):
+        if row.get("label_kind") not in EXACT_REJECTED_LABELS:
+            continue
+        if row["position"]["encoding"] != FEN_GATE_POSITION_ENCODING:
+            continue
+        features = fen_geometry_features(row["position"]["text"])
+        if features is None:
+            continue
+        examples.append(
+            {
+                "split": assignment["split"],
+                "features": features,
+                "target": 1 if row["label_kind"] == "exact" else 0,
+            }
+        )
+    return examples
+
+
+def fen_geometry_features(fen: str) -> list[float] | None:
+    board = expand_fen_board(fen.split()[0]) if fen.split() else None
+    if board is None:
+        return None
+
+    piece_squares = piece_squares_from_board(board)
+    white_king = first_square(piece_squares, "K")
+    black_king = first_square(piece_squares, "k")
+    attacker_piece, attacker_square = first_white_attacker(piece_squares)
+    if white_king is None or black_king is None or attacker_square is None:
+        return None
+
+    white_black_chebyshev = chebyshev_distance(white_king, black_king)
+    attacker_black_chebyshev = chebyshev_distance(attacker_square, black_king)
+    white_attacker_chebyshev = chebyshev_distance(white_king, attacker_square)
+    white_black_manhattan = manhattan_distance(white_king, black_king)
+    attacker_black_manhattan = manhattan_distance(attacker_square, black_king)
+    black_row, black_col = black_king
+    attacker_row, attacker_col = attacker_square
+    piece_value = PIECE_VALUES.get(attacker_piece, 0)
+
+    return [
+        1.0,
+        white_king[0] / 7,
+        white_king[1] / 7,
+        black_king[0] / 7,
+        black_king[1] / 7,
+        attacker_row / 7,
+        attacker_col / 7,
+        white_black_chebyshev / 7,
+        attacker_black_chebyshev / 7,
+        white_attacker_chebyshev / 7,
+        white_black_manhattan / 14,
+        attacker_black_manhattan / 14,
+        float(black_row in {0, 7} or black_col in {0, 7}),
+        float(black_row in {0, 7} and black_col in {0, 7}),
+        float(attacker_row == black_row),
+        float(attacker_col == black_col),
+        float(abs(attacker_row - black_row) == abs(attacker_col - black_col)),
+        float(attacker_attacks_square(attacker_piece, attacker_square, black_king)),
+        piece_value / 9,
+        float(attacker_piece == "Q"),
+        float(attacker_piece == "R"),
+        float(attacker_piece == "B"),
+        float(attacker_piece == "N"),
+        float(attacker_piece == "P"),
+    ]
+
+
+def piece_squares_from_board(board: list[list[str]]) -> dict[str, list[tuple[int, int]]]:
+    squares: dict[str, list[tuple[int, int]]] = {}
+    for row_index, row in enumerate(board):
+        for col_index, piece in enumerate(row):
+            if piece != ".":
+                squares.setdefault(piece, []).append((row_index, col_index))
+    return squares
+
+
+def first_square(
+    piece_squares: dict[str, list[tuple[int, int]]], piece: str
+) -> tuple[int, int] | None:
+    squares = piece_squares.get(piece)
+    if not squares:
+        return None
+    return sorted(squares)[0]
+
+
+def first_white_attacker(
+    piece_squares: dict[str, list[tuple[int, int]]]
+) -> tuple[str, tuple[int, int] | None]:
+    for piece in ("Q", "R", "B", "N", "P"):
+        squares = piece_squares.get(piece)
+        if squares:
+            return piece, sorted(squares)[0]
+    return "?", None
+
+
+def chebyshev_distance(left: tuple[int, int], right: tuple[int, int]) -> int:
+    return max(abs(left[0] - right[0]), abs(left[1] - right[1]))
+
+
+def manhattan_distance(left: tuple[int, int], right: tuple[int, int]) -> int:
+    return abs(left[0] - right[0]) + abs(left[1] - right[1])
+
+
+def attacker_attacks_square(
+    piece: str, attacker_square: tuple[int, int], target_square: tuple[int, int]
+) -> bool:
+    row_delta = target_square[0] - attacker_square[0]
+    col_delta = target_square[1] - attacker_square[1]
+    abs_delta = sorted((abs(row_delta), abs(col_delta)))
+    if piece == "Q":
+        return (
+            row_delta == 0
+            or col_delta == 0
+            or abs(row_delta) == abs(col_delta)
+        )
+    if piece == "R":
+        return row_delta == 0 or col_delta == 0
+    if piece == "B":
+        return abs(row_delta) == abs(col_delta)
+    if piece == "N":
+        return abs_delta == [1, 2]
+    if piece == "P":
+        return row_delta == -1 and abs(col_delta) == 1
+    return False
+
+
+def train_geometry_logistic_probe(
+    features: list[list[float]],
+    targets: list[int],
+    epochs: int,
+    learning_rate: float,
+    l2: float,
+) -> dict[str, Any]:
+    feature_count = len(features[0])
+    means = [0.0] * feature_count
+    scales = [1.0] * feature_count
+    for index in range(1, feature_count):
+        means[index] = sum(vector[index] for vector in features) / len(features)
+        variance = sum(
+            (vector[index] - means[index]) ** 2 for vector in features
+        ) / len(features)
+        scales[index] = variance ** 0.5 or 1.0
+
+    scaled_features = [
+        scale_geometry_features(vector, means, scales) for vector in features
+    ]
+    weights = [0.0] * feature_count
+    for _epoch in range(epochs):
+        gradients = [0.0] * feature_count
+        for vector, target in zip(scaled_features, targets):
+            probability = sigmoid(sum(weight * value for weight, value in zip(weights, vector)))
+            error = probability - target
+            for index, value in enumerate(vector):
+                gradients[index] += error * value
+        for index in range(feature_count):
+            regularization = 0.0 if index == 0 else l2 * weights[index]
+            weights[index] -= learning_rate * (
+                gradients[index] / len(scaled_features) + regularization
+            )
+
+    return {
+        "weights": weights,
+        "means": means,
+        "scales": scales,
+    }
+
+
+def geometry_probe_probability(model: dict[str, Any], features: list[float]) -> float:
+    scaled = scale_geometry_features(features, model["means"], model["scales"])
+    return sigmoid(
+        sum(weight * value for weight, value in zip(model["weights"], scaled))
+    )
+
+
+def scale_geometry_features(
+    features: list[float], means: list[float], scales: list[float]
+) -> list[float]:
+    return [
+        features[0],
+        *[
+            (features[index] - means[index]) / scales[index]
+            for index in range(1, len(features))
+        ],
+    ]
+
+
+def sigmoid(value: float) -> float:
+    bounded = max(-40.0, min(40.0, value))
+    return 1 / (1 + pow(2.718281828459045, -bounded))
+
+
+def brier_score(targets: list[int], probabilities: list[float]) -> float:
+    if not targets:
+        return 0.0
+    return sum(
+        (probability - target) ** 2
+        for target, probability in zip(targets, probabilities)
+    ) / len(targets)
+
+
 def split_assignments_for_rows(
     rows: list[dict[str, Any]], split_key_mode: str
 ) -> list[dict[str, Any]]:
@@ -1287,6 +1614,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the baseline report JSON.",
     )
 
+    geometry_probe_parser = subcommands.add_parser(
+        "geometry-probe-report",
+        help="Train and score a deterministic FEN-geometry logistic probe.",
+    )
+    geometry_probe_parser.add_argument("jsonl_path", type=Path)
+    geometry_probe_parser.add_argument(
+        "--holdout-family",
+        help="Optional generator family to hold out as the test split.",
+    )
+    geometry_probe_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for split assignment.",
+    )
+    geometry_probe_parser.add_argument("--epochs", type=int, default=2_000)
+    geometry_probe_parser.add_argument("--learning-rate", type=float, default=0.05)
+    geometry_probe_parser.add_argument("--l2", type=float, default=0.001)
+    geometry_probe_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the probe report JSON.",
+    )
+
     return parser
 
 
@@ -1331,6 +1682,23 @@ def cli_main(argv: list[str] | None = None) -> int:
             args.jsonl_path,
             split_key_mode=args.split_key_mode,
             holdout_family=args.holdout_family,
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+    if args.command == "geometry-probe-report":
+        report = evaluate_geometry_probe_report(
+            args.jsonl_path,
+            split_key_mode=args.split_key_mode,
+            holdout_family=args.holdout_family,
+            epochs=args.epochs,
+            learning_rate=args.learning_rate,
+            l2=args.l2,
         )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
