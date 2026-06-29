@@ -1,0 +1,91 @@
+{
+  "dataset_path": "/private/tmp/partizan-family-frontier-wave-07.jsonl",
+  "dataset_sha256": "46581eddc4ef5ff745722b5559615a5298d5dd5f003e61d66ff23bdb8e352e31",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "immediate_terminal_frontier": 34
+    },
+    "test": {
+      "immediate_terminal_frontier": 35
+    },
+    "train": {
+      "immediate_terminal_frontier": 331
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "number": 34
+    },
+    "test": {
+      "number": 35
+    },
+    "train": {
+      "number": 331
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {
+      "game_tree": 34
+    },
+    "test": {
+      "game_tree": 35
+    },
+    "train": {
+      "game_tree": 331
+    }
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_kqk_frontier_generator": 91,
+      "astralbase_krk_frontier_generator": 110
+    },
+    "test": {
+      "astralbase_kqk_frontier_generator": 93,
+      "astralbase_krk_frontier_generator": 101
+    },
+    "train": {
+      "astralbase_kqk_frontier_generator": 816,
+      "astralbase_krk_frontier_generator": 789
+    }
+  },
+  "label_kind_counts": {
+    "dev": {
+      "exact": 34,
+      "rejected": 167
+    },
+    "test": {
+      "exact": 35,
+      "rejected": 159
+    },
+    "train": {
+      "exact": 331,
+      "rejected": 1274
+    }
+  },
+  "leakage_checks": {
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_row_ids": 0,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    }
+  },
+  "row_counts": {
+    "dev": 201,
+    "test": 194,
+    "train": 1605
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|position.encoding:position.text",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_position_hash_v0"
+}

@@ -743,8 +743,12 @@ def generator_family(row: dict[str, Any]) -> str:
         return str(provenance["generator"])
 
     row_id = str(row.get("row_id"))
-    if row_id.startswith("astralbase-w6-kqk-frontier-"):
+    if row_id.startswith("astralbase-w6-kqk-frontier-") or row_id.startswith(
+        "astralbase-w7-kqk-frontier-"
+    ):
         return "astralbase_kqk_frontier_generator"
+    if row_id.startswith("astralbase-w7-krk-frontier-"):
+        return "astralbase_krk_frontier_generator"
     return "unprovenanced_rejected"
 
 

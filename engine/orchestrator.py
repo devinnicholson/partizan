@@ -21,8 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ASTRALBASE_DIR = ROOT.parent / "astralbase"
 DEFAULT_SHARD_PATH = Path("/tmp/partizan-wave-03.jsonl")
 DEFAULT_FRONTIER_SHARD_PATH = Path("/tmp/partizan-frontier-wave-06.jsonl")
+DEFAULT_FAMILY_FRONTIER_SHARD_PATH = Path("/tmp/partizan-family-frontier-wave-07.jsonl")
 DEFAULT_MANIFEST_PATH = ROOT / "docs" / "dataset_v0_manifest.md"
 DEFAULT_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "frontier_wave_06_manifest.md"
+DEFAULT_FAMILY_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "family_frontier_wave_07_manifest.md"
 LABEL_SCHEMA_PATH = ROOT / "agents" / "label_schema.py"
 SCHEMA_VERSION = "partizan.dataset_label.v0"
 ASTRALBASE_SHARD_COMMAND = (
@@ -39,7 +41,15 @@ ASTRALBASE_FRONTIER_SHARD_BASE_COMMAND = (
     "--",
     "--frontier-label-shard",
 )
+ASTRALBASE_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
+    "cargo",
+    "run",
+    "--quiet",
+    "--",
+    "--family-frontier-label-shard",
+)
 DEFAULT_FRONTIER_LIMIT = 1_000
+DEFAULT_FAMILY_FRONTIER_LIMIT_PER_FAMILY = 1_000
 
 
 class ShardRunnerError(RuntimeError):
@@ -471,6 +481,11 @@ def _run_astralbase_jsonl_shard(
     ]
     if getattr(args, "limit", None) is not None and args.limit != DEFAULT_FRONTIER_LIMIT:
         runner_command.extend(["--limit", str(args.limit)])
+    if (
+        getattr(args, "limit_per_family", None) is not None
+        and args.limit_per_family != DEFAULT_FAMILY_FRONTIER_LIMIT_PER_FAMILY
+    ):
+        runner_command.extend(["--limit-per-family", str(args.limit_per_family)])
     if output_path != default_output_path:
         runner_command.extend(["--output", _display_path(output_path)])
     if manifest_path != default_manifest_path:
@@ -522,6 +537,26 @@ def run_frontier_label_shard(args: argparse.Namespace) -> int:
         *ASTRALBASE_FRONTIER_SHARD_BASE_COMMAND,
         "--limit",
         str(args.limit),
+    )
+
+
+def run_family_frontier_label_shard(args: argparse.Namespace) -> int:
+    generator_command = (
+        *ASTRALBASE_FAMILY_FRONTIER_SHARD_BASE_COMMAND,
+        "--limit-per-family",
+        str(args.limit_per_family),
+    )
+    return _run_astralbase_jsonl_shard(
+        args=args,
+        command_name="family-frontier-label-shard",
+        generator_command=generator_command,
+        default_output_path=DEFAULT_FAMILY_FRONTIER_SHARD_PATH,
+        default_manifest_path=DEFAULT_FAMILY_FRONTIER_MANIFEST_PATH,
+        manifest_title="Family Frontier Wave 07 Manifest",
+        manifest_description=(
+            "This manifest records the deterministic KQK+KRK terminal-frontier JSONL shard\n"
+            "generated for Wave 7 generator-family split validation."
+        ),
     )
     return _run_astralbase_jsonl_shard(
         args=args,
@@ -603,6 +638,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run the astralbase generator once instead of comparing two runs.",
     )
 
+    family_parser = subcommands.add_parser(
+        "family-frontier-label-shard",
+        help="Generate, validate, and record the Wave 7 KQK+KRK frontier shard.",
+    )
+    family_parser.add_argument(
+        "--astralbase-dir",
+        type=Path,
+        default=DEFAULT_ASTRALBASE_DIR,
+        help="Path to the astralbase repository.",
+    )
+    family_parser.add_argument(
+        "--limit-per-family",
+        type=int,
+        default=DEFAULT_FAMILY_FRONTIER_LIMIT_PER_FAMILY,
+        help="Number of frontier rows to write for each material family.",
+    )
+    family_parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_FAMILY_FRONTIER_SHARD_PATH,
+        help="JSONL artifact path to write.",
+    )
+    family_parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_FAMILY_FRONTIER_MANIFEST_PATH,
+        help="Family frontier dataset manifest path to write.",
+    )
+    family_parser.add_argument(
+        "--skip-determinism-check",
+        action="store_true",
+        help="Run the astralbase generator once instead of comparing two runs.",
+    )
+
     return parser
 
 
@@ -617,6 +686,10 @@ def cli_main(argv: list[str] | None = None) -> int:
             if args.limit < 0:
                 raise ShardRunnerError("--limit must be non-negative")
             return run_frontier_label_shard(args)
+        if args.command == "family-frontier-label-shard":
+            if args.limit_per_family < 0:
+                raise ShardRunnerError("--limit-per-family must be non-negative")
+            return run_family_frontier_label_shard(args)
     except ShardRunnerError as error:
         print(f"{args.command}: error: {error}", file=sys.stderr)
         return 1

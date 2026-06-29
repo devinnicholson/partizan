@@ -10,6 +10,7 @@ except ModuleNotFoundError:
 
 WAVE_3_SHARD = Path("/private/tmp/partizan-wave-03.jsonl")
 FRONTIER_WAVE_6_SHARD = Path("/private/tmp/partizan-frontier-wave-06.jsonl")
+FAMILY_FRONTIER_WAVE_7_SHARD = Path("/private/tmp/partizan-family-frontier-wave-07.jsonl")
 
 
 def run_baseline_smoke():
@@ -92,6 +93,54 @@ def run_frontier_baseline_smoke():
     )
 
 
+def run_family_frontier_baseline_smoke():
+    if not FAMILY_FRONTIER_WAVE_7_SHARD.exists():
+        print(
+            "Family frontier baseline smoke skipped; "
+            f"shard not found: {FAMILY_FRONTIER_WAVE_7_SHARD}"
+        )
+        return
+
+    metrics = evaluate_label_shard_baseline(FAMILY_FRONTIER_WAVE_7_SHARD)
+    assert metrics["row_counts"] == {
+        "total": 2000,
+        "exact": 400,
+        "rejected": 1600,
+        "heuristic": 0,
+        "prediction": 0,
+    }
+    exact_rejected = metrics["baselines"]["exact_vs_rejected"]
+    assert exact_rejected["support"] == 2000
+    assert exact_rejected["accuracy"] == 0.2
+    assert exact_rejected["confusion_matrix"]["rejected"] == {
+        "exact": 1600,
+        "rejected": 0,
+    }
+
+    split_report = evaluate_split_report(FAMILY_FRONTIER_WAVE_7_SHARD)
+    assert split_report["row_counts"] == {"dev": 201, "test": 194, "train": 1605}
+    assert split_report["generator_family_counts"]["train"] == {
+        "astralbase_kqk_frontier_generator": 816,
+        "astralbase_krk_frontier_generator": 789,
+    }
+    assert split_report["generator_family_counts"]["dev"] == {
+        "astralbase_kqk_frontier_generator": 91,
+        "astralbase_krk_frontier_generator": 110,
+    }
+    assert split_report["generator_family_counts"]["test"] == {
+        "astralbase_kqk_frontier_generator": 93,
+        "astralbase_krk_frontier_generator": 101,
+    }
+    assert split_report["leakage_checks"]["position_key_cross_split"][
+        "violation_count"
+    ] == 0
+    print(
+        "Family frontier baseline smoke ok: "
+        f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "
+        f"exact-vs-rejected accuracy={exact_rejected['accuracy']:.3f}"
+    )
+
+
 def run_rust_engine_smoke():
     if partizan is None:
         print("Rust engine smoke skipped; Python extension module 'partizan' is not installed.")
@@ -123,6 +172,7 @@ def run_rust_engine_smoke():
 def main():
     run_baseline_smoke()
     run_frontier_baseline_smoke()
+    run_family_frontier_baseline_smoke()
     run_rust_engine_smoke()
 
 

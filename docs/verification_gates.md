@@ -79,3 +79,11 @@ and symmetry-normalized split reports before OOD claims are active. The current
 `docs/frontier_wave_06_split_report.json` is a deterministic position-key split
 report only: it verifies no position or exact certificate crosses train/dev/test,
 but it does not yet prove OOD separation by family or symmetry.
+
+Wave 7 extends this policy to
+`/private/tmp/partizan-family-frontier-wave-07.jsonl`: only the 400 exact rows
+are eligible for exact supervision, while 1600 rejected rows remain boundary
+controls. `docs/family_frontier_wave_07_split_report.json` verifies zero
+position-key and exact-certificate cross-split violations across KQK and KRK
+families, but it still is not a family-held-out OOD split because both families
+appear in every split.
