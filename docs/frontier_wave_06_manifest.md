@@ -19,6 +19,7 @@ generated for Wave 6 scale-up validation.
 - Generator command: `cd ../astralbase && cargo run --quiet -- --frontier-label-shard --limit 1000`
 - Runner command: `python3 engine/orchestrator.py frontier-label-shard`
 - Validator command: `python3 agents/label_schema.py validate /private/tmp/partizan-frontier-wave-06.jsonl`
+- Split report command: `python3 engine/ml_model.py split-report /private/tmp/partizan-frontier-wave-06.jsonl --output docs/frontier_wave_06_split_report.json`
 - Determinism check: the runner compares two generator invocations before writing.
 
 ## Label Counts

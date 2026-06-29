@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ml_model import evaluate_label_shard_baseline
+from ml_model import evaluate_label_shard_baseline, evaluate_split_report
 
 try:
     import partizan
@@ -64,6 +64,27 @@ def run_frontier_baseline_smoke():
     value_class = metrics["baselines"]["exact_value_class"]
     assert value_class["support"] == 200
     assert value_class["class_counts"] == {"number": 200}
+
+    split_report = evaluate_split_report(FRONTIER_WAVE_6_SHARD)
+    assert split_report["row_counts"] == {"dev": 91, "test": 93, "train": 816}
+    assert split_report["label_kind_counts"]["train"] == {
+        "exact": 172,
+        "rejected": 644,
+    }
+    assert split_report["label_kind_counts"]["dev"] == {
+        "exact": 14,
+        "rejected": 77,
+    }
+    assert split_report["label_kind_counts"]["test"] == {
+        "exact": 14,
+        "rejected": 79,
+    }
+    assert split_report["leakage_checks"]["position_key_cross_split"][
+        "violation_count"
+    ] == 0
+    assert split_report["leakage_checks"]["exact_certificate_digest_cross_split"][
+        "violation_count"
+    ] == 0
     print(
         "Frontier baseline smoke ok: "
         f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "

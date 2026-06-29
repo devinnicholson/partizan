@@ -1,0 +1,88 @@
+{
+  "dataset_path": "/private/tmp/partizan-frontier-wave-06.jsonl",
+  "dataset_sha256": "4863eea78d53adcd7eca22bfdda55c5b5eb668c46065f3ad49c019ae3bf60792",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "immediate_terminal_frontier": 14
+    },
+    "test": {
+      "immediate_terminal_frontier": 14
+    },
+    "train": {
+      "immediate_terminal_frontier": 172
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "number": 14
+    },
+    "test": {
+      "number": 14
+    },
+    "train": {
+      "number": 172
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {
+      "game_tree": 14
+    },
+    "test": {
+      "game_tree": 14
+    },
+    "train": {
+      "game_tree": 172
+    }
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_kqk_frontier_generator": 91
+    },
+    "test": {
+      "astralbase_kqk_frontier_generator": 93
+    },
+    "train": {
+      "astralbase_kqk_frontier_generator": 816
+    }
+  },
+  "label_kind_counts": {
+    "dev": {
+      "exact": 14,
+      "rejected": 77
+    },
+    "test": {
+      "exact": 14,
+      "rejected": 79
+    },
+    "train": {
+      "exact": 172,
+      "rejected": 644
+    }
+  },
+  "leakage_checks": {
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_row_ids": 0,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    }
+  },
+  "row_counts": {
+    "dev": 91,
+    "test": 93,
+    "train": 816
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|position.encoding:position.text",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_position_hash_v0"
+}

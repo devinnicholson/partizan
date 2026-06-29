@@ -75,4 +75,7 @@ only the 200 `label_kind: exact` rows are eligible for exact supervision. The
 and must not enter exact targets. The manifest records zero duplicate row IDs,
 zero duplicate positions, and zero duplicate exact certificate digests; any
 future split builder must preserve those leakage checks and add generator-family
-and symmetry-normalized split reports before OOD claims are active.
+and symmetry-normalized split reports before OOD claims are active. The current
+`docs/frontier_wave_06_split_report.json` is a deterministic position-key split
+report only: it verifies no position or exact certificate crosses train/dev/test,
+but it does not yet prove OOD separation by family or symmetry.

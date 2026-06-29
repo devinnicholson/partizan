@@ -649,6 +649,177 @@ def print_baseline_metrics(metrics: dict[str, Any]) -> None:
     print(json.dumps(metrics, indent=2, sort_keys=True))
 
 
+def evaluate_split_report(jsonl_path: str | Path) -> dict[str, Any]:
+    """Build a deterministic split and leakage report for a dataset-label shard."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = []
+
+    for row in rows:
+        family = generator_family(row)
+        position_key = position_key_for_row(row)
+        split_key = f"{family}|{position_key}"
+        split = split_for_key(split_key)
+        exact = row.get("exact", {}) if isinstance(row.get("exact"), dict) else {}
+        exact_value = exact.get("value", {}) if isinstance(exact.get("value"), dict) else {}
+        assignments.append(
+            {
+                "row_id": str(row.get("row_id")),
+                "label_kind": str(row.get("label_kind")),
+                "split": split,
+                "generator_family": family,
+                "position_key": position_key,
+                "exact_certificate_digest": exact_certificate_digest(row),
+                "exact_value_class": str(exact.get("value_class"))
+                if exact.get("value_class")
+                else None,
+                "exact_solver_scope": str(exact_value.get("solver_scope"))
+                if exact_value.get("solver_scope")
+                else None,
+                "frontier_value_class": str(exact_value.get("frontier_value_class"))
+                if exact_value.get("frontier_value_class")
+                else None,
+            }
+        )
+
+    return {
+        "splitter_id": "deterministic_generator_position_hash_v0",
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "split_policy": {
+            "train": "sha256(split_key) % 100 < 80",
+            "dev": "80 <= sha256(split_key) % 100 < 90",
+            "test": "90 <= sha256(split_key) % 100",
+            "split_key": "generator_family|position.encoding:position.text",
+        },
+        "row_counts": _count_by(assignments, "split"),
+        "label_kind_counts": _nested_count_by(assignments, "split", "label_kind"),
+        "generator_family_counts": _nested_count_by(
+            assignments, "split", "generator_family"
+        ),
+        "exact_value_class_counts": _nested_count_by(
+            assignments, "split", "exact_value_class"
+        ),
+        "exact_solver_scope_counts": _nested_count_by(
+            assignments, "split", "exact_solver_scope"
+        ),
+        "frontier_value_class_counts": _nested_count_by(
+            assignments, "split", "frontier_value_class"
+        ),
+        "leakage_checks": {
+            "duplicate_row_ids": duplicate_total(
+                Counter(item["row_id"] for item in assignments)
+            ),
+            "duplicate_positions": duplicate_total(
+                Counter(item["position_key"] for item in assignments)
+            ),
+            "duplicate_exact_certificate_digests": duplicate_total(
+                Counter(
+                    item["exact_certificate_digest"]
+                    for item in assignments
+                    if item["exact_certificate_digest"]
+                )
+            ),
+            "position_key_cross_split": cross_split_summary(
+                assignments, "position_key"
+            ),
+            "exact_certificate_digest_cross_split": cross_split_summary(
+                [
+                    item
+                    for item in assignments
+                    if item["exact_certificate_digest"]
+                ],
+                "exact_certificate_digest",
+            ),
+        },
+    }
+
+
+def generator_family(row: dict[str, Any]) -> str:
+    provenance = row.get("provenance")
+    if isinstance(provenance, dict) and provenance.get("generator"):
+        return str(provenance["generator"])
+
+    row_id = str(row.get("row_id"))
+    if row_id.startswith("astralbase-w6-kqk-frontier-"):
+        return "astralbase_kqk_frontier_generator"
+    return "unprovenanced_rejected"
+
+
+def position_key_for_row(row: dict[str, Any]) -> str:
+    position = row["position"]
+    return f"{position['encoding']}:{position['text']}"
+
+
+def exact_certificate_digest(row: dict[str, Any]) -> str | None:
+    provenance = row.get("provenance")
+    if not isinstance(provenance, dict):
+        return None
+    certificate = provenance.get("certificate")
+    if not isinstance(certificate, dict) or not certificate.get("digest"):
+        return None
+    return str(certificate["digest"])
+
+
+def split_for_key(split_key: str) -> str:
+    bucket = int(hashlib.sha256(split_key.encode("utf-8")).hexdigest()[:8], 16) % 100
+    if bucket < 80:
+        return "train"
+    if bucket < 90:
+        return "dev"
+    return "test"
+
+
+def _count_by(items: list[dict[str, Any]], key: str) -> dict[str, int]:
+    return dict(sorted(Counter(str(item[key]) for item in items).items()))
+
+
+def _nested_count_by(
+    items: list[dict[str, Any]], outer_key: str, inner_key: str
+) -> dict[str, dict[str, int]]:
+    outer_values = sorted({str(item[outer_key]) for item in items})
+    result: dict[str, dict[str, int]] = {}
+    for outer_value in outer_values:
+        counter = Counter(
+            str(item[inner_key])
+            for item in items
+            if str(item[outer_key]) == outer_value and item.get(inner_key) is not None
+        )
+        result[outer_value] = dict(sorted(counter.items()))
+    return result
+
+
+def duplicate_total(counts: Counter[str]) -> int:
+    return sum(count - 1 for count in counts.values() if count > 1)
+
+
+def cross_split_summary(
+    items: list[dict[str, Any]], key: str, example_limit: int = 5
+) -> dict[str, Any]:
+    split_sets: dict[str, set[str]] = {}
+    for item in items:
+        split_sets.setdefault(str(item[key]), set()).add(str(item["split"]))
+
+    violations = {
+        key_value: sorted(splits)
+        for key_value, splits in split_sets.items()
+        if len(splits) > 1
+    }
+    return {
+        "violation_count": len(violations),
+        "examples": [
+            {"key": key_value, "splits": splits}
+            for key_value, splits in list(sorted(violations.items()))[:example_limit]
+        ],
+    }
+
+
+def print_json_report(report: dict[str, Any]) -> None:
+    print(json.dumps(report, indent=2, sort_keys=True))
+
+
 def train_partizan_net(
     dataset_path: str = "cgt_dataset.jsonl",
     epochs: int = 5,
@@ -716,6 +887,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     baseline_parser.add_argument("jsonl_path", type=Path)
 
+    split_parser = subcommands.add_parser(
+        "split-report",
+        help="Build deterministic train/dev/test split and leakage report.",
+    )
+    split_parser.add_argument("jsonl_path", type=Path)
+    split_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the split report JSON.",
+    )
+
     return parser
 
 
@@ -730,6 +912,16 @@ def cli_main(argv: list[str] | None = None) -> int:
     if args.command == "baseline-eval":
         metrics = evaluate_label_shard_baseline(args.jsonl_path)
         print_baseline_metrics(metrics)
+        return 0
+    if args.command == "split-report":
+        report = evaluate_split_report(args.jsonl_path)
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
         return 0
 
     parser.error(f"unknown command: {args.command}")
