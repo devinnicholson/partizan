@@ -32,6 +32,8 @@ else:
 
 SCHEMA_VERSION = "partizan.dataset_label.v0"
 EXACT_REJECTED_LABELS = ("exact", "rejected")
+SUPPORTED_POSITION_ENCODINGS = {"fen", "cgt_canonical"}
+FEN_GATE_POSITION_ENCODING = "fen"
 PIECE_VALUES = {
     "P": 1,
     "N": 3,
@@ -264,8 +266,11 @@ def _validate_baseline_row(row: Any, path: Path, line_number: int) -> None:
     position = row.get("position")
     if not isinstance(position, dict):
         raise ValueError(f"{path}:{line_number}: position must be an object")
-    if position.get("encoding") != "fen":
-        raise ValueError(f"{path}:{line_number}: only FEN positions are supported")
+    if position.get("encoding") not in SUPPORTED_POSITION_ENCODINGS:
+        raise ValueError(
+            f"{path}:{line_number}: unsupported position.encoding "
+            f"{position.get('encoding')!r}"
+        )
     if not isinstance(position.get("text"), str) or not position["text"].strip():
         raise ValueError(f"{path}:{line_number}: position.text must be non-empty")
 
@@ -287,9 +292,14 @@ def split_label_rows(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any
 
 
 def derive_position_features(row: dict[str, Any]) -> dict[str, Any]:
-    """Derive simple board, material, and FEN string features."""
+    """Derive simple position features for current baseline smoke tests."""
 
-    fen = row["position"]["text"]
+    encoding = row["position"]["encoding"]
+    position_text = row["position"]["text"]
+    if encoding != FEN_GATE_POSITION_ENCODING:
+        return _non_fen_position_features(encoding, position_text)
+
+    fen = position_text
     fields = fen.split()
     board = fields[0] if fields else ""
     side_to_move = fields[1] if len(fields) > 1 else "?"
@@ -317,6 +327,8 @@ def derive_position_features(row: dict[str, Any]) -> dict[str, Any]:
         material_balance += value if piece.isupper() else -value
 
     return {
+        "position_encoding": encoding,
+        "position_text_length": len(position_text),
         "fen_length": len(fen),
         "fen_space_count": fen.count(" "),
         "board_token_length": len(board),
@@ -339,6 +351,35 @@ def derive_position_features(row: dict[str, Any]) -> dict[str, Any]:
         "material_balance": material_balance,
         "absolute_material": absolute_material,
         "piece_counts": dict(sorted(piece_counts.items())),
+    }
+
+
+def _non_fen_position_features(encoding: str, position_text: str) -> dict[str, Any]:
+    return {
+        "position_encoding": encoding,
+        "position_text_length": len(position_text),
+        "fen_length": 0,
+        "fen_space_count": 0,
+        "board_token_length": 0,
+        "board_slash_count": 0,
+        "rank_count": 0,
+        "side_to_move": f"not_{FEN_GATE_POSITION_ENCODING}",
+        "castling_token": "?",
+        "has_castling_rights": False,
+        "castling_right_count": 0,
+        "empty_square_count": 0,
+        "piece_count": 0,
+        "white_piece_count": 0,
+        "black_piece_count": 0,
+        "king_count": 0,
+        "queen_count": 0,
+        "rook_count": 0,
+        "bishop_count": 0,
+        "knight_count": 0,
+        "pawn_count": 0,
+        "material_balance": 0,
+        "absolute_material": 0,
+        "piece_counts": {},
     }
 
 
@@ -427,6 +468,7 @@ def _sha256_file(path: Path) -> str:
 
 def _feature_summary(features_by_row: list[dict[str, Any]]) -> dict[str, Any]:
     numeric_keys = (
+        "position_text_length",
         "fen_length",
         "piece_count",
         "white_piece_count",
@@ -455,6 +497,11 @@ def _feature_summary(features_by_row: list[dict[str, Any]]) -> dict[str, Any]:
     summary["side_to_move_counts"] = dict(
         sorted(Counter(entry["features"]["side_to_move"] for entry in features_by_row).items())
     )
+    summary["position_encoding_counts"] = dict(
+        sorted(
+            Counter(entry["features"]["position_encoding"] for entry in features_by_row).items()
+        )
+    )
     summary["has_castling_rights_counts"] = {
         str(key).lower(): value
         for key, value in sorted(
@@ -474,6 +521,7 @@ def _evaluate_exact_vs_rejected(
         (row, entry["features"])
         for row, entry in zip(rows, features_by_row)
         if row.get("label_kind") in EXACT_REJECTED_LABELS
+        and entry["features"]["position_encoding"] == FEN_GATE_POSITION_ENCODING
     ]
     predictions = [predict_exact_vs_rejected(features) for _, features in eligible]
     targets = [row["label_kind"] for row, _ in eligible]
@@ -487,6 +535,15 @@ def _evaluate_exact_vs_rejected(
                 str(row.get("label_kind"))
                 for row in rows
                 if row.get("label_kind") not in EXACT_REJECTED_LABELS
+            }
+        ),
+        "included_position_encoding": FEN_GATE_POSITION_ENCODING,
+        "excluded_position_encodings": sorted(
+            {
+                entry["features"]["position_encoding"]
+                for row, entry in zip(rows, features_by_row)
+                if row.get("label_kind") in EXACT_REJECTED_LABELS
+                and entry["features"]["position_encoding"] != FEN_GATE_POSITION_ENCODING
             }
         ),
         "support": len(eligible),

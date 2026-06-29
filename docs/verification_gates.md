@@ -61,8 +61,10 @@ No row in `wave_03_negative_controls.jsonl` is eligible as exact training data:
   as a source shard, even when individual rejected rows are schema-valid.
 
 For the current vertical slice, the same policy applies to
-`/private/tmp/partizan-wave-03.jsonl`: only its two `label_kind: exact` rows are
-eligible for exact supervision. Both exact rows currently have
-`exact.value_class: number`, so the value-class baseline is executable but still
-does not test class discrimination. The two schema-valid `rejected` rows are
+`/private/tmp/partizan-wave-03.jsonl`: only its three `label_kind: exact` rows
+are eligible for exact supervision. Two exact rows currently have
+`exact.value_class: number`; one formal CGT row has `exact.value_class: switch`
+and `position.encoding: cgt_canonical`. The exact-vs-rejected FEN gate excludes
+that formal row by encoding, while the value-class baseline includes it and
+records the minority-class miss. The two schema-valid `rejected` rows are
 evidence for gate accounting only.

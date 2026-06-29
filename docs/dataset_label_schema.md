@@ -20,6 +20,8 @@ Every row is one JSON object with these required fields:
 - `domain`: domain/version identifier, preferably pointing at the formal domain
   definition.
 - `position`: object with `encoding` and `text`.
+  - `encoding: fen` is used for standard chess positions.
+  - `encoding: cgt_canonical` is used for formal thermograph CGT fixtures.
 - `label_kind`: one of `exact`, `rejected`, `heuristic`, or `prediction`.
 
 Every row must contain exactly one payload object whose key matches
@@ -33,8 +35,9 @@ They require:
 - `exact.status`: must be `verified`.
 - `exact.value`: exact value payload, intentionally flexible for the first
   thermograph/value serialization.
-- `exact.value_class`: coarse value class such as `integer`, `dyadic`, `switch`,
-  `fuzzy`, or `infinitesimal`.
+- `exact.value_class`: coarse value class currently emitted as `number` or
+  `switch`, with schema room for `star`, `up`, `down`, and `game_tree` as
+  thermograph coverage expands.
 - `provenance.code_commit`.
 - `provenance.generator`.
 - `provenance.generator_config_hash`.

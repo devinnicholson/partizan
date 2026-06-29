@@ -18,19 +18,21 @@ def run_baseline_smoke():
 
     metrics = evaluate_label_shard_baseline(WAVE_3_SHARD)
     assert metrics["row_counts"] == {
-        "total": 4,
-        "exact": 2,
+        "total": 5,
+        "exact": 3,
         "rejected": 2,
         "heuristic": 0,
         "prediction": 0,
     }
     exact_rejected = metrics["baselines"]["exact_vs_rejected"]
     assert exact_rejected["support"] == 4
+    assert exact_rejected["excluded_position_encodings"] == ["cgt_canonical"]
     assert exact_rejected["accuracy"] == 1.0
     value_class = metrics["baselines"]["exact_value_class"]
-    assert value_class["support"] == 2
+    assert value_class["support"] == 3
     assert value_class["status"] == "evaluated"
-    assert value_class["class_counts"] == {"number": 2}
+    assert value_class["class_counts"] == {"number": 2, "switch": 1}
+    assert value_class["accuracy"] == 2 / 3
     print(
         "Baseline smoke ok: "
         f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "
