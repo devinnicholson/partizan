@@ -888,6 +888,88 @@ def evaluate_geometry_probe_report(
     return report
 
 
+def evaluate_frontier_target_report(
+    jsonl_path: str | Path,
+    target_field: str,
+    split_key_mode: str = "position",
+    holdout_family: str | None = None,
+) -> dict[str, Any]:
+    """Evaluate exact-only frontier metadata targets with a train majority floor."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    if holdout_family:
+        assignments = family_holdout_assignments_for_rows(
+            rows, holdout_family, split_key_mode
+        )
+        splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=True)
+        split_policy = split_policy_for_mode(
+            split_key_mode, family_holdout=True, holdout_family=holdout_family
+        )
+    else:
+        assignments = split_assignments_for_rows(rows, split_key_mode)
+        splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=False)
+        split_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
+
+    examples = frontier_target_examples(rows, assignments, target_field)
+    train_targets = [
+        example["target"] for example in examples if example["split"] == "train"
+    ]
+    if not train_targets:
+        raise ValueError("frontier target report requires train exact targets")
+    majority_prediction = _majority_label(train_targets)
+    labels = tuple(sorted({example["target"] for example in examples}))
+
+    split_metrics = {}
+    for split in sorted({example["split"] for example in examples}):
+        split_targets = [
+            example["target"] for example in examples if example["split"] == split
+        ]
+        predictions = [majority_prediction for _target in split_targets]
+        split_metrics[split] = {
+            "support": len(split_targets),
+            "target_counts": dict(sorted(Counter(split_targets).items())),
+            "prediction_counts": dict(sorted(Counter(predictions).items())),
+            **_classification_metrics(split_targets, predictions, labels),
+        }
+
+    report: dict[str, Any] = {
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "baseline_id": "exact_train_majority_frontier_target_v0",
+        "target": f"exact.value.{target_field}",
+        "eligible_label_kinds": ["exact"],
+        "splitter_id": splitter_id,
+        "split_policy": split_policy,
+        "row_counts": _count_by(assignments, "split"),
+        "target_labels": list(labels),
+        "train_majority_prediction": majority_prediction,
+        "split_metrics": split_metrics,
+    }
+    if holdout_family:
+        report["holdout_family"] = holdout_family
+    return report
+
+
+def frontier_target_examples(
+    rows: list[dict[str, Any]],
+    assignments: list[dict[str, Any]],
+    target_field: str,
+) -> list[dict[str, str]]:
+    examples = []
+    for row, assignment in zip(rows, assignments):
+        if row.get("label_kind") != "exact":
+            continue
+        exact = row.get("exact", {})
+        value = exact.get("value", {}) if isinstance(exact, dict) else {}
+        target = value.get(target_field) if isinstance(value, dict) else None
+        if target is None:
+            continue
+        examples.append({"split": assignment["split"], "target": str(target)})
+    return examples
+
+
 def geometry_probe_examples(
     rows: list[dict[str, Any]], assignments: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
@@ -1642,6 +1724,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the probe report JSON.",
     )
 
+    frontier_target_parser = subcommands.add_parser(
+        "frontier-target-report",
+        help="Evaluate exact-only frontier metadata targets per split.",
+    )
+    frontier_target_parser.add_argument("jsonl_path", type=Path)
+    frontier_target_parser.add_argument("--target-field", required=True)
+    frontier_target_parser.add_argument(
+        "--holdout-family",
+        help="Optional generator family to hold out as the test split.",
+    )
+    frontier_target_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for split assignment.",
+    )
+    frontier_target_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the frontier target report JSON.",
+    )
+
     return parser
 
 
@@ -1703,6 +1807,21 @@ def cli_main(argv: list[str] | None = None) -> int:
             epochs=args.epochs,
             learning_rate=args.learning_rate,
             l2=args.l2,
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+    if args.command == "frontier-target-report":
+        report = evaluate_frontier_target_report(
+            args.jsonl_path,
+            args.target_field,
+            split_key_mode=args.split_key_mode,
+            holdout_family=args.holdout_family,
         )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)

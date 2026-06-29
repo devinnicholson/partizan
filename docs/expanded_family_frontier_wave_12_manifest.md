@@ -21,7 +21,9 @@ shard generated for Wave 12 material-family breadth validation.
 - Validator command: `python3 agents/label_schema.py validate /private/tmp/partizan-expanded-family-frontier-wave-12.jsonl`
 - Split report command: `python3 engine/ml_model.py split-report /private/tmp/partizan-expanded-family-frontier-wave-12.jsonl --output docs/expanded_family_frontier_wave_12_split_report.json`
 - Symmetry split report command: `python3 engine/ml_model.py split-report /private/tmp/partizan-expanded-family-frontier-wave-12.jsonl --split-key-mode symmetry --output docs/expanded_family_frontier_wave_12_symmetry_split_report.json`
+- Symmetry KRK holdout report command: `python3 engine/ml_model.py family-holdout-report /private/tmp/partizan-expanded-family-frontier-wave-12.jsonl --holdout-family astralbase_krk_frontier_generator --split-key-mode symmetry --output docs/expanded_family_frontier_wave_12_holdout_krk_symmetry_report.json`
 - Symmetry KNK holdout report command: `python3 engine/ml_model.py family-holdout-report /private/tmp/partizan-expanded-family-frontier-wave-12.jsonl --holdout-family astralbase_knk_frontier_generator --split-key-mode symmetry --output docs/expanded_family_frontier_wave_12_holdout_knk_symmetry_report.json`
+- Symmetry KRK frontier-mean target command: `python3 engine/ml_model.py frontier-target-report /private/tmp/partizan-expanded-family-frontier-wave-12.jsonl --target-field frontier_mean --holdout-family astralbase_krk_frontier_generator --split-key-mode symmetry --output docs/expanded_family_frontier_wave_12_holdout_krk_frontier_mean_report.json`
 - Symmetry KNK holdout baseline command: `python3 engine/ml_model.py split-baseline-report /private/tmp/partizan-expanded-family-frontier-wave-12.jsonl --holdout-family astralbase_knk_frontier_generator --split-key-mode symmetry --output docs/expanded_family_frontier_wave_12_holdout_knk_symmetry_baseline_report.json`
 - Symmetry KNK holdout geometry-probe command: `python3 engine/ml_model.py geometry-probe-report /private/tmp/partizan-expanded-family-frontier-wave-12.jsonl --holdout-family astralbase_knk_frontier_generator --split-key-mode symmetry --output docs/expanded_family_frontier_wave_12_holdout_knk_symmetry_geometry_probe_report.json`
 - Determinism check: the runner compares two generator invocations before writing.
@@ -67,7 +69,10 @@ shard generated for Wave 12 material-family breadth validation.
 - Duplicate exact certificate digests: 0
 - Position-hash split symmetry-key cross-split violations: 269
 - Symmetry-hash split symmetry-key cross-split violations: 0
+- Symmetry-hash KRK holdout symmetry-key cross-split violations: 0
 - Symmetry-hash KNK holdout symmetry-key cross-split violations: 0
+- Symmetry-hash KRK holdout frontier-mean train-majority accuracy: train
+  1.000, dev 1.000, test 0.220
 - Symmetry-hash KNK holdout FEN-gate baseline accuracy: train 0.202, dev
   0.179, test 0.200
 - Symmetry-hash KNK holdout geometry-probe accuracy: train 0.978, dev 0.975,

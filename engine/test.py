@@ -4,6 +4,7 @@ from ml_model import (
     evaluate_geometry_probe_report,
     evaluate_family_holdout_report,
     evaluate_family_holdout_report_with_mode,
+    evaluate_frontier_target_report,
     evaluate_label_shard_baseline,
     evaluate_split_baseline_report,
     evaluate_split_report,
@@ -386,6 +387,33 @@ def run_expanded_family_frontier_baseline_smoke():
     assert geometry_probe_report["split_metrics"]["test"]["confusion_matrix"] == {
         "exact": {"exact": 200, "rejected": 0},
         "rejected": {"exact": 0, "rejected": 800},
+    }
+
+    krk_holdout_report = evaluate_family_holdout_report_with_mode(
+        EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD,
+        "astralbase_krk_frontier_generator",
+        "symmetry",
+    )
+    assert krk_holdout_report["row_counts"] == {
+        "dev": 283,
+        "test": 1000,
+        "train": 2717,
+    }
+    assert krk_holdout_report["generator_family_counts"]["test"] == {
+        "astralbase_krk_frontier_generator": 1000
+    }
+
+    frontier_mean_report = evaluate_frontier_target_report(
+        EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD,
+        "frontier_mean",
+        split_key_mode="symmetry",
+        holdout_family="astralbase_krk_frontier_generator",
+    )
+    assert frontier_mean_report["train_majority_prediction"] == "1"
+    assert frontier_mean_report["split_metrics"]["test"]["accuracy"] == 0.22
+    assert frontier_mean_report["split_metrics"]["test"]["target_counts"] == {
+        "1": 44,
+        "2": 156,
     }
     print(
         "Expanded family frontier baseline smoke ok: "

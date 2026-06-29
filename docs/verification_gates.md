@@ -137,3 +137,12 @@ fixed FEN gate gets 0.200 KNK-test accuracy. The hand geometry probe gets 1.000
 KNK-test accuracy, which means future research claims must move beyond this
 terminal-frontier exact-vs-rejected boundary or beat this probe on a harder
 symmetry-safe split.
+
+Wave 15 adds
+`docs/expanded_family_frontier_wave_12_holdout_krk_frontier_mean_report.json`,
+an exact-only report for `exact.value.frontier_mean` with KRK held out. Rejected
+rows are excluded from the target. The train-majority floor predicts
+`frontier_mean=1`, scores 1.000 on train/dev, and drops to 0.220 on KRK test
+because KRK exact rows include 156 `frontier_mean=2` cases. Frontier temperature
+is still constant on this shard, so this gate is a first option-structure audit,
+not a temperature-learning result.

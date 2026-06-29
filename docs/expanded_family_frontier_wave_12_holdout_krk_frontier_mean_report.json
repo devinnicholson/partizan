@@ -1,0 +1,134 @@
+{
+  "baseline_id": "exact_train_majority_frontier_target_v0",
+  "dataset_path": "/private/tmp/partizan-expanded-family-frontier-wave-12.jsonl",
+  "dataset_sha256": "328c32715eecf5a2dc745042543022dd89c47af8c07f5c8faec22372d8661713",
+  "eligible_label_kinds": [
+    "exact"
+  ],
+  "holdout_family": "astralbase_krk_frontier_generator",
+  "row_counts": {
+    "dev": 283,
+    "test": 1000,
+    "train": 2717
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_metrics": {
+    "dev": {
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "1": {
+          "1": 55,
+          "2": 0
+        },
+        "2": {
+          "1": 0,
+          "2": 0
+        }
+      },
+      "per_class": {
+        "1": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 55
+        },
+        "2": {
+          "f1": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "support": 0
+        }
+      },
+      "prediction_counts": {
+        "1": 55
+      },
+      "support": 55,
+      "target_counts": {
+        "1": 55
+      }
+    },
+    "test": {
+      "accuracy": 0.22,
+      "confusion_matrix": {
+        "1": {
+          "1": 44,
+          "2": 0
+        },
+        "2": {
+          "1": 156,
+          "2": 0
+        }
+      },
+      "per_class": {
+        "1": {
+          "f1": 0.36065573770491804,
+          "precision": 0.22,
+          "recall": 1.0,
+          "support": 44
+        },
+        "2": {
+          "f1": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "support": 156
+        }
+      },
+      "prediction_counts": {
+        "1": 200
+      },
+      "support": 200,
+      "target_counts": {
+        "1": 44,
+        "2": 156
+      }
+    },
+    "train": {
+      "accuracy": 1.0,
+      "confusion_matrix": {
+        "1": {
+          "1": 545,
+          "2": 0
+        },
+        "2": {
+          "1": 0,
+          "2": 0
+        }
+      },
+      "per_class": {
+        "1": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 545
+        },
+        "2": {
+          "f1": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "support": 0
+        }
+      },
+      "prediction_counts": {
+        "1": 545
+      },
+      "support": 545,
+      "target_counts": {
+        "1": 545
+      }
+    }
+  },
+  "split_policy": {
+    "dev": "family != holdout_family and sha256(split_key) % 100 >= 90",
+    "holdout_family": "astralbase_krk_frontier_generator",
+    "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
+    "test": "family == holdout_family",
+    "train": "family != holdout_family and sha256(split_key) % 100 < 90"
+  },
+  "splitter_id": "family_holdout_generator_symmetry_hash_v0",
+  "target": "exact.value.frontier_mean",
+  "target_labels": [
+    "1",
+    "2"
+  ],
+  "train_majority_prediction": "1"
+}
