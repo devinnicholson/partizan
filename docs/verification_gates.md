@@ -101,5 +101,11 @@ symmetry-key cross-split violations.
 Wave 9 adds `docs/family_frontier_wave_07_holdout_krk_symmetry_report.json`,
 which holds all KRK rows in `test` and splits KQK train/dev by D4-canonical FEN
 key. It has zero position-key, symmetry-key, and exact-certificate cross-split
-violations. This is the current evaluation-ready OOD split artifact; it still
-needs model scoring before supporting an OOD performance claim.
+violations. This is the current evaluation-ready OOD split artifact.
+
+Wave 10 adds
+`docs/family_frontier_wave_07_holdout_krk_symmetry_baseline_report.json`, which
+scores `fen_string_material_gate_v0` on the Wave 9 split. The fixed baseline
+gets train/dev/test accuracy 0.198/0.215/0.200 and zero rejected recall because
+it predicts every row as `exact`. Future learned OOD claims must report against
+this same symmetry-safe split and beat this fixed floor.

@@ -661,26 +661,7 @@ def evaluate_split_report_with_mode(
 
     path = Path(jsonl_path)
     rows = load_dataset_label_v0_jsonl(path)
-    assignments = []
-
-    for row in rows:
-        family = generator_family(row)
-        position_key = position_key_for_row(row)
-        symmetry_position_key = symmetry_position_key_for_row(row)
-        split_key = split_key_for_mode(
-            family, position_key, symmetry_position_key, split_key_mode
-        )
-        split = split_for_key(split_key)
-        assignments.append(
-            split_assignment_for_row(
-                row,
-                split,
-                family,
-                position_key,
-                symmetry_position_key,
-                split_key,
-            )
-        )
+    assignments = split_assignments_for_rows(rows, split_key_mode)
 
     return split_report_from_assignments(
         path,
@@ -706,8 +687,113 @@ def evaluate_family_holdout_report_with_mode(
 
     path = Path(jsonl_path)
     rows = load_dataset_label_v0_jsonl(path)
-    assignments = []
+    assignments = family_holdout_assignments_for_rows(
+        rows, holdout_family, split_key_mode
+    )
 
+    report = split_report_from_assignments(
+        path,
+        assignments,
+        split_report_id_for_mode(split_key_mode, family_holdout=True),
+        split_policy_for_mode(
+            split_key_mode, family_holdout=True, holdout_family=holdout_family
+        ),
+    )
+    report["holdout_family"] = holdout_family
+    return report
+
+
+def evaluate_split_baseline_report(
+    jsonl_path: str | Path,
+    split_key_mode: str = "position",
+    holdout_family: str | None = None,
+) -> dict[str, Any]:
+    """Score deterministic baselines per split for a dataset-label shard."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    if holdout_family:
+        assignments = family_holdout_assignments_for_rows(
+            rows, holdout_family, split_key_mode
+        )
+        splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=True)
+        split_policy = split_policy_for_mode(
+            split_key_mode, family_holdout=True, holdout_family=holdout_family
+        )
+    else:
+        assignments = split_assignments_for_rows(rows, split_key_mode)
+        splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=False)
+        split_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
+
+    features_by_row = [derive_position_features(row) for row in rows]
+    split_metrics = {}
+    for split in sorted({assignment["split"] for assignment in assignments}):
+        split_items = [
+            (row, assignment, features)
+            for row, assignment, features in zip(rows, assignments, features_by_row)
+            if assignment["split"] == split
+            and row.get("label_kind") in EXACT_REJECTED_LABELS
+            and features["position_encoding"] == FEN_GATE_POSITION_ENCODING
+        ]
+        targets = [row["label_kind"] for row, _assignment, _features in split_items]
+        predictions = [
+            predict_exact_vs_rejected(features)
+            for _row, _assignment, features in split_items
+        ]
+        split_metrics[split] = {
+            "support": len(split_items),
+            "target_counts": dict(sorted(Counter(targets).items())),
+            "prediction_counts": dict(sorted(Counter(predictions).items())),
+            **_classification_metrics(targets, predictions, EXACT_REJECTED_LABELS),
+        }
+
+    report: dict[str, Any] = {
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "baseline_id": "fen_string_material_gate_v0",
+        "target": "label_kind exact-vs-rejected",
+        "eligible_label_kinds": list(EXACT_REJECTED_LABELS),
+        "included_position_encoding": FEN_GATE_POSITION_ENCODING,
+        "splitter_id": splitter_id,
+        "split_policy": split_policy,
+        "row_counts": _count_by(assignments, "split"),
+        "split_metrics": split_metrics,
+    }
+    if holdout_family:
+        report["holdout_family"] = holdout_family
+    return report
+
+
+def split_assignments_for_rows(
+    rows: list[dict[str, Any]], split_key_mode: str
+) -> list[dict[str, Any]]:
+    assignments = []
+    for row in rows:
+        family = generator_family(row)
+        position_key = position_key_for_row(row)
+        symmetry_position_key = symmetry_position_key_for_row(row)
+        split_key = split_key_for_mode(
+            family, position_key, symmetry_position_key, split_key_mode
+        )
+        split = split_for_key(split_key)
+        assignments.append(
+            split_assignment_for_row(
+                row,
+                split,
+                family,
+                position_key,
+                symmetry_position_key,
+                split_key,
+            )
+        )
+    return assignments
+
+
+def family_holdout_assignments_for_rows(
+    rows: list[dict[str, Any]], holdout_family: str, split_key_mode: str
+) -> list[dict[str, Any]]:
+    assignments = []
     for row in rows:
         family = generator_family(row)
         position_key = position_key_for_row(row)
@@ -730,17 +816,7 @@ def evaluate_family_holdout_report_with_mode(
                 split_key,
             )
         )
-
-    report = split_report_from_assignments(
-        path,
-        assignments,
-        split_report_id_for_mode(split_key_mode, family_holdout=True),
-        split_policy_for_mode(
-            split_key_mode, family_holdout=True, holdout_family=holdout_family
-        ),
-    )
-    report["holdout_family"] = holdout_family
-    return report
+    return assignments
 
 
 def split_assignment_for_row(
@@ -1190,6 +1266,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Position key policy used for train/dev assignment.",
     )
 
+    split_baseline_parser = subcommands.add_parser(
+        "split-baseline-report",
+        help="Score deterministic baselines per split.",
+    )
+    split_baseline_parser.add_argument("jsonl_path", type=Path)
+    split_baseline_parser.add_argument(
+        "--holdout-family",
+        help="Optional generator family to hold out as the test split.",
+    )
+    split_baseline_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for split assignment.",
+    )
+    split_baseline_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the baseline report JSON.",
+    )
+
     return parser
 
 
@@ -1220,6 +1317,20 @@ def cli_main(argv: list[str] | None = None) -> int:
     if args.command == "family-holdout-report":
         report = evaluate_family_holdout_report_with_mode(
             args.jsonl_path, args.holdout_family, args.split_key_mode
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+    if args.command == "split-baseline-report":
+        report = evaluate_split_baseline_report(
+            args.jsonl_path,
+            split_key_mode=args.split_key_mode,
+            holdout_family=args.holdout_family,
         )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)

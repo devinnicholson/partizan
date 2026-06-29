@@ -23,6 +23,7 @@ generated for Wave 7 generator-family split validation.
 - Symmetry split report command: `python3 engine/ml_model.py split-report /private/tmp/partizan-family-frontier-wave-07.jsonl --split-key-mode symmetry --output docs/family_frontier_wave_07_symmetry_split_report.json`
 - Family holdout report command: `python3 engine/ml_model.py family-holdout-report /private/tmp/partizan-family-frontier-wave-07.jsonl --holdout-family astralbase_krk_frontier_generator --output docs/family_frontier_wave_07_holdout_krk_report.json`
 - Symmetry family holdout report command: `python3 engine/ml_model.py family-holdout-report /private/tmp/partizan-family-frontier-wave-07.jsonl --holdout-family astralbase_krk_frontier_generator --split-key-mode symmetry --output docs/family_frontier_wave_07_holdout_krk_symmetry_report.json`
+- Symmetry family holdout baseline command: `python3 engine/ml_model.py split-baseline-report /private/tmp/partizan-family-frontier-wave-07.jsonl --holdout-family astralbase_krk_frontier_generator --split-key-mode symmetry --output docs/family_frontier_wave_07_holdout_krk_symmetry_baseline_report.json`
 - Determinism check: the runner compares two generator invocations before writing.
 
 ## Label Counts
@@ -68,6 +69,8 @@ generated for Wave 7 generator-family split validation.
 - Position-hash KRK holdout train/dev symmetry-key cross-split violations: 38
 - Symmetry-hash split symmetry-key cross-split violations: 0
 - Symmetry-hash KRK holdout symmetry-key cross-split violations: 0
+- Symmetry-hash KRK holdout FEN-gate baseline accuracy: train 0.198, dev
+  0.215, test 0.200
 
 ## Notes
 

@@ -4,6 +4,7 @@ from ml_model import (
     evaluate_family_holdout_report,
     evaluate_family_holdout_report_with_mode,
     evaluate_label_shard_baseline,
+    evaluate_split_baseline_report,
     evaluate_split_report,
     evaluate_split_report_with_mode,
     fen_d4_symmetry_key,
@@ -259,6 +260,25 @@ def run_family_frontier_baseline_smoke():
     assert symmetry_holdout_report["leakage_checks"][
         "symmetry_position_key_cross_split"
     ]["violation_count"] == 0
+
+    baseline_report = evaluate_split_baseline_report(
+        FAMILY_FRONTIER_WAVE_7_SHARD,
+        split_key_mode="symmetry",
+        holdout_family="astralbase_krk_frontier_generator",
+    )
+    assert baseline_report["splitter_id"] == "family_holdout_generator_symmetry_hash_v0"
+    assert baseline_report["row_counts"] == {
+        "dev": 93,
+        "test": 1000,
+        "train": 907,
+    }
+    assert baseline_report["split_metrics"]["train"]["accuracy"] == 180 / 907
+    assert baseline_report["split_metrics"]["dev"]["accuracy"] == 20 / 93
+    assert baseline_report["split_metrics"]["test"]["accuracy"] == 0.2
+    assert baseline_report["split_metrics"]["test"]["confusion_matrix"]["rejected"] == {
+        "exact": 800,
+        "rejected": 0,
+    }
     print(
         "Family frontier baseline smoke ok: "
         f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "
