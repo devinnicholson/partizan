@@ -1,0 +1,133 @@
+{
+  "baseline_id": "fen_string_material_gate_v0",
+  "dataset_path": "/private/tmp/partizan-expanded-family-frontier-wave-12.jsonl",
+  "dataset_sha256": "328c32715eecf5a2dc745042543022dd89c47af8c07f5c8faec22372d8661713",
+  "eligible_label_kinds": [
+    "exact",
+    "rejected"
+  ],
+  "holdout_family": "astralbase_knk_frontier_generator",
+  "included_position_encoding": "fen",
+  "row_counts": {
+    "dev": 279,
+    "test": 1000,
+    "train": 2721
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_metrics": {
+    "dev": {
+      "accuracy": 0.17921146953405018,
+      "confusion_matrix": {
+        "exact": {
+          "exact": 50,
+          "rejected": 0
+        },
+        "rejected": {
+          "exact": 229,
+          "rejected": 0
+        }
+      },
+      "per_class": {
+        "exact": {
+          "f1": 0.30395136778115506,
+          "precision": 0.17921146953405018,
+          "recall": 1.0,
+          "support": 50
+        },
+        "rejected": {
+          "f1": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "support": 229
+        }
+      },
+      "prediction_counts": {
+        "exact": 279
+      },
+      "support": 279,
+      "target_counts": {
+        "exact": 50,
+        "rejected": 229
+      }
+    },
+    "test": {
+      "accuracy": 0.2,
+      "confusion_matrix": {
+        "exact": {
+          "exact": 200,
+          "rejected": 0
+        },
+        "rejected": {
+          "exact": 800,
+          "rejected": 0
+        }
+      },
+      "per_class": {
+        "exact": {
+          "f1": 0.33333333333333337,
+          "precision": 0.2,
+          "recall": 1.0,
+          "support": 200
+        },
+        "rejected": {
+          "f1": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "support": 800
+        }
+      },
+      "prediction_counts": {
+        "exact": 1000
+      },
+      "support": 1000,
+      "target_counts": {
+        "exact": 200,
+        "rejected": 800
+      }
+    },
+    "train": {
+      "accuracy": 0.20213156927600148,
+      "confusion_matrix": {
+        "exact": {
+          "exact": 550,
+          "rejected": 0
+        },
+        "rejected": {
+          "exact": 2171,
+          "rejected": 0
+        }
+      },
+      "per_class": {
+        "exact": {
+          "f1": 0.3362885967594008,
+          "precision": 0.20213156927600148,
+          "recall": 1.0,
+          "support": 550
+        },
+        "rejected": {
+          "f1": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "support": 2171
+        }
+      },
+      "prediction_counts": {
+        "exact": 2721
+      },
+      "support": 2721,
+      "target_counts": {
+        "exact": 550,
+        "rejected": 2171
+      }
+    }
+  },
+  "split_policy": {
+    "dev": "family != holdout_family and sha256(split_key) % 100 >= 90",
+    "holdout_family": "astralbase_knk_frontier_generator",
+    "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
+    "test": "family == holdout_family",
+    "train": "family != holdout_family and sha256(split_key) % 100 < 90"
+  },
+  "splitter_id": "family_holdout_generator_symmetry_hash_v0",
+  "target": "label_kind exact-vs-rejected"
+}

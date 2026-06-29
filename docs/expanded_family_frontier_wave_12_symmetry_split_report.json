@@ -1,0 +1,103 @@
+{
+  "dataset_path": "/private/tmp/partizan-expanded-family-frontier-wave-12.jsonl",
+  "dataset_sha256": "328c32715eecf5a2dc745042543022dd89c47af8c07f5c8faec22372d8661713",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "immediate_terminal_frontier": 71
+    },
+    "test": {
+      "immediate_terminal_frontier": 73
+    },
+    "train": {
+      "immediate_terminal_frontier": 656
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "number": 71
+    },
+    "test": {
+      "number": 73
+    },
+    "train": {
+      "number": 656
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {
+      "game_tree": 71
+    },
+    "test": {
+      "game_tree": 73
+    },
+    "train": {
+      "game_tree": 656
+    }
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_kbk_frontier_generator": 96,
+      "astralbase_knk_frontier_generator": 105,
+      "astralbase_kqk_frontier_generator": 90,
+      "astralbase_krk_frontier_generator": 93
+    },
+    "test": {
+      "astralbase_kbk_frontier_generator": 73,
+      "astralbase_knk_frontier_generator": 117,
+      "astralbase_kqk_frontier_generator": 93,
+      "astralbase_krk_frontier_generator": 113
+    },
+    "train": {
+      "astralbase_kbk_frontier_generator": 831,
+      "astralbase_knk_frontier_generator": 778,
+      "astralbase_kqk_frontier_generator": 817,
+      "astralbase_krk_frontier_generator": 794
+    }
+  },
+  "label_kind_counts": {
+    "dev": {
+      "exact": 71,
+      "rejected": 313
+    },
+    "test": {
+      "exact": 73,
+      "rejected": 323
+    },
+    "train": {
+      "exact": 656,
+      "rejected": 2564
+    }
+  },
+  "leakage_checks": {
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 917,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_eligible_rows": 4000
+  },
+  "row_counts": {
+    "dev": 384,
+    "test": 396,
+    "train": 3220
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_symmetry_hash_v0"
+}

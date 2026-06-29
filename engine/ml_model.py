@@ -1254,6 +1254,10 @@ def generator_family(row: dict[str, Any]) -> str:
         return "astralbase_kqk_frontier_generator"
     if row_id.startswith("astralbase-w7-krk-frontier-"):
         return "astralbase_krk_frontier_generator"
+    if row_id.startswith("astralbase-w12-kbk-frontier-"):
+        return "astralbase_kbk_frontier_generator"
+    if row_id.startswith("astralbase-w12-knk-frontier-"):
+        return "astralbase_knk_frontier_generator"
     return "unprovenanced_rejected"
 
 

@@ -20,6 +20,9 @@ except ModuleNotFoundError:
 WAVE_3_SHARD = Path("/private/tmp/partizan-wave-03.jsonl")
 FRONTIER_WAVE_6_SHARD = Path("/private/tmp/partizan-frontier-wave-06.jsonl")
 FAMILY_FRONTIER_WAVE_7_SHARD = Path("/private/tmp/partizan-family-frontier-wave-07.jsonl")
+EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD = Path(
+    "/private/tmp/partizan-expanded-family-frontier-wave-12.jsonl"
+)
 
 
 def run_symmetry_key_smoke():
@@ -304,6 +307,93 @@ def run_family_frontier_baseline_smoke():
     )
 
 
+def run_expanded_family_frontier_baseline_smoke():
+    if not EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD.exists():
+        print(
+            "Expanded family frontier baseline smoke skipped; "
+            f"shard not found: {EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD}"
+        )
+        return
+
+    metrics = evaluate_label_shard_baseline(EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD)
+    assert metrics["row_counts"] == {
+        "total": 4000,
+        "exact": 800,
+        "rejected": 3200,
+        "heuristic": 0,
+        "prediction": 0,
+    }
+    exact_rejected = metrics["baselines"]["exact_vs_rejected"]
+    assert exact_rejected["support"] == 4000
+    assert exact_rejected["accuracy"] == 0.2
+
+    split_report = evaluate_split_report(EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD)
+    assert split_report["row_counts"] == {"dev": 375, "test": 424, "train": 3201}
+    assert split_report["leakage_checks"]["duplicate_symmetry_positions"] == 917
+    assert split_report["leakage_checks"]["symmetry_position_key_cross_split"][
+        "violation_count"
+    ] == 269
+
+    symmetry_split_report = evaluate_split_report_with_mode(
+        EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD,
+        "symmetry",
+    )
+    assert symmetry_split_report["row_counts"] == {
+        "dev": 384,
+        "test": 396,
+        "train": 3220,
+    }
+    assert symmetry_split_report["generator_family_counts"]["train"] == {
+        "astralbase_kbk_frontier_generator": 831,
+        "astralbase_knk_frontier_generator": 778,
+        "astralbase_kqk_frontier_generator": 817,
+        "astralbase_krk_frontier_generator": 794,
+    }
+    assert symmetry_split_report["leakage_checks"][
+        "symmetry_position_key_cross_split"
+    ]["violation_count"] == 0
+
+    holdout_report = evaluate_family_holdout_report_with_mode(
+        EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD,
+        "astralbase_knk_frontier_generator",
+        "symmetry",
+    )
+    assert holdout_report["row_counts"] == {
+        "dev": 279,
+        "test": 1000,
+        "train": 2721,
+    }
+    assert holdout_report["generator_family_counts"]["test"] == {
+        "astralbase_knk_frontier_generator": 1000
+    }
+    assert holdout_report["leakage_checks"]["symmetry_position_key_cross_split"][
+        "violation_count"
+    ] == 0
+
+    baseline_report = evaluate_split_baseline_report(
+        EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD,
+        split_key_mode="symmetry",
+        holdout_family="astralbase_knk_frontier_generator",
+    )
+    assert baseline_report["split_metrics"]["test"]["accuracy"] == 0.2
+
+    geometry_probe_report = evaluate_geometry_probe_report(
+        EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD,
+        split_key_mode="symmetry",
+        holdout_family="astralbase_knk_frontier_generator",
+    )
+    assert geometry_probe_report["split_metrics"]["test"]["accuracy"] == 1.0
+    assert geometry_probe_report["split_metrics"]["test"]["confusion_matrix"] == {
+        "exact": {"exact": 200, "rejected": 0},
+        "rejected": {"exact": 0, "rejected": 800},
+    }
+    print(
+        "Expanded family frontier baseline smoke ok: "
+        f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "
+        f"exact-vs-rejected accuracy={exact_rejected['accuracy']:.3f}"
+    )
+
+
 def run_rust_engine_smoke():
     if partizan is None:
         print("Rust engine smoke skipped; Python extension module 'partizan' is not installed.")
@@ -337,6 +427,7 @@ def main():
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()
+    run_expanded_family_frontier_baseline_smoke()
     run_rust_engine_smoke()
 
 

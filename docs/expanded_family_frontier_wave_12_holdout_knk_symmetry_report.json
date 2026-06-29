@@ -1,0 +1,100 @@
+{
+  "dataset_path": "/private/tmp/partizan-expanded-family-frontier-wave-12.jsonl",
+  "dataset_sha256": "328c32715eecf5a2dc745042543022dd89c47af8c07f5c8faec22372d8661713",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "immediate_terminal_frontier": 50
+    },
+    "test": {
+      "immediate_terminal_frontier": 200
+    },
+    "train": {
+      "immediate_terminal_frontier": 550
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "number": 50
+    },
+    "test": {
+      "number": 200
+    },
+    "train": {
+      "number": 550
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {
+      "game_tree": 50
+    },
+    "test": {
+      "game_tree": 200
+    },
+    "train": {
+      "game_tree": 550
+    }
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_kbk_frontier_generator": 73,
+      "astralbase_kqk_frontier_generator": 93,
+      "astralbase_krk_frontier_generator": 113
+    },
+    "test": {
+      "astralbase_knk_frontier_generator": 1000
+    },
+    "train": {
+      "astralbase_kbk_frontier_generator": 927,
+      "astralbase_kqk_frontier_generator": 907,
+      "astralbase_krk_frontier_generator": 887
+    }
+  },
+  "holdout_family": "astralbase_knk_frontier_generator",
+  "label_kind_counts": {
+    "dev": {
+      "exact": 50,
+      "rejected": 229
+    },
+    "test": {
+      "exact": 200,
+      "rejected": 800
+    },
+    "train": {
+      "exact": 550,
+      "rejected": 2171
+    }
+  },
+  "leakage_checks": {
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 917,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_eligible_rows": 4000
+  },
+  "row_counts": {
+    "dev": 279,
+    "test": 1000,
+    "train": 2721
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "family != holdout_family and sha256(split_key) % 100 >= 90",
+    "holdout_family": "astralbase_knk_frontier_generator",
+    "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
+    "test": "family == holdout_family",
+    "train": "family != holdout_family and sha256(split_key) % 100 < 90"
+  },
+  "splitter_id": "family_holdout_generator_symmetry_hash_v0"
+}

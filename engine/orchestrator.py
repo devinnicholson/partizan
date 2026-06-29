@@ -22,9 +22,15 @@ DEFAULT_ASTRALBASE_DIR = ROOT.parent / "astralbase"
 DEFAULT_SHARD_PATH = Path("/tmp/partizan-wave-03.jsonl")
 DEFAULT_FRONTIER_SHARD_PATH = Path("/tmp/partizan-frontier-wave-06.jsonl")
 DEFAULT_FAMILY_FRONTIER_SHARD_PATH = Path("/tmp/partizan-family-frontier-wave-07.jsonl")
+DEFAULT_EXPANDED_FAMILY_FRONTIER_SHARD_PATH = Path(
+    "/tmp/partizan-expanded-family-frontier-wave-12.jsonl"
+)
 DEFAULT_MANIFEST_PATH = ROOT / "docs" / "dataset_v0_manifest.md"
 DEFAULT_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "frontier_wave_06_manifest.md"
 DEFAULT_FAMILY_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "family_frontier_wave_07_manifest.md"
+DEFAULT_EXPANDED_FAMILY_FRONTIER_MANIFEST_PATH = (
+    ROOT / "docs" / "expanded_family_frontier_wave_12_manifest.md"
+)
 LABEL_SCHEMA_PATH = ROOT / "agents" / "label_schema.py"
 SCHEMA_VERSION = "partizan.dataset_label.v0"
 ASTRALBASE_SHARD_COMMAND = (
@@ -47,6 +53,13 @@ ASTRALBASE_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
     "--quiet",
     "--",
     "--family-frontier-label-shard",
+)
+ASTRALBASE_EXPANDED_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
+    "cargo",
+    "run",
+    "--quiet",
+    "--",
+    "--expanded-family-frontier-label-shard",
 )
 DEFAULT_FRONTIER_LIMIT = 1_000
 DEFAULT_FAMILY_FRONTIER_LIMIT_PER_FAMILY = 1_000
@@ -538,6 +551,18 @@ def run_frontier_label_shard(args: argparse.Namespace) -> int:
         "--limit",
         str(args.limit),
     )
+    return _run_astralbase_jsonl_shard(
+        args=args,
+        command_name="frontier-label-shard",
+        generator_command=generator_command,
+        default_output_path=DEFAULT_FRONTIER_SHARD_PATH,
+        default_manifest_path=DEFAULT_FRONTIER_MANIFEST_PATH,
+        manifest_title="Frontier Wave 06 Manifest",
+        manifest_description=(
+            "This manifest records the deterministic KQK terminal-frontier JSONL shard\n"
+            "generated for Wave 6 scale-up validation."
+        ),
+    )
 
 
 def run_family_frontier_label_shard(args: argparse.Namespace) -> int:
@@ -558,16 +583,24 @@ def run_family_frontier_label_shard(args: argparse.Namespace) -> int:
             "generated for Wave 7 generator-family split validation."
         ),
     )
+
+
+def run_expanded_family_frontier_label_shard(args: argparse.Namespace) -> int:
+    generator_command = (
+        *ASTRALBASE_EXPANDED_FAMILY_FRONTIER_SHARD_BASE_COMMAND,
+        "--limit-per-family",
+        str(args.limit_per_family),
+    )
     return _run_astralbase_jsonl_shard(
         args=args,
-        command_name="frontier-label-shard",
+        command_name="expanded-family-frontier-label-shard",
         generator_command=generator_command,
-        default_output_path=DEFAULT_FRONTIER_SHARD_PATH,
-        default_manifest_path=DEFAULT_FRONTIER_MANIFEST_PATH,
-        manifest_title="Frontier Wave 06 Manifest",
+        default_output_path=DEFAULT_EXPANDED_FAMILY_FRONTIER_SHARD_PATH,
+        default_manifest_path=DEFAULT_EXPANDED_FAMILY_FRONTIER_MANIFEST_PATH,
+        manifest_title="Expanded Family Frontier Wave 12 Manifest",
         manifest_description=(
-            "This manifest records the deterministic KQK terminal-frontier JSONL shard\n"
-            "generated for Wave 6 scale-up validation."
+            "This manifest records the deterministic KQK+KRK+KBK+KNK frontier JSONL\n"
+            "shard generated for Wave 12 material-family breadth validation."
         ),
     )
 
@@ -672,6 +705,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run the astralbase generator once instead of comparing two runs.",
     )
 
+    expanded_family_parser = subcommands.add_parser(
+        "expanded-family-frontier-label-shard",
+        help="Generate, validate, and record the Wave 12 KQK+KRK+KBK+KNK shard.",
+    )
+    expanded_family_parser.add_argument(
+        "--astralbase-dir",
+        type=Path,
+        default=DEFAULT_ASTRALBASE_DIR,
+        help="Path to the astralbase repository.",
+    )
+    expanded_family_parser.add_argument(
+        "--limit-per-family",
+        type=int,
+        default=DEFAULT_FAMILY_FRONTIER_LIMIT_PER_FAMILY,
+        help="Number of frontier rows to write for each material family.",
+    )
+    expanded_family_parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_EXPANDED_FAMILY_FRONTIER_SHARD_PATH,
+        help="JSONL artifact path to write.",
+    )
+    expanded_family_parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_EXPANDED_FAMILY_FRONTIER_MANIFEST_PATH,
+        help="Expanded family frontier dataset manifest path to write.",
+    )
+    expanded_family_parser.add_argument(
+        "--skip-determinism-check",
+        action="store_true",
+        help="Run the astralbase generator once instead of comparing two runs.",
+    )
+
     return parser
 
 
@@ -690,6 +757,10 @@ def cli_main(argv: list[str] | None = None) -> int:
             if args.limit_per_family < 0:
                 raise ShardRunnerError("--limit-per-family must be non-negative")
             return run_family_frontier_label_shard(args)
+        if args.command == "expanded-family-frontier-label-shard":
+            if args.limit_per_family < 0:
+                raise ShardRunnerError("--limit-per-family must be non-negative")
+            return run_expanded_family_frontier_label_shard(args)
     except ShardRunnerError as error:
         print(f"{args.command}: error: {error}", file=sys.stderr)
         return 1

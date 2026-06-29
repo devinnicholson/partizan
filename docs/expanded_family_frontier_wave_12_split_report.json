@@ -1,0 +1,139 @@
+{
+  "dataset_path": "/private/tmp/partizan-expanded-family-frontier-wave-12.jsonl",
+  "dataset_sha256": "328c32715eecf5a2dc745042543022dd89c47af8c07f5c8faec22372d8661713",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "immediate_terminal_frontier": 72
+    },
+    "test": {
+      "immediate_terminal_frontier": 76
+    },
+    "train": {
+      "immediate_terminal_frontier": 652
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "number": 72
+    },
+    "test": {
+      "number": 76
+    },
+    "train": {
+      "number": 652
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {
+      "game_tree": 72
+    },
+    "test": {
+      "game_tree": 76
+    },
+    "train": {
+      "game_tree": 652
+    }
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_kbk_frontier_generator": 90,
+      "astralbase_knk_frontier_generator": 84,
+      "astralbase_kqk_frontier_generator": 91,
+      "astralbase_krk_frontier_generator": 110
+    },
+    "test": {
+      "astralbase_kbk_frontier_generator": 109,
+      "astralbase_knk_frontier_generator": 121,
+      "astralbase_kqk_frontier_generator": 93,
+      "astralbase_krk_frontier_generator": 101
+    },
+    "train": {
+      "astralbase_kbk_frontier_generator": 801,
+      "astralbase_knk_frontier_generator": 795,
+      "astralbase_kqk_frontier_generator": 816,
+      "astralbase_krk_frontier_generator": 789
+    }
+  },
+  "label_kind_counts": {
+    "dev": {
+      "exact": 72,
+      "rejected": 303
+    },
+    "test": {
+      "exact": 76,
+      "rejected": 348
+    },
+    "train": {
+      "exact": 652,
+      "rejected": 2549
+    }
+  },
+  "leakage_checks": {
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 917,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [
+        {
+          "key": "fen_d4:1B5K/8/7k/8/8/8/8/8 w - - 0 1",
+          "splits": [
+            "dev",
+            "test"
+          ]
+        },
+        {
+          "key": "fen_d4:1B6/8/8/8/8/6K1/8/7k w - - 0 1",
+          "splits": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "key": "fen_d4:1B6/8/8/8/8/7k/8/7K w - - 0 1",
+          "splits": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "key": "fen_d4:1B6/8/8/8/8/8/4K3/7k w - - 0 1",
+          "splits": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "key": "fen_d4:1B6/8/8/8/8/8/5k2/7K w - - 0 1",
+          "splits": [
+            "test",
+            "train"
+          ]
+        }
+      ],
+      "violation_count": 269
+    },
+    "symmetry_position_key_eligible_rows": 4000
+  },
+  "row_counts": {
+    "dev": 375,
+    "test": 424,
+    "train": 3201
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|position.encoding:position.text",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_position_hash_v0"
+}

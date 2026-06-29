@@ -1,0 +1,177 @@
+{
+  "baseline_id": "fen_geometry_logistic_probe_v0",
+  "dataset_path": "/private/tmp/partizan-expanded-family-frontier-wave-12.jsonl",
+  "dataset_sha256": "328c32715eecf5a2dc745042543022dd89c47af8c07f5c8faec22372d8661713",
+  "eligible_label_kinds": [
+    "exact",
+    "rejected"
+  ],
+  "feature_names": [
+    "bias",
+    "white_king_row",
+    "white_king_col",
+    "black_king_row",
+    "black_king_col",
+    "attacker_row",
+    "attacker_col",
+    "white_black_chebyshev_distance",
+    "attacker_black_chebyshev_distance",
+    "white_attacker_chebyshev_distance",
+    "white_black_manhattan_distance",
+    "attacker_black_manhattan_distance",
+    "black_king_on_edge",
+    "black_king_in_corner",
+    "attacker_same_rank_as_black_king",
+    "attacker_same_file_as_black_king",
+    "attacker_same_diagonal_as_black_king",
+    "attacker_attacks_black_king",
+    "attacker_piece_value",
+    "attacker_is_queen",
+    "attacker_is_rook",
+    "attacker_is_bishop",
+    "attacker_is_knight",
+    "attacker_is_pawn"
+  ],
+  "holdout_family": "astralbase_knk_frontier_generator",
+  "included_position_encoding": "fen",
+  "row_counts": {
+    "dev": 279,
+    "test": 1000,
+    "train": 2721
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_metrics": {
+    "dev": {
+      "accuracy": 0.974910394265233,
+      "brier_score": 0.018144896226820136,
+      "confusion_matrix": {
+        "exact": {
+          "exact": 44,
+          "rejected": 6
+        },
+        "rejected": {
+          "exact": 1,
+          "rejected": 228
+        }
+      },
+      "mean_exact_probability": 0.1849138621836238,
+      "per_class": {
+        "exact": {
+          "f1": 0.9263157894736842,
+          "precision": 0.9777777777777777,
+          "recall": 0.88,
+          "support": 50
+        },
+        "rejected": {
+          "f1": 0.9848812095032398,
+          "precision": 0.9743589743589743,
+          "recall": 0.9956331877729258,
+          "support": 229
+        }
+      },
+      "prediction_counts": {
+        "exact": 45,
+        "rejected": 234
+      },
+      "support": 279,
+      "target_counts": {
+        "exact": 50,
+        "rejected": 229
+      }
+    },
+    "test": {
+      "accuracy": 1.0,
+      "brier_score": 0.0014682067464822416,
+      "confusion_matrix": {
+        "exact": {
+          "exact": 200,
+          "rejected": 0
+        },
+        "rejected": {
+          "exact": 0,
+          "rejected": 800
+        }
+      },
+      "mean_exact_probability": 0.2166047269490288,
+      "per_class": {
+        "exact": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 200
+        },
+        "rejected": {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "support": 800
+        }
+      },
+      "prediction_counts": {
+        "exact": 200,
+        "rejected": 800
+      },
+      "support": 1000,
+      "target_counts": {
+        "exact": 200,
+        "rejected": 800
+      }
+    },
+    "train": {
+      "accuracy": 0.9783167952958471,
+      "brier_score": 0.01578406729397375,
+      "confusion_matrix": {
+        "exact": {
+          "exact": 504,
+          "rejected": 46
+        },
+        "rejected": {
+          "exact": 13,
+          "rejected": 2158
+        }
+      },
+      "mean_exact_probability": 0.20925763866470878,
+      "per_class": {
+        "exact": {
+          "f1": 0.944704779756326,
+          "precision": 0.9748549323017408,
+          "recall": 0.9163636363636364,
+          "support": 550
+        },
+        "rejected": {
+          "f1": 0.9865142857142857,
+          "precision": 0.9791288566243194,
+          "recall": 0.9940119760479041,
+          "support": 2171
+        }
+      },
+      "prediction_counts": {
+        "exact": 517,
+        "rejected": 2204
+      },
+      "support": 2721,
+      "target_counts": {
+        "exact": 550,
+        "rejected": 2171
+      }
+    }
+  },
+  "split_policy": {
+    "dev": "family != holdout_family and sha256(split_key) % 100 >= 90",
+    "holdout_family": "astralbase_knk_frontier_generator",
+    "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
+    "test": "family == holdout_family",
+    "train": "family != holdout_family and sha256(split_key) % 100 < 90"
+  },
+  "splitter_id": "family_holdout_generator_symmetry_hash_v0",
+  "target": "label_kind exact-vs-rejected",
+  "training": {
+    "epochs": 2000,
+    "l2": 0.001,
+    "learning_rate": 0.05,
+    "optimizer": "full_batch_gradient_descent",
+    "standardization": "train_split_mean_std_except_bias",
+    "threshold": 0.5,
+    "train_split": "train"
+  }
+}

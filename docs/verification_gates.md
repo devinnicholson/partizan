@@ -117,3 +117,23 @@ on held-out KRK test rows. It gets train/dev/test accuracy 0.942/0.935/0.928
 and KRK rejected recall 0.91. Future structured or neural claims must report
 against this same symmetry-safe split and beat this hand-feature probe, not only
 the fixed floor.
+
+Wave 12 adds `/private/tmp/partizan-expanded-family-frontier-wave-12.jsonl`,
+generated from KQK, KRK, KBK, and KNK families at 1000 rows per family. It has
+4000 rows total, 800 exact rows, 3200 rejected controls, zero duplicate row IDs,
+zero duplicate positions, and zero duplicate exact certificate digests.
+`docs/expanded_family_frontier_wave_12_split_report.json` is a position-hash
+audit and exposes 269 D4 symmetry-key cross-split violations.
+
+Wave 13 adds
+`docs/expanded_family_frontier_wave_12_symmetry_split_report.json` and
+`docs/expanded_family_frontier_wave_12_holdout_knk_symmetry_report.json`. The
+symmetry split and KNK-family holdout both have zero position-key,
+symmetry-key, and exact-certificate cross-split violations. The KNK holdout puts
+all KNK rows in `test` and keeps KQK/KRK/KBK in `train`/`dev`.
+
+Wave 14 adds fixed and trainable baselines for the Wave 13 KNK holdout. The
+fixed FEN gate gets 0.200 KNK-test accuracy. The hand geometry probe gets 1.000
+KNK-test accuracy, which means future research claims must move beyond this
+terminal-frontier exact-vs-rejected boundary or beat this probe on a harder
+symmetry-safe split.
