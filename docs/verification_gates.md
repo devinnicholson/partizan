@@ -68,3 +68,11 @@ and `position.encoding: cgt_canonical`. The exact-vs-rejected FEN gate excludes
 that formal row by encoding, while the value-class baseline includes it and
 records the minority-class miss. The two schema-valid `rejected` rows are
 evidence for gate accounting only.
+
+For the Wave 6 frontier shard at `/private/tmp/partizan-frontier-wave-06.jsonl`,
+only the 200 `label_kind: exact` rows are eligible for exact supervision. The
+800 `label_kind: rejected` rows are retained as no-strict-decomposition controls
+and must not enter exact targets. The manifest records zero duplicate row IDs,
+zero duplicate positions, and zero duplicate exact certificate digests; any
+future split builder must preserve those leakage checks and add generator-family
+and symmetry-normalized split reports before OOD claims are active.

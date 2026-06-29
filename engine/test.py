@@ -9,6 +9,7 @@ except ModuleNotFoundError:
 
 
 WAVE_3_SHARD = Path("/private/tmp/partizan-wave-03.jsonl")
+FRONTIER_WAVE_6_SHARD = Path("/private/tmp/partizan-frontier-wave-06.jsonl")
 
 
 def run_baseline_smoke():
@@ -35,6 +36,36 @@ def run_baseline_smoke():
     assert value_class["accuracy"] == 2 / 3
     print(
         "Baseline smoke ok: "
+        f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "
+        f"exact-vs-rejected accuracy={exact_rejected['accuracy']:.3f}"
+    )
+
+
+def run_frontier_baseline_smoke():
+    if not FRONTIER_WAVE_6_SHARD.exists():
+        print(f"Frontier baseline smoke skipped; shard not found: {FRONTIER_WAVE_6_SHARD}")
+        return
+
+    metrics = evaluate_label_shard_baseline(FRONTIER_WAVE_6_SHARD)
+    assert metrics["row_counts"] == {
+        "total": 1000,
+        "exact": 200,
+        "rejected": 800,
+        "heuristic": 0,
+        "prediction": 0,
+    }
+    exact_rejected = metrics["baselines"]["exact_vs_rejected"]
+    assert exact_rejected["support"] == 1000
+    assert exact_rejected["accuracy"] == 0.2
+    assert exact_rejected["confusion_matrix"]["rejected"] == {
+        "exact": 800,
+        "rejected": 0,
+    }
+    value_class = metrics["baselines"]["exact_value_class"]
+    assert value_class["support"] == 200
+    assert value_class["class_counts"] == {"number": 200}
+    print(
+        "Frontier baseline smoke ok: "
         f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "
         f"exact-vs-rejected accuracy={exact_rejected['accuracy']:.3f}"
     )
@@ -70,6 +101,7 @@ def run_rust_engine_smoke():
 
 def main():
     run_baseline_smoke()
+    run_frontier_baseline_smoke()
     run_rust_engine_smoke()
 
 

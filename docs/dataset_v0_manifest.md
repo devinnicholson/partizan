@@ -7,7 +7,7 @@ local Partizan runner.
 
 - Schema version: `partizan.dataset_label.v0`
 - JSONL artifact: `/private/tmp/partizan-wave-03.jsonl`
-- Artifact SHA-256: `4a678e9a960e2349f15d8ea09744c354718703acd553923ecd6aa7758b0b2fc4`
+- Artifact SHA-256: `ef791885bbeb30f68ce1dc63d826fbb41b048c7741fe8953099278674d15a167`
 - Total rows: 5
 - Exact rows: 3
 - Rejected rows: 2
@@ -15,7 +15,7 @@ local Partizan runner.
 ## Source
 
 - Source repo: `../astralbase`
-- Source commit: `63c34d5dcf6f1bcfa65434d05b98e3ad9ed657bc`
+- Source commit: `02b0f678c70632fef0f754459fdb16d811ac9b29`
 - Generator command: `cd ../astralbase && cargo run --quiet -- --sample-label-shard`
 - Runner command: `python3 engine/orchestrator.py sample-label-shard`
 - Validator command: `python3 agents/label_schema.py validate /private/tmp/partizan-wave-03.jsonl`
@@ -31,6 +31,22 @@ local Partizan runner.
 - `number`: 2
 - `switch`: 1
 
+## Exact Solver Scope Counts
+
+- `formal_cgt_switch_fixture`: 1
+- `immediate_terminal_frontier`: 1
+- `terminal_position`: 1
+
+## Frontier Value Class Counts
+
+- `game_tree`: 1
+
+## Certificate Kind Counts
+
+- `immediate-checkmate-enumeration+thermograph-exact-value+bitmesh-domain-gate`: 1
+- `terminal-legal-move-enumeration+thermograph-exact-value+bitmesh-domain-gate`: 1
+- `thermograph-canonical-switch-fixture`: 1
+
 ## Position Encoding Counts
 
 - `cgt_canonical`: 1
@@ -44,6 +60,12 @@ local Partizan runner.
 
 - `castling_rights`: 1
 - `no_strict_decomposition`: 1
+
+## Leakage And Uniqueness Checks
+
+- Duplicate row IDs: 0
+- Duplicate positions: 0
+- Duplicate exact certificate digests: 0
 
 ## Notes
 

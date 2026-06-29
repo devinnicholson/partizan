@@ -20,7 +20,9 @@ except ModuleNotFoundError:
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ASTRALBASE_DIR = ROOT.parent / "astralbase"
 DEFAULT_SHARD_PATH = Path("/tmp/partizan-wave-03.jsonl")
+DEFAULT_FRONTIER_SHARD_PATH = Path("/tmp/partizan-frontier-wave-06.jsonl")
 DEFAULT_MANIFEST_PATH = ROOT / "docs" / "dataset_v0_manifest.md"
+DEFAULT_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "frontier_wave_06_manifest.md"
 LABEL_SCHEMA_PATH = ROOT / "agents" / "label_schema.py"
 SCHEMA_VERSION = "partizan.dataset_label.v0"
 ASTRALBASE_SHARD_COMMAND = (
@@ -30,6 +32,14 @@ ASTRALBASE_SHARD_COMMAND = (
     "--",
     "--sample-label-shard",
 )
+ASTRALBASE_FRONTIER_SHARD_BASE_COMMAND = (
+    "cargo",
+    "run",
+    "--quiet",
+    "--",
+    "--frontier-label-shard",
+)
+DEFAULT_FRONTIER_LIMIT = 1_000
 
 
 class ShardRunnerError(RuntimeError):
@@ -225,7 +235,13 @@ def _summarize_jsonl(path: Path) -> dict[str, object]:
     rejection_status_counts: Counter[str] = Counter()
     rejection_reason_counts: Counter[str] = Counter()
     exact_value_class_counts: Counter[str] = Counter()
+    exact_solver_scope_counts: Counter[str] = Counter()
+    frontier_value_class_counts: Counter[str] = Counter()
+    certificate_kind_counts: Counter[str] = Counter()
     position_encoding_counts: Counter[str] = Counter()
+    row_id_counts: Counter[str] = Counter()
+    position_key_counts: Counter[str] = Counter()
+    exact_certificate_digest_counts: Counter[str] = Counter()
     row_count = 0
 
     with path.open("r", encoding="utf-8") as handle:
@@ -233,9 +249,14 @@ def _summarize_jsonl(path: Path) -> dict[str, object]:
             row_count += 1
             row = json.loads(line)
             schema_versions.update([str(row.get("schema_version"))])
+            row_id_counts.update([str(row.get("row_id"))])
             position = row.get("position", {})
             if isinstance(position, dict):
-                position_encoding_counts.update([str(position.get("encoding"))])
+                encoding = str(position.get("encoding"))
+                position_encoding_counts.update([encoding])
+                position_key_counts.update(
+                    [f"{encoding}:{str(position.get('text'))}"]
+                )
 
             label_kind = str(row.get("label_kind"))
             label_kind_counts.update([label_kind])
@@ -244,6 +265,26 @@ def _summarize_jsonl(path: Path) -> dict[str, object]:
                 exact = row.get("exact", {})
                 if isinstance(exact, dict):
                     exact_value_class_counts.update([str(exact.get("value_class"))])
+                    value = exact.get("value", {})
+                    if isinstance(value, dict):
+                        exact_solver_scope_counts.update(
+                            [str(value.get("solver_scope"))]
+                        )
+                        frontier_value_class = value.get("frontier_value_class")
+                        if frontier_value_class:
+                            frontier_value_class_counts.update(
+                                [str(frontier_value_class)]
+                            )
+                provenance = row.get("provenance", {})
+                if isinstance(provenance, dict):
+                    certificate = provenance.get("certificate", {})
+                    if isinstance(certificate, dict):
+                        certificate_kind_counts.update(
+                            [str(certificate.get("kind"))]
+                        )
+                        digest = certificate.get("digest")
+                        if digest:
+                            exact_certificate_digest_counts.update([str(digest)])
 
             if label_kind == "rejected":
                 rejected = row.get("rejected", {})
@@ -261,23 +302,41 @@ def _summarize_jsonl(path: Path) -> dict[str, object]:
         "exact_rows": label_kind_counts.get("exact", 0),
         "rejected_rows": label_kind_counts.get("rejected", 0),
         "exact_value_class_counts": dict(sorted(exact_value_class_counts.items())),
+        "exact_solver_scope_counts": dict(sorted(exact_solver_scope_counts.items())),
+        "frontier_value_class_counts": dict(sorted(frontier_value_class_counts.items())),
+        "certificate_kind_counts": dict(sorted(certificate_kind_counts.items())),
         "position_encoding_counts": dict(sorted(position_encoding_counts.items())),
         "rejection_status_counts": dict(sorted(rejection_status_counts.items())),
         "rejection_reason_counts": dict(sorted(rejection_reason_counts.items())),
+        "duplicate_row_ids": duplicate_count(row_id_counts),
+        "duplicate_positions": duplicate_count(position_key_counts),
+        "duplicate_exact_certificate_digests": duplicate_count(
+            exact_certificate_digest_counts
+        ),
     }
+
+
+def duplicate_count(counts: Counter[str]) -> int:
+    return sum(count - 1 for count in counts.values() if count > 1)
 
 
 def _write_manifest(
     manifest_path: Path,
+    manifest_title: str,
+    manifest_description: str,
     output_path: Path,
     output_sha256: str,
     astralbase_dir: Path,
     astralbase_commit: str,
+    generator_command: list[str] | tuple[str, ...],
     runner_command: list[str],
     summary: dict[str, object],
 ) -> None:
     label_kind_counts = summary["label_kind_counts"]
     exact_value_class_counts = summary["exact_value_class_counts"]
+    exact_solver_scope_counts = summary["exact_solver_scope_counts"]
+    frontier_value_class_counts = summary["frontier_value_class_counts"]
+    certificate_kind_counts = summary["certificate_kind_counts"]
     position_encoding_counts = summary["position_encoding_counts"]
     rejection_status_counts = summary["rejection_status_counts"]
     rejection_reason_counts = summary["rejection_reason_counts"]
@@ -287,10 +346,9 @@ def _write_manifest(
             return "- none"
         return "\n".join(f"- `{key}`: {value}" for key, value in counts.items())
 
-    manifest = f"""# Dataset v0 Manifest
+    manifest = f"""# {manifest_title}
 
-This manifest records the current vertical-slice JSONL shard generated by the
-local Partizan runner.
+{manifest_description}
 
 ## Artifact
 
@@ -305,7 +363,7 @@ local Partizan runner.
 
 - Source repo: `{_display_path(astralbase_dir)}`
 - Source commit: `{astralbase_commit}`
-- Generator command: `cd {_display_path(astralbase_dir)} && {_format_command(ASTRALBASE_SHARD_COMMAND)}`
+- Generator command: `cd {_display_path(astralbase_dir)} && {_format_command(generator_command)}`
 - Runner command: `{_format_command(runner_command)}`
 - Validator command: `python3 agents/label_schema.py validate {_display_path(output_path)}`
 - Determinism check: the runner compares two generator invocations before writing.
@@ -317,6 +375,18 @@ local Partizan runner.
 ## Exact Value Class Counts
 
 {bullet_counts(exact_value_class_counts)}
+
+## Exact Solver Scope Counts
+
+{bullet_counts(exact_solver_scope_counts)}
+
+## Frontier Value Class Counts
+
+{bullet_counts(frontier_value_class_counts)}
+
+## Certificate Kind Counts
+
+{bullet_counts(certificate_kind_counts)}
 
 ## Position Encoding Counts
 
@@ -330,6 +400,12 @@ local Partizan runner.
 
 {bullet_counts(rejection_reason_counts)}
 
+## Leakage And Uniqueness Checks
+
+- Duplicate row IDs: {summary["duplicate_row_ids"]}
+- Duplicate positions: {summary["duplicate_positions"]}
+- Duplicate exact certificate digests: {summary["duplicate_exact_certificate_digests"]}
+
 ## Notes
 
 - Exact rows remain the only rows eligible as exact supervision targets.
@@ -341,7 +417,15 @@ local Partizan runner.
     manifest_path.write_text(manifest, encoding="utf-8")
 
 
-def run_sample_label_shard(args: argparse.Namespace) -> int:
+def _run_astralbase_jsonl_shard(
+    args: argparse.Namespace,
+    command_name: str,
+    generator_command: tuple[str, ...],
+    default_output_path: Path,
+    default_manifest_path: Path,
+    manifest_title: str,
+    manifest_description: str,
+) -> int:
     astralbase_dir = _resolve_from_root(args.astralbase_dir)
     output_path = _resolve_from_root(args.output)
     manifest_path = _resolve_from_root(args.manifest)
@@ -356,21 +440,21 @@ def run_sample_label_shard(args: argparse.Namespace) -> int:
     }
 
     first = _run_capture(
-        ASTRALBASE_SHARD_COMMAND,
+        generator_command,
         cwd=astralbase_dir,
-        label="astralbase sample label shard generation",
+        label=f"astralbase {command_name} generation",
         env=generator_env,
     )
     if not args.skip_determinism_check:
         second = _run_capture(
-            ASTRALBASE_SHARD_COMMAND,
+            generator_command,
             cwd=astralbase_dir,
-            label="astralbase sample label shard determinism check",
+            label=f"astralbase {command_name} determinism check",
             env=generator_env,
         )
         if first != second:
             raise ShardRunnerError(
-                "astralbase sample label shard is not byte-identical across runs"
+                f"astralbase {command_name} is not byte-identical across runs"
             )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -383,27 +467,32 @@ def run_sample_label_shard(args: argparse.Namespace) -> int:
     runner_command = [
         "python3",
         "engine/orchestrator.py",
-        "sample-label-shard",
+        command_name,
     ]
-    if output_path != DEFAULT_SHARD_PATH:
+    if getattr(args, "limit", None) is not None and args.limit != DEFAULT_FRONTIER_LIMIT:
+        runner_command.extend(["--limit", str(args.limit)])
+    if output_path != default_output_path:
         runner_command.extend(["--output", _display_path(output_path)])
-    if manifest_path != DEFAULT_MANIFEST_PATH:
+    if manifest_path != default_manifest_path:
         runner_command.extend(["--manifest", _display_path(manifest_path)])
     if args.skip_determinism_check:
         runner_command.append("--skip-determinism-check")
 
     _write_manifest(
         manifest_path=manifest_path,
+        manifest_title=manifest_title,
+        manifest_description=manifest_description,
         output_path=output_path,
         output_sha256=output_sha256,
         astralbase_dir=astralbase_dir,
         astralbase_commit=astralbase_commit,
+        generator_command=generator_command,
         runner_command=runner_command,
         summary=summary,
     )
 
     print(
-        "sample-label-shard: ok "
+        f"{command_name}: ok "
         f"({_display_path(output_path)}, "
         f"rows={summary['row_count']}, "
         f"exact={summary['exact_rows']}, "
@@ -411,6 +500,41 @@ def run_sample_label_shard(args: argparse.Namespace) -> int:
     )
     print(f"manifest: {_display_path(manifest_path)}")
     return 0
+
+
+def run_sample_label_shard(args: argparse.Namespace) -> int:
+    return _run_astralbase_jsonl_shard(
+        args=args,
+        command_name="sample-label-shard",
+        generator_command=ASTRALBASE_SHARD_COMMAND,
+        default_output_path=DEFAULT_SHARD_PATH,
+        default_manifest_path=DEFAULT_MANIFEST_PATH,
+        manifest_title="Dataset v0 Manifest",
+        manifest_description=(
+            "This manifest records the current vertical-slice JSONL shard generated by the\n"
+            "local Partizan runner."
+        ),
+    )
+
+
+def run_frontier_label_shard(args: argparse.Namespace) -> int:
+    generator_command = (
+        *ASTRALBASE_FRONTIER_SHARD_BASE_COMMAND,
+        "--limit",
+        str(args.limit),
+    )
+    return _run_astralbase_jsonl_shard(
+        args=args,
+        command_name="frontier-label-shard",
+        generator_command=generator_command,
+        default_output_path=DEFAULT_FRONTIER_SHARD_PATH,
+        default_manifest_path=DEFAULT_FRONTIER_MANIFEST_PATH,
+        manifest_title="Frontier Wave 06 Manifest",
+        manifest_description=(
+            "This manifest records the deterministic KQK terminal-frontier JSONL shard\n"
+            "generated for Wave 6 scale-up validation."
+        ),
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -445,6 +569,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run the astralbase generator once instead of comparing two runs.",
     )
 
+    frontier_parser = subcommands.add_parser(
+        "frontier-label-shard",
+        help="Generate, validate, and record the Wave 6 KQK frontier shard.",
+    )
+    frontier_parser.add_argument(
+        "--astralbase-dir",
+        type=Path,
+        default=DEFAULT_ASTRALBASE_DIR,
+        help="Path to the astralbase repository.",
+    )
+    frontier_parser.add_argument(
+        "--limit",
+        type=int,
+        default=DEFAULT_FRONTIER_LIMIT,
+        help="Number of frontier rows to write.",
+    )
+    frontier_parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_FRONTIER_SHARD_PATH,
+        help="JSONL artifact path to write.",
+    )
+    frontier_parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_FRONTIER_MANIFEST_PATH,
+        help="Frontier dataset manifest path to write.",
+    )
+    frontier_parser.add_argument(
+        "--skip-determinism-check",
+        action="store_true",
+        help="Run the astralbase generator once instead of comparing two runs.",
+    )
+
     return parser
 
 
@@ -455,8 +613,12 @@ def cli_main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "sample-label-shard":
             return run_sample_label_shard(args)
+        if args.command == "frontier-label-shard":
+            if args.limit < 0:
+                raise ShardRunnerError("--limit must be non-negative")
+            return run_frontier_label_shard(args)
     except ShardRunnerError as error:
-        print(f"sample-label-shard: error: {error}", file=sys.stderr)
+        print(f"{args.command}: error: {error}", file=sys.stderr)
         return 1
 
     parser.error(f"unknown command: {args.command}")
