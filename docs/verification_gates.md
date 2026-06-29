@@ -87,3 +87,8 @@ controls. `docs/family_frontier_wave_07_split_report.json` verifies zero
 position-key and exact-certificate cross-split violations across KQK and KRK
 families, but it still is not a family-held-out OOD split because both families
 appear in every split.
+
+Wave 8 adds `docs/family_frontier_wave_07_holdout_krk_report.json`, which holds
+all KRK rows in `test` and keeps KQK rows in `train`/`dev`. This is the first
+generator-family OOD split artifact. It still needs model scoring and
+symmetry-normalized leakage checks before supporting an OOD performance claim.

@@ -1,0 +1,90 @@
+{
+  "dataset_path": "/private/tmp/partizan-family-frontier-wave-07.jsonl",
+  "dataset_sha256": "46581eddc4ef5ff745722b5559615a5298d5dd5f003e61d66ff23bdb8e352e31",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "immediate_terminal_frontier": 14
+    },
+    "test": {
+      "immediate_terminal_frontier": 200
+    },
+    "train": {
+      "immediate_terminal_frontier": 186
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "number": 14
+    },
+    "test": {
+      "number": 200
+    },
+    "train": {
+      "number": 186
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {
+      "game_tree": 14
+    },
+    "test": {
+      "game_tree": 200
+    },
+    "train": {
+      "game_tree": 186
+    }
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_kqk_frontier_generator": 93
+    },
+    "test": {
+      "astralbase_krk_frontier_generator": 1000
+    },
+    "train": {
+      "astralbase_kqk_frontier_generator": 907
+    }
+  },
+  "holdout_family": "astralbase_krk_frontier_generator",
+  "label_kind_counts": {
+    "dev": {
+      "exact": 14,
+      "rejected": 79
+    },
+    "test": {
+      "exact": 200,
+      "rejected": 800
+    },
+    "train": {
+      "exact": 186,
+      "rejected": 721
+    }
+  },
+  "leakage_checks": {
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_row_ids": 0,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    }
+  },
+  "row_counts": {
+    "dev": 93,
+    "test": 1000,
+    "train": 907
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "family != holdout_family and sha256(split_key) % 100 >= 90",
+    "holdout_family": "astralbase_krk_frontier_generator",
+    "split_key": "generator_family|position.encoding:position.text",
+    "test": "family == holdout_family",
+    "train": "family != holdout_family and sha256(split_key) % 100 < 90"
+  },
+  "splitter_id": "family_holdout_generator_position_hash_v0"
+}

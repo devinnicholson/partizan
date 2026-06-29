@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from ml_model import evaluate_label_shard_baseline, evaluate_split_report
+from ml_model import (
+    evaluate_family_holdout_report,
+    evaluate_label_shard_baseline,
+    evaluate_split_report,
+)
 
 try:
     import partizan
@@ -132,6 +136,24 @@ def run_family_frontier_baseline_smoke():
         "astralbase_krk_frontier_generator": 101,
     }
     assert split_report["leakage_checks"]["position_key_cross_split"][
+        "violation_count"
+    ] == 0
+
+    holdout_report = evaluate_family_holdout_report(
+        FAMILY_FRONTIER_WAVE_7_SHARD,
+        "astralbase_krk_frontier_generator",
+    )
+    assert holdout_report["row_counts"] == {"dev": 93, "test": 1000, "train": 907}
+    assert holdout_report["generator_family_counts"]["train"] == {
+        "astralbase_kqk_frontier_generator": 907
+    }
+    assert holdout_report["generator_family_counts"]["dev"] == {
+        "astralbase_kqk_frontier_generator": 93
+    }
+    assert holdout_report["generator_family_counts"]["test"] == {
+        "astralbase_krk_frontier_generator": 1000
+    }
+    assert holdout_report["leakage_checks"]["position_key_cross_split"][
         "violation_count"
     ] == 0
     print(

@@ -20,6 +20,7 @@ generated for Wave 7 generator-family split validation.
 - Runner command: `python3 engine/orchestrator.py family-frontier-label-shard`
 - Validator command: `python3 agents/label_schema.py validate /private/tmp/partizan-family-frontier-wave-07.jsonl`
 - Split report command: `python3 engine/ml_model.py split-report /private/tmp/partizan-family-frontier-wave-07.jsonl --output docs/family_frontier_wave_07_split_report.json`
+- Family holdout report command: `python3 engine/ml_model.py family-holdout-report /private/tmp/partizan-family-frontier-wave-07.jsonl --holdout-family astralbase_krk_frontier_generator --output docs/family_frontier_wave_07_holdout_krk_report.json`
 - Determinism check: the runner compares two generator invocations before writing.
 
 ## Label Counts

@@ -661,39 +661,92 @@ def evaluate_split_report(jsonl_path: str | Path) -> dict[str, Any]:
         position_key = position_key_for_row(row)
         split_key = f"{family}|{position_key}"
         split = split_for_key(split_key)
-        exact = row.get("exact", {}) if isinstance(row.get("exact"), dict) else {}
-        exact_value = exact.get("value", {}) if isinstance(exact.get("value"), dict) else {}
-        assignments.append(
-            {
-                "row_id": str(row.get("row_id")),
-                "label_kind": str(row.get("label_kind")),
-                "split": split,
-                "generator_family": family,
-                "position_key": position_key,
-                "exact_certificate_digest": exact_certificate_digest(row),
-                "exact_value_class": str(exact.get("value_class"))
-                if exact.get("value_class")
-                else None,
-                "exact_solver_scope": str(exact_value.get("solver_scope"))
-                if exact_value.get("solver_scope")
-                else None,
-                "frontier_value_class": str(exact_value.get("frontier_value_class"))
-                if exact_value.get("frontier_value_class")
-                else None,
-            }
-        )
+        assignments.append(split_assignment_for_row(row, split, family, position_key))
 
-    return {
-        "splitter_id": "deterministic_generator_position_hash_v0",
-        "dataset_path": str(path),
-        "dataset_sha256": _sha256_file(path),
-        "schema_version": SCHEMA_VERSION,
-        "split_policy": {
+    return split_report_from_assignments(
+        path,
+        assignments,
+        "deterministic_generator_position_hash_v0",
+        {
             "train": "sha256(split_key) % 100 < 80",
             "dev": "80 <= sha256(split_key) % 100 < 90",
             "test": "90 <= sha256(split_key) % 100",
             "split_key": "generator_family|position.encoding:position.text",
         },
+    )
+
+
+def evaluate_family_holdout_report(
+    jsonl_path: str | Path, holdout_family: str
+) -> dict[str, Any]:
+    """Build a family-held-out split report for a dataset-label shard."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = []
+
+    for row in rows:
+        family = generator_family(row)
+        position_key = position_key_for_row(row)
+        if family == holdout_family:
+            split = "test"
+        else:
+            split_key = f"{family}|{position_key}"
+            split = train_dev_split_for_key(split_key)
+        assignments.append(split_assignment_for_row(row, split, family, position_key))
+
+    report = split_report_from_assignments(
+        path,
+        assignments,
+        "family_holdout_generator_position_hash_v0",
+        {
+            "train": "family != holdout_family and sha256(split_key) % 100 < 90",
+            "dev": "family != holdout_family and sha256(split_key) % 100 >= 90",
+            "test": "family == holdout_family",
+            "split_key": "generator_family|position.encoding:position.text",
+            "holdout_family": holdout_family,
+        },
+    )
+    report["holdout_family"] = holdout_family
+    return report
+
+
+def split_assignment_for_row(
+    row: dict[str, Any], split: str, family: str, position_key: str
+) -> dict[str, Any]:
+    exact = row.get("exact", {}) if isinstance(row.get("exact"), dict) else {}
+    exact_value = exact.get("value", {}) if isinstance(exact.get("value"), dict) else {}
+    return {
+        "row_id": str(row.get("row_id")),
+        "label_kind": str(row.get("label_kind")),
+        "split": split,
+        "generator_family": family,
+        "position_key": position_key,
+        "exact_certificate_digest": exact_certificate_digest(row),
+        "exact_value_class": str(exact.get("value_class"))
+        if exact.get("value_class")
+        else None,
+        "exact_solver_scope": str(exact_value.get("solver_scope"))
+        if exact_value.get("solver_scope")
+        else None,
+        "frontier_value_class": str(exact_value.get("frontier_value_class"))
+        if exact_value.get("frontier_value_class")
+        else None,
+    }
+
+
+def split_report_from_assignments(
+    path: Path,
+    assignments: list[dict[str, Any]],
+    splitter_id: str,
+    split_policy: dict[str, str],
+) -> dict[str, Any]:
+    return {
+        "splitter_id": splitter_id,
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "split_policy": split_policy,
         "row_counts": _count_by(assignments, "split"),
         "label_kind_counts": _nested_count_by(assignments, "split", "label_kind"),
         "generator_family_counts": _nested_count_by(
@@ -774,6 +827,13 @@ def split_for_key(split_key: str) -> str:
     if bucket < 90:
         return "dev"
     return "test"
+
+
+def train_dev_split_for_key(split_key: str) -> str:
+    bucket = int(hashlib.sha256(split_key.encode("utf-8")).hexdigest()[:8], 16) % 100
+    if bucket < 90:
+        return "train"
+    return "dev"
 
 
 def _count_by(items: list[dict[str, Any]], key: str) -> dict[str, int]:
@@ -902,6 +962,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the split report JSON.",
     )
 
+    holdout_parser = subcommands.add_parser(
+        "family-holdout-report",
+        help="Build a family-held-out split and leakage report.",
+    )
+    holdout_parser.add_argument("jsonl_path", type=Path)
+    holdout_parser.add_argument("--holdout-family", required=True)
+    holdout_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the holdout report JSON.",
+    )
+
     return parser
 
 
@@ -919,6 +991,16 @@ def cli_main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "split-report":
         report = evaluate_split_report(args.jsonl_path)
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+    if args.command == "family-holdout-report":
+        report = evaluate_family_holdout_report(args.jsonl_path, args.holdout_family)
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(
