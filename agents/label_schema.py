@@ -32,6 +32,13 @@ EXACT_PROVENANCE_REQUIRED_FIELDS = (
     "verifier_version",
     "certificate",
 )
+CERTIFICATE_REQUIRED_FIELDS = ("kind", "digest")
+COMPOSITION_CERTIFICATE_FIELDS = (
+    "decomposition_digest",
+    "composition_digest",
+    "component_values",
+    "result_value_digest",
+)
 REJECTED_REQUIRED_FIELDS = ("status", "reasons")
 REJECTED_STATUSES = {"unsupported", "error", "excluded"}
 HEURISTIC_REQUIRED_FIELDS = ("method", "method_version", "outputs")
@@ -158,6 +165,51 @@ def _validate_exact(row: dict[str, Any], errors: list[str]) -> None:
             "provenance",
             errors,
         )
+        _validate_certificate(provenance.get("certificate"), errors)
+
+
+def _validate_certificate(certificate: Any, errors: list[str]) -> None:
+    if not isinstance(certificate, dict):
+        errors.append("provenance.certificate must be an object")
+        return
+
+    _require_fields(
+        certificate,
+        CERTIFICATE_REQUIRED_FIELDS,
+        "provenance.certificate",
+        errors,
+    )
+
+    has_composition_fields = any(
+        field in certificate for field in COMPOSITION_CERTIFICATE_FIELDS
+    )
+    if not has_composition_fields:
+        return
+
+    _require_fields(
+        certificate,
+        COMPOSITION_CERTIFICATE_FIELDS,
+        "provenance.certificate",
+        errors,
+    )
+
+    component_values = certificate.get("component_values")
+    if not isinstance(component_values, dict) or not component_values:
+        errors.append(
+            "provenance.certificate.component_values must be a non-empty "
+            "object mapping component roots to value digests"
+        )
+        return
+
+    for component_root, value_digest in component_values.items():
+        if not isinstance(component_root, str) or not component_root.strip():
+            errors.append(
+                "provenance.certificate.component_values keys must be non-empty strings"
+            )
+        if not isinstance(value_digest, str) or not value_digest.strip():
+            errors.append(
+                "provenance.certificate.component_values values must be non-empty strings"
+            )
 
 
 def _validate_rejected(row: dict[str, Any], errors: list[str]) -> None:

@@ -54,7 +54,8 @@ object rather than an opaque string. The planned shape is:
 - `digest`: aggregate composition certificate digest.
 - `decomposition_digest`: bitmesh strict decomposition certificate digest.
 - `composition_digest`: bitmesh BMCOMPOSE v1 digest.
-- `component_values`: list of `{component_root, value_digest}` entries.
+- `component_values`: non-empty object mapping component-root identifiers to
+  exact value digest strings.
 - `result_value_digest`: digest of the verified composed exact value payload.
 
 The schema gate must reject top-level `components` as ambiguous. Component
