@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 3 vertical-slice negative controls.
+Status: Wave 16 hard-target gates, with Wave 3 negative controls retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
 training shard. It intentionally mixes rows that the current schema validator
@@ -147,3 +147,16 @@ because KRK exact rows include 156 `frontier_mean=2` cases. The report must flag
 `2` under `target_support_coverage.unseen_labels_by_split.test`. Frontier
 temperature is still constant on this shard, so this gate is a first
 option-structure audit, not a temperature-learning result.
+
+Wave 16 hard-target work cannot activate new agency, temperature, or aesthetic
+claims unless all of these conditions hold:
+
+- A strict composition certificate or non-number exact target has a
+  machine-checkable verifier path and stable digest.
+- The OOD split is symmetry-safe and reports generator-family, composition,
+  certificate, and target-support leakage.
+- Fixed floors and hand probes are reported on the same split.
+- The target is not solved by the current hand geometry probe, or the result is
+  explicitly recorded as a baseline warning rather than a main claim.
+- Nonconstant temperature claims require at least two certified temperature
+  target labels in train and at least one OOD split.
