@@ -1,0 +1,276 @@
+{
+  "wave_id": "wave_17_composition_certificates",
+  "objective": "Turn the bitmesh composition-certificate contract into an auditable hard-target shard with strict component provenance, composition-aware OOD splits, and baselines that can test whether decomposition helps beyond full-board hand features.",
+  "non_negotiables": [
+    "Exact composed rows require a validated strict decomposition digest, one verified exact value digest per component root, and a deterministic composed result digest.",
+    "A composition certificate is a provenance binding, not a value proof by itself; generators must still verify component values and composed result values.",
+    "Weak, unchecked, stale, duplicate-root, or missing-digest decompositions remain rejected controls and must not enter exact supervision.",
+    "Every composition OOD report must include raw-position, D4-symmetry, decomposition-certificate, composition-certificate, generator-family, component-count, component-family, and target-support leakage checks.",
+    "Any decomposition-benefit claim must compare against full-board scalar, no-decomposition structured, fixed FEN/material, and hand-geometry baselines on the same split.",
+    "Temperature, agency, or beauty claims remain inactive unless exact nonconstant targets beat train-majority and hand-feature controls under the composition split."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w17_contract_lock_and_negative_controls",
+        "w17_value_digest_adapter"
+      ]
+    },
+    {
+      "parallel": [
+        "w17_astralbase_composition_generator"
+      ]
+    },
+    {
+      "parallel": [
+        "w17_partizan_schema_and_orchestration"
+      ]
+    },
+    {
+      "parallel": [
+        "w17_composition_ood_reports"
+      ]
+    },
+    {
+      "parallel": [
+        "w17_decomposition_aware_baselines"
+      ]
+    },
+    {
+      "parallel": [
+        "w17_red_team_claim_audit"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w17_contract_lock_and_negative_controls",
+      "agent": "topology_engineer",
+      "repo": "../bitmesh",
+      "write_scope": [
+        "src/lib.rs",
+        "tests/",
+        "README.md"
+      ],
+      "depends_on": [],
+      "prompt": "Freeze the BMCOMPOSE v1 composition-certificate payload added in bitmesh commit c6e8e4d. Add any missing negative controls for duplicate roots, empty digests, stale decomposition digests, and component-count canonicalization. Document exactly what the certificate proves and what it does not prove.",
+      "outputs": [
+        "Stable composition-certificate payload contract",
+        "Negative-control tests for malformed composition provenance",
+        "Contract notes for astralbase and partizan integration"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets -- -D warnings"
+      ],
+      "acceptance": [
+        "Validated certificates digest deterministically before any downstream row can cite them",
+        "Malformed composition metadata fails before digesting",
+        "Documentation says the composition certificate binds provenance but does not independently verify chess values"
+      ]
+    },
+    {
+      "id": "w17_value_digest_adapter",
+      "agent": "exact_value_engineer",
+      "repo": "../thermograph",
+      "write_scope": [
+        "src/lib.rs",
+        "tests/",
+        "README.md"
+      ],
+      "depends_on": [],
+      "prompt": "Expose or document the canonical exact-value digest contract that astralbase should use for component values and composed results. Preserve existing number and switch byte stability, and make unsupported non-number chess values explicit rather than approximate.",
+      "outputs": [
+        "Exact-value digest adapter or documented stable API",
+        "Golden tests for number, switch, and game-tree payloads used as composition components",
+        "Compatibility notes for BMCOMPOSE value_digest fields"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets -- -D warnings"
+      ],
+      "acceptance": [
+        "Canonical value digests are stable across runs",
+        "Existing exact payloads remain compatible",
+        "Unsupported targets fail explicitly instead of producing heuristic labels"
+      ]
+    },
+    {
+      "id": "w17_astralbase_composition_generator",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/domain.rs",
+        "src/main.rs",
+        "tests/"
+      ],
+      "depends_on": [
+        "w17_contract_lock_and_negative_controls",
+        "w17_value_digest_adapter"
+      ],
+      "prompt": "Build the deterministic composition hard-target generator. Emit exact rows only when component decomposition, component exact values, and composed result values are all verified. Emit rejected controls for weak decomposition, missing component proofs, unsupported values, duplicate roots, and stale composition digests.",
+      "outputs": [
+        "Composition hard-target generator CLI",
+        "Exact rows with decomposition and composition certificate digests",
+        "Rejected rows with explicit unsupported reason codes",
+        "Tests for deterministic generation, family coverage, and malformed-certificate rejection"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets -- -D warnings",
+        "cargo run --quiet -- --help"
+      ],
+      "acceptance": [
+        "Two generator runs produce byte-identical JSONL",
+        "Exact rows carry component value digests and a composed result digest",
+        "Rejected controls cannot be loaded as exact targets"
+      ]
+    },
+    {
+      "id": "w17_partizan_schema_and_orchestration",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "agents/label_schema.py",
+        "agents/fixtures/",
+        "engine/orchestrator.py",
+        "engine/test.py",
+        "docs/*wave_17*",
+        "docs/dataset_label_schema.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w17_astralbase_composition_generator"
+      ],
+      "prompt": "Wire the composition shard into partizan. Extend schema fixtures and orchestration so exact rows can carry nested decomposition and composition certificate provenance while rejected controls remain excluded from exact supervision.",
+      "outputs": [
+        "Wave 17 JSONL artifact and manifest",
+        "Schema fixtures for valid and invalid composition certificate rows",
+        "Orchestrator command for deterministic composition shard generation",
+        "Smoke tests for exact/rejected separation"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_17_composition_certificates.json",
+        "python3 agents/label_schema.py self-test",
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py engine/orchestrator.py agents/network.py agents/label_schema.py"
+      ],
+      "acceptance": [
+        "Schema-valid exact composition rows require complete provenance",
+        "Missing or malformed composition certificates fail validation or are rejected controls",
+        "The manifest cites exact bitmesh, thermograph, astralbase, and partizan commits"
+      ]
+    },
+    {
+      "id": "w17_composition_ood_reports",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/*wave_17*",
+        "docs/experiment_matrix.md",
+        "docs/agency_metrics.md"
+      ],
+      "depends_on": [
+        "w17_partizan_schema_and_orchestration"
+      ],
+      "prompt": "Add composition-aware split and target-support reports. Required split modes: D4 symmetry, component-count holdout, component-family holdout, and composition-certificate holdout. Reports must fail loudly on cross-split raw-position, symmetry, decomposition-certificate, or composition-certificate leakage.",
+      "outputs": [
+        "Composition split report",
+        "Component-family and component-count holdout reports",
+        "Exact-only target-support coverage for composed result fields",
+        "Updated experiment matrix entries"
+      ],
+      "commands": [
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py"
+      ],
+      "acceptance": [
+        "Every split records composition certificate counts and leakage summaries",
+        "Unseen target labels are reported rather than hidden",
+        "Reports exclude rejected controls from exact-value targets"
+      ]
+    },
+    {
+      "id": "w17_decomposition_aware_baselines",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/*wave_17*",
+        "docs/research_claims.md",
+        "docs/experiment_matrix.md"
+      ],
+      "depends_on": [
+        "w17_composition_ood_reports"
+      ],
+      "prompt": "Implement the first decomposition-aware baseline and its controls. Compare against full-board scalar, no-decomposition structured, fixed FEN/material, train-majority, and hand-geometry baselines on the exact same composition OOD split.",
+      "outputs": [
+        "Decomposition-aware baseline report",
+        "No-decomposition and scalar-control ablations",
+        "Failure analysis when hand features or train-majority match the structured model"
+      ],
+      "commands": [
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py"
+      ],
+      "acceptance": [
+        "Metrics include train/dev/test plus held-out composition slices",
+        "No decomposition claim activates unless the decomposition-aware model beats controls",
+        "The report records exact target support and rejected-row exclusion"
+      ]
+    },
+    {
+      "id": "w17_red_team_claim_audit",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "docs/experiment_matrix.md"
+      ],
+      "depends_on": [
+        "w17_decomposition_aware_baselines"
+      ],
+      "prompt": "Audit Wave 17 for overclaiming. Invalidate any agency, beauty, decomposition, or temperature claim not supported by exact labels, composition certificates, leakage-free OOD reports, and baseline-beating evidence.",
+      "outputs": [
+        "Claim ledger update",
+        "Reviewer-risk notes for composition certificates",
+        "Concrete blockers for the next wave"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_17_composition_certificates.json"
+      ],
+      "acceptance": [
+        "Every activated claim has evidence, baseline, and falsification condition",
+        "Composition certificates are not overstated as full chess independence proofs",
+        "The next wave has measurable blockers rather than vague research intent"
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_validate",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_17_composition_certificates.json",
+      "success_signal": "The network and Wave 17 composition plan are internally consistent."
+    },
+    {
+      "id": "partizan_schema_and_reports",
+      "command": "python3 agents/label_schema.py self-test && python3 engine/test.py && python3 -m py_compile engine/ml_model.py engine/test.py engine/orchestrator.py agents/network.py agents/label_schema.py",
+      "success_signal": "Partizan schema, reporting, and orchestration smoke gates pass."
+    },
+    {
+      "id": "engine_crate_quality",
+      "command": "cd ../bitmesh && cargo test && cargo clippy --all-targets -- -D warnings && cd ../thermograph && cargo test && cargo clippy --all-targets -- -D warnings && cd ../astralbase && cargo test && cargo clippy --all-targets -- -D warnings",
+      "success_signal": "All engine crates pass tests and clippy after composition integration."
+    }
+  ]
+}

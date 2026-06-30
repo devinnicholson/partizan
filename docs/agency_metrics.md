@@ -1,6 +1,6 @@
 # Agency And Aesthetic Metrics
 
-Status: Wave 16 hard-target specification.
+Status: Wave 17 composition-certificate planning.
 
 These metrics are paper-facing only after they are attached to exact,
 schema-valid rows and reported against leakage-safe splits. A metric can be
@@ -59,6 +59,20 @@ Measures nonconstant thermograph temperature or equivalent hot-game structure.
 - Activation gate: at least two temperature labels must appear in train and at
   least one OOD split, with target-support coverage reported.
 
+### Composition Leverage
+
+Measures whether verified component structure changes prediction quality or
+search ranking on composed positions.
+
+- Eligible rows: exact Wave 17 composition rows with strict decomposition
+  digest, BMCOMPOSE digest, component value digests, and result value digest.
+- Required reports: component-count holdout, component-family holdout,
+  composition-certificate leakage, and target-support coverage.
+- Positive controls: composed rows where a decomposition-aware baseline beats
+  full-board scalar and no-decomposition structured controls.
+- Falsification: hand geometry, material lookup, or train-majority targets match
+  the decomposition-aware model under the same symmetry-safe composition split.
+
 ## Aesthetic Metrics
 
 ### Compactness
@@ -93,6 +107,6 @@ training or gallery set.
 
 - Every metric report must name eligible rows and excluded rows.
 - Every OOD report must include raw-position, D4-symmetry, certificate, family,
-  and target-support leakage checks.
+  composition-certificate, component-family, and target-support leakage checks.
 - Every model or search result must compare against fixed floors and hand
   probes before supporting an agency or aesthetic claim.

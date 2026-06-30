@@ -16,10 +16,13 @@ python3 agents/network.py first-sprint
 python3 agents/network.py agent exact_value_engineer
 python3 agents/network.py validate-wave
 python3 agents/network.py validate-wave agents/waves/wave_16_harder_targets.json
+python3 agents/network.py validate-wave agents/waves/wave_17_composition_certificates.json
 python3 agents/network.py wave-plan
 python3 agents/network.py wave-plan agents/waves/wave_16_harder_targets.json
+python3 agents/network.py wave-plan agents/waves/wave_17_composition_certificates.json
 python3 agents/network.py wave-task w3_thermograph_value_contract
 python3 agents/network.py wave-task w16_dataset_splits_and_target_support --wave agents/waves/wave_16_harder_targets.json
+python3 agents/network.py wave-task w17_astralbase_composition_generator --wave agents/waves/wave_17_composition_certificates.json
 python3 agents/label_schema.py validate agents/fixtures/label_rows.valid.jsonl
 python3 agents/label_schema.py self-test
 ```

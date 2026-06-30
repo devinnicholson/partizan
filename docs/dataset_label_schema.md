@@ -47,6 +47,22 @@ They require:
 - `provenance.verifier_version`.
 - `provenance.certificate`.
 
+For Wave 17 composition rows, `provenance.certificate` must become a structured
+object rather than an opaque string. The planned shape is:
+
+- `kind`: composition certificate kind/version.
+- `digest`: aggregate composition certificate digest.
+- `decomposition_digest`: bitmesh strict decomposition certificate digest.
+- `composition_digest`: bitmesh BMCOMPOSE v1 digest.
+- `component_values`: list of `{component_root, value_digest}` entries.
+- `result_value_digest`: digest of the verified composed exact value payload.
+
+The schema gate must reject top-level `components` as ambiguous. Component
+metadata belongs under `provenance.certificate`, where it can be tied to the
+verified decomposition and exact-value payloads. A composition certificate binds
+provenance; it does not by itself prove that the component values or composed
+result are correct.
+
 ## Rejected Rows
 
 Rejected rows are allowed and expected for unsupported positions, verifier

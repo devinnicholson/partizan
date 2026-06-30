@@ -19,12 +19,15 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_03_vertical_slice.json` builds the first auditable vertical slice:
+`wave_17_composition_certificates.json` turns the new bitmesh composition
+certificate contract into the next executable hard-target wave:
 
 ```text
-position -> domain gate -> decomposition certificate -> exact/rejected label
-         -> JSONL shard -> schema validation -> baseline-ready artifact
+strict decomposition -> component exact values -> composition certificate
+                    -> JSONL shard -> composition OOD reports -> baselines
 ```
 
-The critical rule is that exact, rejected, heuristic, and prediction payloads
-remain separate throughout the pipeline.
+The critical rule is that a composition certificate binds provenance but does
+not, by itself, prove chess value correctness. Exact rows still need verified
+component values, verified composed result values, and schema-valid provenance;
+weak or unchecked decompositions remain rejected controls.

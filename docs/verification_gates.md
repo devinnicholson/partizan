@@ -1,6 +1,7 @@
 # Verification Gates
 
-Status: Wave 16 hard-target gates, with Wave 3 negative controls retained.
+Status: Wave 17 composition-certificate planning gates, with Wave 3 negative
+controls retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
 training shard. It intentionally mixes rows that the current schema validator
@@ -30,10 +31,13 @@ Wave 3 uses negative controls to keep the claim ledger conservative:
   `formal_domain:first_constrained_chess:v0`.
 - `decomposition_certificate_gate`: future bitmesh/astralbase checker; accepts
   exact decomposition only with a strict, validated independence certificate.
+- `composition_certificate_gate`: future bitmesh/astralbase/partizan checker;
+  accepts exact composed rows only when component roots, component value
+  digests, decomposition digest, and composed result digest validate together.
 - `exact_training_split_gate`: future dataset loader policy; trains exact
   targets only from schema-valid rows with `label_kind: exact`,
   `exact.status: verified`, complete provenance, and accepted domain and
-  decomposition checks.
+  decomposition/composition checks.
 
 ## Wave 3 Negative Controls
 
@@ -160,3 +164,13 @@ claims unless all of these conditions hold:
   explicitly recorded as a baseline warning rather than a main claim.
 - Nonconstant temperature claims require at least two certified temperature
   target labels in train and at least one OOD split.
+
+Wave 17 starts the executable composition-certificate integration plan in
+`agents/waves/wave_17_composition_certificates.json`. The current bitmesh
+BMCOMPOSE v1 certificate binds a strict decomposition digest, component
+`component_root -> value_digest` entries, and a result value digest into a
+stable payload. It is not yet a full value verifier. Wave 17 gates therefore
+require astralbase and partizan to add root coverage, verified thermograph value
+payloads, composition-result verification, nested schema validation, and
+composition-certificate leakage reports before any decomposition-benefit claim
+can activate.
