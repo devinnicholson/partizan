@@ -1,0 +1,274 @@
+{
+  "wave_id": "wave_16_harder_targets",
+  "objective": "Move beyond terminal-frontier exact-vs-rejected boundaries by producing harder compositional splits, non-number chess-derived targets, and structured baselines that must beat hand geometry probes.",
+  "non_negotiables": [
+    "No target may enter training unless it is exact, schema-valid, and tied to a verifier certificate.",
+    "Rejected rows remain gate/accounting evidence and must not become exact target labels.",
+    "Every OOD split must report raw-position, D4-symmetry, certificate, generator-family, and target-support leakage.",
+    "Any learned result must compare against the fixed FEN gate, hand geometry probe, and train-majority target floors.",
+    "If a hand-coded feature solves a task, the result is a baseline warning, not a main research claim."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w16_theory_hard_target_spec"
+      ]
+    },
+    {
+      "parallel": [
+        "w16_topology_composition_certificate_spec",
+        "w16_exact_non_number_contract"
+      ]
+    },
+    {
+      "parallel": [
+        "w16_astralbase_composition_generator"
+      ]
+    },
+    {
+      "parallel": [
+        "w16_dataset_splits_and_target_support"
+      ]
+    },
+    {
+      "parallel": [
+        "w16_structured_model_baselines"
+      ]
+    },
+    {
+      "parallel": [
+        "w16_red_team_claim_audit"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w16_theory_hard_target_spec",
+      "agent": "theory_steward",
+      "repo": ".",
+      "write_scope": [
+        "docs/formal_domain.md",
+        "docs/agency_metrics.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [],
+      "prompt": "Specify the next hard target family after Wave 15. It must include at least one compositional OOD split and one target that cannot be solved by the current hand geometry probe. Define what counts as non-number chess-derived value evidence, which frontier metadata targets are acceptable interim targets, and which controls falsify agency/temperature claims.",
+      "outputs": [
+        "Hard-target domain and target definitions",
+        "Positive and negative controls for composition, option structure, and agency",
+        "Verification gate updates for unseen target labels and hand-probe failures"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_16_harder_targets.json"
+      ],
+      "acceptance": [
+        "The spec states why Wave 14 KNK is too easy",
+        "Every proposed target has a verifier path and a falsification condition",
+        "Temperature and agency claims remain inactive unless supported by nonconstant exact targets"
+      ]
+    },
+    {
+      "id": "w16_topology_composition_certificate_spec",
+      "agent": "topology_engineer",
+      "repo": "../bitmesh",
+      "write_scope": [
+        "src/lib.rs",
+        "tests/"
+      ],
+      "depends_on": [
+        "w16_theory_hard_target_spec"
+      ],
+      "prompt": "Design the first strict composition certificate that can support exact labels rather than rejected controls. Start with synthetic or tightly constrained chess-derived boards where component independence can be machine-checked. Do not broaden claims to general chess independence.",
+      "outputs": [
+        "Composition certificate fields and digest contract",
+        "Positive certificate tests and counterexample tests",
+        "Clear unsupported status for weak or unchecked decompositions"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets -- -D warnings"
+      ],
+      "acceptance": [
+        "Certificates are deterministic and validate before digesting",
+        "At least one positive composition fixture passes",
+        "At least one false-composition counterexample fails"
+      ]
+    },
+    {
+      "id": "w16_exact_non_number_contract",
+      "agent": "exact_value_engineer",
+      "repo": "../thermograph",
+      "write_scope": [
+        "src/lib.rs",
+        "tests/"
+      ],
+      "depends_on": [
+        "w16_theory_hard_target_spec"
+      ],
+      "prompt": "Extend or document the exact value contract needed for chess-derived non-number targets. Prioritize canonical game-tree/switch outputs, thermograph mean/temperature, and target-support metadata that downstream reports can consume without parsing display strings.",
+      "outputs": [
+        "Exact payload support for the required non-number target classes or documented blockers",
+        "Golden tests for switch/game-tree target serialization and thermograph fields",
+        "Compatibility notes for astralbase and partizan loaders"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets -- -D warnings"
+      ],
+      "acceptance": [
+        "Existing number/switch payloads remain byte-stable",
+        "New or documented target classes have golden tests",
+        "Unsupported exactness is explicit rather than approximated"
+      ]
+    },
+    {
+      "id": "w16_astralbase_composition_generator",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/domain.rs",
+        "src/main.rs",
+        "tests/"
+      ],
+      "depends_on": [
+        "w16_topology_composition_certificate_spec",
+        "w16_exact_non_number_contract"
+      ],
+      "prompt": "Add a deterministic generator for the Wave 16 hard-target shard. It should emit exact rows only when the composition/value path is verified, rejected rows for unsupported candidates, and enough metadata for partizan to build family, composition, target-support, and symmetry leakage reports.",
+      "outputs": [
+        "Generator CLI for the hard-target shard",
+        "Exact provenance with composition/value certificates",
+        "Tests for deterministic generation and family/target coverage"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets -- -D warnings",
+        "cargo run --quiet -- --help"
+      ],
+      "acceptance": [
+        "The generator is deterministic across two runs",
+        "Exact rows carry verifier provenance and certificate digests",
+        "Rejected rows expose unsupported reason codes"
+      ]
+    },
+    {
+      "id": "w16_dataset_splits_and_target_support",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "engine/orchestrator.py",
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/experiment_matrix.md",
+        "docs/verification_gates.md",
+        "docs/*wave_16*",
+        "agents/waves/wave_16_harder_targets.json"
+      ],
+      "depends_on": [
+        "w16_astralbase_composition_generator"
+      ],
+      "prompt": "Wire the Wave 16 shard into the deterministic orchestrator and reporting stack. Required reports: manifest, schema validation, symmetry-safe split, composition/family holdout, exact-only target-support coverage, fixed floors, and hand-probe baselines where applicable.",
+      "outputs": [
+        "Wave 16 JSONL artifact and manifest",
+        "Symmetry-safe OOD split reports",
+        "Target-support coverage reports with unseen-label accounting",
+        "Updated smoke tests"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_16_harder_targets.json",
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py engine/orchestrator.py agents/network.py agents/label_schema.py"
+      ],
+      "acceptance": [
+        "Reports fail loudly on symmetry leakage or unseen target labels",
+        "Every split report records generator-family counts",
+        "Artifacts cite the exact astralbase commit and schema version"
+      ]
+    },
+    {
+      "id": "w16_structured_model_baselines",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md"
+      ],
+      "depends_on": [
+        "w16_dataset_splits_and_target_support"
+      ],
+      "prompt": "Train or implement the first structured baseline for the Wave 16 hard target. It must report against the same symmetry-safe splits as the fixed floor and hand geometry probe, and it must include failure analysis if it does not beat those baselines.",
+      "outputs": [
+        "Structured baseline report",
+        "Ablation or control against scalar/hand-feature inputs",
+        "Experiment matrix update with exact metrics and limitations"
+      ],
+      "commands": [
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py"
+      ],
+      "acceptance": [
+        "Metrics include train/dev/test and OOD slices",
+        "The report compares to fixed and hand-feature baselines",
+        "No claim is activated if the structured model fails the baseline comparison"
+      ]
+    },
+    {
+      "id": "w16_red_team_claim_audit",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "docs/experiment_matrix.md"
+      ],
+      "depends_on": [
+        "w16_structured_model_baselines"
+      ],
+      "prompt": "Audit Wave 16 for overclaiming. Mark which claims remain inactive, which baselines are too strong, which target labels are unseen or under-supported, and which results are vulnerable to hand-coded geometry or leakage.",
+      "outputs": [
+        "Claim ledger update",
+        "Reviewer-risk notes for Wave 16",
+        "Next-wave blockers"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_16_harder_targets.json"
+      ],
+      "acceptance": [
+        "Every active claim has evidence, baseline, and falsification condition",
+        "Known failures are documented instead of hidden",
+        "The next wave has concrete blockers rather than vague research intent"
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "network_and_wave_validate",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_16_harder_targets.json",
+      "success_signal": "The network and Wave 16 plan are internally consistent."
+    },
+    {
+      "id": "partizan_eval_smoke",
+      "command": "python3 engine/test.py",
+      "success_signal": "Current dataset reports and smoke tests pass."
+    },
+    {
+      "id": "python_compile",
+      "command": "python3 -m py_compile engine/ml_model.py engine/test.py engine/orchestrator.py agents/network.py agents/label_schema.py",
+      "success_signal": "Python orchestration and reporting code compiles."
+    },
+    {
+      "id": "engine_crate_quality",
+      "command": "cd ../thermograph && cargo test && cargo clippy --all-targets -- -D warnings && cd ../bitmesh && cargo test && cargo clippy --all-targets -- -D warnings && cd ../astralbase && cargo test && cargo clippy --all-targets -- -D warnings",
+      "success_signal": "All engine crates pass tests and clippy after integration."
+    }
+  ]
+}
