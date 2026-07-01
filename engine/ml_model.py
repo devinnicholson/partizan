@@ -1258,6 +1258,7 @@ def split_assignment_for_row(
 ) -> dict[str, Any]:
     exact = row.get("exact", {}) if isinstance(row.get("exact"), dict) else {}
     exact_value = exact.get("value", {}) if isinstance(exact.get("value"), dict) else {}
+    composition_metadata = composition_certificate_metadata(row)
     return {
         "row_id": str(row.get("row_id")),
         "label_kind": str(row.get("label_kind")),
@@ -1267,6 +1268,13 @@ def split_assignment_for_row(
         "symmetry_position_key": symmetry_position_key,
         "split_key": split_key,
         "exact_certificate_digest": exact_certificate_digest(row),
+        "decomposition_digest": composition_metadata["decomposition_digest"],
+        "composition_digest": composition_metadata["composition_digest"],
+        "component_count": composition_metadata["component_count"],
+        "component_roots": composition_metadata["component_roots"],
+        "component_value_digests": composition_metadata["component_value_digests"],
+        "component_values": composition_metadata["component_values"],
+        "result_value_digest": composition_metadata["result_value_digest"],
         "exact_value_class": str(exact.get("value_class"))
         if exact.get("value_class")
         else None,
@@ -1288,6 +1296,10 @@ def split_report_from_assignments(
     symmetry_assignments = [
         item for item in assignments if item.get("symmetry_position_key")
     ]
+    composition_assignments = [
+        item for item in assignments if item_has_composition_certificate_metadata(item)
+    ]
+    component_value_items = composition_component_value_items(composition_assignments)
     return {
         "splitter_id": splitter_id,
         "dataset_path": str(path),
@@ -1308,6 +1320,18 @@ def split_report_from_assignments(
         "frontier_value_class_counts": _nested_count_by(
             assignments, "split", "frontier_value_class"
         ),
+        "composition_certificate_counts": {
+            "rows_by_split": _count_by(composition_assignments, "split"),
+            "component_count_by_split": _nested_count_by(
+                composition_assignments, "split", "component_count"
+            ),
+            "component_root_counts_by_split": _nested_count_by(
+                component_value_items, "split", "component_root"
+            ),
+            "component_value_digest_counts_by_split": _nested_count_by(
+                component_value_items, "split", "component_value_digest"
+            ),
+        },
         "leakage_checks": {
             "symmetry_position_key_eligible_rows": len(symmetry_assignments),
             "duplicate_row_ids": duplicate_total(
@@ -1326,6 +1350,38 @@ def split_report_from_assignments(
                     if item["exact_certificate_digest"]
                 )
             ),
+            "duplicate_decomposition_digests": duplicate_total(
+                Counter(
+                    item["decomposition_digest"]
+                    for item in assignments
+                    if item["decomposition_digest"]
+                )
+            ),
+            "duplicate_composition_digests": duplicate_total(
+                Counter(
+                    item["composition_digest"]
+                    for item in assignments
+                    if item["composition_digest"]
+                )
+            ),
+            "duplicate_component_roots": duplicate_total(
+                Counter(item["component_root"] for item in component_value_items)
+            ),
+            "duplicate_component_value_digests": duplicate_total(
+                Counter(
+                    item["component_value_digest"] for item in component_value_items
+                )
+            ),
+            "duplicate_component_value_pairs": duplicate_total(
+                Counter(item["component_value_pair"] for item in component_value_items)
+            ),
+            "duplicate_result_value_digests": duplicate_total(
+                Counter(
+                    item["result_value_digest"]
+                    for item in assignments
+                    if item["result_value_digest"]
+                )
+            ),
             "position_key_cross_split": cross_split_summary(
                 assignments, "position_key"
             ),
@@ -1339,6 +1395,42 @@ def split_report_from_assignments(
                     if item["exact_certificate_digest"]
                 ],
                 "exact_certificate_digest",
+            ),
+            "decomposition_digest_cross_split": cross_split_summary(
+                [
+                    item
+                    for item in assignments
+                    if item["decomposition_digest"]
+                ],
+                "decomposition_digest",
+            ),
+            "composition_digest_cross_split": cross_split_summary(
+                [
+                    item
+                    for item in assignments
+                    if item["composition_digest"]
+                ],
+                "composition_digest",
+            ),
+            "component_root_cross_split": cross_split_summary(
+                component_value_items,
+                "component_root",
+            ),
+            "component_value_digest_cross_split": cross_split_summary(
+                component_value_items,
+                "component_value_digest",
+            ),
+            "component_value_pair_cross_split": cross_split_summary(
+                component_value_items,
+                "component_value_pair",
+            ),
+            "result_value_digest_cross_split": cross_split_summary(
+                [
+                    item
+                    for item in assignments
+                    if item["result_value_digest"]
+                ],
+                "result_value_digest",
             ),
         },
     }
@@ -1531,6 +1623,103 @@ def exact_certificate_digest(row: dict[str, Any]) -> str | None:
     if not isinstance(certificate, dict) or not certificate.get("digest"):
         return None
     return str(certificate["digest"])
+
+
+def composition_certificate_metadata(row: dict[str, Any]) -> dict[str, Any]:
+    provenance = row.get("provenance")
+    if not isinstance(provenance, dict):
+        return empty_composition_certificate_metadata()
+    certificate = provenance.get("certificate")
+    if not isinstance(certificate, dict):
+        return empty_composition_certificate_metadata()
+
+    raw_component_values = certificate.get("component_values")
+    component_values: dict[str, str] = {}
+    if isinstance(raw_component_values, dict):
+        for component_root, value_digest in raw_component_values.items():
+            if component_root is None or value_digest is None:
+                continue
+            root_text = str(component_root)
+            digest_text = str(value_digest)
+            if root_text and digest_text:
+                component_values[root_text] = digest_text
+        component_values = dict(sorted(component_values.items()))
+
+    component_value_digests = [
+        value_digest for _component_root, value_digest in component_values.items()
+    ]
+
+    return {
+        "decomposition_digest": _optional_non_empty_str(
+            certificate.get("decomposition_digest")
+        ),
+        "composition_digest": _optional_non_empty_str(
+            certificate.get("composition_digest")
+        ),
+        "component_count": len(component_values)
+        if isinstance(raw_component_values, dict)
+        else None,
+        "component_values": component_values,
+        "component_roots": list(component_values),
+        "component_value_digests": component_value_digests,
+        "result_value_digest": _optional_non_empty_str(
+            certificate.get("result_value_digest")
+        ),
+    }
+
+
+def empty_composition_certificate_metadata() -> dict[str, Any]:
+    return {
+        "decomposition_digest": None,
+        "composition_digest": None,
+        "component_count": None,
+        "component_values": {},
+        "component_roots": [],
+        "component_value_digests": [],
+        "result_value_digest": None,
+    }
+
+
+def _optional_non_empty_str(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value)
+    if not text:
+        return None
+    return text
+
+
+def item_has_composition_certificate_metadata(item: dict[str, Any]) -> bool:
+    return any(
+        (
+            item.get("decomposition_digest"),
+            item.get("composition_digest"),
+            item.get("component_values"),
+            item.get("result_value_digest"),
+        )
+    )
+
+
+def composition_component_value_items(
+    assignments: list[dict[str, Any]]
+) -> list[dict[str, str]]:
+    items: list[dict[str, str]] = []
+    for assignment in assignments:
+        component_values = assignment.get("component_values")
+        if not isinstance(component_values, dict):
+            continue
+        for component_root, value_digest in component_values.items():
+            root_text = str(component_root)
+            digest_text = str(value_digest)
+            items.append(
+                {
+                    "split": str(assignment["split"]),
+                    "component_root": root_text,
+                    "component_value_digest": digest_text,
+                    "component_value_pair": f"{root_text}={digest_text}",
+                }
+            )
+    return items
 
 
 def split_for_key(split_key: str) -> str:

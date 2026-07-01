@@ -174,3 +174,17 @@ require astralbase and partizan to add root coverage, verified thermograph value
 payloads, composition-result verification, nested schema validation, and
 composition-certificate leakage reports before any decomposition-benefit claim
 can activate.
+
+The first Wave 17 fixture shard at
+`/private/tmp/partizan-composition-hard-target-wave-17.jsonl` is eligible only
+as a composition-certificate plumbing gate. It has one exact row under the
+declared `formal_domain:bitmesh_composition_fixture:v0` fixture domain and
+three rejected controls for weak decomposition, a missing component value
+digest, and a stale composition digest. The exact fixture row may enter only
+fixture-scoped exact tests; it must not be counted as legal chess value evidence
+or as decomposition-benefit evidence. The companion report
+`docs/composition_hard_target_wave_17_symmetry_split_report.json` must preserve
+zero cross-split leakage for position, symmetry key, exact certificate,
+decomposition digest, composition digest, component roots, component value
+digests, component/value pairs, and result value digest before any larger
+composition shard can be used for model evaluation.

@@ -25,11 +25,17 @@ DEFAULT_FAMILY_FRONTIER_SHARD_PATH = Path("/tmp/partizan-family-frontier-wave-07
 DEFAULT_EXPANDED_FAMILY_FRONTIER_SHARD_PATH = Path(
     "/tmp/partizan-expanded-family-frontier-wave-12.jsonl"
 )
+DEFAULT_COMPOSITION_HARD_TARGET_SHARD_PATH = Path(
+    "/tmp/partizan-composition-hard-target-wave-17.jsonl"
+)
 DEFAULT_MANIFEST_PATH = ROOT / "docs" / "dataset_v0_manifest.md"
 DEFAULT_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "frontier_wave_06_manifest.md"
 DEFAULT_FAMILY_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "family_frontier_wave_07_manifest.md"
 DEFAULT_EXPANDED_FAMILY_FRONTIER_MANIFEST_PATH = (
     ROOT / "docs" / "expanded_family_frontier_wave_12_manifest.md"
+)
+DEFAULT_COMPOSITION_HARD_TARGET_MANIFEST_PATH = (
+    ROOT / "docs" / "composition_hard_target_wave_17_manifest.md"
 )
 LABEL_SCHEMA_PATH = ROOT / "agents" / "label_schema.py"
 SCHEMA_VERSION = "partizan.dataset_label.v0"
@@ -61,8 +67,16 @@ ASTRALBASE_EXPANDED_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
     "--",
     "--expanded-family-frontier-label-shard",
 )
+ASTRALBASE_COMPOSITION_HARD_TARGET_SHARD_BASE_COMMAND = (
+    "cargo",
+    "run",
+    "--quiet",
+    "--",
+    "--composition-hard-target-shard",
+)
 DEFAULT_FRONTIER_LIMIT = 1_000
 DEFAULT_FAMILY_FRONTIER_LIMIT_PER_FAMILY = 1_000
+DEFAULT_COMPOSITION_HARD_TARGET_LIMIT = 4
 
 
 class ShardRunnerError(RuntimeError):
@@ -605,6 +619,26 @@ def run_expanded_family_frontier_label_shard(args: argparse.Namespace) -> int:
     )
 
 
+def run_composition_hard_target_shard(args: argparse.Namespace) -> int:
+    generator_command = (
+        *ASTRALBASE_COMPOSITION_HARD_TARGET_SHARD_BASE_COMMAND,
+        "--limit",
+        str(args.limit),
+    )
+    return _run_astralbase_jsonl_shard(
+        args=args,
+        command_name="composition-hard-target-shard",
+        generator_command=generator_command,
+        default_output_path=DEFAULT_COMPOSITION_HARD_TARGET_SHARD_PATH,
+        default_manifest_path=DEFAULT_COMPOSITION_HARD_TARGET_MANIFEST_PATH,
+        manifest_title="Composition Hard Target Wave 17 Manifest",
+        manifest_description=(
+            "This manifest records the deterministic Wave 17 composition-certificate\n"
+            "hard-target JSONL shard generated from the astralbase BMCOMPOSE fixture."
+        ),
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Partizan local orchestration tools.")
     subcommands = parser.add_subparsers(dest="command", required=True)
@@ -739,6 +773,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run the astralbase generator once instead of comparing two runs.",
     )
 
+    composition_parser = subcommands.add_parser(
+        "composition-hard-target-shard",
+        help="Generate, validate, and record the Wave 17 composition hard-target shard.",
+    )
+    composition_parser.add_argument(
+        "--astralbase-dir",
+        type=Path,
+        default=DEFAULT_ASTRALBASE_DIR,
+        help="Path to the astralbase repository.",
+    )
+    composition_parser.add_argument(
+        "--limit",
+        type=int,
+        default=DEFAULT_COMPOSITION_HARD_TARGET_LIMIT,
+        help="Number of composition hard-target rows to write.",
+    )
+    composition_parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_COMPOSITION_HARD_TARGET_SHARD_PATH,
+        help="JSONL artifact path to write.",
+    )
+    composition_parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_COMPOSITION_HARD_TARGET_MANIFEST_PATH,
+        help="Composition hard-target dataset manifest path to write.",
+    )
+    composition_parser.add_argument(
+        "--skip-determinism-check",
+        action="store_true",
+        help="Run the astralbase generator once instead of comparing two runs.",
+    )
+
     return parser
 
 
@@ -761,6 +829,10 @@ def cli_main(argv: list[str] | None = None) -> int:
             if args.limit_per_family < 0:
                 raise ShardRunnerError("--limit-per-family must be non-negative")
             return run_expanded_family_frontier_label_shard(args)
+        if args.command == "composition-hard-target-shard":
+            if args.limit < 0:
+                raise ShardRunnerError("--limit must be non-negative")
+            return run_composition_hard_target_shard(args)
     except ShardRunnerError as error:
         print(f"{args.command}: error: {error}", file=sys.stderr)
         return 1

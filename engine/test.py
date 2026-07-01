@@ -1,6 +1,9 @@
+import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from ml_model import (
+    composition_certificate_metadata,
     evaluate_geometry_probe_report,
     evaluate_family_holdout_report,
     evaluate_family_holdout_report_with_mode,
@@ -9,7 +12,9 @@ from ml_model import (
     evaluate_split_baseline_report,
     evaluate_split_report,
     evaluate_split_report_with_mode,
+    exact_certificate_digest,
     fen_d4_symmetry_key,
+    split_for_key,
 )
 
 try:
@@ -31,6 +36,159 @@ def run_symmetry_key_smoke():
     mirrored_fen = "K7/8/8/8/8/8/8/1k5Q w - - 0 1"
     assert fen_d4_symmetry_key(fen) == fen_d4_symmetry_key(mirrored_fen)
     assert fen_d4_symmetry_key("7K/8/8/8/8/8/8/Q5k1 w K - 0 1") is None
+
+
+def run_composition_certificate_report_smoke():
+    certificate = {
+        "kind": "bitmesh-bmcompose-v1+thermograph-exact-value",
+        "digest": "sha256:aggregate-composition",
+        "decomposition_digest": "sha256:strict-decomposition",
+        "composition_digest": "sha256:bmcompose",
+        "component_values": {
+            "0": "sha256:component-a",
+            "63": "sha256:component-b",
+        },
+        "result_value_digest": "sha256:composed-result",
+    }
+    legacy_certificate = {
+        "kind": "legacy-exact",
+        "digest": "sha256:legacy-exact-certificate",
+    }
+    composition_row = _composition_fixture_row(
+        "composition-metadata-row",
+        "8/8/8/8/8/8/K7/7k w - - 0 1",
+        certificate,
+    )
+    metadata = composition_certificate_metadata(composition_row)
+    assert metadata == {
+        "decomposition_digest": "sha256:strict-decomposition",
+        "composition_digest": "sha256:bmcompose",
+        "component_count": 2,
+        "component_values": {
+            "0": "sha256:component-a",
+            "63": "sha256:component-b",
+        },
+        "component_roots": ["0", "63"],
+        "component_value_digests": [
+            "sha256:component-a",
+            "sha256:component-b",
+        ],
+        "result_value_digest": "sha256:composed-result",
+    }
+
+    legacy_row = _composition_fixture_row(
+        "legacy-certificate-row",
+        "8/8/8/8/8/8/1K6/6k1 w - - 0 1",
+        legacy_certificate,
+    )
+    assert exact_certificate_digest(legacy_row) == "sha256:legacy-exact-certificate"
+    assert composition_certificate_metadata(legacy_row) == {
+        "decomposition_digest": None,
+        "composition_digest": None,
+        "component_count": None,
+        "component_values": {},
+        "component_roots": [],
+        "component_value_digests": [],
+        "result_value_digest": None,
+    }
+
+    train_row = _composition_fixture_row_for_split(
+        "composition-train",
+        "train",
+        certificate,
+    )
+    test_row = _composition_fixture_row_for_split(
+        "composition-test",
+        "test",
+        certificate,
+    )
+    legacy_row = _composition_fixture_row_for_split(
+        "legacy-dev",
+        "dev",
+        legacy_certificate,
+    )
+
+    with TemporaryDirectory() as temp_dir:
+        shard_path = Path(temp_dir) / "composition-smoke.jsonl"
+        shard_path.write_text(
+            "\n".join(json.dumps(row, sort_keys=True) for row in [
+                train_row,
+                test_row,
+                legacy_row,
+            ])
+            + "\n",
+            encoding="utf-8",
+        )
+        report = evaluate_split_report(shard_path)
+
+    assert report["composition_certificate_counts"]["rows_by_split"] == {
+        "test": 1,
+        "train": 1,
+    }
+    assert report["composition_certificate_counts"]["component_count_by_split"] == {
+        "test": {"2": 1},
+        "train": {"2": 1},
+    }
+    assert report["composition_certificate_counts"][
+        "component_root_counts_by_split"
+    ] == {
+        "test": {"0": 1, "63": 1},
+        "train": {"0": 1, "63": 1},
+    }
+
+    leakage = report["leakage_checks"]
+    assert leakage["exact_certificate_digest_cross_split"]["violation_count"] == 1
+    assert leakage["decomposition_digest_cross_split"]["violation_count"] == 1
+    assert leakage["composition_digest_cross_split"]["violation_count"] == 1
+    assert leakage["result_value_digest_cross_split"]["violation_count"] == 1
+    assert leakage["component_root_cross_split"]["violation_count"] == 2
+    assert leakage["component_value_digest_cross_split"]["violation_count"] == 2
+    assert leakage["component_value_pair_cross_split"]["violation_count"] == 2
+
+
+def _composition_fixture_row(
+    row_id: str,
+    fen: str,
+    certificate: dict[str, object],
+) -> dict[str, object]:
+    return {
+        "schema_version": "partizan.dataset_label.v0",
+        "row_id": row_id,
+        "domain": "formal_domain:composition_fixture:v0",
+        "position": {"encoding": "fen", "text": fen},
+        "label_kind": "exact",
+        "exact": {
+            "status": "verified",
+            "value": {
+                "digest": "sha256:composed-result",
+                "canonical_serialization": "Number(0/2^0)",
+            },
+            "value_class": "number",
+        },
+        "provenance": {
+            "code_commit": "fixture-commit",
+            "generator": "fixture_composition_generator",
+            "generator_config_hash": "sha256:fixture-config",
+            "random_seed": 0,
+            "domain_definition": "docs/formal_domain.md#composition-fixture",
+            "verifier": "fixture_composition_verifier",
+            "verifier_version": "0.0.1",
+            "certificate": certificate,
+        },
+    }
+
+
+def _composition_fixture_row_for_split(
+    row_id: str,
+    target_split: str,
+    certificate: dict[str, object],
+) -> dict[str, object]:
+    for index in range(1000):
+        fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
+        split_key = f"fixture_composition_generator|fen:{fen}"
+        if split_for_key(split_key) == target_split:
+            return _composition_fixture_row(row_id, fen, certificate)
+    raise AssertionError(f"could not find fixture FEN for split {target_split!r}")
 
 
 def run_baseline_smoke():
@@ -455,6 +613,7 @@ def run_rust_engine_smoke():
 
 def main():
     run_symmetry_key_smoke()
+    run_composition_certificate_report_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()
