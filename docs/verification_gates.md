@@ -177,7 +177,7 @@ can activate.
 
 The first Wave 17 fixture shard at
 `/private/tmp/partizan-composition-hard-target-wave-17.jsonl` is eligible only
-as a composition-certificate plumbing gate. It has 12 exact rows under the
+as a composition-certificate plumbing gate. It has 16 exact rows under the
 declared `formal_domain:bitmesh_composition_fixture:v0` fixture domain and 5
 rejected controls for weak decomposition, a missing component value digest, a
 stale composition digest, a duplicate component root, and unsupported value
@@ -190,3 +190,13 @@ decomposition digest, composition digest, qualified component roots
 (`decomposition_digest:component_root`), component value digests, qualified
 component/value pairs, and result value digest before any larger composition
 shard can be used for model evaluation.
+
+Wave 17 composition holdout reports add exact-only split gates for
+`component_count`, `composition_digest`, and `result_value_digest`. The
+component-count gate currently holds out `component_count=3` exact rows, while
+the digest gates each hold out one exact fixture row. Rejected rows with matching
+metadata must stay in train/dev accounting rather than becoming exact test
+targets, and all holdout reports must preserve zero cross-split leakage for the
+same position, symmetry, certificate, decomposition, composition, qualified
+component, component-value, and result-value identities before decomposition
+baselines can be reported.

@@ -2,10 +2,10 @@
   "composition_certificate_counts": {
     "component_count_by_split": {
       "dev": {
-        "3": 1
+        "2": 1
       },
       "test": {
-        "2": 1
+        "3": 1
       },
       "train": {
         "2": 11,
@@ -14,13 +14,13 @@
     },
     "component_root_counts_by_split": {
       "dev": {
+        "41": 1,
+        "9": 1
+      },
+      "test": {
         "1": 1,
         "25": 1,
         "49": 1
-      },
-      "test": {
-        "41": 1,
-        "9": 1
       },
       "train": {
         "1": 3,
@@ -32,17 +32,17 @@
     },
     "component_value_digest_counts_by_split": {
       "dev": {
-        "04f616ea8bd3ce26": 1,
-        "46b12b9a40ec3ffc": 1,
-        "b16b256df611a585": 1
-      },
-      "test": {
         "2b7b69b6358b8115": 1,
         "b5d98e57bdecc3c2": 1
       },
-      "train": {
-        "062aa4203f6a2598": 1,
+      "test": {
         "073cf9cf4fe4347d": 1,
+        "729111a2a9bea95e": 1,
+        "846901e095f2f727": 1
+      },
+      "train": {
+        "04f616ea8bd3ce26": 1,
+        "062aa4203f6a2598": 1,
         "0d4bac37a5315bee": 1,
         "168b3b7f97d200ef": 1,
         "17bfc8b54b685861": 1,
@@ -53,13 +53,12 @@
         "2c89b400ae513b8b": 1,
         "2f6609ce6612a269": 1,
         "42eafa8449b20b0c": 1,
+        "46b12b9a40ec3ffc": 1,
         "4a9a4b9c662fcfa0": 1,
         "56294f77e809d44b": 1,
         "5dc7265746d5c634": 1,
         "62243884080392b1": 1,
-        "729111a2a9bea95e": 1,
         "7c00699f467f864d": 1,
-        "846901e095f2f727": 1,
         "864f3f9291241358": 1,
         "87619541a19e223d": 1,
         "8b2df7b072f71429": 1,
@@ -68,6 +67,7 @@
         "a3f2c953562a3428": 1,
         "a82b962603710084": 1,
         "ae089d57cfab8fe7": 1,
+        "b16b256df611a585": 1,
         "c8f7ce95ab365c1b": 1,
         "ddebc1c9988fb3f4": 1,
         "e0e2a03eea722da6": 1,
@@ -111,24 +111,27 @@
   },
   "generator_family_counts": {
     "dev": {
-      "astralbase_composition_fixture_generator": 1
-    },
-    "test": {
       "astralbase_composition_fixture_generator": 1,
       "unprovenanced_rejected": 1
+    },
+    "test": {
+      "astralbase_composition_fixture_generator": 1
     },
     "train": {
       "astralbase_composition_fixture_generator": 14,
       "unprovenanced_rejected": 4
     }
   },
+  "holdout_label_kind": "exact",
+  "holdout_selector": "composition_digest",
+  "holdout_value": "0b8695bcb1aede5ba80e69f2a47af29e75b77479b523d98788ccf3cf97f334cc",
   "label_kind_counts": {
     "dev": {
-      "exact": 1
-    },
-    "test": {
       "exact": 1,
       "rejected": 1
+    },
+    "test": {
+      "exact": 1
     },
     "train": {
       "exact": 14,
@@ -185,16 +188,19 @@
     "symmetry_position_key_eligible_rows": 21
   },
   "row_counts": {
-    "dev": 1,
-    "test": 2,
+    "dev": 2,
+    "test": 1,
     "train": 18
   },
   "schema_version": "partizan.dataset_label.v0",
   "split_policy": {
-    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "dev": "not (label_kind == exact and composition_certificate.composition_digest == holdout_value) and sha256(split_key) % 100 >= 90",
+    "holdout_label_kind": "exact",
+    "holdout_selector": "composition_digest",
+    "holdout_value": "0b8695bcb1aede5ba80e69f2a47af29e75b77479b523d98788ccf3cf97f334cc",
     "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
-    "test": "90 <= sha256(split_key) % 100",
-    "train": "sha256(split_key) % 100 < 80"
+    "test": "label_kind == exact and composition_certificate.composition_digest == holdout_value",
+    "train": "not (label_kind == exact and composition_certificate.composition_digest == holdout_value) and sha256(split_key) % 100 < 90"
   },
-  "splitter_id": "deterministic_generator_symmetry_hash_v0"
+  "splitter_id": "composition_holdout_composition_digest_generator_symmetry_hash_v0"
 }

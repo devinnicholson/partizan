@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 
 from ml_model import (
     composition_certificate_metadata,
+    evaluate_composition_holdout_report,
     evaluate_geometry_probe_report,
     evaluate_family_holdout_report,
     evaluate_family_holdout_report_with_mode,
@@ -15,6 +16,7 @@ from ml_model import (
     exact_certificate_digest,
     fen_d4_symmetry_key,
     split_for_key,
+    train_dev_split_for_key,
 )
 
 try:
@@ -146,6 +148,134 @@ def run_composition_certificate_report_smoke():
     assert leakage["component_value_pair_cross_split"]["violation_count"] == 2
 
 
+def run_composition_holdout_report_smoke():
+    shared_count_holdout_certificate = {
+        "kind": "bitmesh-bmcompose-v1+thermograph-exact-value",
+        "digest": "sha256:shared-count-holdout-certificate",
+        "decomposition_digest": "sha256:shared-decomposition",
+        "composition_digest": "sha256:shared-composition",
+        "component_values": {
+            "0": "sha256:shared-component-a",
+            "63": "sha256:shared-component-b",
+        },
+        "result_value_digest": "sha256:shared-result",
+    }
+    count_only_holdout_certificate = {
+        "kind": "bitmesh-bmcompose-v1+thermograph-exact-value",
+        "digest": "sha256:count-only-holdout-certificate",
+        "decomposition_digest": "sha256:count-only-decomposition",
+        "composition_digest": "sha256:count-only-composition",
+        "component_values": {
+            "1": "sha256:count-only-component-a",
+            "62": "sha256:count-only-component-b",
+        },
+        "result_value_digest": "sha256:count-only-result",
+    }
+    train_leakage_certificate = {
+        "kind": "bitmesh-bmcompose-v1+thermograph-exact-value",
+        "digest": "sha256:train-leakage-certificate",
+        "decomposition_digest": "sha256:shared-decomposition",
+        "composition_digest": "sha256:shared-composition",
+        "component_values": {
+            "0": "sha256:shared-component-a",
+        },
+        "result_value_digest": "sha256:shared-result",
+    }
+    rejected_matching_certificate = {
+        "kind": "bitmesh-bmcompose-v1+thermograph-exact-value",
+        "digest": "sha256:rejected-matching-certificate",
+        "decomposition_digest": "sha256:rejected-decomposition",
+        "composition_digest": "sha256:rejected-composition",
+        "component_values": {
+            "2": "sha256:rejected-component-a",
+            "61": "sha256:rejected-component-b",
+        },
+        "result_value_digest": "sha256:rejected-result",
+    }
+
+    rows = [
+        _composition_fixture_row(
+            "composition-holdout-shared",
+            "8/8/8/8/8/8/K7/7k w - - 0 11",
+            shared_count_holdout_certificate,
+        ),
+        _composition_fixture_row_for_train_dev_split(
+            "composition-holdout-count-only",
+            "train",
+            count_only_holdout_certificate,
+            start_index=1000,
+        ),
+        _composition_fixture_row_for_train_dev_split(
+            "composition-train-leakage",
+            "train",
+            train_leakage_certificate,
+            start_index=2000,
+        ),
+        _composition_rejected_fixture_row_for_train_dev_split(
+            "composition-rejected-matching-count",
+            "train",
+            rejected_matching_certificate,
+            start_index=3000,
+        ),
+    ]
+
+    with TemporaryDirectory() as temp_dir:
+        shard_path = Path(temp_dir) / "composition-holdout-smoke.jsonl"
+        shard_path.write_text(
+            "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
+            encoding="utf-8",
+        )
+        component_count_report = evaluate_composition_holdout_report(
+            shard_path,
+            "component_count",
+            2,
+        )
+        composition_digest_report = evaluate_composition_holdout_report(
+            shard_path,
+            "composition_digest",
+            "sha256:shared-composition",
+        )
+        result_value_digest_report = evaluate_composition_holdout_report(
+            shard_path,
+            "result_value_digest",
+            "sha256:shared-result",
+        )
+
+    assert (
+        component_count_report["splitter_id"]
+        == "composition_holdout_component_count_generator_position_hash_v0"
+    )
+    assert component_count_report["holdout_selector"] == "component_count"
+    assert component_count_report["holdout_value"] == "2"
+    assert component_count_report["holdout_label_kind"] == "exact"
+    assert component_count_report["row_counts"] == {"test": 2, "train": 2}
+    assert component_count_report["label_kind_counts"]["test"] == {"exact": 2}
+    assert component_count_report["label_kind_counts"]["train"] == {
+        "exact": 1,
+        "rejected": 1,
+    }
+    assert component_count_report["composition_certificate_counts"][
+        "component_count_by_split"
+    ] == {
+        "test": {"2": 2},
+        "train": {"1": 1, "2": 1},
+    }
+    leakage = component_count_report["leakage_checks"]
+    assert leakage["composition_digest_cross_split"]["violation_count"] == 1
+    assert leakage["result_value_digest_cross_split"]["violation_count"] == 1
+    assert leakage["component_root_cross_split"]["violation_count"] == 1
+    assert leakage["component_value_digest_cross_split"]["violation_count"] == 1
+    assert leakage["component_value_pair_cross_split"]["violation_count"] == 1
+
+    assert composition_digest_report["holdout_selector"] == "composition_digest"
+    assert composition_digest_report["row_counts"] == {"test": 2, "train": 2}
+    assert composition_digest_report["label_kind_counts"]["test"] == {"exact": 2}
+
+    assert result_value_digest_report["holdout_selector"] == "result_value_digest"
+    assert result_value_digest_report["row_counts"] == {"test": 2, "train": 2}
+    assert result_value_digest_report["label_kind_counts"]["test"] == {"exact": 2}
+
+
 def _composition_fixture_row(
     row_id: str,
     fen: str,
@@ -189,6 +319,62 @@ def _composition_fixture_row_for_split(
         if split_for_key(split_key) == target_split:
             return _composition_fixture_row(row_id, fen, certificate)
     raise AssertionError(f"could not find fixture FEN for split {target_split!r}")
+
+
+def _composition_fixture_row_for_train_dev_split(
+    row_id: str,
+    target_split: str,
+    certificate: dict[str, object],
+    start_index: int = 0,
+) -> dict[str, object]:
+    for index in range(start_index, start_index + 1000):
+        fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
+        split_key = f"fixture_composition_generator|fen:{fen}"
+        if train_dev_split_for_key(split_key) == target_split:
+            return _composition_fixture_row(row_id, fen, certificate)
+    raise AssertionError(f"could not find fixture FEN for train/dev split {target_split!r}")
+
+
+def _composition_rejected_fixture_row(
+    row_id: str,
+    fen: str,
+    certificate: dict[str, object],
+) -> dict[str, object]:
+    return {
+        "schema_version": "partizan.dataset_label.v0",
+        "row_id": row_id,
+        "domain": "formal_domain:composition_fixture:v0",
+        "position": {"encoding": "fen", "text": fen},
+        "label_kind": "rejected",
+        "rejected": {
+            "status": "excluded",
+            "reasons": ["synthetic composition holdout negative"],
+        },
+        "provenance": {
+            "code_commit": "fixture-commit",
+            "generator": "fixture_composition_generator",
+            "generator_config_hash": "sha256:fixture-config",
+            "random_seed": 0,
+            "domain_definition": "docs/formal_domain.md#composition-fixture",
+            "verifier": "fixture_composition_verifier",
+            "verifier_version": "0.0.1",
+            "certificate": certificate,
+        },
+    }
+
+
+def _composition_rejected_fixture_row_for_train_dev_split(
+    row_id: str,
+    target_split: str,
+    certificate: dict[str, object],
+    start_index: int = 0,
+) -> dict[str, object]:
+    for index in range(start_index, start_index + 1000):
+        fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
+        split_key = f"fixture_composition_generator|fen:{fen}"
+        if train_dev_split_for_key(split_key) == target_split:
+            return _composition_rejected_fixture_row(row_id, fen, certificate)
+    raise AssertionError(f"could not find fixture FEN for train/dev split {target_split!r}")
 
 
 def run_baseline_smoke():
@@ -614,6 +800,7 @@ def run_rust_engine_smoke():
 def main():
     run_symmetry_key_smoke()
     run_composition_certificate_report_smoke()
+    run_composition_holdout_report_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()

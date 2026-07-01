@@ -32,6 +32,11 @@ else:
 
 SCHEMA_VERSION = "partizan.dataset_label.v0"
 EXACT_REJECTED_LABELS = ("exact", "rejected")
+COMPOSITION_HOLDOUT_SELECTORS = (
+    "component_count",
+    "composition_digest",
+    "result_value_digest",
+)
 SUPPORTED_POSITION_ENCODINGS = {"fen", "cgt_canonical"}
 FEN_GATE_POSITION_ENCODING = "fen"
 PIECE_VALUES = {
@@ -703,6 +708,45 @@ def evaluate_family_holdout_report_with_mode(
     return report
 
 
+def evaluate_composition_holdout_report(
+    jsonl_path: str | Path,
+    holdout_selector: str,
+    holdout_value: Any,
+) -> dict[str, Any]:
+    """Build an exact-composition-held-out split report for a shard."""
+    return evaluate_composition_holdout_report_with_mode(
+        jsonl_path, holdout_selector, holdout_value, "position"
+    )
+
+
+def evaluate_composition_holdout_report_with_mode(
+    jsonl_path: str | Path,
+    holdout_selector: str,
+    holdout_value: Any,
+    split_key_mode: str,
+) -> dict[str, Any]:
+    """Build an exact-composition-held-out report with train/dev hashing."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = composition_holdout_assignments_for_rows(
+        rows, holdout_selector, holdout_value, split_key_mode
+    )
+
+    report = split_report_from_assignments(
+        path,
+        assignments,
+        composition_holdout_report_id_for_mode(split_key_mode, holdout_selector),
+        composition_holdout_policy_for_mode(
+            split_key_mode, holdout_selector, holdout_value
+        ),
+    )
+    report["holdout_selector"] = holdout_selector
+    report["holdout_value"] = str(holdout_value)
+    report["holdout_label_kind"] = "exact"
+    return report
+
+
 def evaluate_split_baseline_report(
     jsonl_path: str | Path,
     split_key_mode: str = "position",
@@ -1248,6 +1292,45 @@ def family_holdout_assignments_for_rows(
     return assignments
 
 
+def composition_holdout_assignments_for_rows(
+    rows: list[dict[str, Any]],
+    holdout_selector: str,
+    holdout_value: Any,
+    split_key_mode: str,
+) -> list[dict[str, Any]]:
+    if holdout_selector not in COMPOSITION_HOLDOUT_SELECTORS:
+        raise ValueError(f"unsupported composition holdout selector {holdout_selector!r}")
+
+    target_value = str(holdout_value)
+    assignments = []
+    for row in rows:
+        family = generator_family(row)
+        position_key = position_key_for_row(row)
+        symmetry_position_key = symmetry_position_key_for_row(row)
+        split_key = split_key_for_mode(
+            family, position_key, symmetry_position_key, split_key_mode
+        )
+        composition_metadata = composition_certificate_metadata(row)
+        selector_value = composition_holdout_value(
+            composition_metadata, holdout_selector
+        )
+        if row.get("label_kind") == "exact" and selector_value == target_value:
+            split = "test"
+        else:
+            split = train_dev_split_for_key(split_key)
+        assignments.append(
+            split_assignment_for_row(
+                row,
+                split,
+                family,
+                position_key,
+                symmetry_position_key,
+                split_key,
+            )
+        )
+    return assignments
+
+
 def split_assignment_for_row(
     row: dict[str, Any],
     split: str,
@@ -1584,6 +1667,18 @@ def split_report_id_for_mode(split_key_mode: str, family_holdout: bool) -> str:
     raise ValueError(f"unsupported split_key_mode {split_key_mode!r}")
 
 
+def composition_holdout_report_id_for_mode(
+    split_key_mode: str, holdout_selector: str
+) -> str:
+    if holdout_selector not in COMPOSITION_HOLDOUT_SELECTORS:
+        raise ValueError(f"unsupported composition holdout selector {holdout_selector!r}")
+    if split_key_mode == "position":
+        return f"composition_holdout_{holdout_selector}_generator_position_hash_v0"
+    if split_key_mode == "symmetry":
+        return f"composition_holdout_{holdout_selector}_generator_symmetry_hash_v0"
+    raise ValueError(f"unsupported split_key_mode {split_key_mode!r}")
+
+
 def split_policy_for_mode(
     split_key_mode: str,
     family_holdout: bool,
@@ -1614,6 +1709,37 @@ def split_policy_for_mode(
         "dev": "80 <= sha256(split_key) % 100 < 90",
         "test": "90 <= sha256(split_key) % 100",
         "split_key": split_key,
+    }
+
+
+def composition_holdout_policy_for_mode(
+    split_key_mode: str,
+    holdout_selector: str,
+    holdout_value: Any,
+) -> dict[str, str]:
+    if holdout_selector not in COMPOSITION_HOLDOUT_SELECTORS:
+        raise ValueError(f"unsupported composition holdout selector {holdout_selector!r}")
+
+    base_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
+    return {
+        "train": (
+            "not (label_kind == exact and composition_certificate."
+            f"{holdout_selector} == holdout_value) "
+            "and sha256(split_key) % 100 < 90"
+        ),
+        "dev": (
+            "not (label_kind == exact and composition_certificate."
+            f"{holdout_selector} == holdout_value) "
+            "and sha256(split_key) % 100 >= 90"
+        ),
+        "test": (
+            "label_kind == exact and composition_certificate."
+            f"{holdout_selector} == holdout_value"
+        ),
+        "split_key": base_policy["split_key"],
+        "holdout_selector": holdout_selector,
+        "holdout_value": str(holdout_value),
+        "holdout_label_kind": "exact",
     }
 
 
@@ -1680,6 +1806,17 @@ def empty_composition_certificate_metadata() -> dict[str, Any]:
         "component_value_digests": [],
         "result_value_digest": None,
     }
+
+
+def composition_holdout_value(
+    composition_metadata: dict[str, Any], holdout_selector: str
+) -> str | None:
+    if holdout_selector not in COMPOSITION_HOLDOUT_SELECTORS:
+        raise ValueError(f"unsupported composition holdout selector {holdout_selector!r}")
+    value = composition_metadata.get(holdout_selector)
+    if value is None:
+        return None
+    return str(value)
 
 
 def _optional_non_empty_str(value: Any) -> str | None:
@@ -1896,6 +2033,29 @@ def build_parser() -> argparse.ArgumentParser:
         help="Position key policy used for train/dev assignment.",
     )
 
+    composition_holdout_parser = subcommands.add_parser(
+        "composition-holdout-report",
+        help="Build an exact-composition-held-out split and leakage report.",
+    )
+    composition_holdout_parser.add_argument("jsonl_path", type=Path)
+    composition_holdout_parser.add_argument(
+        "--holdout-selector",
+        choices=COMPOSITION_HOLDOUT_SELECTORS,
+        required=True,
+    )
+    composition_holdout_parser.add_argument("--holdout-value", required=True)
+    composition_holdout_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the holdout report JSON.",
+    )
+    composition_holdout_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for train/dev assignment.",
+    )
+
     split_baseline_parser = subcommands.add_parser(
         "split-baseline-report",
         help="Score deterministic baselines per split.",
@@ -1993,6 +2153,21 @@ def cli_main(argv: list[str] | None = None) -> int:
     if args.command == "family-holdout-report":
         report = evaluate_family_holdout_report_with_mode(
             args.jsonl_path, args.holdout_family, args.split_key_mode
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+    if args.command == "composition-holdout-report":
+        report = evaluate_composition_holdout_report_with_mode(
+            args.jsonl_path,
+            args.holdout_selector,
+            args.holdout_value,
+            args.split_key_mode,
         )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
