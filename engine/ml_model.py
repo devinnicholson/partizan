@@ -1365,7 +1365,7 @@ def split_report_from_assignments(
                 )
             ),
             "duplicate_component_roots": duplicate_total(
-                Counter(item["component_root"] for item in component_value_items)
+                Counter(item["component_identity"] for item in component_value_items)
             ),
             "duplicate_component_value_digests": duplicate_total(
                 Counter(
@@ -1373,7 +1373,9 @@ def split_report_from_assignments(
                 )
             ),
             "duplicate_component_value_pairs": duplicate_total(
-                Counter(item["component_value_pair"] for item in component_value_items)
+                Counter(
+                    item["component_value_identity"] for item in component_value_items
+                )
             ),
             "duplicate_result_value_digests": duplicate_total(
                 Counter(
@@ -1414,7 +1416,7 @@ def split_report_from_assignments(
             ),
             "component_root_cross_split": cross_split_summary(
                 component_value_items,
-                "component_root",
+                "component_identity",
             ),
             "component_value_digest_cross_split": cross_split_summary(
                 component_value_items,
@@ -1422,7 +1424,7 @@ def split_report_from_assignments(
             ),
             "component_value_pair_cross_split": cross_split_summary(
                 component_value_items,
-                "component_value_pair",
+                "component_value_identity",
             ),
             "result_value_digest_cross_split": cross_split_summary(
                 [
@@ -1708,15 +1710,21 @@ def composition_component_value_items(
         component_values = assignment.get("component_values")
         if not isinstance(component_values, dict):
             continue
+        decomposition_digest = str(assignment.get("decomposition_digest") or "")
         for component_root, value_digest in component_values.items():
             root_text = str(component_root)
             digest_text = str(value_digest)
+            component_identity = f"{decomposition_digest}:{root_text}"
             items.append(
                 {
                     "split": str(assignment["split"]),
                     "component_root": root_text,
+                    "component_identity": component_identity,
                     "component_value_digest": digest_text,
                     "component_value_pair": f"{root_text}={digest_text}",
+                    "component_value_identity": (
+                        f"{component_identity}={digest_text}"
+                    ),
                 }
             )
     return items

@@ -177,14 +177,16 @@ can activate.
 
 The first Wave 17 fixture shard at
 `/private/tmp/partizan-composition-hard-target-wave-17.jsonl` is eligible only
-as a composition-certificate plumbing gate. It has one exact row under the
-declared `formal_domain:bitmesh_composition_fixture:v0` fixture domain and
-three rejected controls for weak decomposition, a missing component value
-digest, and a stale composition digest. The exact fixture row may enter only
-fixture-scoped exact tests; it must not be counted as legal chess value evidence
-or as decomposition-benefit evidence. The companion report
+as a composition-certificate plumbing gate. It has 12 exact rows under the
+declared `formal_domain:bitmesh_composition_fixture:v0` fixture domain and 5
+rejected controls for weak decomposition, a missing component value digest, a
+stale composition digest, a duplicate component root, and unsupported value
+composition. Exact fixture rows may enter only fixture-scoped exact tests; they
+must not be counted as legal chess value evidence or as decomposition-benefit
+evidence. The companion report
 `docs/composition_hard_target_wave_17_symmetry_split_report.json` must preserve
 zero cross-split leakage for position, symmetry key, exact certificate,
-decomposition digest, composition digest, component roots, component value
-digests, component/value pairs, and result value digest before any larger
-composition shard can be used for model evaluation.
+decomposition digest, composition digest, qualified component roots
+(`decomposition_digest:component_root`), component value digests, qualified
+component/value pairs, and result value digest before any larger composition
+shard can be used for model evaluation.

@@ -1,38 +1,74 @@
 {
   "composition_certificate_counts": {
     "component_count_by_split": {
-      "train": {
+      "test": {
         "2": 1
+      },
+      "train": {
+        "2": 11
       }
     },
     "component_root_counts_by_split": {
-      "train": {
+      "test": {
         "41": 1,
         "9": 1
+      },
+      "train": {
+        "41": 11,
+        "9": 11
       }
     },
     "component_value_digest_counts_by_split": {
+      "test": {
+        "2b7b69b6358b8115": 1,
+        "b5d98e57bdecc3c2": 1
+      },
       "train": {
+        "062aa4203f6a2598": 1,
+        "0d4bac37a5315bee": 1,
+        "17bfc8b54b685861": 1,
+        "18116924a72cb532": 1,
+        "2230e713acb298f7": 1,
+        "2c89b400ae513b8b": 1,
+        "42eafa8449b20b0c": 1,
+        "56294f77e809d44b": 1,
+        "5dc7265746d5c634": 1,
+        "62243884080392b1": 1,
+        "7c00699f467f864d": 1,
+        "864f3f9291241358": 1,
+        "87619541a19e223d": 1,
+        "97e464279d224621": 1,
+        "98360496f8e6a2f2": 1,
+        "a3f2c953562a3428": 1,
+        "a82b962603710084": 1,
         "ae089d57cfab8fe7": 1,
-        "ddebc1c9988fb3f4": 1
+        "c8f7ce95ab365c1b": 1,
+        "ddebc1c9988fb3f4": 1,
+        "e0e2a03eea722da6": 1,
+        "f277c4d3f670606f": 1
       }
     },
     "rows_by_split": {
-      "train": 1
+      "test": 1,
+      "train": 11
     }
   },
   "dataset_path": "/tmp/partizan-composition-hard-target-wave-17.jsonl",
-  "dataset_sha256": "b0218d2c215ca9cc08b495393391bc09b43f1acac7bf58178caaafdb10cd5e77",
+  "dataset_sha256": "37abac744ee87fe1b79a6d75729477765b319f7f8e3c14c675b3fb5a60ecf392",
   "exact_solver_scope_counts": {
-    "test": {},
-    "train": {
+    "test": {
       "composition_certificate_fixture": 1
+    },
+    "train": {
+      "composition_certificate_fixture": 11
     }
   },
   "exact_value_class_counts": {
-    "test": {},
-    "train": {
+    "test": {
       "number": 1
+    },
+    "train": {
+      "number": 11
     }
   },
   "frontier_value_class_counts": {
@@ -41,20 +77,22 @@
   },
   "generator_family_counts": {
     "test": {
+      "astralbase_composition_fixture_generator": 1,
       "unprovenanced_rejected": 1
     },
     "train": {
-      "astralbase_composition_fixture_generator": 1,
-      "unprovenanced_rejected": 2
+      "astralbase_composition_fixture_generator": 11,
+      "unprovenanced_rejected": 4
     }
   },
   "label_kind_counts": {
     "test": {
+      "exact": 1,
       "rejected": 1
     },
     "train": {
-      "exact": 1,
-      "rejected": 2
+      "exact": 11,
+      "rejected": 4
     }
   },
   "leakage_checks": {
@@ -104,11 +142,11 @@
       "examples": [],
       "violation_count": 0
     },
-    "symmetry_position_key_eligible_rows": 4
+    "symmetry_position_key_eligible_rows": 17
   },
   "row_counts": {
-    "test": 1,
-    "train": 3
+    "test": 2,
+    "train": 15
   },
   "schema_version": "partizan.dataset_label.v0",
   "split_policy": {

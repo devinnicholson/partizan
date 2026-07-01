@@ -96,15 +96,15 @@ checks, and decomposition-aware baselines before claims can move.
 
 The first Wave 17 implementation slice adds a deterministic BMCOMPOSE fixture
 shard at `/private/tmp/partizan-composition-hard-target-wave-17.jsonl`,
-SHA-256 `b0218d2c215ca9cc08b495393391bc09b43f1acac7bf58178caaafdb10cd5e77`,
-with 4 rows (1 exact fixture-number composition certificate, 3 rejected
+SHA-256 `37abac744ee87fe1b79a6d75729477765b319f7f8e3c14c675b3fb5a60ecf392`,
+with 17 rows (12 exact fixture-number composition certificates, 5 rejected
 composition controls). The companion symmetry split report
 `docs/composition_hard_target_wave_17_symmetry_split_report.json` has zero
 position, symmetry, exact-certificate, decomposition, composition,
-component-root, component-value, component-pair, and result-value cross-split
-leakage. This is still a plumbing result: the exact row uses a declared fixture
-sum over verified component value digests, not a legal chess value proof or a
-model result.
+qualified component-root, component-value, component-pair, and result-value
+cross-split leakage. This is still a plumbing result: exact rows use declared
+fixture sums over verified component value digests, not legal chess value
+proofs or model results.
 
 | ID | Claim | Current Evidence Status | Required Evidence | Baselines | Falsification Condition | Current Blocker / Next Evidence | Owner |
 | --- | --- | --- | --- | --- | --- | --- | --- |
