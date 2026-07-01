@@ -596,6 +596,17 @@ def _classification_metrics(
     }
 
 
+def composition_exact_result_metrics(
+    targets: list[str],
+    predictions: list[str],
+) -> dict[str, Any]:
+    correct = sum(1 for target, prediction in zip(targets, predictions) if target == prediction)
+    return {
+        "accuracy": _safe_div(correct, len(targets)),
+        "correct": correct,
+    }
+
+
 def _safe_div(numerator: float, denominator: float) -> float:
     if denominator == 0:
         return 0.0
@@ -745,6 +756,108 @@ def evaluate_composition_holdout_report_with_mode(
     report["holdout_value"] = str(holdout_value)
     report["holdout_label_kind"] = "exact"
     return report
+
+
+def evaluate_composition_baseline_report(
+    jsonl_path: str | Path,
+    holdout_selector: str,
+    holdout_value: Any,
+    split_key_mode: str = "position",
+) -> dict[str, Any]:
+    """Score deterministic exact-result baselines on a composition holdout split."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = composition_holdout_assignments_for_rows(
+        rows, holdout_selector, holdout_value, split_key_mode
+    )
+    split_metadata = split_report_from_assignments(
+        path,
+        assignments,
+        composition_holdout_report_id_for_mode(split_key_mode, holdout_selector),
+        composition_holdout_policy_for_mode(
+            split_key_mode, holdout_selector, holdout_value
+        ),
+    )
+
+    target_field = "canonical_serialization"
+    examples, excluded = composition_baseline_examples(
+        rows, assignments, target_field
+    )
+    train_targets = [
+        example["target"] for example in examples if example["split"] == "train"
+    ]
+    if not train_targets:
+        raise ValueError("composition baseline report requires train exact targets")
+
+    majority_prediction = _majority_label(train_targets)
+    material_predictions = composition_material_feature_predictions(
+        examples, majority_prediction
+    )
+    fixture_predictions = [
+        fixture_component_sum_prediction(example["row"]) for example in examples
+    ]
+
+    split_metadata.update(
+        {
+            "baseline_id": "composition_exact_result_baselines_v0",
+            "target": f"exact.value.{target_field}",
+            "eligible_label_kinds": ["exact"],
+            "holdout_selector": holdout_selector,
+            "holdout_value": str(holdout_value),
+            "holdout_label_kind": "exact",
+            "exact_target_counts_by_split": _nested_count_by(
+                examples, "split", "target"
+            ),
+            "excluded_from_target_metrics": excluded,
+            "predictors": {
+                "train_majority": composition_predictor_report(
+                    examples,
+                    [majority_prediction for _example in examples],
+                    {
+                        "baseline_id": "composition_train_majority_exact_result_v0",
+                        "description": (
+                            "Predicts the most common exact target among exact train rows."
+                        ),
+                        "uses_decomposition_metadata": False,
+                        "train_majority_prediction": majority_prediction,
+                    },
+                ),
+                "fen_material_feature_majority": composition_predictor_report(
+                    examples,
+                    material_predictions,
+                    {
+                        "baseline_id": (
+                            "composition_fen_material_feature_majority_v0"
+                        ),
+                        "description": (
+                            "Uses deterministic FEN material/count features from "
+                            "exact train rows, falling back to train_majority."
+                        ),
+                        "uses_decomposition_metadata": False,
+                        "fallback_prediction": majority_prediction,
+                    },
+                ),
+                "fixture_component_sum": composition_predictor_report(
+                    examples,
+                    fixture_predictions,
+                    {
+                        "baseline_id": "fixture_component_integer_sum_v0",
+                        "description": (
+                            "Fixture-only verifier sanity check: parses "
+                            "exact.value.component_values summaries and sums "
+                            "integer component values. This is not evidence of "
+                            "learned decomposition."
+                        ),
+                        "uses_decomposition_metadata": True,
+                        "fixture_only": True,
+                        "verifier_sanity_check": True,
+                    },
+                ),
+            },
+        }
+    )
+    return split_metadata
 
 
 def evaluate_split_baseline_report(
@@ -1032,6 +1145,208 @@ def frontier_target_examples(
             continue
         examples.append({"split": assignment["split"], "target": str(target)})
     return examples
+
+
+def composition_baseline_examples(
+    rows: list[dict[str, Any]],
+    assignments: list[dict[str, Any]],
+    target_field: str,
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, int]]]:
+    examples: list[dict[str, Any]] = []
+    non_exact_by_split: Counter[str] = Counter()
+    missing_target_by_split: Counter[str] = Counter()
+
+    for row, assignment in zip(rows, assignments):
+        split = str(assignment["split"])
+        if row.get("label_kind") != "exact":
+            non_exact_by_split[split] += 1
+            continue
+
+        target = exact_result_target(row, target_field)
+        if target is None:
+            missing_target_by_split[split] += 1
+            continue
+
+        features = derive_position_features(row)
+        examples.append(
+            {
+                "row": row,
+                "row_id": str(row.get("row_id")),
+                "split": split,
+                "target": target,
+                "fen_material_feature_key": fen_material_feature_key(features),
+            }
+        )
+
+    return examples, {
+        "non_exact_rows_by_split": dict(sorted(non_exact_by_split.items())),
+        "exact_rows_missing_target_by_split": dict(
+            sorted(missing_target_by_split.items())
+        ),
+    }
+
+
+def exact_result_target(row: dict[str, Any], target_field: str) -> str | None:
+    exact_value = exact_value_payload(row)
+    target = exact_value.get(target_field)
+    if target is None:
+        return None
+    target_text = str(target)
+    if not target_text:
+        return None
+    return target_text
+
+
+def exact_value_payload(row: dict[str, Any]) -> dict[str, Any]:
+    exact = row.get("exact")
+    if not isinstance(exact, dict):
+        return {}
+    value = exact.get("value")
+    if not isinstance(value, dict):
+        return {}
+    return value
+
+
+def fen_material_feature_key(features: dict[str, Any]) -> str:
+    if features["position_encoding"] != FEN_GATE_POSITION_ENCODING:
+        return f"{features['position_encoding']}:non_fen"
+
+    signature = {
+        "position_encoding": features["position_encoding"],
+        "side_to_move": features["side_to_move"],
+        "piece_counts": features["piece_counts"],
+        "piece_count": features["piece_count"],
+        "white_piece_count": features["white_piece_count"],
+        "black_piece_count": features["black_piece_count"],
+        "material_balance": features["material_balance"],
+        "absolute_material": features["absolute_material"],
+    }
+    return json.dumps(signature, sort_keys=True, separators=(",", ":"))
+
+
+def composition_material_feature_predictions(
+    examples: list[dict[str, Any]], fallback_prediction: str
+) -> list[str]:
+    train_targets_by_key: dict[str, list[str]] = {}
+    for example in examples:
+        if example["split"] != "train":
+            continue
+        train_targets_by_key.setdefault(
+            example["fen_material_feature_key"], []
+        ).append(example["target"])
+
+    predictions = []
+    for example in examples:
+        matching_train_targets = train_targets_by_key.get(
+            example["fen_material_feature_key"], []
+        )
+        if matching_train_targets:
+            predictions.append(_majority_label(matching_train_targets))
+        else:
+            predictions.append(fallback_prediction)
+    return predictions
+
+
+def fixture_component_sum_prediction(row: dict[str, Any]) -> str | None:
+    exact_value = exact_value_payload(row)
+    component_sum = fixture_component_integer_sum(
+        exact_value.get("component_values")
+    )
+    if component_sum is None:
+        return None
+    return f"Number({component_sum}/2^0)"
+
+
+def fixture_component_integer_sum(component_values_summary: Any) -> int | None:
+    if not isinstance(component_values_summary, str):
+        return None
+
+    total = 0
+    saw_component = False
+    for component_summary in component_values_summary.split(","):
+        component_summary = component_summary.strip()
+        if not component_summary or "=" not in component_summary:
+            return None
+        _component_root, component_value = component_summary.split("=", 1)
+        integer_value = parse_fixture_integer_number(component_value.strip())
+        if integer_value is None:
+            return None
+        total += integer_value
+        saw_component = True
+
+    return total if saw_component else None
+
+
+def parse_fixture_integer_number(value_text: str) -> int | None:
+    if not value_text.startswith("Number(") or not value_text.endswith(")"):
+        return None
+
+    inner = value_text[len("Number("):-1].strip()
+    if "/2^" in inner:
+        numerator_text, denominator_power_text = inner.split("/2^", 1)
+        if denominator_power_text.strip() != "0":
+            return None
+    else:
+        numerator_text = inner
+
+    try:
+        return int(numerator_text.strip())
+    except ValueError:
+        return None
+
+
+def composition_predictor_report(
+    examples: list[dict[str, Any]],
+    raw_predictions: list[str | None],
+    metadata: dict[str, Any],
+) -> dict[str, Any]:
+    predictions = [
+        prediction if prediction is not None else "__abstained__"
+        for prediction in raw_predictions
+    ]
+    targets = [example["target"] for example in examples]
+
+    report = dict(metadata)
+    report.update(
+        {
+            "support": len(examples),
+            "target_counts": dict(sorted(Counter(targets).items())),
+            "prediction_counts": dict(sorted(Counter(predictions).items())),
+            "abstention_count": sum(
+                1 for prediction in raw_predictions if prediction is None
+            ),
+            **composition_exact_result_metrics(targets, predictions),
+            "split_metrics": {},
+        }
+    )
+
+    for split in sorted({example["split"] for example in examples}):
+        split_targets = [
+            target
+            for target, example in zip(targets, examples)
+            if example["split"] == split
+        ]
+        split_predictions = [
+            prediction
+            for prediction, example in zip(predictions, examples)
+            if example["split"] == split
+        ]
+        split_raw_predictions = [
+            prediction
+            for prediction, example in zip(raw_predictions, examples)
+            if example["split"] == split
+        ]
+        report["split_metrics"][split] = {
+            "support": len(split_targets),
+            "target_counts": dict(sorted(Counter(split_targets).items())),
+            "prediction_counts": dict(sorted(Counter(split_predictions).items())),
+            "abstention_count": sum(
+                1 for prediction in split_raw_predictions if prediction is None
+            ),
+            **composition_exact_result_metrics(split_targets, split_predictions),
+        }
+
+    return report
 
 
 def geometry_probe_examples(
@@ -2056,6 +2371,29 @@ def build_parser() -> argparse.ArgumentParser:
         help="Position key policy used for train/dev assignment.",
     )
 
+    composition_baseline_parser = subcommands.add_parser(
+        "composition-baseline-report",
+        help="Score deterministic exact-result baselines on a composition holdout split.",
+    )
+    composition_baseline_parser.add_argument("jsonl_path", type=Path)
+    composition_baseline_parser.add_argument(
+        "--holdout-selector",
+        choices=COMPOSITION_HOLDOUT_SELECTORS,
+        required=True,
+    )
+    composition_baseline_parser.add_argument("--holdout-value", required=True)
+    composition_baseline_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the baseline report JSON.",
+    )
+    composition_baseline_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for train/dev assignment.",
+    )
+
     split_baseline_parser = subcommands.add_parser(
         "split-baseline-report",
         help="Score deterministic baselines per split.",
@@ -2168,6 +2506,21 @@ def cli_main(argv: list[str] | None = None) -> int:
             args.holdout_selector,
             args.holdout_value,
             args.split_key_mode,
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+    if args.command == "composition-baseline-report":
+        report = evaluate_composition_baseline_report(
+            args.jsonl_path,
+            args.holdout_selector,
+            args.holdout_value,
+            split_key_mode=args.split_key_mode,
         )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)

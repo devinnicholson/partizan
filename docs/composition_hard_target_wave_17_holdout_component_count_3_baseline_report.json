@@ -1,0 +1,521 @@
+{
+  "baseline_id": "composition_exact_result_baselines_v0",
+  "composition_certificate_counts": {
+    "component_count_by_split": {
+      "dev": {
+        "2": 1
+      },
+      "test": {
+        "3": 4
+      },
+      "train": {
+        "2": 11
+      }
+    },
+    "component_root_counts_by_split": {
+      "dev": {
+        "41": 1,
+        "9": 1
+      },
+      "test": {
+        "1": 4,
+        "25": 4,
+        "49": 4
+      },
+      "train": {
+        "41": 11,
+        "9": 11
+      }
+    },
+    "component_value_digest_counts_by_split": {
+      "dev": {
+        "2b7b69b6358b8115": 1,
+        "b5d98e57bdecc3c2": 1
+      },
+      "test": {
+        "04f616ea8bd3ce26": 1,
+        "073cf9cf4fe4347d": 1,
+        "168b3b7f97d200ef": 1,
+        "1822f1a56c79c4ba": 1,
+        "29b8463a78784913": 1,
+        "2f6609ce6612a269": 1,
+        "46b12b9a40ec3ffc": 1,
+        "4a9a4b9c662fcfa0": 1,
+        "729111a2a9bea95e": 1,
+        "846901e095f2f727": 1,
+        "8b2df7b072f71429": 1,
+        "b16b256df611a585": 1
+      },
+      "train": {
+        "062aa4203f6a2598": 1,
+        "0d4bac37a5315bee": 1,
+        "17bfc8b54b685861": 1,
+        "18116924a72cb532": 1,
+        "2230e713acb298f7": 1,
+        "2c89b400ae513b8b": 1,
+        "42eafa8449b20b0c": 1,
+        "56294f77e809d44b": 1,
+        "5dc7265746d5c634": 1,
+        "62243884080392b1": 1,
+        "7c00699f467f864d": 1,
+        "864f3f9291241358": 1,
+        "87619541a19e223d": 1,
+        "97e464279d224621": 1,
+        "98360496f8e6a2f2": 1,
+        "a3f2c953562a3428": 1,
+        "a82b962603710084": 1,
+        "ae089d57cfab8fe7": 1,
+        "c8f7ce95ab365c1b": 1,
+        "ddebc1c9988fb3f4": 1,
+        "e0e2a03eea722da6": 1,
+        "f277c4d3f670606f": 1
+      }
+    },
+    "rows_by_split": {
+      "dev": 1,
+      "test": 4,
+      "train": 11
+    }
+  },
+  "dataset_path": "/tmp/partizan-composition-hard-target-wave-17.jsonl",
+  "dataset_sha256": "8a15c6043a9129b90b94e2ffeb78a04a3c1d8076b5f4aa932183bec6f60d859d",
+  "eligible_label_kinds": [
+    "exact"
+  ],
+  "exact_solver_scope_counts": {
+    "dev": {
+      "composition_certificate_fixture": 1
+    },
+    "test": {
+      "composition_certificate_fixture": 4
+    },
+    "train": {
+      "composition_certificate_fixture": 11
+    }
+  },
+  "exact_target_counts_by_split": {
+    "dev": {
+      "Number(35/2^0)": 1
+    },
+    "test": {
+      "Number(105/2^0)": 1,
+      "Number(78/2^0)": 1,
+      "Number(87/2^0)": 1,
+      "Number(96/2^0)": 1
+    },
+    "train": {
+      "Number(11/2^0)": 1,
+      "Number(15/2^0)": 1,
+      "Number(19/2^0)": 1,
+      "Number(23/2^0)": 1,
+      "Number(27/2^0)": 1,
+      "Number(3/2^0)": 1,
+      "Number(31/2^0)": 1,
+      "Number(39/2^0)": 1,
+      "Number(43/2^0)": 1,
+      "Number(47/2^0)": 1,
+      "Number(7/2^0)": 1
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "number": 1
+    },
+    "test": {
+      "number": 4
+    },
+    "train": {
+      "number": 11
+    }
+  },
+  "excluded_from_target_metrics": {
+    "exact_rows_missing_target_by_split": {},
+    "non_exact_rows_by_split": {
+      "dev": 1,
+      "train": 4
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {},
+    "test": {},
+    "train": {}
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_composition_fixture_generator": 1,
+      "unprovenanced_rejected": 1
+    },
+    "test": {
+      "astralbase_composition_fixture_generator": 4
+    },
+    "train": {
+      "astralbase_composition_fixture_generator": 11,
+      "unprovenanced_rejected": 4
+    }
+  },
+  "holdout_label_kind": "exact",
+  "holdout_selector": "component_count",
+  "holdout_value": "3",
+  "label_kind_counts": {
+    "dev": {
+      "exact": 1,
+      "rejected": 1
+    },
+    "test": {
+      "exact": 4
+    },
+    "train": {
+      "exact": 11,
+      "rejected": 4
+    }
+  },
+  "leakage_checks": {
+    "component_root_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "component_value_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "component_value_pair_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "composition_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "decomposition_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "duplicate_component_roots": 0,
+    "duplicate_component_value_digests": 0,
+    "duplicate_component_value_pairs": 0,
+    "duplicate_composition_digests": 0,
+    "duplicate_decomposition_digests": 0,
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_result_value_digests": 0,
+    "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 0,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "result_value_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_eligible_rows": 21
+  },
+  "predictors": {
+    "fen_material_feature_majority": {
+      "abstention_count": 0,
+      "accuracy": 0.25,
+      "baseline_id": "composition_fen_material_feature_majority_v0",
+      "correct": 4,
+      "description": "Uses deterministic FEN material/count features from exact train rows, falling back to train_majority.",
+      "fallback_prediction": "Number(11/2^0)",
+      "prediction_counts": {
+        "Number(11/2^0)": 7,
+        "Number(15/2^0)": 3,
+        "Number(19/2^0)": 3,
+        "Number(23/2^0)": 3
+      },
+      "split_metrics": {
+        "dev": {
+          "abstention_count": 0,
+          "accuracy": 0.0,
+          "correct": 0,
+          "prediction_counts": {
+            "Number(19/2^0)": 1
+          },
+          "support": 1,
+          "target_counts": {
+            "Number(35/2^0)": 1
+          }
+        },
+        "test": {
+          "abstention_count": 0,
+          "accuracy": 0.0,
+          "correct": 0,
+          "prediction_counts": {
+            "Number(11/2^0)": 4
+          },
+          "support": 4,
+          "target_counts": {
+            "Number(105/2^0)": 1,
+            "Number(78/2^0)": 1,
+            "Number(87/2^0)": 1,
+            "Number(96/2^0)": 1
+          }
+        },
+        "train": {
+          "abstention_count": 0,
+          "accuracy": 0.36363636363636365,
+          "correct": 4,
+          "prediction_counts": {
+            "Number(11/2^0)": 3,
+            "Number(15/2^0)": 3,
+            "Number(19/2^0)": 2,
+            "Number(23/2^0)": 3
+          },
+          "support": 11,
+          "target_counts": {
+            "Number(11/2^0)": 1,
+            "Number(15/2^0)": 1,
+            "Number(19/2^0)": 1,
+            "Number(23/2^0)": 1,
+            "Number(27/2^0)": 1,
+            "Number(3/2^0)": 1,
+            "Number(31/2^0)": 1,
+            "Number(39/2^0)": 1,
+            "Number(43/2^0)": 1,
+            "Number(47/2^0)": 1,
+            "Number(7/2^0)": 1
+          }
+        }
+      },
+      "support": 16,
+      "target_counts": {
+        "Number(105/2^0)": 1,
+        "Number(11/2^0)": 1,
+        "Number(15/2^0)": 1,
+        "Number(19/2^0)": 1,
+        "Number(23/2^0)": 1,
+        "Number(27/2^0)": 1,
+        "Number(3/2^0)": 1,
+        "Number(31/2^0)": 1,
+        "Number(35/2^0)": 1,
+        "Number(39/2^0)": 1,
+        "Number(43/2^0)": 1,
+        "Number(47/2^0)": 1,
+        "Number(7/2^0)": 1,
+        "Number(78/2^0)": 1,
+        "Number(87/2^0)": 1,
+        "Number(96/2^0)": 1
+      },
+      "uses_decomposition_metadata": false
+    },
+    "fixture_component_sum": {
+      "abstention_count": 0,
+      "accuracy": 1.0,
+      "baseline_id": "fixture_component_integer_sum_v0",
+      "correct": 16,
+      "description": "Fixture-only verifier sanity check: parses exact.value.component_values summaries and sums integer component values. This is not evidence of learned decomposition.",
+      "fixture_only": true,
+      "prediction_counts": {
+        "Number(105/2^0)": 1,
+        "Number(11/2^0)": 1,
+        "Number(15/2^0)": 1,
+        "Number(19/2^0)": 1,
+        "Number(23/2^0)": 1,
+        "Number(27/2^0)": 1,
+        "Number(3/2^0)": 1,
+        "Number(31/2^0)": 1,
+        "Number(35/2^0)": 1,
+        "Number(39/2^0)": 1,
+        "Number(43/2^0)": 1,
+        "Number(47/2^0)": 1,
+        "Number(7/2^0)": 1,
+        "Number(78/2^0)": 1,
+        "Number(87/2^0)": 1,
+        "Number(96/2^0)": 1
+      },
+      "split_metrics": {
+        "dev": {
+          "abstention_count": 0,
+          "accuracy": 1.0,
+          "correct": 1,
+          "prediction_counts": {
+            "Number(35/2^0)": 1
+          },
+          "support": 1,
+          "target_counts": {
+            "Number(35/2^0)": 1
+          }
+        },
+        "test": {
+          "abstention_count": 0,
+          "accuracy": 1.0,
+          "correct": 4,
+          "prediction_counts": {
+            "Number(105/2^0)": 1,
+            "Number(78/2^0)": 1,
+            "Number(87/2^0)": 1,
+            "Number(96/2^0)": 1
+          },
+          "support": 4,
+          "target_counts": {
+            "Number(105/2^0)": 1,
+            "Number(78/2^0)": 1,
+            "Number(87/2^0)": 1,
+            "Number(96/2^0)": 1
+          }
+        },
+        "train": {
+          "abstention_count": 0,
+          "accuracy": 1.0,
+          "correct": 11,
+          "prediction_counts": {
+            "Number(11/2^0)": 1,
+            "Number(15/2^0)": 1,
+            "Number(19/2^0)": 1,
+            "Number(23/2^0)": 1,
+            "Number(27/2^0)": 1,
+            "Number(3/2^0)": 1,
+            "Number(31/2^0)": 1,
+            "Number(39/2^0)": 1,
+            "Number(43/2^0)": 1,
+            "Number(47/2^0)": 1,
+            "Number(7/2^0)": 1
+          },
+          "support": 11,
+          "target_counts": {
+            "Number(11/2^0)": 1,
+            "Number(15/2^0)": 1,
+            "Number(19/2^0)": 1,
+            "Number(23/2^0)": 1,
+            "Number(27/2^0)": 1,
+            "Number(3/2^0)": 1,
+            "Number(31/2^0)": 1,
+            "Number(39/2^0)": 1,
+            "Number(43/2^0)": 1,
+            "Number(47/2^0)": 1,
+            "Number(7/2^0)": 1
+          }
+        }
+      },
+      "support": 16,
+      "target_counts": {
+        "Number(105/2^0)": 1,
+        "Number(11/2^0)": 1,
+        "Number(15/2^0)": 1,
+        "Number(19/2^0)": 1,
+        "Number(23/2^0)": 1,
+        "Number(27/2^0)": 1,
+        "Number(3/2^0)": 1,
+        "Number(31/2^0)": 1,
+        "Number(35/2^0)": 1,
+        "Number(39/2^0)": 1,
+        "Number(43/2^0)": 1,
+        "Number(47/2^0)": 1,
+        "Number(7/2^0)": 1,
+        "Number(78/2^0)": 1,
+        "Number(87/2^0)": 1,
+        "Number(96/2^0)": 1
+      },
+      "uses_decomposition_metadata": true,
+      "verifier_sanity_check": true
+    },
+    "train_majority": {
+      "abstention_count": 0,
+      "accuracy": 0.0625,
+      "baseline_id": "composition_train_majority_exact_result_v0",
+      "correct": 1,
+      "description": "Predicts the most common exact target among exact train rows.",
+      "prediction_counts": {
+        "Number(11/2^0)": 16
+      },
+      "split_metrics": {
+        "dev": {
+          "abstention_count": 0,
+          "accuracy": 0.0,
+          "correct": 0,
+          "prediction_counts": {
+            "Number(11/2^0)": 1
+          },
+          "support": 1,
+          "target_counts": {
+            "Number(35/2^0)": 1
+          }
+        },
+        "test": {
+          "abstention_count": 0,
+          "accuracy": 0.0,
+          "correct": 0,
+          "prediction_counts": {
+            "Number(11/2^0)": 4
+          },
+          "support": 4,
+          "target_counts": {
+            "Number(105/2^0)": 1,
+            "Number(78/2^0)": 1,
+            "Number(87/2^0)": 1,
+            "Number(96/2^0)": 1
+          }
+        },
+        "train": {
+          "abstention_count": 0,
+          "accuracy": 0.09090909090909091,
+          "correct": 1,
+          "prediction_counts": {
+            "Number(11/2^0)": 11
+          },
+          "support": 11,
+          "target_counts": {
+            "Number(11/2^0)": 1,
+            "Number(15/2^0)": 1,
+            "Number(19/2^0)": 1,
+            "Number(23/2^0)": 1,
+            "Number(27/2^0)": 1,
+            "Number(3/2^0)": 1,
+            "Number(31/2^0)": 1,
+            "Number(39/2^0)": 1,
+            "Number(43/2^0)": 1,
+            "Number(47/2^0)": 1,
+            "Number(7/2^0)": 1
+          }
+        }
+      },
+      "support": 16,
+      "target_counts": {
+        "Number(105/2^0)": 1,
+        "Number(11/2^0)": 1,
+        "Number(15/2^0)": 1,
+        "Number(19/2^0)": 1,
+        "Number(23/2^0)": 1,
+        "Number(27/2^0)": 1,
+        "Number(3/2^0)": 1,
+        "Number(31/2^0)": 1,
+        "Number(35/2^0)": 1,
+        "Number(39/2^0)": 1,
+        "Number(43/2^0)": 1,
+        "Number(47/2^0)": 1,
+        "Number(7/2^0)": 1,
+        "Number(78/2^0)": 1,
+        "Number(87/2^0)": 1,
+        "Number(96/2^0)": 1
+      },
+      "train_majority_prediction": "Number(11/2^0)",
+      "uses_decomposition_metadata": false
+    }
+  },
+  "row_counts": {
+    "dev": 2,
+    "test": 4,
+    "train": 15
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "not (label_kind == exact and composition_certificate.component_count == holdout_value) and sha256(split_key) % 100 >= 90",
+    "holdout_label_kind": "exact",
+    "holdout_selector": "component_count",
+    "holdout_value": "3",
+    "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
+    "test": "label_kind == exact and composition_certificate.component_count == holdout_value",
+    "train": "not (label_kind == exact and composition_certificate.component_count == holdout_value) and sha256(split_key) % 100 < 90"
+  },
+  "splitter_id": "composition_holdout_component_count_generator_symmetry_hash_v0",
+  "target": "exact.value.canonical_serialization"
+}

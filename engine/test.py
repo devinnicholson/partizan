@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 
 from ml_model import (
     composition_certificate_metadata,
+    evaluate_composition_baseline_report,
     evaluate_composition_holdout_report,
     evaluate_geometry_probe_report,
     evaluate_family_holdout_report,
@@ -276,11 +277,131 @@ def run_composition_holdout_report_smoke():
     assert result_value_digest_report["label_kind_counts"]["test"] == {"exact": 2}
 
 
+def run_composition_baseline_rejected_exclusion_smoke():
+    report = _composition_baseline_fixture_report()
+
+    assert report["row_counts"] == {"test": 1, "train": 2}
+    assert report["label_kind_counts"]["train"] == {"exact": 1, "rejected": 1}
+    assert report["label_kind_counts"]["test"] == {"exact": 1}
+    assert report["excluded_from_target_metrics"] == {
+        "non_exact_rows_by_split": {"train": 1},
+        "exact_rows_missing_target_by_split": {},
+    }
+    assert report["exact_target_counts_by_split"] == {
+        "test": {"Number(5/2^0)": 1},
+        "train": {"Number(1/2^0)": 1},
+    }
+
+    for predictor_report in report["predictors"].values():
+        assert predictor_report["support"] == 2
+        assert predictor_report["split_metrics"]["train"]["support"] == 1
+        assert predictor_report["split_metrics"]["test"]["support"] == 1
+
+
+def run_composition_baseline_component_sum_smoke():
+    report = _composition_baseline_fixture_report()
+
+    train_majority_test = report["predictors"]["train_majority"]["split_metrics"][
+        "test"
+    ]
+    assert train_majority_test["accuracy"] == 0.0
+    assert train_majority_test["prediction_counts"] == {"Number(1/2^0)": 1}
+
+    fixture_component_sum = report["predictors"]["fixture_component_sum"]
+    assert fixture_component_sum["fixture_only"] is True
+    assert fixture_component_sum["verifier_sanity_check"] is True
+    fixture_component_sum_test = fixture_component_sum["split_metrics"]["test"]
+    assert fixture_component_sum_test["accuracy"] == 1.0
+    assert fixture_component_sum_test["prediction_counts"] == {"Number(5/2^0)": 1}
+
+
+def _composition_baseline_fixture_report() -> dict[str, object]:
+    train_certificate = {
+        "kind": "bitmesh-bmcompose-v1+thermograph-exact-value+fixture-sum",
+        "digest": "sha256:baseline-train-certificate",
+        "decomposition_digest": "sha256:baseline-train-decomposition",
+        "composition_digest": "sha256:baseline-train-composition",
+        "component_values": {
+            "0": "sha256:baseline-component-one",
+        },
+        "result_value_digest": "sha256:baseline-train-result",
+    }
+    heldout_certificate = {
+        "kind": "bitmesh-bmcompose-v1+thermograph-exact-value+fixture-sum",
+        "digest": "sha256:baseline-heldout-certificate",
+        "decomposition_digest": "sha256:baseline-heldout-decomposition",
+        "composition_digest": "sha256:baseline-heldout-composition",
+        "component_values": {
+            "0": "sha256:baseline-component-two",
+            "1": "sha256:baseline-component-three",
+        },
+        "result_value_digest": "sha256:baseline-heldout-result",
+    }
+    rejected_matching_certificate = {
+        "kind": "bitmesh-bmcompose-v1+thermograph-exact-value+fixture-sum",
+        "digest": "sha256:baseline-rejected-certificate",
+        "decomposition_digest": "sha256:baseline-rejected-decomposition",
+        "composition_digest": "sha256:baseline-rejected-composition",
+        "component_values": {
+            "0": "sha256:baseline-rejected-component-two",
+            "1": "sha256:baseline-rejected-component-three",
+        },
+        "result_value_digest": "sha256:baseline-rejected-result",
+    }
+
+    rows = [
+        _composition_fixture_row_for_train_dev_split(
+            "composition-baseline-train-exact",
+            "train",
+            train_certificate,
+            canonical_serialization="Number(1/2^0)",
+            digest="sha256:baseline-train-result",
+            component_values_summary="0=Number(1/2^0)",
+        ),
+        _composition_fixture_row(
+            "composition-baseline-heldout-exact",
+            "8/8/8/8/8/8/K7/7k w - - 0 99",
+            heldout_certificate,
+            canonical_serialization="Number(5/2^0)",
+            digest="sha256:baseline-heldout-result",
+            component_values_summary="0=Number(2/2^0),1=Number(3/2^0)",
+        ),
+        _composition_rejected_fixture_row_for_train_dev_split(
+            "composition-baseline-rejected-matching-count",
+            "train",
+            rejected_matching_certificate,
+            start_index=1000,
+        ),
+    ]
+
+    with TemporaryDirectory() as temp_dir:
+        shard_path = Path(temp_dir) / "composition-baseline-smoke.jsonl"
+        shard_path.write_text(
+            "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
+            encoding="utf-8",
+        )
+        return evaluate_composition_baseline_report(
+            shard_path,
+            "component_count",
+            2,
+        )
+
+
 def _composition_fixture_row(
     row_id: str,
     fen: str,
     certificate: dict[str, object],
+    canonical_serialization: str = "Number(0/2^0)",
+    digest: str = "sha256:composed-result",
+    component_values_summary: str | None = None,
 ) -> dict[str, object]:
+    exact_value = {
+        "digest": digest,
+        "canonical_serialization": canonical_serialization,
+    }
+    if component_values_summary is not None:
+        exact_value["component_values"] = component_values_summary
+
     return {
         "schema_version": "partizan.dataset_label.v0",
         "row_id": row_id,
@@ -289,10 +410,7 @@ def _composition_fixture_row(
         "label_kind": "exact",
         "exact": {
             "status": "verified",
-            "value": {
-                "digest": "sha256:composed-result",
-                "canonical_serialization": "Number(0/2^0)",
-            },
+            "value": exact_value,
             "value_class": "number",
         },
         "provenance": {
@@ -312,12 +430,22 @@ def _composition_fixture_row_for_split(
     row_id: str,
     target_split: str,
     certificate: dict[str, object],
+    canonical_serialization: str = "Number(0/2^0)",
+    digest: str = "sha256:composed-result",
+    component_values_summary: str | None = None,
 ) -> dict[str, object]:
     for index in range(1000):
         fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
         split_key = f"fixture_composition_generator|fen:{fen}"
         if split_for_key(split_key) == target_split:
-            return _composition_fixture_row(row_id, fen, certificate)
+            return _composition_fixture_row(
+                row_id,
+                fen,
+                certificate,
+                canonical_serialization=canonical_serialization,
+                digest=digest,
+                component_values_summary=component_values_summary,
+            )
     raise AssertionError(f"could not find fixture FEN for split {target_split!r}")
 
 
@@ -326,12 +454,22 @@ def _composition_fixture_row_for_train_dev_split(
     target_split: str,
     certificate: dict[str, object],
     start_index: int = 0,
+    canonical_serialization: str = "Number(0/2^0)",
+    digest: str = "sha256:composed-result",
+    component_values_summary: str | None = None,
 ) -> dict[str, object]:
     for index in range(start_index, start_index + 1000):
         fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
         split_key = f"fixture_composition_generator|fen:{fen}"
         if train_dev_split_for_key(split_key) == target_split:
-            return _composition_fixture_row(row_id, fen, certificate)
+            return _composition_fixture_row(
+                row_id,
+                fen,
+                certificate,
+                canonical_serialization=canonical_serialization,
+                digest=digest,
+                component_values_summary=component_values_summary,
+            )
     raise AssertionError(f"could not find fixture FEN for train/dev split {target_split!r}")
 
 
@@ -801,6 +939,8 @@ def main():
     run_symmetry_key_smoke()
     run_composition_certificate_report_smoke()
     run_composition_holdout_report_smoke()
+    run_composition_baseline_rejected_exclusion_smoke()
+    run_composition_baseline_component_sum_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()

@@ -200,3 +200,10 @@ targets, and all holdout reports must preserve zero cross-split leakage for the
 same position, symmetry, certificate, decomposition, composition, qualified
 component, component-value, and result-value identities before decomposition
 baselines can be reported.
+
+The first Wave 17 composition baseline report is a fixture sanity gate. It must
+exclude rejected rows from exact target metrics, report train-majority and
+FEN/material controls on the same component-count holdout, and mark
+`fixture_component_sum` as fixture-only. A perfect fixture-component-sum score
+cannot activate a decomposition-benefit claim because the fixture target is
+defined as that integer sum.
