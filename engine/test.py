@@ -224,18 +224,21 @@ def run_composition_holdout_report_smoke():
             "composition-holdout-shared",
             "8/8/8/8/8/8/K7/7k w - - 0 11",
             shared_count_holdout_certificate,
+            component_topology_family="fixture-topology-shared",
         ),
         _composition_fixture_row_for_train_dev_split(
             "composition-holdout-count-only",
             "train",
             count_only_holdout_certificate,
             start_index=1000,
+            component_topology_family="fixture-topology-shared",
         ),
         _composition_fixture_row_for_train_dev_split(
             "composition-train-leakage",
             "train",
             train_leakage_certificate,
             start_index=2000,
+            component_topology_family="fixture-topology-other",
         ),
         _composition_rejected_fixture_row_for_train_dev_split(
             "composition-rejected-matching-count",
@@ -270,6 +273,11 @@ def run_composition_holdout_report_smoke():
             shard_path,
             "component_family",
             composition_component_family({"0": "x", "63": "y"}),
+        )
+        component_topology_family_report = evaluate_composition_holdout_report(
+            shard_path,
+            "component_topology_family",
+            "fixture-topology-shared",
         )
 
     assert (
@@ -309,6 +317,19 @@ def run_composition_holdout_report_smoke():
     assert component_family_report["holdout_selector"] == "component_family"
     assert component_family_report["row_counts"] == {"test": 1, "train": 3}
     assert component_family_report["label_kind_counts"]["test"] == {"exact": 1}
+
+    assert component_topology_family_report["holdout_selector"] == (
+        "component_topology_family"
+    )
+    assert component_topology_family_report["holdout_value"] == "fixture-topology-shared"
+    assert component_topology_family_report["row_counts"] == {
+        "test": 2,
+        "train": 2,
+    }
+    assert component_topology_family_report["label_kind_counts"]["test"] == {"exact": 2}
+    assert component_topology_family_report["component_topology_family_counts"][
+        "test"
+    ] == {"fixture-topology-shared": 2}
 
 
 def run_composition_baseline_rejected_exclusion_smoke():
@@ -470,6 +491,7 @@ def _composition_fixture_row(
     digest: str = "sha256:composed-result",
     component_values_summary: str | None = None,
     composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
+    component_topology_family: str | None = None,
 ) -> dict[str, object]:
     exact_value = {
         "digest": digest,
@@ -479,6 +501,8 @@ def _composition_fixture_row(
         exact_value["component_values"] = component_values_summary
         if composition_value_rule is not None:
             exact_value["composition_value_rule"] = composition_value_rule
+    if component_topology_family is not None:
+        exact_value["component_topology_family"] = component_topology_family
 
     return {
         "schema_version": "partizan.dataset_label.v0",
@@ -512,6 +536,7 @@ def _composition_fixture_row_for_split(
     digest: str = "sha256:composed-result",
     component_values_summary: str | None = None,
     composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
+    component_topology_family: str | None = None,
 ) -> dict[str, object]:
     for index in range(1000):
         fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
@@ -525,6 +550,7 @@ def _composition_fixture_row_for_split(
                 digest=digest,
                 component_values_summary=component_values_summary,
                 composition_value_rule=composition_value_rule,
+                component_topology_family=component_topology_family,
             )
     raise AssertionError(f"could not find fixture FEN for split {target_split!r}")
 
@@ -538,6 +564,7 @@ def _composition_fixture_row_for_train_dev_split(
     digest: str = "sha256:composed-result",
     component_values_summary: str | None = None,
     composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
+    component_topology_family: str | None = None,
 ) -> dict[str, object]:
     for index in range(start_index, start_index + 1000):
         fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
@@ -551,6 +578,7 @@ def _composition_fixture_row_for_train_dev_split(
                 digest=digest,
                 component_values_summary=component_values_summary,
                 composition_value_rule=composition_value_rule,
+                component_topology_family=component_topology_family,
             )
     raise AssertionError(f"could not find fixture FEN for train/dev split {target_split!r}")
 

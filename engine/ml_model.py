@@ -35,6 +35,7 @@ EXACT_REJECTED_LABELS = ("exact", "rejected")
 COMPOSITION_HOLDOUT_SELECTORS = (
     "component_count",
     "component_family",
+    "component_topology_family",
     "composition_digest",
     "result_value_digest",
 )
@@ -1672,9 +1673,7 @@ def composition_holdout_assignments_for_rows(
             family, position_key, symmetry_position_key, split_key_mode
         )
         composition_metadata = composition_certificate_metadata(row)
-        selector_value = composition_holdout_value(
-            composition_metadata, holdout_selector
-        )
+        selector_value = composition_holdout_value(row, composition_metadata, holdout_selector)
         if row.get("label_kind") == "exact" and selector_value == target_value:
             split = "test"
         else:
@@ -1720,6 +1719,9 @@ def split_assignment_for_row(
         "component_value_digests": composition_metadata["component_value_digests"],
         "component_values": composition_metadata["component_values"],
         "result_value_digest": composition_metadata["result_value_digest"],
+        "component_topology_family": _optional_non_empty_str(
+            exact_value.get("component_topology_family")
+        ),
         "exact_value_class": str(exact.get("value_class"))
         if exact.get("value_class")
         else None,
@@ -1761,6 +1763,9 @@ def split_report_from_assignments(
         ),
         "exact_solver_scope_counts": _nested_count_by(
             assignments, "split", "exact_solver_scope"
+        ),
+        "component_topology_family_counts": _nested_count_by(
+            assignments, "split", "component_topology_family"
         ),
         "frontier_value_class_counts": _nested_count_by(
             assignments, "split", "frontier_value_class"
@@ -2088,17 +2093,17 @@ def composition_holdout_policy_for_mode(
     base_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
     return {
         "train": (
-            "not (label_kind == exact and composition_certificate."
+            "not (label_kind == exact and composition_holdout."
             f"{holdout_selector} == holdout_value) "
             "and sha256(split_key) % 100 < 90"
         ),
         "dev": (
-            "not (label_kind == exact and composition_certificate."
+            "not (label_kind == exact and composition_holdout."
             f"{holdout_selector} == holdout_value) "
             "and sha256(split_key) % 100 >= 90"
         ),
         "test": (
-            "label_kind == exact and composition_certificate."
+            "label_kind == exact and composition_holdout."
             f"{holdout_selector} == holdout_value"
         ),
         "split_key": base_policy["split_key"],
@@ -2187,10 +2192,16 @@ def composition_component_family(component_values: dict[str, str]) -> str | None
 
 
 def composition_holdout_value(
-    composition_metadata: dict[str, Any], holdout_selector: str
+    row: dict[str, Any],
+    composition_metadata: dict[str, Any],
+    holdout_selector: str,
 ) -> str | None:
     if holdout_selector not in COMPOSITION_HOLDOUT_SELECTORS:
         raise ValueError(f"unsupported composition holdout selector {holdout_selector!r}")
+    if holdout_selector == "component_topology_family":
+        return _optional_non_empty_str(
+            exact_value_payload(row).get("component_topology_family")
+        )
     value = composition_metadata.get(holdout_selector)
     if value is None:
         return None
