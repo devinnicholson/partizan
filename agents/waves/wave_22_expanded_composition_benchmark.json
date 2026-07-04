@@ -1,0 +1,228 @@
+{
+  "wave_id": "wave_22_expanded_composition_benchmark",
+  "objective": "Build the first NeurIPS-grade expanded composition benchmark: a replay-verified non-fixture composition shard with enough generated rows to support meaningful topology/source holdouts, leakage-safe reports, and decomposition-aware baselines tied directly to the decomposition generalization claim.",
+  "non_negotiables": [
+    "The existing Wave 18 default shard remains byte-stable unless an explicit migration is documented; expanded composition data must start behind a separate command or artifact path.",
+    "Every exact row in the expanded shard must pass Astralbase replay: board parse, BitMesh conservative legal-independence proof, component CGT values, BMCOMPOSE digest, and result exact-value payload.",
+    "Rejected composition controls remain rejected rows and never enter exact target metrics.",
+    "Every Partizan report must include source, topology, D4-symmetry, position, decomposition, composition, component-value, component-pair, and result-value leakage checks.",
+    "Profile capacity support is not model evidence. Decomposition-benefit claims remain inactive until a decomposition-aware baseline beats full-board, no-decomposition, train-majority, FEN/material, and hand-feature controls on the same expanded holdout.",
+    "Agency, aesthetics, and temperature claims remain inactive unless exact nonconstant targets and verified galleries are produced and beat the relevant controls."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w22_astralbase_expanded_non_fixture_shard"
+      ]
+    },
+    {
+      "parallel": [
+        "w23_partizan_expanded_shard_reports"
+      ]
+    },
+    {
+      "parallel": [
+        "w24_expanded_composition_baseline_suite"
+      ]
+    },
+    {
+      "parallel": [
+        "w25_decomposition_aware_model_baselines"
+      ]
+    },
+    {
+      "parallel": [
+        "w26_claim_and_reviewer_audit"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w22_astralbase_expanded_non_fixture_shard",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs",
+        "README.md"
+      ],
+      "depends_on": [],
+      "prompt": "Add an explicit expanded non-fixture composed-domain shard command that uses the Wave 21 profile pool to emit 10 generated exact rows per depth-two topology family while preserving the existing --non-fixture-composed-domain-shard bytes. The expanded shard must use the same verifier/replay path and keep rejected controls out of exact rows.",
+      "outputs": [
+        "Expanded non-fixture composed-domain shard CLI",
+        "Tests proving default shard byte stability and expanded generated topology counts",
+        "Replay-verified expanded JSONL artifact with deterministic row and digest accounting"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo run --quiet -- --non-fixture-composed-domain-shard > /tmp/astralbase-w18-default.jsonl",
+        "cargo run --quiet -- --expanded-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w22-expanded-composition.jsonl"
+      ],
+      "acceptance": [
+        "Default non-fixture shard SHA remains ae01fe8256a1c7a699e5f6f0358d499d6c1f4850148c9251e1c494bb059d3aa8",
+        "Expanded shard contains 11 curated exact rows, 30 generated exact rows, and 3 rejected controls unless a documented verifier gate rejects a candidate",
+        "Generated exact rows are balanced 10/10/10 across the depth-two topology families",
+        "Replay checks every exact composed-board row and skips only rejected controls"
+      ]
+    },
+    {
+      "id": "w23_partizan_expanded_shard_reports",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "engine/orchestrator.py",
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/non_fixture_composition_*wave_22*.json",
+        "docs/experiment_matrix.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w22_astralbase_expanded_non_fixture_shard"
+      ],
+      "prompt": "Generate and validate Partizan reports for the expanded non-fixture composition shard. Required reports: topology-family benchmark, generated-vs-curated source holdout, source baseline report, schema validation, and leakage validation. Reports must expose target-support and unseen generated labels.",
+      "outputs": [
+        "Expanded topology benchmark report",
+        "Expanded generated-vs-curated source holdout report",
+        "Expanded deterministic baseline report",
+        "Experiment matrix and verification gate updates"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_22_expanded_composition_benchmark.json",
+        "python3 agents/label_schema.py validate /tmp/astralbase-w22-expanded-composition.jsonl",
+        "python3 engine/ml_model.py composition-topology-benchmark-report /tmp/astralbase-w22-expanded-composition.jsonl --split-key-mode symmetry --fail-on-leakage --output docs/non_fixture_composition_topology_wave_22_benchmark_report.json",
+        "python3 engine/ml_model.py composition-holdout-report /tmp/astralbase-w22-expanded-composition.jsonl --holdout-selector composition_spec_source --holdout-value profiled_depth2_component_pair_generator_v0 --split-key-mode symmetry --fail-on-leakage --output docs/non_fixture_composition_source_wave_22_holdout_report.json",
+        "python3 engine/ml_model.py composition-baseline-report /tmp/astralbase-w22-expanded-composition.jsonl --holdout-selector composition_spec_source --holdout-value profiled_depth2_component_pair_generator_v0 --split-key-mode symmetry --output docs/non_fixture_composition_source_wave_22_baseline_report.json",
+        "python3 engine/ml_model.py validate-report docs/non_fixture_composition_source_wave_22_baseline_report.json --fail-on-leakage"
+      ],
+      "acceptance": [
+        "All expanded reports have zero leakage violations under symmetry mode",
+        "Generated-vs-curated source holdout puts generated exact rows in test and curated exact rows in train/dev",
+        "Reports expose topology counts, source counts, unseen target labels, and rejected-row exclusion",
+        "Experiment matrix records the expanded artifact SHA, Astralbase commit, commands, non-claims, and falsification conditions"
+      ]
+    },
+    {
+      "id": "w24_expanded_composition_baseline_suite",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/non_fixture_composition_*wave_22*.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md"
+      ],
+      "depends_on": [
+        "w23_partizan_expanded_shard_reports"
+      ],
+      "prompt": "Strengthen deterministic baselines on the expanded composition shard. Baselines must include train-majority exact result, FEN/material majority, fixture-only component-sum sanity, source/topology holdout slices, target-support coverage, and clear abstention/failure accounting.",
+      "outputs": [
+        "Expanded deterministic baseline suite",
+        "Per-topology and source-holdout metric tables",
+        "Tests for rejected-row exclusion, target-support reporting, and baseline abstention semantics"
+      ],
+      "commands": [
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py engine/orchestrator.py agents/network.py agents/label_schema.py",
+        "python3 engine/ml_model.py validate-report docs/non_fixture_composition_source_wave_22_baseline_report.json --fail-on-leakage"
+      ],
+      "acceptance": [
+        "Every deterministic baseline is evaluated on the same expanded source holdout",
+        "Rejected rows are counted as controls but excluded from exact-value metrics",
+        "All unseen labels and abstentions are reported rather than hidden",
+        "Claim ledger states that deterministic baselines are floors, not decomposition-aware model evidence"
+      ]
+    },
+    {
+      "id": "w25_decomposition_aware_model_baselines",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/non_fixture_composition_*wave_22*.json",
+        "docs/research_claims.md",
+        "docs/experiment_matrix.md"
+      ],
+      "depends_on": [
+        "w24_expanded_composition_baseline_suite"
+      ],
+      "prompt": "Implement the first decomposition-aware learned baseline and matched controls on the expanded composition source holdout. Compare against full-board scalar, no-decomposition structured, train-majority, FEN/material, and hand-feature controls. Do not activate a decomposition-benefit claim unless the decomposition-aware model improves under the same split and target support.",
+      "outputs": [
+        "Decomposition-aware model report",
+        "No-decomposition and scalar-control reports",
+        "Matched-split comparison table with target-support and failure analysis"
+      ],
+      "commands": [
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py",
+        "python3 engine/ml_model.py validate-report docs/non_fixture_composition_source_wave_22_baseline_report.json --fail-on-leakage"
+      ],
+      "acceptance": [
+        "Model and controls use identical train/dev/test assignment and target field",
+        "Metrics include train/dev/test plus generated-source and topology slices",
+        "Failure to beat controls is documented as a blocker, not hidden",
+        "Any positive result cites the exact expanded shard SHA, commit, seed/config, and report path"
+      ]
+    },
+    {
+      "id": "w26_claim_and_reviewer_audit",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "docs/experiment_matrix.md",
+        "agents/waves/wave_22_expanded_composition_benchmark.json"
+      ],
+      "depends_on": [
+        "w25_decomposition_aware_model_baselines"
+      ],
+      "prompt": "Audit Waves 22-25 for NeurIPS-level claim discipline. Mark which claims are active, blocked, or falsified. Identify leakage risks, target-support weaknesses, hand-feature shortcuts, scale limitations, and missing baselines. Convert the next blocker into an executable follow-up wave.",
+      "outputs": [
+        "Claim ledger update with active/inactive/falsified status",
+        "Reviewer-risk audit for the expanded composition benchmark",
+        "Next executable wave plan for agency/aesthetics or broader composition scale"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_22_expanded_composition_benchmark.json",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Every research claim points to exact artifact paths and verification commands",
+        "No agency, beauty, or decomposition-benefit claim is active without a baseline-beating result",
+        "Known failures and missing evidence are documented as blockers",
+        "The next wave has concrete gates rather than vague research intent"
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "network_and_wave_validate",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_22_expanded_composition_benchmark.json",
+      "success_signal": "The network and Wave 22-26 expanded composition plan are internally consistent."
+    },
+    {
+      "id": "expanded_shard_replay",
+      "command": "cd ../astralbase && cargo run --quiet -- --expanded-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w22-expanded-composition.jsonl && cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w22-expanded-composition.jsonl",
+      "success_signal": "The expanded non-fixture composition shard is generated and replay-verified."
+    },
+    {
+      "id": "partizan_expanded_reports",
+      "command": "python3 engine/ml_model.py composition-topology-benchmark-report /tmp/astralbase-w22-expanded-composition.jsonl --split-key-mode symmetry --fail-on-leakage --output docs/non_fixture_composition_topology_wave_22_benchmark_report.json && python3 engine/ml_model.py composition-holdout-report /tmp/astralbase-w22-expanded-composition.jsonl --holdout-selector composition_spec_source --holdout-value profiled_depth2_component_pair_generator_v0 --split-key-mode symmetry --fail-on-leakage --output docs/non_fixture_composition_source_wave_22_holdout_report.json",
+      "success_signal": "Expanded composition topology and source-holdout reports pass leakage gates."
+    },
+    {
+      "id": "repo_quality",
+      "command": "python3 engine/test.py && python3 -m py_compile engine/ml_model.py engine/test.py engine/orchestrator.py agents/network.py agents/label_schema.py && cd ../astralbase && cargo test && cargo clippy --all-targets --all-features -- -D warnings",
+      "success_signal": "Partizan reporting and Astralbase generation pass tests and static checks."
+    }
+  ]
+}

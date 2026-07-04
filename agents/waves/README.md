@@ -9,9 +9,9 @@ acceptance gates.
 From the `partizan` repo root:
 
 ```bash
-python3 agents/network.py validate-wave
-python3 agents/network.py wave-plan
-python3 agents/network.py wave-task w3_thermograph_value_contract
+python3 agents/network.py validate-wave agents/waves/wave_22_expanded_composition_benchmark.json
+python3 agents/network.py wave-plan agents/waves/wave_22_expanded_composition_benchmark.json
+python3 agents/network.py wave-task w22_astralbase_expanded_non_fixture_shard --wave agents/waves/wave_22_expanded_composition_benchmark.json
 ```
 
 Use `wave-plan` to see the parallel dispatch order. Use `wave-task` to print
@@ -19,8 +19,19 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_17_composition_certificates.json` turns the new bitmesh composition
-certificate contract into the next executable hard-target wave:
+`wave_22_expanded_composition_benchmark.json` is the current execution target.
+It turns the replay-audited Wave 18/21 composition machinery into a larger
+benchmark whose first real model question is whether decomposition helps on
+generated source/topology holdouts:
+
+```text
+expanded profile pool -> expanded JSONL shard -> replay gate
+                      -> source/topology reports -> baseline suite
+                      -> decomposition-aware model -> claim audit
+```
+
+The older `wave_17_composition_certificates.json` remains the certificate
+foundation:
 
 ```text
 strict decomposition -> component exact values -> composition certificate
