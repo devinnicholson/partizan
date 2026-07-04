@@ -217,3 +217,11 @@ composition rule, rebuilds BMCOMPOSE, and compares every recomputable exact
 value and nested certificate field. This is stricter than Partizan schema or
 report validation, but it is still a replay of the declared finite rule, not a
 learned-model result or a broad chess-value proof.
+
+Before default generated composition shard expansion, Astralbase must also run
+`cargo run --quiet -- --generated-depth-two-profile-search --rows-per-family <n>`.
+That profile-search audit must report target support, selected row count,
+topology/source counts, and the no-reuse constraints used for component and
+result digests. Default shard bytes should not change unless the profile-search
+target is supported and the non-fixture replay gate passes on the expanded
+artifact.
