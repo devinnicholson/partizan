@@ -18,6 +18,7 @@ from ml_model import (
     evaluate_split_report_with_mode,
     exact_certificate_digest,
     fen_d4_symmetry_key,
+    fixture_component_integer_sum,
     leakage_report_violations,
     report_passes_leakage_gate,
     split_for_key,
@@ -374,6 +375,15 @@ def run_composition_baseline_component_sum_rule_scope_smoke():
     }
     assert fixture_component_sum["verifier_sanity_check"] is True
     assert fixture_component_sum["split_metrics"]["test"]["accuracy"] == 1.0
+
+
+def run_composition_component_sum_parser_scope_smoke():
+    assert (
+        fixture_component_integer_sum("9=Number(4/2^0),13=Number(-3/2^0)")
+        == 1
+    )
+    assert fixture_component_integer_sum("9=Up,13=Down") is None
+    assert fixture_component_integer_sum("9=GameTree(L[Star,Up];R[Down]),13=Down") is None
 
 
 def _composition_baseline_fixture_report(
@@ -1014,6 +1024,7 @@ def main():
     run_composition_baseline_rejected_exclusion_smoke()
     run_composition_baseline_component_sum_smoke()
     run_composition_baseline_component_sum_rule_scope_smoke()
+    run_composition_component_sum_parser_scope_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()
