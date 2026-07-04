@@ -873,6 +873,151 @@ def evaluate_composition_baseline_report(
     return split_metadata
 
 
+def evaluate_composition_topology_benchmark_report(
+    jsonl_path: str | Path,
+    split_key_mode: str = "position",
+    min_family_support: int = 1,
+) -> dict[str, Any]:
+    """Run composition topology-family holdout baselines for every eligible family."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    families = composition_topology_families(rows, min_family_support)
+    family_reports = []
+    for family in families:
+        baseline_report = evaluate_composition_baseline_report(
+            path,
+            "component_topology_family",
+            family,
+            split_key_mode=split_key_mode,
+        )
+        family_reports.append(
+            composition_topology_family_benchmark_summary(family, baseline_report)
+        )
+
+    leakage_checks = composition_topology_benchmark_leakage_checks(family_reports)
+    predictor_names = sorted(
+        {
+            predictor_name
+            for family_report in family_reports
+            for predictor_name in family_report["predictors"]
+        }
+    )
+    return {
+        "benchmark_id": "composition_topology_family_holdout_benchmark_v0",
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "split_key_mode": split_key_mode,
+        "holdout_selector": "component_topology_family",
+        "min_family_support": min_family_support,
+        "family_count": len(families),
+        "families": families,
+        "leakage_gate_passed": leakage_checks["family_leakage_gate_failures"][
+            "violation_count"
+        ]
+        == 0,
+        "leakage_checks": leakage_checks,
+        "family_reports": family_reports,
+        "predictor_accuracy_by_family": {
+            predictor_name: {
+                family_report["holdout_value"]: family_report["predictors"][
+                    predictor_name
+                ]["accuracy"]
+                for family_report in family_reports
+                if predictor_name in family_report["predictors"]
+            }
+            for predictor_name in predictor_names
+        },
+    }
+
+
+def composition_topology_benchmark_leakage_checks(
+    family_reports: list[dict[str, Any]]
+) -> dict[str, Any]:
+    failing_reports = [
+        family_report
+        for family_report in family_reports
+        if family_report["leakage_violations"]
+    ]
+    return {
+        "family_leakage_gate_failures": {
+            "violation_count": len(failing_reports),
+            "examples": [
+                {
+                    "holdout_value": family_report["holdout_value"],
+                    "leakage_violations": family_report["leakage_violations"],
+                }
+                for family_report in failing_reports[:5]
+            ],
+        }
+    }
+
+
+def composition_topology_families(
+    rows: list[dict[str, Any]], min_family_support: int
+) -> list[str]:
+    if min_family_support < 1:
+        raise ValueError("min_family_support must be >= 1")
+    counts = Counter(
+        family
+        for row in rows
+        if row.get("label_kind") == "exact"
+        if (family := composition_topology_family(row)) is not None
+    )
+    return [
+        family
+        for family, count in sorted(counts.items())
+        if count >= min_family_support
+    ]
+
+
+def composition_topology_family_benchmark_summary(
+    family: str, baseline_report: dict[str, Any]
+) -> dict[str, Any]:
+    leakage_violations = leakage_report_violations(baseline_report)
+    diagnostics = baseline_report["component_topology_family_diagnostics"].get(
+        family, {}
+    )
+    return {
+        "holdout_value": family,
+        "row_counts": baseline_report["row_counts"],
+        "label_kind_counts": baseline_report["label_kind_counts"],
+        "leakage_gate_passed": not leakage_violations,
+        "leakage_violations": leakage_violations,
+        "holdout_support": diagnostics.get("support", 0),
+        "holdout_split_counts": diagnostics.get("split_counts", {}),
+        "holdout_target_counts": diagnostics.get("target_counts", {}),
+        "holdout_local_move_totals": diagnostics.get("local_move_totals", {}),
+        "holdout_local_move_imbalance": diagnostics.get(
+            "local_move_imbalance", {}
+        ),
+        "holdout_recursive_total_nodes": diagnostics.get(
+            "recursive_total_nodes", {}
+        ),
+        "unseen_test_labels": baseline_report["target_support"][
+            "unseen_labels_by_split"
+        ].get("test", []),
+        "predictors": {
+            predictor_name: {
+                "accuracy": metrics["accuracy"],
+                "support": metrics["support"],
+                "abstention_count": metrics["abstention_count"],
+                "prediction_counts": metrics["prediction_counts"],
+            }
+            for predictor_name, predictor_report in baseline_report[
+                "predictors"
+            ].items()
+            if (
+                metrics := predictor_report[
+                    "component_topology_family_metrics"
+                ].get(family)
+            )
+            is not None
+        },
+    }
+
+
 def composition_target_support_report(examples: list[dict[str, Any]]) -> dict[str, Any]:
     train_target_labels = {
         str(example["target"]) for example in examples if example["split"] == "train"
@@ -2689,6 +2834,34 @@ def build_parser() -> argparse.ArgumentParser:
         help="Position key policy used for train/dev assignment.",
     )
 
+    composition_topology_benchmark_parser = subcommands.add_parser(
+        "composition-topology-benchmark-report",
+        help="Run composition topology-family holdout baselines for every eligible family.",
+    )
+    composition_topology_benchmark_parser.add_argument("jsonl_path", type=Path)
+    composition_topology_benchmark_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the benchmark report JSON.",
+    )
+    composition_topology_benchmark_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for train/dev assignment.",
+    )
+    composition_topology_benchmark_parser.add_argument(
+        "--min-family-support",
+        type=int,
+        default=1,
+        help="Minimum exact-row count required for a topology family benchmark.",
+    )
+    composition_topology_benchmark_parser.add_argument(
+        "--fail-on-leakage",
+        action="store_true",
+        help="Exit nonzero when any per-family benchmark has leakage violations.",
+    )
+
     split_baseline_parser = subcommands.add_parser(
         "split-baseline-report",
         help="Score deterministic baselines per split.",
@@ -2848,8 +3021,37 @@ def cli_main(argv: list[str] | None = None) -> int:
             args.output.write_text(
                 json.dumps(report, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
+        )
+        print_json_report(report)
+        return 0
+    if args.command == "composition-topology-benchmark-report":
+        try:
+            report = evaluate_composition_topology_benchmark_report(
+                args.jsonl_path,
+                split_key_mode=args.split_key_mode,
+                min_family_support=args.min_family_support,
+            )
+        except ValueError as error:
+            print(str(error), file=sys.stderr)
+            return 1
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
             )
         print_json_report(report)
+        if args.fail_on_leakage and not report["leakage_gate_passed"]:
+            for family_report in report["family_reports"]:
+                if family_report["leakage_violations"]:
+                    print(
+                        f"leakage violation: holdout_value={family_report['holdout_value']}",
+                        file=sys.stderr,
+                    )
+                    print_leakage_violations(
+                        family_report["leakage_violations"]
+                    )
+            return 1
         return 0
     if args.command == "split-baseline-report":
         report = evaluate_split_baseline_report(

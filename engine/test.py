@@ -8,6 +8,7 @@ from ml_model import (
     composition_component_family,
     evaluate_composition_baseline_report,
     evaluate_composition_holdout_report,
+    evaluate_composition_topology_benchmark_report,
     evaluate_geometry_probe_report,
     evaluate_family_holdout_report,
     evaluate_family_holdout_report_with_mode,
@@ -428,6 +429,114 @@ def run_composition_baseline_component_sum_rule_scope_smoke():
     assert fixture_component_sum["split_metrics"]["test"]["accuracy"] == 1.0
 
 
+def run_composition_topology_benchmark_report_smoke():
+    rows = [
+        _composition_fixture_row_for_train_dev_split(
+            "composition-topology-family-a",
+            "train",
+            _composition_fixture_certificate("family-a", {"0": "sha256:a0"}),
+            start_index=0,
+            canonical_serialization="Number(1/2^0)",
+            digest="sha256:family-a-result",
+            component_values_summary="0=Number(1/2^0)",
+            component_topology_family="fixture-topology-a",
+            component_local_move_totals="white:1,black:0",
+            component_local_move_imbalance="1",
+            component_recursive_total_nodes="3",
+        ),
+        _composition_fixture_row_for_train_dev_split(
+            "composition-topology-family-b",
+            "train",
+            _composition_fixture_certificate(
+                "family-b",
+                {"0": "sha256:b0", "1": "sha256:b1"},
+            ),
+            start_index=1000,
+            canonical_serialization="Number(5/2^0)",
+            digest="sha256:family-b-result",
+            component_values_summary="0=Number(2/2^0),1=Number(3/2^0)",
+            component_topology_family="fixture-topology-b",
+            component_local_move_totals="white:2,black:3",
+            component_local_move_imbalance="-1",
+            component_recursive_total_nodes="8",
+        ),
+        _composition_fixture_row_for_train_dev_split(
+            "composition-topology-family-c",
+            "train",
+            _composition_fixture_certificate(
+                "family-c",
+                {"0": "sha256:c0", "1": "sha256:c1"},
+            ),
+            start_index=2000,
+            canonical_serialization="Number(9/2^0)",
+            digest="sha256:family-c-result",
+            component_values_summary="0=Number(4/2^0),1=Number(5/2^0)",
+            component_topology_family="fixture-topology-c",
+            component_local_move_totals="white:4,black:5",
+            component_local_move_imbalance="-1",
+            component_recursive_total_nodes="12",
+        ),
+    ]
+
+    with TemporaryDirectory() as temp_dir:
+        shard_path = Path(temp_dir) / "composition-topology-benchmark-smoke.jsonl"
+        shard_path.write_text(
+            "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
+            encoding="utf-8",
+        )
+        report = evaluate_composition_topology_benchmark_report(shard_path)
+        min_support_report = evaluate_composition_topology_benchmark_report(
+            shard_path, min_family_support=2
+        )
+
+    assert report["benchmark_id"] == "composition_topology_family_holdout_benchmark_v0"
+    assert report["holdout_selector"] == "component_topology_family"
+    assert report["family_count"] == 3
+    assert report["families"] == [
+        "fixture-topology-a",
+        "fixture-topology-b",
+        "fixture-topology-c",
+    ]
+    assert report["leakage_gate_passed"] is True
+    assert report["leakage_checks"] == {
+        "family_leakage_gate_failures": {
+            "violation_count": 0,
+            "examples": [],
+        }
+    }
+    assert min_support_report["family_count"] == 0
+
+    reports_by_family = {
+        family_report["holdout_value"]: family_report
+        for family_report in report["family_reports"]
+    }
+    assert reports_by_family["fixture-topology-b"]["holdout_support"] == 1
+    assert reports_by_family["fixture-topology-b"]["holdout_split_counts"] == {
+        "test": 1
+    }
+    assert reports_by_family["fixture-topology-b"][
+        "holdout_recursive_total_nodes"
+    ] == {
+        "count": 1,
+        "min": 8,
+        "max": 8,
+        "mean": 8.0,
+    }
+    for family_report in report["family_reports"]:
+        assert family_report["leakage_gate_passed"] is True
+        assert family_report["leakage_violations"] == []
+        assert family_report["predictors"]["fixture_component_sum"]["accuracy"] == 1.0
+        assert family_report["predictors"]["fixture_component_sum"][
+            "abstention_count"
+        ] == 0
+
+    assert report["predictor_accuracy_by_family"]["fixture_component_sum"] == {
+        "fixture-topology-a": 1.0,
+        "fixture-topology-b": 1.0,
+        "fixture-topology-c": 1.0,
+    }
+
+
 def run_composition_component_sum_parser_scope_smoke():
     assert (
         fixture_component_integer_sum("9=Number(4/2^0),13=Number(-3/2^0)")
@@ -435,6 +544,19 @@ def run_composition_component_sum_parser_scope_smoke():
     )
     assert fixture_component_integer_sum("9=Up,13=Down") is None
     assert fixture_component_integer_sum("9=GameTree(L[Star,Up];R[Down]),13=Down") is None
+
+
+def _composition_fixture_certificate(
+    name: str, component_values: dict[str, str]
+) -> dict[str, object]:
+    return {
+        "kind": "bitmesh-bmcompose-v1+thermograph-exact-value+fixture-sum",
+        "digest": f"sha256:{name}-certificate",
+        "decomposition_digest": f"sha256:{name}-decomposition",
+        "composition_digest": f"sha256:{name}-composition",
+        "component_values": component_values,
+        "result_value_digest": f"sha256:{name}-result",
+    }
 
 
 def _composition_baseline_fixture_report(
@@ -1111,6 +1233,7 @@ def main():
     run_composition_baseline_rejected_exclusion_smoke()
     run_composition_baseline_component_sum_smoke()
     run_composition_baseline_component_sum_rule_scope_smoke()
+    run_composition_topology_benchmark_report_smoke()
     run_composition_component_sum_parser_scope_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
