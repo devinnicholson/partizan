@@ -1,0 +1,286 @@
+{
+  "component_topology_family_counts": {
+    "dev": {
+      "dfile_two_component_agency_atom_v0": 1
+    },
+    "test": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 10,
+      "dfile_two_component_depth2_local_move_v0": 10,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 10
+    },
+    "train": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 2,
+      "dfile_two_component_depth2_local_move_v0": 2,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 2,
+      "dfile_two_component_local_move_v0": 1,
+      "dfile_two_component_material_balance_v0": 3
+    }
+  },
+  "composition_certificate_counts": {
+    "component_count_by_split": {
+      "dev": {
+        "2": 1
+      },
+      "test": {
+        "2": 30
+      },
+      "train": {
+        "2": 10
+      }
+    },
+    "component_family_by_split": {
+      "dev": {
+        "count:2|roots:13,9": 1
+      },
+      "test": {
+        "count:2|roots:13,9": 30
+      },
+      "train": {
+        "count:2|roots:13,9": 10
+      }
+    },
+    "component_root_counts_by_split": {
+      "dev": {
+        "13": 1,
+        "9": 1
+      },
+      "test": {
+        "13": 30,
+        "9": 30
+      },
+      "train": {
+        "13": 10,
+        "9": 10
+      }
+    },
+    "component_value_digest_counts_by_split": {
+      "dev": {
+        "032c13736048bf35": 1,
+        "09313a07b5c3ab60": 1
+      },
+      "test": {
+        "0a9e056b8ad2ef1f": 3,
+        "14f3ec156db6e78a": 4,
+        "180b3b4f81e9a743": 4,
+        "33612fded7c41844": 3,
+        "71287af854999b1e": 5,
+        "7f770cf2a36c12fa": 3,
+        "829478f700df97e8": 5,
+        "986f5c6b25e8d086": 4,
+        "999c2d34dcc0a10b": 4,
+        "a56b7865290bf909": 5,
+        "b11a21f1ea92fd1c": 3,
+        "c66b7e75b4d9d195": 5,
+        "c7c440b1b2c7cd21": 4,
+        "dd20db8dbb70dbf2": 3,
+        "ff2112cc9065eec0": 5
+      },
+      "train": {
+        "05631564af32123a": 1,
+        "0a3264d77eb7b566": 1,
+        "2b525ca581b1d3e9": 1,
+        "329147fecc332f62": 1,
+        "44a7109f9920cb51": 1,
+        "485984119e9e7f3b": 1,
+        "4c748e0c9680ffed": 1,
+        "56294f77e809d44b": 1,
+        "60ebee880a925aa7": 1,
+        "87619541a19e223d": 1,
+        "88306de687f0fded": 1,
+        "98360496f8e6a2f2": 1,
+        "9be343ff64350998": 1,
+        "ae554422032926b3": 1,
+        "b1231ce80334616e": 1,
+        "bb06b4d7aadc8eac": 1,
+        "cfe332c1d1bfa6c7": 1,
+        "d872e10a5dd78aa0": 1,
+        "d9efe6ea0eb7c325": 1,
+        "e0a1d2f9e449e554": 1
+      }
+    },
+    "rows_by_split": {
+      "dev": 1,
+      "test": 30,
+      "train": 10
+    }
+  },
+  "composition_spec_source_counts": {
+    "dev": {
+      "curated_non_fixture_board_spec_v0": 1
+    },
+    "test": {
+      "profiled_depth2_component_pair_generator_v0": 30
+    },
+    "train": {
+      "curated_non_fixture_board_spec_v0": 10
+    }
+  },
+  "dataset_path": "/tmp/astralbase-w22-expanded-composition.jsonl",
+  "dataset_sha256": "9d1b2754b880e64498b5deec12ac14c5b4be320446ed1319a67252599bd5dcc7",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "composition_board_agency_atoms": 1
+    },
+    "test": {
+      "composition_board_component_depth2_local_moves": 30
+    },
+    "train": {
+      "composition_board_component_depth2_local_moves": 6,
+      "composition_board_component_local_moves": 1,
+      "composition_board_material_components": 3
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "game_tree": 1
+    },
+    "test": {
+      "game_tree": 30
+    },
+    "train": {
+      "game_tree": 7,
+      "number": 3
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {},
+    "test": {},
+    "train": {}
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_non_fixture_composed_board_generator": 1
+    },
+    "test": {
+      "astralbase_non_fixture_composed_board_generator": 30
+    },
+    "train": {
+      "astralbase_non_fixture_composed_board_generator": 10,
+      "unprovenanced_rejected": 3
+    }
+  },
+  "holdout_label_kind": "exact",
+  "holdout_selector": "composition_spec_source",
+  "holdout_value": "profiled_depth2_component_pair_generator_v0",
+  "label_kind_counts": {
+    "dev": {
+      "exact": 1
+    },
+    "test": {
+      "exact": 30
+    },
+    "train": {
+      "exact": 10,
+      "rejected": 3
+    }
+  },
+  "leakage_checks": {
+    "component_root_cross_split": {
+      "examples": [
+        {
+          "key": "2709ecbc33d9921f152307a9c3b5bea1864cea661561180d65a62a53f5ed1301:13",
+          "splits": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "key": "2709ecbc33d9921f152307a9c3b5bea1864cea661561180d65a62a53f5ed1301:9",
+          "splits": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "key": "c495d12e32f178de13c3c037b079fe8d414258d4b6785f2b697431ee9a1c8eec:13",
+          "splits": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "key": "c495d12e32f178de13c3c037b079fe8d414258d4b6785f2b697431ee9a1c8eec:9",
+          "splits": [
+            "test",
+            "train"
+          ]
+        }
+      ],
+      "violation_count": 4
+    },
+    "component_value_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "component_value_pair_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "composition_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "decomposition_digest_cross_split": {
+      "examples": [
+        {
+          "key": "2709ecbc33d9921f152307a9c3b5bea1864cea661561180d65a62a53f5ed1301",
+          "splits": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "key": "c495d12e32f178de13c3c037b079fe8d414258d4b6785f2b697431ee9a1c8eec",
+          "splits": [
+            "test",
+            "train"
+          ]
+        }
+      ],
+      "violation_count": 2
+    },
+    "duplicate_component_roots": 18,
+    "duplicate_component_value_digests": 45,
+    "duplicate_component_value_pairs": 7,
+    "duplicate_composition_digests": 0,
+    "duplicate_decomposition_digests": 9,
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_result_value_digests": 0,
+    "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 0,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "result_value_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_eligible_rows": 44
+  },
+  "row_counts": {
+    "dev": 1,
+    "test": 30,
+    "train": 13
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "not (label_kind == exact and composition_holdout.composition_spec_source == holdout_value) and sha256(split_key) % 100 >= 90",
+    "holdout_label_kind": "exact",
+    "holdout_selector": "composition_spec_source",
+    "holdout_value": "profiled_depth2_component_pair_generator_v0",
+    "split_key": "generator_family|fen_d4_canonical(position) for supported FEN rows; generator_family|position.encoding:position.text otherwise",
+    "test": "label_kind == exact and composition_holdout.composition_spec_source == holdout_value",
+    "train": "not (label_kind == exact and composition_holdout.composition_spec_source == holdout_value) and sha256(split_key) % 100 < 90"
+  },
+  "splitter_id": "composition_holdout_composition_spec_source_generator_symmetry_hash_v0"
+}
