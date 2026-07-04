@@ -5,7 +5,8 @@
     },
     "test": {
       "dfile_two_component_depth2_asymmetric_fan_v0": 1,
-      "dfile_two_component_depth2_local_move_v0": 1
+      "dfile_two_component_depth2_local_move_v0": 1,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 1
     },
     "train": {
       "dfile_two_component_depth2_asymmetric_fan_v0": 2,
@@ -21,7 +22,7 @@
         "2": 1
       },
       "test": {
-        "2": 2
+        "2": 3
       },
       "train": {
         "2": 10
@@ -32,7 +33,7 @@
         "count:2|roots:13,9": 1
       },
       "test": {
-        "count:2|roots:13,9": 2
+        "count:2|roots:13,9": 3
       },
       "train": {
         "count:2|roots:13,9": 10
@@ -44,8 +45,8 @@
         "9": 1
       },
       "test": {
-        "13": 2,
-        "9": 2
+        "13": 3,
+        "9": 3
       },
       "train": {
         "13": 10,
@@ -59,6 +60,8 @@
       },
       "test": {
         "0a9e056b8ad2ef1f": 1,
+        "829478f700df97e8": 1,
+        "986f5c6b25e8d086": 1,
         "999c2d34dcc0a10b": 1,
         "b11a21f1ea92fd1c": 1,
         "c66b7e75b4d9d195": 1
@@ -88,7 +91,7 @@
     },
     "rows_by_split": {
       "dev": 1,
-      "test": 2,
+      "test": 3,
       "train": 10
     }
   },
@@ -97,20 +100,20 @@
       "curated_non_fixture_board_spec_v0": 1
     },
     "test": {
-      "profiled_depth2_component_pair_generator_v0": 2
+      "profiled_depth2_component_pair_generator_v0": 3
     },
     "train": {
       "curated_non_fixture_board_spec_v0": 10
     }
   },
   "dataset_path": "/tmp/astralbase-w18-traceable-composition.jsonl",
-  "dataset_sha256": "459635622b9564dfcc4c3e5cb501dda24271988ce730a41ce8ba0fae0056ca15",
+  "dataset_sha256": "26922a77cbff8c08f9dd93c6a117fabe09deec33c8333079d987259a6a93fb1c",
   "exact_solver_scope_counts": {
     "dev": {
       "composition_board_agency_atoms": 1
     },
     "test": {
-      "composition_board_component_depth2_local_moves": 2
+      "composition_board_component_depth2_local_moves": 3
     },
     "train": {
       "composition_board_component_depth2_local_moves": 6,
@@ -123,7 +126,7 @@
       "game_tree": 1
     },
     "test": {
-      "game_tree": 2
+      "game_tree": 3
     },
     "train": {
       "game_tree": 7,
@@ -140,7 +143,7 @@
       "astralbase_non_fixture_composed_board_generator": 1
     },
     "test": {
-      "astralbase_non_fixture_composed_board_generator": 2
+      "astralbase_non_fixture_composed_board_generator": 3
     },
     "train": {
       "astralbase_non_fixture_composed_board_generator": 10,
@@ -155,7 +158,7 @@
       "exact": 1
     },
     "test": {
-      "exact": 2
+      "exact": 3
     },
     "train": {
       "exact": 10,
@@ -209,11 +212,11 @@
       "examples": [],
       "violation_count": 0
     },
-    "symmetry_position_key_eligible_rows": 16
+    "symmetry_position_key_eligible_rows": 17
   },
   "row_counts": {
     "dev": 1,
-    "test": 2,
+    "test": 3,
     "train": 13
   },
   "schema_version": "partizan.dataset_label.v0",
