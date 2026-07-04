@@ -34,6 +34,7 @@ SCHEMA_VERSION = "partizan.dataset_label.v0"
 EXACT_REJECTED_LABELS = ("exact", "rejected")
 COMPOSITION_HOLDOUT_SELECTORS = (
     "component_count",
+    "component_family",
     "composition_digest",
     "result_value_digest",
 )
@@ -809,6 +810,7 @@ def evaluate_composition_baseline_report(
             "exact_target_counts_by_split": _nested_count_by(
                 examples, "split", "target"
             ),
+            "target_support": composition_target_support_report(examples),
             "excluded_from_target_metrics": excluded,
             "predictors": {
                 "train_majority": composition_predictor_report(
@@ -858,6 +860,28 @@ def evaluate_composition_baseline_report(
         }
     )
     return split_metadata
+
+
+def composition_target_support_report(examples: list[dict[str, Any]]) -> dict[str, Any]:
+    train_target_labels = {
+        str(example["target"]) for example in examples if example["split"] == "train"
+    }
+    split_target_labels: dict[str, set[str]] = {}
+    for example in examples:
+        split_target_labels.setdefault(str(example["split"]), set()).add(
+            str(example["target"])
+        )
+
+    return {
+        "train_labels": sorted(train_target_labels),
+        "labels_by_split": {
+            split: sorted(labels) for split, labels in sorted(split_target_labels.items())
+        },
+        "unseen_labels_by_split": {
+            split: sorted(labels - train_target_labels)
+            for split, labels in sorted(split_target_labels.items())
+        },
+    }
 
 
 def evaluate_split_baseline_report(
@@ -1669,6 +1693,7 @@ def split_assignment_for_row(
         "decomposition_digest": composition_metadata["decomposition_digest"],
         "composition_digest": composition_metadata["composition_digest"],
         "component_count": composition_metadata["component_count"],
+        "component_family": composition_metadata["component_family"],
         "component_roots": composition_metadata["component_roots"],
         "component_value_digests": composition_metadata["component_value_digests"],
         "component_values": composition_metadata["component_values"],
@@ -1722,6 +1747,9 @@ def split_report_from_assignments(
             "rows_by_split": _count_by(composition_assignments, "split"),
             "component_count_by_split": _nested_count_by(
                 composition_assignments, "split", "component_count"
+            ),
+            "component_family_by_split": _nested_count_by(
+                composition_assignments, "split", "component_family"
             ),
             "component_root_counts_by_split": _nested_count_by(
                 component_value_items, "split", "component_root"
@@ -2102,6 +2130,9 @@ def composition_certificate_metadata(row: dict[str, Any]) -> dict[str, Any]:
         "component_count": len(component_values)
         if isinstance(raw_component_values, dict)
         else None,
+        "component_family": composition_component_family(component_values)
+        if isinstance(raw_component_values, dict)
+        else None,
         "component_values": component_values,
         "component_roots": list(component_values),
         "component_value_digests": component_value_digests,
@@ -2116,11 +2147,21 @@ def empty_composition_certificate_metadata() -> dict[str, Any]:
         "decomposition_digest": None,
         "composition_digest": None,
         "component_count": None,
+        "component_family": None,
         "component_values": {},
         "component_roots": [],
         "component_value_digests": [],
         "result_value_digest": None,
     }
+
+
+def composition_component_family(component_values: dict[str, str]) -> str | None:
+    """Return a stable coarse family key for component-root topology."""
+
+    if not component_values:
+        return None
+    roots = ",".join(component_values)
+    return f"count:{len(component_values)}|roots:{roots}"
 
 
 def composition_holdout_value(
@@ -2242,6 +2283,41 @@ def cross_split_summary(
     }
 
 
+def leakage_report_violations(report: dict[str, Any]) -> list[str]:
+    """Return report leakage failures that should block benchmark promotion."""
+
+    leakage_checks = report.get("leakage_checks")
+    if not isinstance(leakage_checks, dict):
+        return ["leakage_checks: missing or not an object"]
+
+    violations: list[str] = []
+
+    def visit(value: Any, path: str) -> None:
+        if isinstance(value, dict):
+            violation_count = value.get("violation_count")
+            if isinstance(violation_count, int) and violation_count > 0:
+                violations.append(f"{path}.violation_count={violation_count}")
+            for key, nested_value in value.items():
+                visit(nested_value, f"{path}.{key}")
+            return
+
+        key = path.rsplit(".", 1)[-1]
+        if key.startswith("duplicate_") and isinstance(value, int) and value > 0:
+            violations.append(f"{path}={value}")
+
+    visit(leakage_checks, "leakage_checks")
+    return violations
+
+
+def report_passes_leakage_gate(report: dict[str, Any]) -> bool:
+    return not leakage_report_violations(report)
+
+
+def print_leakage_violations(violations: list[str]) -> None:
+    for violation in violations:
+        print(f"leakage violation: {violation}", file=sys.stderr)
+
+
 def print_json_report(report: dict[str, Any]) -> None:
     print(json.dumps(report, indent=2, sort_keys=True))
 
@@ -2329,6 +2405,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="position",
         help="Position key policy used for split assignment.",
     )
+    split_parser.add_argument(
+        "--fail-on-leakage",
+        action="store_true",
+        help="Exit nonzero when leakage_checks contain duplicate or cross-split violations.",
+    )
 
     holdout_parser = subcommands.add_parser(
         "family-holdout-report",
@@ -2346,6 +2427,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("position", "symmetry"),
         default="position",
         help="Position key policy used for train/dev assignment.",
+    )
+    holdout_parser.add_argument(
+        "--fail-on-leakage",
+        action="store_true",
+        help="Exit nonzero when leakage_checks contain duplicate or cross-split violations.",
     )
 
     composition_holdout_parser = subcommands.add_parser(
@@ -2369,6 +2455,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("position", "symmetry"),
         default="position",
         help="Position key policy used for train/dev assignment.",
+    )
+    composition_holdout_parser.add_argument(
+        "--fail-on-leakage",
+        action="store_true",
+        help="Exit nonzero when leakage_checks contain duplicate or cross-split violations.",
     )
 
     composition_baseline_parser = subcommands.add_parser(
@@ -2461,6 +2552,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the frontier target report JSON.",
     )
 
+    validate_report_parser = subcommands.add_parser(
+        "validate-report",
+        help="Validate a saved JSON report and optionally enforce leakage gates.",
+    )
+    validate_report_parser.add_argument("report_json_path", type=Path)
+    validate_report_parser.add_argument(
+        "--fail-on-leakage",
+        action="store_true",
+        help="Exit nonzero when leakage_checks contain duplicate or cross-split violations.",
+    )
+
     return parser
 
 
@@ -2487,6 +2589,11 @@ def cli_main(argv: list[str] | None = None) -> int:
                 encoding="utf-8",
             )
         print_json_report(report)
+        if args.fail_on_leakage:
+            violations = leakage_report_violations(report)
+            if violations:
+                print_leakage_violations(violations)
+                return 1
         return 0
     if args.command == "family-holdout-report":
         report = evaluate_family_holdout_report_with_mode(
@@ -2499,6 +2606,11 @@ def cli_main(argv: list[str] | None = None) -> int:
                 encoding="utf-8",
             )
         print_json_report(report)
+        if args.fail_on_leakage:
+            violations = leakage_report_violations(report)
+            if violations:
+                print_leakage_violations(violations)
+                return 1
         return 0
     if args.command == "composition-holdout-report":
         report = evaluate_composition_holdout_report_with_mode(
@@ -2514,6 +2626,11 @@ def cli_main(argv: list[str] | None = None) -> int:
                 encoding="utf-8",
             )
         print_json_report(report)
+        if args.fail_on_leakage:
+            violations = leakage_report_violations(report)
+            if violations:
+                print_leakage_violations(violations)
+                return 1
         return 0
     if args.command == "composition-baseline-report":
         report = evaluate_composition_baseline_report(
@@ -2575,6 +2692,35 @@ def cli_main(argv: list[str] | None = None) -> int:
                 encoding="utf-8",
             )
         print_json_report(report)
+        return 0
+
+    if args.command == "validate-report":
+        try:
+            report = json.loads(args.report_json_path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            print(f"report not found: {args.report_json_path}", file=sys.stderr)
+            return 1
+        except json.JSONDecodeError as error:
+            print(
+                f"{args.report_json_path}: invalid JSON: {error.msg}",
+                file=sys.stderr,
+            )
+            return 1
+        if not isinstance(report, dict):
+            print(f"{args.report_json_path}: report must be a JSON object", file=sys.stderr)
+            return 1
+
+        violations = leakage_report_violations(report)
+        if args.fail_on_leakage and violations:
+            print_leakage_violations(violations)
+            return 1
+        if violations:
+            print(
+                f"report: ok ({len(violations)} leakage violation(s) present)",
+                file=sys.stderr,
+            )
+        else:
+            print("report: ok (no leakage violations)")
         return 0
 
     parser.error(f"unknown command: {args.command}")

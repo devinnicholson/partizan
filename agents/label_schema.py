@@ -9,6 +9,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+import re
 
 
 ROOT = Path(__file__).resolve().parent
@@ -39,10 +40,14 @@ COMPOSITION_CERTIFICATE_FIELDS = (
     "component_values",
     "result_value_digest",
 )
+COMPOSITION_CERTIFICATE_KIND_PREFIX = "bitmesh-bmcompose-v1+thermograph-exact-value"
 REJECTED_REQUIRED_FIELDS = ("status", "reasons")
 REJECTED_STATUSES = {"unsupported", "error", "excluded"}
 HEURISTIC_REQUIRED_FIELDS = ("method", "method_version", "outputs")
 PREDICTION_REQUIRED_FIELDS = ("model_id", "model_version", "checkpoint", "outputs")
+LEGACY_HEX_DIGEST_RE = re.compile(r"^[0-9a-f]{16}$")
+SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
+ROOT_RE = re.compile(r"^(?:[0-9]|[1-5][0-9]|6[0-3])$")
 
 AMBIGUOUS_TOP_LEVEL_FIELDS = {
     "components",
@@ -156,6 +161,11 @@ def _validate_exact(row: dict[str, Any], errors: list[str]) -> None:
         _require_fields(exact, EXACT_REQUIRED_FIELDS, "exact", errors)
         if exact.get("status") != "verified":
             errors.append("exact.status must be 'verified'")
+        value = exact.get("value")
+        if isinstance(value, dict):
+            digest = value.get("digest")
+            if digest is not None and not _is_digest_like(digest):
+                errors.append("exact.value.digest must be a digest-like string")
 
     provenance = _require_mapping(row, "provenance", errors)
     if provenance is not None:
@@ -165,10 +175,12 @@ def _validate_exact(row: dict[str, Any], errors: list[str]) -> None:
             "provenance",
             errors,
         )
-        _validate_certificate(provenance.get("certificate"), errors)
+        _validate_certificate(provenance.get("certificate"), exact, errors)
 
 
-def _validate_certificate(certificate: Any, errors: list[str]) -> None:
+def _validate_certificate(
+    certificate: Any, exact: dict[str, Any] | None, errors: list[str]
+) -> None:
     if not isinstance(certificate, dict):
         errors.append("provenance.certificate must be an object")
         return
@@ -179,6 +191,8 @@ def _validate_certificate(certificate: Any, errors: list[str]) -> None:
         "provenance.certificate",
         errors,
     )
+    if "digest" in certificate and not _is_digest_like(certificate.get("digest")):
+        errors.append("provenance.certificate.digest must be a digest-like string")
 
     has_composition_fields = any(
         field in certificate for field in COMPOSITION_CERTIFICATE_FIELDS
@@ -193,6 +207,32 @@ def _validate_certificate(certificate: Any, errors: list[str]) -> None:
         errors,
     )
 
+    kind = certificate.get("kind")
+    if not isinstance(kind, str) or not kind.startswith(COMPOSITION_CERTIFICATE_KIND_PREFIX):
+        errors.append(
+            "provenance.certificate.kind with composition fields must start with "
+            f"{COMPOSITION_CERTIFICATE_KIND_PREFIX!r}"
+        )
+
+    for digest_field in (
+        "decomposition_digest",
+        "composition_digest",
+        "result_value_digest",
+    ):
+        if digest_field in certificate and not _is_digest_like(certificate.get(digest_field)):
+            errors.append(f"provenance.certificate.{digest_field} must be a digest-like string")
+
+    exact_value = exact.get("value") if isinstance(exact, dict) else None
+    if isinstance(exact_value, dict):
+        exact_digest = exact_value.get("digest")
+        result_digest = certificate.get("result_value_digest")
+        if _is_non_empty(exact_digest) and _is_non_empty(result_digest):
+            if str(exact_digest) != str(result_digest):
+                errors.append(
+                    "provenance.certificate.result_value_digest must match "
+                    "exact.value.digest"
+                )
+
     component_values = certificate.get("component_values")
     if not isinstance(component_values, dict) or not component_values:
         errors.append(
@@ -206,10 +246,47 @@ def _validate_certificate(certificate: Any, errors: list[str]) -> None:
             errors.append(
                 "provenance.certificate.component_values keys must be non-empty strings"
             )
+        elif not ROOT_RE.fullmatch(component_root.strip()):
+            errors.append(
+                "provenance.certificate.component_values keys must be square roots 0..63"
+            )
         if not isinstance(value_digest, str) or not value_digest.strip():
             errors.append(
                 "provenance.certificate.component_values values must be non-empty strings"
             )
+        elif not _is_digest_like(value_digest):
+            errors.append(
+                "provenance.certificate.component_values values must be digest-like strings"
+            )
+
+    if isinstance(exact_value, dict) and _is_non_empty(exact_value.get("component_count")):
+        try:
+            declared_count = int(str(exact_value["component_count"]))
+        except ValueError:
+            errors.append("exact.value.component_count must be an integer when present")
+        else:
+            if declared_count != len(component_values):
+                errors.append(
+                    "exact.value.component_count must match "
+                    "provenance.certificate.component_values"
+                )
+
+
+def _is_digest_like(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    text = value.strip()
+    if not text:
+        return False
+    if LEGACY_HEX_DIGEST_RE.fullmatch(text) or SHA256_HEX_RE.fullmatch(text):
+        return True
+    if text.startswith("sha256:") and len(text) > len("sha256:"):
+        return True
+    if text.startswith("thermograph:") and len(text) > len("thermograph:"):
+        return True
+    if text.startswith("bitmesh:") and len(text) > len("bitmesh:"):
+        return True
+    return False
 
 
 def _validate_rejected(row: dict[str, Any], errors: list[str]) -> None:

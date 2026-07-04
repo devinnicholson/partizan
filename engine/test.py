@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 
 from ml_model import (
     composition_certificate_metadata,
+    composition_component_family,
     evaluate_composition_baseline_report,
     evaluate_composition_holdout_report,
     evaluate_geometry_probe_report,
@@ -16,6 +17,8 @@ from ml_model import (
     evaluate_split_report_with_mode,
     exact_certificate_digest,
     fen_d4_symmetry_key,
+    leakage_report_violations,
+    report_passes_leakage_gate,
     split_for_key,
     train_dev_split_for_key,
 )
@@ -67,6 +70,7 @@ def run_composition_certificate_report_smoke():
         "decomposition_digest": "sha256:strict-decomposition",
         "composition_digest": "sha256:bmcompose",
         "component_count": 2,
+        "component_family": "count:2|roots:0,63",
         "component_values": {
             "0": "sha256:component-a",
             "63": "sha256:component-b",
@@ -89,6 +93,7 @@ def run_composition_certificate_report_smoke():
         "decomposition_digest": None,
         "composition_digest": None,
         "component_count": None,
+        "component_family": None,
         "component_values": {},
         "component_roots": [],
         "component_value_digests": [],
@@ -132,6 +137,10 @@ def run_composition_certificate_report_smoke():
         "test": {"2": 1},
         "train": {"2": 1},
     }
+    assert report["composition_certificate_counts"]["component_family_by_split"] == {
+        "test": {"count:2|roots:0,63": 1},
+        "train": {"count:2|roots:0,63": 1},
+    }
     assert report["composition_certificate_counts"][
         "component_root_counts_by_split"
     ] == {
@@ -147,6 +156,20 @@ def run_composition_certificate_report_smoke():
     assert leakage["component_root_cross_split"]["violation_count"] == 2
     assert leakage["component_value_digest_cross_split"]["violation_count"] == 2
     assert leakage["component_value_pair_cross_split"]["violation_count"] == 2
+    assert not report_passes_leakage_gate(report)
+    assert any(
+        "composition_digest_cross_split" in violation
+        for violation in leakage_report_violations(report)
+    )
+
+    with TemporaryDirectory() as temp_dir:
+        clean_path = Path(temp_dir) / "composition-clean-smoke.jsonl"
+        clean_path.write_text(
+            json.dumps(train_row, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        clean_report = evaluate_split_report(clean_path)
+    assert report_passes_leakage_gate(clean_report)
 
 
 def run_composition_holdout_report_smoke():
@@ -241,6 +264,11 @@ def run_composition_holdout_report_smoke():
             "result_value_digest",
             "sha256:shared-result",
         )
+        component_family_report = evaluate_composition_holdout_report(
+            shard_path,
+            "component_family",
+            composition_component_family({"0": "x", "63": "y"}),
+        )
 
     assert (
         component_count_report["splitter_id"]
@@ -276,6 +304,10 @@ def run_composition_holdout_report_smoke():
     assert result_value_digest_report["row_counts"] == {"test": 2, "train": 2}
     assert result_value_digest_report["label_kind_counts"]["test"] == {"exact": 2}
 
+    assert component_family_report["holdout_selector"] == "component_family"
+    assert component_family_report["row_counts"] == {"test": 1, "train": 3}
+    assert component_family_report["label_kind_counts"]["test"] == {"exact": 1}
+
 
 def run_composition_baseline_rejected_exclusion_smoke():
     report = _composition_baseline_fixture_report()
@@ -290,6 +322,17 @@ def run_composition_baseline_rejected_exclusion_smoke():
     assert report["exact_target_counts_by_split"] == {
         "test": {"Number(5/2^0)": 1},
         "train": {"Number(1/2^0)": 1},
+    }
+    assert report["target_support"] == {
+        "train_labels": ["Number(1/2^0)"],
+        "labels_by_split": {
+            "test": ["Number(5/2^0)"],
+            "train": ["Number(1/2^0)"],
+        },
+        "unseen_labels_by_split": {
+            "test": ["Number(5/2^0)"],
+            "train": [],
+        },
     }
 
     for predictor_report in report["predictors"].values():
