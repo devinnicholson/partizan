@@ -51,6 +51,7 @@ PIECE_VALUES = {
 }
 FIXTURE_COMPONENT_SUM_RULE = "component_index_integer_sum_fixture_v0"
 MISSING_COMPOSITION_VALUE_RULE = "__missing__"
+MISSING_COMPONENT_TOPOLOGY_FAMILY = "__missing__"
 
 
 def _require_torch() -> None:
@@ -815,6 +816,9 @@ def evaluate_composition_baseline_report(
                 examples, "split", "target"
             ),
             "target_support": composition_target_support_report(examples),
+            "component_topology_family_diagnostics": (
+                composition_topology_family_diagnostics(examples)
+            ),
             "excluded_from_target_metrics": excluded,
             "predictors": {
                 "train_majority": composition_predictor_report(
@@ -888,6 +892,66 @@ def composition_target_support_report(examples: list[dict[str, Any]]) -> dict[st
             split: sorted(labels - train_target_labels)
             for split, labels in sorted(split_target_labels.items())
         },
+    }
+
+
+def composition_topology_family_diagnostics(
+    examples: list[dict[str, Any]]
+) -> dict[str, Any]:
+    diagnostics = {}
+    for family in sorted({example["component_topology_family"] for example in examples}):
+        family_examples = [
+            example
+            for example in examples
+            if example["component_topology_family"] == family
+        ]
+        white_moves = [
+            totals["white"]
+            for example in family_examples
+            if (totals := example["component_local_move_totals"]) is not None
+        ]
+        black_moves = [
+            totals["black"]
+            for example in family_examples
+            if (totals := example["component_local_move_totals"]) is not None
+        ]
+        imbalances = [
+            imbalance
+            for example in family_examples
+            if (imbalance := example["component_local_move_imbalance"]) is not None
+        ]
+        recursive_nodes = [
+            nodes
+            for example in family_examples
+            if (nodes := example["component_recursive_total_nodes"]) is not None
+        ]
+        diagnostics[family] = {
+            "support": len(family_examples),
+            "split_counts": _count_by(family_examples, "split"),
+            "target_counts": dict(
+                sorted(Counter(example["target"] for example in family_examples).items())
+            ),
+            "composition_value_rule_counts": _count_by(
+                family_examples, "composition_value_rule"
+            ),
+            "local_move_totals": {
+                "white": numeric_summary(white_moves),
+                "black": numeric_summary(black_moves),
+            },
+            "local_move_imbalance": numeric_summary(imbalances),
+            "recursive_total_nodes": numeric_summary(recursive_nodes),
+        }
+    return diagnostics
+
+
+def numeric_summary(values: list[int]) -> dict[str, int | float | None]:
+    if not values:
+        return {"count": 0, "min": None, "max": None, "mean": None}
+    return {
+        "count": len(values),
+        "min": min(values),
+        "max": max(values),
+        "mean": sum(values) / len(values),
     }
 
 
@@ -1198,6 +1262,7 @@ def composition_baseline_examples(
             missing_target_by_split[split] += 1
             continue
 
+        exact_value = exact_value_payload(row)
         features = derive_position_features(row)
         examples.append(
             {
@@ -1206,6 +1271,19 @@ def composition_baseline_examples(
                 "split": split,
                 "target": target,
                 "fen_material_feature_key": fen_material_feature_key(features),
+                "component_topology_family": composition_topology_family(row)
+                or MISSING_COMPONENT_TOPOLOGY_FAMILY,
+                "composition_value_rule": composition_value_rule(row)
+                or MISSING_COMPOSITION_VALUE_RULE,
+                "component_local_move_totals": parse_component_local_move_totals(
+                    exact_value.get("component_local_move_totals")
+                ),
+                "component_local_move_imbalance": parse_int_metadata(
+                    exact_value.get("component_local_move_imbalance")
+                ),
+                "component_recursive_total_nodes": parse_int_metadata(
+                    exact_value.get("component_recursive_total_nodes")
+                ),
             }
         )
 
@@ -1244,6 +1322,48 @@ def composition_value_rule(row: dict[str, Any]) -> str | None:
         return None
     rule = rule.strip()
     return rule or None
+
+
+def composition_topology_family(row: dict[str, Any]) -> str | None:
+    family = exact_value_payload(row).get("component_topology_family")
+    if not isinstance(family, str):
+        return None
+    family = family.strip()
+    return family or None
+
+
+def parse_int_metadata(value: Any) -> int | None:
+    if isinstance(value, int):
+        return value
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    if not value:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
+def parse_component_local_move_totals(value: Any) -> dict[str, int] | None:
+    if not isinstance(value, str):
+        return None
+    totals: dict[str, int] = {}
+    for part in value.split(","):
+        if ":" not in part:
+            return None
+        side, count_text = part.split(":", 1)
+        side = side.strip()
+        if side not in {"white", "black"}:
+            return None
+        count = parse_int_metadata(count_text)
+        if count is None:
+            return None
+        totals[side] = count
+    if set(totals) != {"white", "black"}:
+        return None
+    return totals
 
 
 def composition_value_rule_counts(examples: list[dict[str, Any]]) -> dict[str, int]:
@@ -1364,6 +1484,14 @@ def composition_predictor_report(
             ),
             **composition_exact_result_metrics(targets, predictions),
             "split_metrics": {},
+            "component_topology_family_metrics": (
+                composition_predictor_group_metrics(
+                    examples,
+                    predictions,
+                    raw_predictions,
+                    "component_topology_family",
+                )
+            ),
         }
     )
 
@@ -1394,6 +1522,49 @@ def composition_predictor_report(
         }
 
     return report
+
+
+def composition_predictor_group_metrics(
+    examples: list[dict[str, Any]],
+    predictions: list[str],
+    raw_predictions: list[str | None],
+    group_field: str,
+) -> dict[str, Any]:
+    metrics = {}
+    for group in sorted({example[group_field] for example in examples}):
+        group_targets = [
+            example["target"]
+            for example in examples
+            if example[group_field] == group
+        ]
+        group_predictions = [
+            prediction
+            for prediction, example in zip(predictions, examples)
+            if example[group_field] == group
+        ]
+        group_raw_predictions = [
+            prediction
+            for prediction, example in zip(raw_predictions, examples)
+            if example[group_field] == group
+        ]
+        metrics[group] = {
+            "support": len(group_targets),
+            "split_counts": _count_by(
+                [
+                    example
+                    for example in examples
+                    if example[group_field] == group
+                ],
+                "split",
+            ),
+            "target_counts": dict(sorted(Counter(group_targets).items())),
+            "prediction_counts": dict(sorted(Counter(group_predictions).items())),
+            "abstention_count": sum(
+                1 for prediction in group_raw_predictions if prediction is None
+            ),
+            **composition_exact_result_metrics(group_targets, group_predictions),
+        }
+    return metrics
 
 
 def geometry_probe_examples(

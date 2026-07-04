@@ -357,11 +357,41 @@ def run_composition_baseline_rejected_exclusion_smoke():
             "train": [],
         },
     }
+    assert report["component_topology_family_diagnostics"][
+        "fixture-heldout-topology"
+    ] == {
+        "support": 1,
+        "split_counts": {"test": 1},
+        "target_counts": {"Number(5/2^0)": 1},
+        "composition_value_rule_counts": {FIXTURE_COMPONENT_SUM_RULE: 1},
+        "local_move_totals": {
+            "white": {"count": 1, "min": 2, "max": 2, "mean": 2.0},
+            "black": {"count": 1, "min": 3, "max": 3, "mean": 3.0},
+        },
+        "local_move_imbalance": {
+            "count": 1,
+            "min": -1,
+            "max": -1,
+            "mean": -1.0,
+        },
+        "recursive_total_nodes": {
+            "count": 1,
+            "min": 8,
+            "max": 8,
+            "mean": 8.0,
+        },
+    }
 
     for predictor_report in report["predictors"].values():
         assert predictor_report["support"] == 2
         assert predictor_report["split_metrics"]["train"]["support"] == 1
         assert predictor_report["split_metrics"]["test"]["support"] == 1
+        assert predictor_report["component_topology_family_metrics"][
+            "fixture-heldout-topology"
+        ]["support"] == 1
+        assert predictor_report["component_topology_family_metrics"][
+            "fixture-train-topology"
+        ]["split_counts"] == {"train": 1}
 
 
 def run_composition_baseline_component_sum_smoke():
@@ -452,6 +482,10 @@ def _composition_baseline_fixture_report(
             digest="sha256:baseline-train-result",
             component_values_summary="0=Number(1/2^0)",
             composition_value_rule=composition_value_rule,
+            component_topology_family="fixture-train-topology",
+            component_local_move_totals="white:1,black:0",
+            component_local_move_imbalance="1",
+            component_recursive_total_nodes="3",
         ),
         _composition_fixture_row(
             "composition-baseline-heldout-exact",
@@ -461,6 +495,10 @@ def _composition_baseline_fixture_report(
             digest="sha256:baseline-heldout-result",
             component_values_summary="0=Number(2/2^0),1=Number(3/2^0)",
             composition_value_rule=composition_value_rule,
+            component_topology_family="fixture-heldout-topology",
+            component_local_move_totals="white:2,black:3",
+            component_local_move_imbalance="-1",
+            component_recursive_total_nodes="8",
         ),
         _composition_rejected_fixture_row_for_train_dev_split(
             "composition-baseline-rejected-matching-count",
@@ -492,6 +530,9 @@ def _composition_fixture_row(
     component_values_summary: str | None = None,
     composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
     component_topology_family: str | None = None,
+    component_local_move_totals: str | None = None,
+    component_local_move_imbalance: str | None = None,
+    component_recursive_total_nodes: str | None = None,
 ) -> dict[str, object]:
     exact_value = {
         "digest": digest,
@@ -503,6 +544,12 @@ def _composition_fixture_row(
             exact_value["composition_value_rule"] = composition_value_rule
     if component_topology_family is not None:
         exact_value["component_topology_family"] = component_topology_family
+    if component_local_move_totals is not None:
+        exact_value["component_local_move_totals"] = component_local_move_totals
+    if component_local_move_imbalance is not None:
+        exact_value["component_local_move_imbalance"] = component_local_move_imbalance
+    if component_recursive_total_nodes is not None:
+        exact_value["component_recursive_total_nodes"] = component_recursive_total_nodes
 
     return {
         "schema_version": "partizan.dataset_label.v0",
@@ -537,6 +584,9 @@ def _composition_fixture_row_for_split(
     component_values_summary: str | None = None,
     composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
     component_topology_family: str | None = None,
+    component_local_move_totals: str | None = None,
+    component_local_move_imbalance: str | None = None,
+    component_recursive_total_nodes: str | None = None,
 ) -> dict[str, object]:
     for index in range(1000):
         fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
@@ -551,6 +601,9 @@ def _composition_fixture_row_for_split(
                 component_values_summary=component_values_summary,
                 composition_value_rule=composition_value_rule,
                 component_topology_family=component_topology_family,
+                component_local_move_totals=component_local_move_totals,
+                component_local_move_imbalance=component_local_move_imbalance,
+                component_recursive_total_nodes=component_recursive_total_nodes,
             )
     raise AssertionError(f"could not find fixture FEN for split {target_split!r}")
 
@@ -565,6 +618,9 @@ def _composition_fixture_row_for_train_dev_split(
     component_values_summary: str | None = None,
     composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
     component_topology_family: str | None = None,
+    component_local_move_totals: str | None = None,
+    component_local_move_imbalance: str | None = None,
+    component_recursive_total_nodes: str | None = None,
 ) -> dict[str, object]:
     for index in range(start_index, start_index + 1000):
         fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
@@ -579,6 +635,9 @@ def _composition_fixture_row_for_train_dev_split(
                 component_values_summary=component_values_summary,
                 composition_value_rule=composition_value_rule,
                 component_topology_family=component_topology_family,
+                component_local_move_totals=component_local_move_totals,
+                component_local_move_imbalance=component_local_move_imbalance,
+                component_recursive_total_nodes=component_recursive_total_nodes,
             )
     raise AssertionError(f"could not find fixture FEN for train/dev split {target_split!r}")
 
