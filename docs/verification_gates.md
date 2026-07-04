@@ -236,6 +236,19 @@ with no generated component/decomposition identity reuse or use a group-aware
 split that keeps reused identities inside a single split before reporting
 decomposition-benefit evidence.
 
+Wave 27 adds a separate leakage-clean composition command:
+`cargo run --quiet -- --leakage-clean-non-fixture-composed-domain-shard --rows-per-family 10`.
+The resulting shard is smaller than Wave 22 but evaluation-clean under current
+Partizan gates: 21 rows total, 18 exact rows replayed, 3 rejected controls
+skipped, and 7 profiled generated exact rows. The topology benchmark,
+generated-source holdout, and generated-source baseline reports all pass
+`--fail-on-leakage`, with zero duplicate decomposition digests, component
+identities, component value digests, component value pairs, composition digests,
+positions, symmetry keys, certificates, and result digests. Future model work
+may use this as the first leakage-clean non-fixture composition split, but must
+state its small generated support and compare against deterministic floors on
+the exact same split.
+
 Before any generated composition shard is treated as evaluation data,
 Astralbase must run
 `cargo run --quiet -- --generated-depth-two-profile-search --rows-per-family <n>`
@@ -248,5 +261,6 @@ Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
 command and replayed the expanded artifact successfully. The active gate is now
-leakage cleanliness: future model-evaluation shards must either avoid generated
-component/decomposition identity reuse or split by those reused identities.
+useful clean support: Wave 27 avoids generated component/decomposition identity
+reuse and passes leakage validation, but it currently supports only 7 generated
+exact rows.
