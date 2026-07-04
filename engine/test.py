@@ -226,6 +226,7 @@ def run_composition_holdout_report_smoke():
             "8/8/8/8/8/8/K7/7k w - - 0 11",
             shared_count_holdout_certificate,
             component_topology_family="fixture-topology-shared",
+            composition_spec_source="fixture-curated-source",
         ),
         _composition_fixture_row_for_train_dev_split(
             "composition-holdout-count-only",
@@ -233,6 +234,7 @@ def run_composition_holdout_report_smoke():
             count_only_holdout_certificate,
             start_index=1000,
             component_topology_family="fixture-topology-shared",
+            composition_spec_source="fixture-generated-source",
         ),
         _composition_fixture_row_for_train_dev_split(
             "composition-train-leakage",
@@ -240,6 +242,7 @@ def run_composition_holdout_report_smoke():
             train_leakage_certificate,
             start_index=2000,
             component_topology_family="fixture-topology-other",
+            composition_spec_source="fixture-curated-source",
         ),
         _composition_rejected_fixture_row_for_train_dev_split(
             "composition-rejected-matching-count",
@@ -279,6 +282,11 @@ def run_composition_holdout_report_smoke():
             shard_path,
             "component_topology_family",
             "fixture-topology-shared",
+        )
+        composition_spec_source_report = evaluate_composition_holdout_report(
+            shard_path,
+            "composition_spec_source",
+            "fixture-generated-source",
         )
 
     assert (
@@ -331,6 +339,18 @@ def run_composition_holdout_report_smoke():
     assert component_topology_family_report["component_topology_family_counts"][
         "test"
     ] == {"fixture-topology-shared": 2}
+
+    assert composition_spec_source_report["holdout_selector"] == (
+        "composition_spec_source"
+    )
+    assert composition_spec_source_report["holdout_value"] == "fixture-generated-source"
+    assert composition_spec_source_report["row_counts"] == {"test": 1, "train": 3}
+    assert composition_spec_source_report["label_kind_counts"]["test"] == {
+        "exact": 1
+    }
+    assert composition_spec_source_report["composition_spec_source_counts"][
+        "test"
+    ] == {"fixture-generated-source": 1}
 
 
 def run_composition_baseline_rejected_exclusion_smoke():

@@ -36,6 +36,7 @@ COMPOSITION_HOLDOUT_SELECTORS = (
     "component_count",
     "component_family",
     "component_topology_family",
+    "composition_spec_source",
     "composition_digest",
     "result_value_digest",
 )
@@ -2540,6 +2541,10 @@ def composition_holdout_value(
     if holdout_selector == "component_topology_family":
         return _optional_non_empty_str(
             exact_value_payload(row).get("component_topology_family")
+        )
+    if holdout_selector == "composition_spec_source":
+        return _optional_non_empty_str(
+            exact_value_payload(row).get("composition_spec_source")
         )
     value = composition_metadata.get(holdout_selector)
     if value is None:
