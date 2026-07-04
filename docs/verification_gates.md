@@ -207,3 +207,13 @@ FEN/material controls on the same component-count holdout, and mark
 `fixture_component_sum` as fixture-only. A perfect fixture-component-sum score
 cannot activate a decomposition-benefit claim because the fixture target is
 defined as that integer sum.
+
+Wave 19 adds an Astralbase replay gate for non-fixture composed-board rows:
+`cargo run --quiet -- --replay-non-fixture-composed-domain-shard <jsonl>`.
+For each exact row in `formal_domain:bitmesh_composed_board_material:v0`, the
+gate reparses the serialized board, recomputes the BitMesh conservative
+legal-independence proof, recomputes component CGT values under the declared
+composition rule, rebuilds BMCOMPOSE, and compares every recomputable exact
+value and nested certificate field. This is stricter than Partizan schema or
+report validation, but it is still a replay of the declared finite rule, not a
+learned-model result or a broad chess-value proof.
