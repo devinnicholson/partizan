@@ -1,0 +1,185 @@
+{
+  "wave_id": "wave_27_leakage_clean_composition_scale",
+  "objective": "Convert the replay-valid Wave 22 expanded composition shard into leakage-clean evaluation evidence by eliminating or grouping reused decomposition/component identities before any decomposition-aware model claim is attempted.",
+  "non_negotiables": [
+    "Wave 18 default non-fixture composition shard bytes remain stable at SHA-256 ae01fe8256a1c7a699e5f6f0358d499d6c1f4850148c9251e1c494bb059d3aa8.",
+    "Wave 22 expanded artifact remains documented as replay-valid but leakage-positive; do not rewrite its reports as passed evidence.",
+    "A promoted evaluation shard or split must pass Partizan leakage validation under the relevant report command with --fail-on-leakage.",
+    "Rejected composition controls remain rejected rows and never enter exact target metrics.",
+    "No decomposition-benefit, agency, aesthetics, or model-performance claim can activate until learned models beat deterministic and hand-feature controls on the same leakage-clean split."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w27_astralbase_no_reuse_expanded_search"
+      ]
+    },
+    {
+      "parallel": [
+        "w28_partizan_leakage_clean_reports"
+      ]
+    },
+    {
+      "parallel": [
+        "w29_composition_baseline_suite_on_clean_split"
+      ]
+    },
+    {
+      "parallel": [
+        "w30_decomposition_model_go_no_go"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w27_astralbase_no_reuse_expanded_search",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs",
+        "README.md"
+      ],
+      "depends_on": [],
+      "prompt": "Add a separate leakage-clean expanded non-fixture composition artifact path. The preferred path is a no-generated-reuse generator that keeps positions, decomposition digests, component identities, component value digests, component value pairs, composition digests, and result value digests unique while maintaining topology/source counts. If 10 per generated topology is not reachable, emit the maximum replay-verified clean shard and report capacity exactly.",
+      "outputs": [
+        "Leakage-clean expanded composition command or explicit capacity report",
+        "Tests proving default Wave 18 and Wave 22 command stability",
+        "Replay-verified leakage-clean JSONL artifact candidate"
+      ],
+      "commands": [
+        "cargo fmt --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo run --quiet -- --non-fixture-composed-domain-shard > /tmp/astralbase-w18-default.jsonl",
+        "shasum -a 256 /tmp/astralbase-w18-default.jsonl",
+        "cargo run --quiet -- --expanded-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --leakage-clean-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w27-clean-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w27-clean-composition.jsonl"
+      ],
+      "acceptance": [
+        "Default Wave 18 SHA remains ae01fe8256a1c7a699e5f6f0358d499d6c1f4850148c9251e1c494bb059d3aa8.",
+        "Existing Wave 22 expanded command remains replay-compatible and its documented SHA changes only if an explicit migration is recorded.",
+        "Clean candidate replay checks every exact composed-board row and skips only rejected controls.",
+        "Clean candidate exposes exact generated topology/source counts and capacity limits when 10/10/10 is not achievable."
+      ]
+    },
+    {
+      "id": "w28_partizan_leakage_clean_reports",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/non_fixture_composition_*wave_27*.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w27_astralbase_no_reuse_expanded_search"
+      ],
+      "prompt": "Generate topology, source, and baseline reports for the leakage-clean composition candidate. If Astralbase cannot produce enough no-reuse rows, add a group-aware split/report mode that keeps reused decomposition/component identities inside one split and document the tradeoff explicitly.",
+      "outputs": [
+        "Leakage-clean topology/source reports or a documented capacity failure",
+        "Report tests for rejected-row exclusion and leakage validation",
+        "Updated experiment matrix and claim ledger"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_27_leakage_clean_composition_scale.json",
+        "python3 agents/label_schema.py validate /tmp/astralbase-w27-clean-composition.jsonl",
+        "python3 engine/ml_model.py composition-topology-benchmark-report /tmp/astralbase-w27-clean-composition.jsonl --split-key-mode symmetry --fail-on-leakage --output docs/non_fixture_composition_topology_wave_27_benchmark_report.json",
+        "python3 engine/ml_model.py composition-holdout-report /tmp/astralbase-w27-clean-composition.jsonl --holdout-selector composition_spec_source --holdout-value profiled_depth2_component_pair_generator_v0 --split-key-mode symmetry --fail-on-leakage --output docs/non_fixture_composition_source_wave_27_holdout_report.json",
+        "python3 engine/ml_model.py composition-baseline-report /tmp/astralbase-w27-clean-composition.jsonl --holdout-selector composition_spec_source --holdout-value profiled_depth2_component_pair_generator_v0 --split-key-mode symmetry --output docs/non_fixture_composition_source_wave_27_baseline_report.json",
+        "python3 engine/ml_model.py validate-report docs/non_fixture_composition_source_wave_27_baseline_report.json --fail-on-leakage"
+      ],
+      "acceptance": [
+        "Promoted reports pass --fail-on-leakage or are documented as a capacity failure.",
+        "Reports expose exact topology counts, source counts, unseen target labels, abstentions, and rejected-row exclusion.",
+        "Docs state whether the evidence is no-reuse clean, group-split clean, or still blocked."
+      ]
+    },
+    {
+      "id": "w29_composition_baseline_suite_on_clean_split",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/non_fixture_composition_*wave_27*.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md"
+      ],
+      "depends_on": [
+        "w28_partizan_leakage_clean_reports"
+      ],
+      "prompt": "Run deterministic exact-result floors on the leakage-clean composition split: train-majority, FEN/material majority, fixture-only component-sum sanity, and any existing hand-feature probe that applies. Record support, abstentions, and unseen labels before learned models.",
+      "outputs": [
+        "Leakage-clean deterministic baseline report",
+        "Per-topology/source metric table",
+        "Claim-ledger update that keeps deterministic baselines as floors"
+      ],
+      "commands": [
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py",
+        "python3 engine/ml_model.py validate-report docs/non_fixture_composition_source_wave_27_baseline_report.json --fail-on-leakage"
+      ],
+      "acceptance": [
+        "Baselines use the same leakage-clean split and target field.",
+        "Rejected rows are excluded from exact target metrics.",
+        "Unseen labels and abstentions are visible in the report."
+      ]
+    },
+    {
+      "id": "w30_decomposition_model_go_no_go",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/non_fixture_composition_*wave_27*.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md"
+      ],
+      "depends_on": [
+        "w29_composition_baseline_suite_on_clean_split"
+      ],
+      "prompt": "Only after Wave 27/28 leakage gates pass, implement a minimal decomposition-aware learned baseline and matched no-decomposition/full-board controls on the same split. If leakage-clean support is too small, emit a no-go report instead of training.",
+      "outputs": [
+        "Decomposition-aware model report or explicit no-go report",
+        "Matched control report",
+        "Claim ledger go/no-go update"
+      ],
+      "commands": [
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py",
+        "python3 engine/ml_model.py validate-report docs/non_fixture_composition_source_wave_27_baseline_report.json --fail-on-leakage"
+      ],
+      "acceptance": [
+        "Model and controls share identical split, target, and leakage report.",
+        "Any failure to beat controls is documented as a blocker.",
+        "No decomposition-benefit claim activates without a baseline-beating result."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "network_and_wave_validate",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_27_leakage_clean_composition_scale.json",
+      "success_signal": "The leakage-clean follow-up plan is internally consistent."
+    },
+    {
+      "id": "clean_candidate_replay",
+      "command": "cd ../astralbase && cargo run --quiet -- --leakage-clean-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w27-clean-composition.jsonl && cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w27-clean-composition.jsonl",
+      "success_signal": "The clean candidate shard is generated and replay-verified."
+    },
+    {
+      "id": "clean_partizan_reports",
+      "command": "python3 engine/ml_model.py composition-holdout-report /tmp/astralbase-w27-clean-composition.jsonl --holdout-selector composition_spec_source --holdout-value profiled_depth2_component_pair_generator_v0 --split-key-mode symmetry --fail-on-leakage --output docs/non_fixture_composition_source_wave_27_holdout_report.json",
+      "success_signal": "The promoted composition source holdout passes leakage gates."
+    }
+  ]
+}
