@@ -73,6 +73,28 @@ Candidate hard-target families:
 - Small generalized-board shards only if the domain id and board assumptions are
   explicit and separate from `first_constrained_chess:v0`.
 
+## Wave 18 Non-Fixture Composed Domain
+
+Wave 18 introduces standard-FEN composed-board rows outside the earlier fixture
+domain. A row is eligible for exact composition only when:
+
+- `bitmesh` emits a conservative legal-independence proof with at least two
+  components.
+- `astralbase` emits a structured BMCOMPOSE-style provenance certificate with a
+  decomposition digest, component value digests, composition digest, and result
+  value digest.
+- `exact.value.component_topology_family` names the topology family used by
+  composition holdout reports.
+- `exact.value.composition_spec_source` names whether the row came from a
+  curated seed specification or a profiled generated specification.
+- The row remains inside the declared solver scope and unsupported candidates
+  are emitted as `rejected`, not promoted to exact supervision.
+
+The current Wave 18 shard is intentionally small. It establishes provenance,
+source accounting, topology-family holdout reporting, and negative controls for
+unsupported non-fixture composition candidates. It does not yet claim broad
+chess value correctness, learned decomposition benefit, or aesthetic discovery.
+
 ## Acceptance Criteria
 
 - Unsupported positions are rejected before solving.

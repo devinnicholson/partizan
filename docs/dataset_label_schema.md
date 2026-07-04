@@ -64,6 +64,19 @@ verified decomposition and exact-value payloads. A composition certificate binds
 provenance; it does not by itself prove that the component values or composed
 result are correct.
 
+Composition exact rows may also include report-facing metadata under
+`exact.value`:
+
+- `component_topology_family`: stable topology/motif family used for topology
+  holdout reports.
+- `composition_spec_source`: stable source identifier for the row specification
+  or generator path, such as curated seed rows versus profiled generated rows.
+- `composition_value_rule`: exact composition rule used to derive the emitted
+  value payload.
+
+These fields are metadata for auditing, splits, and baselines. They do not
+replace the structured certificate or exact value payload.
+
 ## Rejected Rows
 
 Rejected rows are allowed and expected for unsupported positions, verifier

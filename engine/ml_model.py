@@ -52,6 +52,7 @@ PIECE_VALUES = {
 FIXTURE_COMPONENT_SUM_RULE = "component_index_integer_sum_fixture_v0"
 MISSING_COMPOSITION_VALUE_RULE = "__missing__"
 MISSING_COMPONENT_TOPOLOGY_FAMILY = "__missing__"
+MISSING_COMPOSITION_SPEC_SOURCE = "__missing__"
 
 
 def _require_torch() -> None:
@@ -995,6 +996,9 @@ def composition_topology_family_benchmark_summary(
         "holdout_recursive_total_nodes": diagnostics.get(
             "recursive_total_nodes", {}
         ),
+        "holdout_spec_source_counts": diagnostics.get(
+            "composition_spec_source_counts", {}
+        ),
         "unseen_test_labels": baseline_report["target_support"][
             "unseen_labels_by_split"
         ].get("test", []),
@@ -1078,6 +1082,9 @@ def composition_topology_family_diagnostics(
             ),
             "composition_value_rule_counts": _count_by(
                 family_examples, "composition_value_rule"
+            ),
+            "composition_spec_source_counts": _count_by(
+                family_examples, "composition_spec_source"
             ),
             "local_move_totals": {
                 "white": numeric_summary(white_moves),
@@ -1418,6 +1425,8 @@ def composition_baseline_examples(
                 "fen_material_feature_key": fen_material_feature_key(features),
                 "component_topology_family": composition_topology_family(row)
                 or MISSING_COMPONENT_TOPOLOGY_FAMILY,
+                "composition_spec_source": composition_spec_source(row)
+                or MISSING_COMPOSITION_SPEC_SOURCE,
                 "composition_value_rule": composition_value_rule(row)
                 or MISSING_COMPOSITION_VALUE_RULE,
                 "component_local_move_totals": parse_component_local_move_totals(
@@ -1475,6 +1484,14 @@ def composition_topology_family(row: dict[str, Any]) -> str | None:
         return None
     family = family.strip()
     return family or None
+
+
+def composition_spec_source(row: dict[str, Any]) -> str | None:
+    source = exact_value_payload(row).get("composition_spec_source")
+    if not isinstance(source, str):
+        return None
+    source = source.strip()
+    return source or None
 
 
 def parse_int_metadata(value: Any) -> int | None:
@@ -2038,6 +2055,9 @@ def split_assignment_for_row(
         "component_topology_family": _optional_non_empty_str(
             exact_value.get("component_topology_family")
         ),
+        "composition_spec_source": _optional_non_empty_str(
+            exact_value.get("composition_spec_source")
+        ),
         "exact_value_class": str(exact.get("value_class"))
         if exact.get("value_class")
         else None,
@@ -2082,6 +2102,9 @@ def split_report_from_assignments(
         ),
         "component_topology_family_counts": _nested_count_by(
             assignments, "split", "component_topology_family"
+        ),
+        "composition_spec_source_counts": _nested_count_by(
+            assignments, "split", "composition_spec_source"
         ),
         "frontier_value_class_counts": _nested_count_by(
             assignments, "split", "frontier_value_class"

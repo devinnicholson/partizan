@@ -365,6 +365,7 @@ def run_composition_baseline_rejected_exclusion_smoke():
         "split_counts": {"test": 1},
         "target_counts": {"Number(5/2^0)": 1},
         "composition_value_rule_counts": {FIXTURE_COMPONENT_SUM_RULE: 1},
+        "composition_spec_source_counts": {"__missing__": 1},
         "local_move_totals": {
             "white": {"count": 1, "min": 2, "max": 2, "mean": 2.0},
             "black": {"count": 1, "min": 3, "max": 3, "mean": 3.0},
@@ -440,6 +441,7 @@ def run_composition_topology_benchmark_report_smoke():
             digest="sha256:family-a-result",
             component_values_summary="0=Number(1/2^0)",
             component_topology_family="fixture-topology-a",
+            composition_spec_source="fixture-curated-source",
             component_local_move_totals="white:1,black:0",
             component_local_move_imbalance="1",
             component_recursive_total_nodes="3",
@@ -456,6 +458,7 @@ def run_composition_topology_benchmark_report_smoke():
             digest="sha256:family-b-result",
             component_values_summary="0=Number(2/2^0),1=Number(3/2^0)",
             component_topology_family="fixture-topology-b",
+            composition_spec_source="fixture-generated-source",
             component_local_move_totals="white:2,black:3",
             component_local_move_imbalance="-1",
             component_recursive_total_nodes="8",
@@ -472,6 +475,7 @@ def run_composition_topology_benchmark_report_smoke():
             digest="sha256:family-c-result",
             component_values_summary="0=Number(4/2^0),1=Number(5/2^0)",
             component_topology_family="fixture-topology-c",
+            composition_spec_source="fixture-generated-source",
             component_local_move_totals="white:4,black:5",
             component_local_move_imbalance="-1",
             component_recursive_total_nodes="12",
@@ -521,6 +525,9 @@ def run_composition_topology_benchmark_report_smoke():
         "min": 8,
         "max": 8,
         "mean": 8.0,
+    }
+    assert reports_by_family["fixture-topology-b"]["holdout_spec_source_counts"] == {
+        "fixture-generated-source": 1
     }
     for family_report in report["family_reports"]:
         assert family_report["leakage_gate_passed"] is True
@@ -652,6 +659,7 @@ def _composition_fixture_row(
     component_values_summary: str | None = None,
     composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
     component_topology_family: str | None = None,
+    composition_spec_source: str | None = None,
     component_local_move_totals: str | None = None,
     component_local_move_imbalance: str | None = None,
     component_recursive_total_nodes: str | None = None,
@@ -666,6 +674,8 @@ def _composition_fixture_row(
             exact_value["composition_value_rule"] = composition_value_rule
     if component_topology_family is not None:
         exact_value["component_topology_family"] = component_topology_family
+    if composition_spec_source is not None:
+        exact_value["composition_spec_source"] = composition_spec_source
     if component_local_move_totals is not None:
         exact_value["component_local_move_totals"] = component_local_move_totals
     if component_local_move_imbalance is not None:
@@ -706,6 +716,7 @@ def _composition_fixture_row_for_split(
     component_values_summary: str | None = None,
     composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
     component_topology_family: str | None = None,
+    composition_spec_source: str | None = None,
     component_local_move_totals: str | None = None,
     component_local_move_imbalance: str | None = None,
     component_recursive_total_nodes: str | None = None,
@@ -723,6 +734,7 @@ def _composition_fixture_row_for_split(
                 component_values_summary=component_values_summary,
                 composition_value_rule=composition_value_rule,
                 component_topology_family=component_topology_family,
+                composition_spec_source=composition_spec_source,
                 component_local_move_totals=component_local_move_totals,
                 component_local_move_imbalance=component_local_move_imbalance,
                 component_recursive_total_nodes=component_recursive_total_nodes,
@@ -740,6 +752,7 @@ def _composition_fixture_row_for_train_dev_split(
     component_values_summary: str | None = None,
     composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
     component_topology_family: str | None = None,
+    composition_spec_source: str | None = None,
     component_local_move_totals: str | None = None,
     component_local_move_imbalance: str | None = None,
     component_recursive_total_nodes: str | None = None,
@@ -757,6 +770,7 @@ def _composition_fixture_row_for_train_dev_split(
                 component_values_summary=component_values_summary,
                 composition_value_rule=composition_value_rule,
                 component_topology_family=component_topology_family,
+                composition_spec_source=composition_spec_source,
                 component_local_move_totals=component_local_move_totals,
                 component_local_move_imbalance=component_local_move_imbalance,
                 component_recursive_total_nodes=component_recursive_total_nodes,
