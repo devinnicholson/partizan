@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from ml_model import (
+    FIXTURE_COMPONENT_SUM_RULE,
     composition_certificate_metadata,
     composition_component_family,
     evaluate_composition_baseline_report,
@@ -352,13 +353,32 @@ def run_composition_baseline_component_sum_smoke():
 
     fixture_component_sum = report["predictors"]["fixture_component_sum"]
     assert fixture_component_sum["fixture_only"] is True
+    assert fixture_component_sum["composition_value_rule_counts"] == {
+        FIXTURE_COMPONENT_SUM_RULE: 2
+    }
     assert fixture_component_sum["verifier_sanity_check"] is True
     fixture_component_sum_test = fixture_component_sum["split_metrics"]["test"]
     assert fixture_component_sum_test["accuracy"] == 1.0
     assert fixture_component_sum_test["prediction_counts"] == {"Number(5/2^0)": 1}
 
 
-def _composition_baseline_fixture_report() -> dict[str, object]:
+def run_composition_baseline_component_sum_rule_scope_smoke():
+    report = _composition_baseline_fixture_report(
+        composition_value_rule="component_material_balance_sum_v0"
+    )
+
+    fixture_component_sum = report["predictors"]["fixture_component_sum"]
+    assert fixture_component_sum["fixture_only"] is False
+    assert fixture_component_sum["composition_value_rule_counts"] == {
+        "component_material_balance_sum_v0": 2
+    }
+    assert fixture_component_sum["verifier_sanity_check"] is True
+    assert fixture_component_sum["split_metrics"]["test"]["accuracy"] == 1.0
+
+
+def _composition_baseline_fixture_report(
+    composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
+) -> dict[str, object]:
     train_certificate = {
         "kind": "bitmesh-bmcompose-v1+thermograph-exact-value+fixture-sum",
         "digest": "sha256:baseline-train-certificate",
@@ -400,6 +420,7 @@ def _composition_baseline_fixture_report() -> dict[str, object]:
             canonical_serialization="Number(1/2^0)",
             digest="sha256:baseline-train-result",
             component_values_summary="0=Number(1/2^0)",
+            composition_value_rule=composition_value_rule,
         ),
         _composition_fixture_row(
             "composition-baseline-heldout-exact",
@@ -408,6 +429,7 @@ def _composition_baseline_fixture_report() -> dict[str, object]:
             canonical_serialization="Number(5/2^0)",
             digest="sha256:baseline-heldout-result",
             component_values_summary="0=Number(2/2^0),1=Number(3/2^0)",
+            composition_value_rule=composition_value_rule,
         ),
         _composition_rejected_fixture_row_for_train_dev_split(
             "composition-baseline-rejected-matching-count",
@@ -437,6 +459,7 @@ def _composition_fixture_row(
     canonical_serialization: str = "Number(0/2^0)",
     digest: str = "sha256:composed-result",
     component_values_summary: str | None = None,
+    composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
 ) -> dict[str, object]:
     exact_value = {
         "digest": digest,
@@ -444,6 +467,8 @@ def _composition_fixture_row(
     }
     if component_values_summary is not None:
         exact_value["component_values"] = component_values_summary
+        if composition_value_rule is not None:
+            exact_value["composition_value_rule"] = composition_value_rule
 
     return {
         "schema_version": "partizan.dataset_label.v0",
@@ -476,6 +501,7 @@ def _composition_fixture_row_for_split(
     canonical_serialization: str = "Number(0/2^0)",
     digest: str = "sha256:composed-result",
     component_values_summary: str | None = None,
+    composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
 ) -> dict[str, object]:
     for index in range(1000):
         fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
@@ -488,6 +514,7 @@ def _composition_fixture_row_for_split(
                 canonical_serialization=canonical_serialization,
                 digest=digest,
                 component_values_summary=component_values_summary,
+                composition_value_rule=composition_value_rule,
             )
     raise AssertionError(f"could not find fixture FEN for split {target_split!r}")
 
@@ -500,6 +527,7 @@ def _composition_fixture_row_for_train_dev_split(
     canonical_serialization: str = "Number(0/2^0)",
     digest: str = "sha256:composed-result",
     component_values_summary: str | None = None,
+    composition_value_rule: str | None = FIXTURE_COMPONENT_SUM_RULE,
 ) -> dict[str, object]:
     for index in range(start_index, start_index + 1000):
         fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
@@ -512,6 +540,7 @@ def _composition_fixture_row_for_train_dev_split(
                 canonical_serialization=canonical_serialization,
                 digest=digest,
                 component_values_summary=component_values_summary,
+                composition_value_rule=composition_value_rule,
             )
     raise AssertionError(f"could not find fixture FEN for train/dev split {target_split!r}")
 
@@ -984,6 +1013,7 @@ def main():
     run_composition_holdout_report_smoke()
     run_composition_baseline_rejected_exclusion_smoke()
     run_composition_baseline_component_sum_smoke()
+    run_composition_baseline_component_sum_rule_scope_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()

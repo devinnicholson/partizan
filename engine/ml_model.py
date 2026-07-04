@@ -48,6 +48,8 @@ PIECE_VALUES = {
     "Q": 9,
     "K": 0,
 }
+FIXTURE_COMPONENT_SUM_RULE = "component_index_integer_sum_fixture_v0"
+MISSING_COMPOSITION_VALUE_RULE = "__missing__"
 
 
 def _require_torch() -> None:
@@ -798,6 +800,7 @@ def evaluate_composition_baseline_report(
     fixture_predictions = [
         fixture_component_sum_prediction(example["row"]) for example in examples
     ]
+    component_sum_rule_counts = composition_value_rule_counts(examples)
 
     split_metadata.update(
         {
@@ -846,13 +849,16 @@ def evaluate_composition_baseline_report(
                     {
                         "baseline_id": "fixture_component_integer_sum_v0",
                         "description": (
-                            "Fixture-only verifier sanity check: parses "
-                            "exact.value.component_values summaries and sums "
-                            "integer component values. This is not evidence of "
-                            "learned decomposition."
+                            "Parses exact.value.component_values summaries and "
+                            "sums integer component values. fixture_only is true "
+                            "only when all scored rows use the fixture index-sum "
+                            "composition rule. This is not evidence of learned "
+                            "decomposition."
                         ),
                         "uses_decomposition_metadata": True,
-                        "fixture_only": True,
+                        "composition_value_rule_counts": component_sum_rule_counts,
+                        "fixture_only": set(component_sum_rule_counts)
+                        <= {FIXTURE_COMPONENT_SUM_RULE},
                         "verifier_sanity_check": True,
                     },
                 ),
@@ -1229,6 +1235,22 @@ def exact_value_payload(row: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(value, dict):
         return {}
     return value
+
+
+def composition_value_rule(row: dict[str, Any]) -> str | None:
+    rule = exact_value_payload(row).get("composition_value_rule")
+    if not isinstance(rule, str):
+        return None
+    rule = rule.strip()
+    return rule or None
+
+
+def composition_value_rule_counts(examples: list[dict[str, Any]]) -> dict[str, int]:
+    counts = Counter(
+        composition_value_rule(example["row"]) or MISSING_COMPOSITION_VALUE_RULE
+        for example in examples
+    )
+    return dict(sorted(counts.items()))
 
 
 def fen_material_feature_key(features: dict[str, Any]) -> str:
