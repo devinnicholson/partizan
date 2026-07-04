@@ -225,3 +225,10 @@ topology/source counts, and the no-reuse constraints used for component and
 result digests. Default shard bytes should not change unless the profile-search
 target is supported and the non-fixture replay gate passes on the expanded
 artifact.
+
+Wave 21 establishes target support for `--rows-per-family 10` at Astralbase
+commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba`: 30 selected candidates,
+10 per generated topology family, while the existing Wave 18 shard remains
+byte-identical. The next gate is to deliberately change the default generated
+row plan or add an expanded-shard command, then rerun replay and Partizan
+source/topology reports on that expanded artifact.
