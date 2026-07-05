@@ -566,6 +566,15 @@ selected rows, but it is still below the 150-row target. This source must remain
 diagnostic-only until a later source reaches rpf50 and then passes materialized
 schema, replay, split, projection, and baseline gates.
 
+Wave 57 adds a topology-balanced baseline ablation:
+`python3 engine/ml_model.py exact-projection-topology-balanced-baseline-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output docs/signature_target_mixed_hook_topology_balanced_baseline_wave_57_rpf36_report.json`.
+The split groups exact rows by `exact.value.component_topology_family` and
+assigns 24 train, 6 dev, and 6 test rows per topology family. This gives
+72/18/18 total support. The topology target has zero unseen labels, but the
+best test result, signature-metadata logistic at 0.3889, misses on dev with
+0.2778 against the 0.3333 majority floor. This is a stronger ablation than the
+Wave 55 89/9/10 split, but still not learned-structure evidence.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -591,5 +600,7 @@ Wave 52 materializes and audits the rpf20 mixed-hook exact shard, Wave 53
 selects compact exact projections, Wave 54 shows the first compact baselines are
 a topology no-go plus a material-control result, and Wave 55 expands exact
 support to rpf36 while exposing rpf50 as source-limited. Wave 56's expanded
-mixed-hook source remains below rpf50. The active gate is a materially different
-source family or stronger OOD ablation before any learned structure claim.
+mixed-hook source remains below rpf50, and Wave 57's balanced split does not
+produce matched dev/test lift. The active gate is a materially different source
+family or a model/feature ablation that improves both dev and test before any
+learned structure claim.

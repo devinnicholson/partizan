@@ -1701,6 +1701,68 @@ def evaluate_exact_projection_baseline_report(
     assignments = split_assignments_for_rows(rows, split_key_mode)
     splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=False)
     split_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
+    return exact_projection_baseline_report_from_assignments(
+        path,
+        rows,
+        assignments,
+        splitter_id,
+        split_policy,
+        target_projections=target_projections,
+        epochs=epochs,
+        learning_rate=learning_rate,
+        l2=l2,
+    )
+
+
+def evaluate_exact_projection_topology_balanced_baseline_report(
+    jsonl_path: str | Path,
+    target_projections: list[str] | None = None,
+    split_key_mode: str = "position",
+    epochs: int = 1_000,
+    learning_rate: float = 0.05,
+    l2: float = 0.001,
+) -> dict[str, Any]:
+    """Score exact projection baselines on a topology-balanced split."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = topology_balanced_assignments_for_rows(rows, split_key_mode)
+    split_key = split_policy_for_mode(split_key_mode, family_holdout=False)[
+        "split_key"
+    ]
+    split_policy = {
+        "train": "first 2/3 of rows by sha256(split_key), within exact.value.component_topology_family",
+        "dev": "next 1/6 of rows by sha256(split_key), within exact.value.component_topology_family",
+        "test": "remaining rows by sha256(split_key), within exact.value.component_topology_family",
+        "split_key": split_key,
+        "balance_key": "exact.value.component_topology_family",
+    }
+    return exact_projection_baseline_report_from_assignments(
+        path,
+        rows,
+        assignments,
+        "component_topology_balanced_position_hash_v0"
+        if split_key_mode == "position"
+        else "component_topology_balanced_symmetry_hash_v0",
+        split_policy,
+        target_projections=target_projections,
+        epochs=epochs,
+        learning_rate=learning_rate,
+        l2=l2,
+    )
+
+
+def exact_projection_baseline_report_from_assignments(
+    path: Path,
+    rows: list[dict[str, Any]],
+    assignments: list[dict[str, Any]],
+    splitter_id: str,
+    split_policy: dict[str, str],
+    target_projections: list[str] | None,
+    epochs: int,
+    learning_rate: float,
+    l2: float,
+) -> dict[str, Any]:
     projections = target_projections or list(DEFAULT_EXACT_PROJECTION_BASELINE_TARGETS)
     projection_reports = []
     for projection_id in projections:
@@ -3530,6 +3592,57 @@ def split_assignments_for_rows(
     return assignments
 
 
+def topology_balanced_assignments_for_rows(
+    rows: list[dict[str, Any]], split_key_mode: str
+) -> list[dict[str, Any]]:
+    grouped: dict[str, list[tuple[int, dict[str, Any], str, str, str | None, str]]] = {}
+    for index, row in enumerate(rows):
+        family = generator_family(row)
+        position_key = position_key_for_row(row)
+        symmetry_position_key = symmetry_position_key_for_row(row)
+        split_key = split_key_for_mode(
+            family, position_key, symmetry_position_key, split_key_mode
+        )
+        balance_key = (
+            composition_topology_family(row)
+            or f"__{str(row.get('label_kind') or 'unknown')}_missing_topology__"
+        )
+        grouped.setdefault(balance_key, []).append(
+            (index, row, family, position_key, symmetry_position_key, split_key)
+        )
+
+    assignments: list[dict[str, Any] | None] = [None] * len(rows)
+    for group_entries in grouped.values():
+        ordered = sorted(
+            group_entries,
+            key=lambda entry: (
+                hashlib.sha256(entry[5].encode("utf-8")).hexdigest(),
+                str(entry[1].get("row_id")),
+            ),
+        )
+        train_count = (len(ordered) * 2) // 3
+        dev_count = len(ordered) // 6
+        for rank, (index, row, family, position_key, symmetry_position_key, split_key) in enumerate(
+            ordered
+        ):
+            if rank < train_count:
+                split = "train"
+            elif rank < train_count + dev_count:
+                split = "dev"
+            else:
+                split = "test"
+            assignments[index] = split_assignment_for_row(
+                row,
+                split,
+                family,
+                position_key,
+                symmetry_position_key,
+                split_key,
+            )
+
+    return [assignment for assignment in assignments if assignment is not None]
+
+
 def family_holdout_assignments_for_rows(
     rows: list[dict[str, Any]], holdout_family: str, split_key_mode: str
 ) -> list[dict[str, Any]]:
@@ -4636,6 +4749,53 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the exact projection baseline report JSON.",
     )
 
+    exact_projection_topology_balanced_parser = subcommands.add_parser(
+        "exact-projection-topology-balanced-baseline-report",
+        help="Score exact projection baselines on a topology-balanced split.",
+    )
+    exact_projection_topology_balanced_parser.add_argument("jsonl_path", type=Path)
+    exact_projection_topology_balanced_parser.add_argument(
+        "--target-projection",
+        action="append",
+        choices=tuple(
+            definition["projection_id"]
+            for definition in EXACT_SIGNATURE_TARGET_PROJECTIONS
+        ),
+        help=(
+            "Projection id to score. Repeat for multiple projections. "
+            "Defaults to compact Wave 53 targets."
+        ),
+    )
+    exact_projection_topology_balanced_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for ordering rows within each topology.",
+    )
+    exact_projection_topology_balanced_parser.add_argument(
+        "--epochs",
+        type=int,
+        default=1000,
+        help="Training epochs for multiclass logistic probes.",
+    )
+    exact_projection_topology_balanced_parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=0.05,
+        help="Learning rate for multiclass logistic probes.",
+    )
+    exact_projection_topology_balanced_parser.add_argument(
+        "--l2",
+        type=float,
+        default=0.001,
+        help="L2 regularization for multiclass logistic probes.",
+    )
+    exact_projection_topology_balanced_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the topology-balanced baseline report JSON.",
+    )
+
     heuristic_signature_promotion_parser = subcommands.add_parser(
         "heuristic-signature-promotion-report",
         help="Audit heuristic signature rows for promotion readiness and blockers.",
@@ -4906,6 +5066,24 @@ def cli_main(argv: list[str] | None = None) -> int:
 
     if args.command == "exact-projection-baseline-report":
         report = evaluate_exact_projection_baseline_report(
+            args.jsonl_path,
+            target_projections=args.target_projection,
+            split_key_mode=args.split_key_mode,
+            epochs=args.epochs,
+            learning_rate=args.learning_rate,
+            l2=args.l2,
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+
+    if args.command == "exact-projection-topology-balanced-baseline-report":
+        report = evaluate_exact_projection_topology_balanced_baseline_report(
             args.jsonl_path,
             target_projections=args.target_projection,
             split_key_mode=args.split_key_mode,

@@ -1,0 +1,96 @@
+{
+  "wave_id": "wave_57_topology_balanced_projection_baselines",
+  "objective": "Run compact exact-projection baselines on a topology-balanced split of the Wave 55 rpf36 exact shard.",
+  "non_negotiables": [
+    "The topology-balanced split is an ablation split, not a replacement for prior hash-split audit artifacts.",
+    "Each topology family must contribute 24 train, 6 dev, and 6 test rows on the rpf36 shard.",
+    "Any topology test lift must be compared against dev behavior and deterministic controls before claims.",
+    "Full result signatures remain excluded from learned-model claims unless unseen-label support is solved."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w57_partizan_topology_balanced_baseline_command"
+      ]
+    },
+    {
+      "parallel": [
+        "w57_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w57_partizan_topology_balanced_baseline_command",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "docs/signature_target_mixed_hook_topology_balanced_baseline_wave_57_rpf36_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add and run a topology-balanced exact-projection baseline report over the Wave 55 rpf36 exact shard.",
+      "outputs": [
+        "exact-projection-topology-balanced-baseline-report CLI command",
+        "Topology-balanced compact projection baseline report"
+      ],
+      "commands": [
+        "python3 engine/ml_model.py exact-projection-topology-balanced-baseline-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output docs/signature_target_mixed_hook_topology_balanced_baseline_wave_57_rpf36_report.json",
+        "jq empty docs/signature_target_mixed_hook_topology_balanced_baseline_wave_57_rpf36_report.json",
+        "shasum -a 256 docs/signature_target_mixed_hook_topology_balanced_baseline_wave_57_rpf36_report.json"
+      ],
+      "acceptance": [
+        "The split has row counts 72/18/18.",
+        "Each topology family contributes 24 train, 6 dev, and 6 test examples.",
+        "The topology target has zero dev/test unseen labels.",
+        "The report records deterministic and learned probe controls."
+      ]
+    },
+    {
+      "id": "w57_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_57_topology_balanced_projection_baselines.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w57_partizan_topology_balanced_baseline_command"
+      ],
+      "prompt": "Record Wave 57 as a stronger ablation split with tentative, non-claim baseline evidence.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_57_topology_balanced_projection_baselines.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that the best topology test score is 0.3889 but dev remains below majority.",
+        "Docs keep learned-structure claims blocked.",
+        "Docs route next work to source diversity or model/feature ablations that improve both dev and test.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_57_topology_balanced_projection_baselines.json",
+      "success_signal": "The Wave 57 plan is internally consistent."
+    },
+    {
+      "id": "balanced_baseline_report_reproduces",
+      "command": "python3 engine/ml_model.py exact-projection-topology-balanced-baseline-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output /tmp/partizan-wave-57-balanced-smoke.json && cmp docs/signature_target_mixed_hook_topology_balanced_baseline_wave_57_rpf36_report.json /tmp/partizan-wave-57-balanced-smoke.json",
+      "success_signal": "The topology-balanced baseline report is reproducible."
+    }
+  ]
+}

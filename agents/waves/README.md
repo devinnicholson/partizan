@@ -19,9 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_56_expanded_mixed_hook_source_no_go.json` is the current execution
-target. It tests a larger mixed-hook source against the rpf50 blocker and
-records the result as diagnostic-only unless it reaches full rpf50 support:
+`wave_57_topology_balanced_projection_baselines.json` is the current execution
+target. It runs the rpf36 exact projection baselines on a topology-balanced
+split with larger dev/test support before any learned-structure claim:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -46,6 +46,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> exact support expansion + ablation design
                              -> source-capacity expansion or stronger OOD splits
                              -> expanded source no-go / next source design
+                             -> topology-balanced baseline ablation
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
