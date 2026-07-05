@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 45 signature promotion-readiness gates, with Wave 3 negative
+Status: Wave 46 signature replay-preflight gates, with Wave 3 negative
 controls and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
@@ -428,6 +428,23 @@ those blockers or train exact models from these rows until an external replay
 checker supplies exact target semantics and the promoted split/reporting rules
 are regenerated.
 
+Wave 46 adds that first Astralbase replay preflight:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-replay-preflight docs/signature_target_diagnostic_wave_44_rpf20.jsonl`.
+The report recomputes each Wave 44 heuristic row from its FEN board under the
+depth-two local-move rule. It checks active pieces, left/right component value
+digests, left/right component signatures, result signature key, current result
+value digest, and recursive node totals. On the current 60-row shard, required
+output field misses and contract-field mismatches are empty, replay failure
+count is 0, replay check failures are empty, and every checked replay field
+passes on all 60 rows.
+
+Wave 46 still does not promote the target. The report status is
+`replay_preflight_passed_promotion_blocked`, `promotion_gate_passed=false`, and
+all four blocker IDs remain counted on all 60 rows. Future work must convert
+this replay-preflighted diagnostic into a versioned exact value rule, regenerate
+split semantics and deterministic floors for the promoted target, and only then
+run learned models.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -444,6 +461,6 @@ target support, and Wave 42 shows naive higher-support scaling hits a bounded
 candidate-pair cap before reaching rpf20. Wave 43 shows rpf20 support is
 reachable with a full-pair scan. Wave 44 materializes and audits the rpf20
 heuristic shard. Wave 45 adds an executable row-contract/promotion-readiness
-gate, so promotion now remains closed until the diagnostic signature target is
-converted into a replayed exact value target with explicit split and
-learned-baseline rules.
+gate. Wave 46 adds field-by-field Astralbase replay preflight, so promotion now
+remains closed until the diagnostic signature target is converted into a
+versioned exact value target with explicit split and learned-baseline rules.

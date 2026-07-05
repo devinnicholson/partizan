@@ -1,0 +1,36 @@
+{
+  "row_count": 60,
+  "checked_heuristic_rows": 60,
+  "skipped_exact_rows": 0,
+  "skipped_rejected_rows": 0,
+  "skipped_non_target_rows": 0,
+  "required_output_field_missing_counts": {},
+  "contract_field_mismatch_counts": {},
+  "replay_failure_count": 0,
+  "replay_check_pass_counts": {
+    "heuristic.outputs.active_pieces": 60,
+    "heuristic.outputs.current_result_value_digest": 60,
+    "heuristic.outputs.left_component_signature": 60,
+    "heuristic.outputs.left_component_value_digest": 60,
+    "heuristic.outputs.result_signature_key": 60,
+    "heuristic.outputs.right_component_signature": 60,
+    "heuristic.outputs.right_component_value_digest": 60,
+    "heuristic.outputs.total_recursive_nodes": 60
+  },
+  "replay_check_failure_counts": {},
+  "mismatch_examples": [],
+  "promotion_blocker_counts": {
+    "deterministic_and_model_baselines_missing": 60,
+    "replay_compatible_provenance_missing": 60,
+    "split_semantics_missing": 60,
+    "versioned_exact_value_rule_missing": 60
+  },
+  "replayability_status": "replay_preflight_passed_promotion_blocked",
+  "promotion_gate_passed": false,
+  "promotion_blockers": [
+    "versioned_exact_value_rule_missing",
+    "replay_compatible_provenance_missing",
+    "split_semantics_missing",
+    "deterministic_and_model_baselines_missing"
+  ]
+}

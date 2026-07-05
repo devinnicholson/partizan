@@ -19,10 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_45_signature_promotion_readiness.json` is the current execution target.
-It makes promotion readiness executable for the rows-per-family 20 signature
-diagnostic shard by checking row-level contract fields, blocker IDs, duplicate
-signature reuse, and the still-closed promotion gate:
+`wave_46_signature_replay_preflight.json` is the current execution target. It
+adds an Astralbase replay preflight for the rows-per-family 20 signature
+diagnostic shard, recomputing diagnostic fields from each FEN board while
+keeping the exact promotion gate closed:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -35,6 +35,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> full-pair rpf20 support gate
                              -> materialized rpf20 diagnostic shard
                              -> promotion-readiness row contract
+                             -> replay preflight for diagnostic fields
                              -> replayed exact value-rule/split/baseline work
 ```
 

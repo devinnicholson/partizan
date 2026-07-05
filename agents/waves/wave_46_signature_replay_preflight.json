@@ -1,0 +1,125 @@
+{
+  "wave_id": "wave_46_signature_replay_preflight",
+  "objective": "Add an Astralbase replay preflight for heuristic signature target rows and record whether Wave 44 diagnostic fields recompute from the board.",
+  "non_negotiables": [
+    "Replay preflight is not exact promotion.",
+    "The report must keep promotion_gate_passed=false while blocker IDs remain present.",
+    "Recomputed diagnostic fields must be counted field-by-field.",
+    "Any mismatch must be preserved as a report artifact instead of being hidden by aggregate status."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w46_astralbase_signature_replay_preflight_cli"
+      ]
+    },
+    {
+      "parallel": [
+        "w46_partizan_record_replay_preflight_evidence"
+      ]
+    },
+    {
+      "parallel": [
+        "w46_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w46_astralbase_signature_replay_preflight_cli",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add an Astralbase CLI that parses signature diagnostic JSONL rows and recomputes active pieces, component signatures, component value digests, result signature keys, current result value digest, and recursive node totals from each FEN board.",
+      "outputs": [
+        "--signature-target-replay-preflight PATH",
+        "Signature target replay-preflight report structs",
+        "Positive and stale-field tests"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings"
+      ],
+      "acceptance": [
+        "The preflight report separates replayability_status from promotion_gate_passed.",
+        "Generated diagnostic rows pass all replay checks while promotion remains blocked.",
+        "A stale recomputable field creates a replay_check_failure_counts entry and mismatch example."
+      ]
+    },
+    {
+      "id": "w46_partizan_record_replay_preflight_evidence",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_replay_preflight_wave_46_report.json"
+      ],
+      "depends_on": [
+        "w46_astralbase_signature_replay_preflight_cli"
+      ],
+      "prompt": "Run the Astralbase preflight on the Wave 44 rpf20 diagnostic shard and record the report hash.",
+      "outputs": [
+        "Wave 46 replay-preflight report"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-replay-preflight docs/signature_target_diagnostic_wave_44_rpf20.jsonl > docs/signature_target_replay_preflight_wave_46_report.json",
+        "shasum -a 256 docs/signature_target_replay_preflight_wave_46_report.json"
+      ],
+      "acceptance": [
+        "The report checks all 60 heuristic rows.",
+        "required_output_field_missing_counts and contract_field_mismatch_counts are empty.",
+        "replay_failure_count is zero and replay_check_failure_counts is empty.",
+        "promotion_gate_passed remains false with all blocker IDs counted on all 60 rows."
+      ]
+    },
+    {
+      "id": "w46_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_46_signature_replay_preflight.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w46_partizan_record_replay_preflight_evidence"
+      ],
+      "prompt": "Record Wave 46 as replay preflight evidence and keep exact promotion blocked until the value rule, split semantics, and model baselines are versioned.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_46_signature_replay_preflight.json",
+        "jq empty docs/signature_target_replay_preflight_wave_46_report.json"
+      ],
+      "acceptance": [
+        "Docs state that replay preflight passed but promotion remains blocked.",
+        "Claims C2 and C5 identify versioned exact value semantics, split semantics, and baselines as the remaining blockers.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_46_signature_replay_preflight.json",
+      "success_signal": "The Wave 46 plan is internally consistent."
+    },
+    {
+      "id": "replay_preflight_passes",
+      "command": "jq '.replayability_status == \"replay_preflight_passed_promotion_blocked\" and .promotion_gate_passed == false and (.replay_check_failure_counts | length) == 0' docs/signature_target_replay_preflight_wave_46_report.json",
+      "success_signal": "All Wave 44 diagnostic fields replay while promotion remains blocked."
+    }
+  ]
+}
