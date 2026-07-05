@@ -1,0 +1,126 @@
+{
+  "wave_id": "wave_48_value_unique_signature_support_diagnostic",
+  "objective": "Measure why Wave 47 exact metadata support stops at 13 value-unique rows instead of the 60-row diagnostic target.",
+  "non_negotiables": [
+    "This is a diagnostic report, not a new promoted shard.",
+    "The report must preserve selected topology counts and rejection counts.",
+    "Exact support scale must not be inferred from heuristic support.",
+    "The next generator wave must target the measured component-value reuse bottleneck."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w48_astralbase_value_unique_support_report"
+      ]
+    },
+    {
+      "parallel": [
+        "w48_partizan_record_support_evidence"
+      ]
+    },
+    {
+      "parallel": [
+        "w48_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w48_astralbase_value_unique_support_report",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add a value-unique signature profile search report command that runs the same selector used by the Wave 47 exact shard and exposes selected counts and rejection reasons.",
+      "outputs": [
+        "--generated-depth-two-value-unique-signature-profile-search [--rows-per-family N]",
+        "generated_depth_two_value_unique_signature_profile_search_report",
+        "Regression test for the 13-row support limit"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings"
+      ],
+      "acceptance": [
+        "The report uses the existing signature support report schema.",
+        "The rpf20 value-unique selector reports 13 selected rows.",
+        "Rejection counts include component_value_digest_reuse_before_materialization as the dominant blocker."
+      ]
+    },
+    {
+      "id": "w48_partizan_record_support_evidence",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_value_unique_signature_support_wave_48_report.json"
+      ],
+      "depends_on": [
+        "w48_astralbase_value_unique_support_report"
+      ],
+      "prompt": "Run the value-unique signature support report for rows-per-family 20 and record the artifact hash.",
+      "outputs": [
+        "Wave 48 support-collapse report"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-profile-search --rows-per-family 20 > docs/non_fixture_composition_value_unique_signature_support_wave_48_report.json",
+        "jq empty docs/non_fixture_composition_value_unique_signature_support_wave_48_report.json",
+        "shasum -a 256 docs/non_fixture_composition_value_unique_signature_support_wave_48_report.json"
+      ],
+      "acceptance": [
+        "The report has 90 left and 92 right signature profiles.",
+        "The report scans 8280 candidate pairs per topology family.",
+        "Selected counts are 4 asymmetric-fan, 5 local-move, and 4 pawn-phalanx.",
+        "Rejection counts record 18391 component-value reuse rejections."
+      ]
+    },
+    {
+      "id": "w48_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_48_value_unique_signature_support_diagnostic.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w48_partizan_record_support_evidence"
+      ],
+      "prompt": "Record Wave 48 as the exact-support bottleneck measurement and set the next wave goal to generate new component-value diversity.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_48_value_unique_signature_support_diagnostic.json",
+        "jq empty docs/non_fixture_composition_value_unique_signature_support_wave_48_report.json"
+      ],
+      "acceptance": [
+        "Docs distinguish Wave 48 diagnostics from Wave 47 exact rows.",
+        "Claims identify component-value reuse pressure as the immediate exact support blocker.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_48_value_unique_signature_support_diagnostic.json",
+      "success_signal": "The Wave 48 plan is internally consistent."
+    },
+    {
+      "id": "support_report_has_expected_bottleneck",
+      "command": "jq '.selected_row_count == 13 and .rejection_counts.component_value_digest_reuse_before_materialization == 18391' docs/non_fixture_composition_value_unique_signature_support_wave_48_report.json",
+      "success_signal": "The support-collapse report records the current value-unique bottleneck."
+    }
+  ]
+}

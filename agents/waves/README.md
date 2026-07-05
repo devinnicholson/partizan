@@ -19,11 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_47_signature_exact_metadata_shard.json` is the current execution target.
-It adds a small leakage-clean exact metadata shard for the replay-preflighted
-signature target. The promoted rows are verified depth-two local-move exact
-thermograph values with signature fields recorded under `exact.value`; they are
-not a new exact value class and they do not yet provide model evidence:
+`wave_48_value_unique_signature_support_diagnostic.json` is the current
+execution target. It measures why the Wave 47 value-unique exact metadata shard
+stops at 13 rows instead of the 60-row heuristic diagnostic support. This is a
+support-collapse diagnostic, not a new promoted shard:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -38,7 +37,8 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> promotion-readiness row contract
                              -> replay preflight for diagnostic fields
                              -> value-unique exact metadata shard
-                             -> exact support scaling + learned baselines
+                             -> value-unique exact support bottleneck report
+                             -> new component-value diversity + learned baselines
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

@@ -464,6 +464,16 @@ Wave 47 split and report the `exact.value.result_signature_key` train-majority
 floor: train/dev/test accuracy 0.0909/0.0/0.0, with one unseen label in dev and
 one unseen label in test.
 
+Wave 48 adds the support-collapse diagnostic:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-profile-search --rows-per-family 20`.
+This report must remain separate from promoted exact shards. It runs the same
+value-unique signature selector used by Wave 47 and records the current rpf20
+limit: 90 left signature profiles, 92 right signature profiles, 8280 candidate
+pairs per topology family, and only 13 selected rows. The dominant blocker is
+`component_value_digest_reuse_before_materialization=18391`. Future exact
+support claims must either increase `selected_row_count` under this report or
+explicitly document a new value rule or split rule before changing the gate.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -481,6 +491,7 @@ candidate-pair cap before reaching rpf20. Wave 43 shows rpf20 support is
 reachable with a full-pair scan. Wave 44 materializes and audits the rpf20
 heuristic shard. Wave 45 adds an executable row-contract/promotion-readiness
 gate. Wave 46 adds field-by-field Astralbase replay preflight. Wave 47 converts
-that target into a small leakage-clean exact metadata shard, so the active gate
-is no longer basic exact semantics; it is scaling exact support beyond 13 rows
-and producing deterministic plus learned baselines on the exact split.
+that target into a small leakage-clean exact metadata shard. Wave 48 measures
+the exact support collapse and shows component-value reuse as the dominant
+blocker, so the active gate is new component-value diversity plus deterministic
+and learned baselines on a scaled exact split.
