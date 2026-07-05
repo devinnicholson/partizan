@@ -346,6 +346,16 @@ with zero duplicate or cross-split leakage violations. These rows may be used
 for audit, visualization, and future contract development only; exact target
 metrics and learned exact-label claims must exclude them.
 
+Wave 40 adds a deterministic heuristic-target floor:
+`python3 engine/ml_model.py heuristic-target-report docs/signature_target_diagnostic_wave_39.jsonl --target-field result_signature_key --heuristic-method signature_profile_target_diagnostic --output docs/signature_target_diagnostic_wave_40_baseline_report.json`.
+The report targets only `heuristic.outputs.result_signature_key` on
+`label_kind=heuristic` rows, includes all 30 rows, and preserves the Wave 39
+25/3/2 train/dev/test split. The train-majority floor scores 0.04 on train and
+0.0 on dev/test because all dev/test target labels are unseen relative to
+train. Future diagnostic-model experiments over the signature shard must report
+against this floor, but exact metrics and learned exact-label claims must still
+exclude these heuristic rows.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -356,5 +366,6 @@ exact rows. Wave 31 identifies the immediate clean-support bottleneck as
 component-value reuse pressure, not report validation. Wave 37 shows a richer
 material/mobility signature can recover 30 diagnostic rows, and Wave 38 makes
 that support machine-checkable. Wave 39 adds row-level heuristic diagnostics
-while keeping promotion closed until the signature becomes a replayed exact
-value target with explicit split and baseline rules.
+and Wave 40 adds a deterministic heuristic floor while keeping promotion closed
+until the signature becomes a replayed exact value target with explicit split
+and learned-baseline rules.

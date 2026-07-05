@@ -1403,6 +1403,87 @@ def evaluate_frontier_target_report(
     return report
 
 
+def evaluate_heuristic_target_report(
+    jsonl_path: str | Path,
+    target_field: str,
+    split_key_mode: str = "position",
+    heuristic_method: str | None = None,
+) -> dict[str, Any]:
+    """Evaluate heuristic-output targets with a train majority floor."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = split_assignments_for_rows(rows, split_key_mode)
+    splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=False)
+    split_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
+    examples, excluded = heuristic_target_examples(
+        rows,
+        assignments,
+        target_field,
+        heuristic_method=heuristic_method,
+    )
+    train_targets = [
+        example["target"] for example in examples if example["split"] == "train"
+    ]
+    if not train_targets:
+        raise ValueError("heuristic target report requires train heuristic targets")
+
+    majority_prediction = _majority_label(train_targets)
+    labels = tuple(sorted({example["target"] for example in examples}))
+    train_target_labels = set(train_targets)
+    split_target_labels = {
+        split: {
+            example["target"]
+            for example in examples
+            if example["split"] == split
+        }
+        for split in sorted({example["split"] for example in examples})
+    }
+
+    split_metrics = {}
+    for split in sorted({example["split"] for example in examples}):
+        split_targets = [
+            example["target"] for example in examples if example["split"] == split
+        ]
+        predictions = [majority_prediction for _target in split_targets]
+        split_metrics[split] = {
+            "support": len(split_targets),
+            "target_counts": dict(sorted(Counter(split_targets).items())),
+            "prediction_counts": dict(sorted(Counter(predictions).items())),
+            **_classification_metrics(split_targets, predictions, labels),
+        }
+
+    return {
+        "report_id": "heuristic_target_train_majority_report_v0",
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "baseline_id": "heuristic_train_majority_target_v0",
+        "target": f"heuristic.outputs.{target_field}",
+        "eligible_label_kinds": ["heuristic"],
+        "heuristic_method": heuristic_method,
+        "splitter_id": splitter_id,
+        "split_policy": split_policy,
+        "row_counts": _count_by(assignments, "split"),
+        "included_target_count": len(examples),
+        "excluded_from_target_metrics": excluded,
+        "target_labels": list(labels),
+        "train_majority_prediction": majority_prediction,
+        "target_support_coverage": {
+            "train_labels": sorted(train_target_labels),
+            "split_labels": {
+                split: sorted(targets)
+                for split, targets in split_target_labels.items()
+            },
+            "unseen_labels_by_split": {
+                split: sorted(targets - train_target_labels)
+                for split, targets in split_target_labels.items()
+            },
+        },
+        "split_metrics": split_metrics,
+    }
+
+
 def evaluate_signature_profile_contract_report(
     report_json_path: str | Path,
     rows_per_family_target: int = 10,
@@ -1632,6 +1713,51 @@ def frontier_target_examples(
             continue
         examples.append({"split": assignment["split"], "target": str(target)})
     return examples
+
+
+def heuristic_target_examples(
+    rows: list[dict[str, Any]],
+    assignments: list[dict[str, Any]],
+    target_field: str,
+    heuristic_method: str | None = None,
+) -> tuple[list[dict[str, str]], dict[str, dict[str, int]]]:
+    examples = []
+    excluded: dict[str, Counter[str]] = {
+        "non_heuristic_rows_by_split": Counter(),
+        "method_mismatch_rows_by_split": Counter(),
+        "heuristic_rows_missing_target_by_split": Counter(),
+    }
+    for row, assignment in zip(rows, assignments):
+        split = str(assignment["split"])
+        heuristic = row.get("heuristic")
+        if row.get("label_kind") != "heuristic" or not isinstance(heuristic, dict):
+            excluded["non_heuristic_rows_by_split"][split] += 1
+            continue
+        method = str(heuristic.get("method") or "")
+        if heuristic_method is not None and method != heuristic_method:
+            excluded["method_mismatch_rows_by_split"][split] += 1
+            continue
+        outputs = heuristic.get("outputs")
+        if not isinstance(outputs, dict) or target_field not in outputs:
+            excluded["heuristic_rows_missing_target_by_split"][split] += 1
+            continue
+        target = str(outputs[target_field])
+        if not target:
+            excluded["heuristic_rows_missing_target_by_split"][split] += 1
+            continue
+        examples.append(
+            {
+                "split": split,
+                "target": target,
+                "heuristic_method": method,
+                "row_id": str(row.get("row_id")),
+            }
+        )
+    return examples, {
+        key: dict(sorted(counter.items()))
+        for key, counter in excluded.items()
+        if counter
+    }
 
 
 def composition_baseline_examples(
@@ -3197,6 +3323,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the frontier target report JSON.",
     )
 
+    heuristic_target_parser = subcommands.add_parser(
+        "heuristic-target-report",
+        help="Evaluate heuristic output targets per split with a train majority floor.",
+    )
+    heuristic_target_parser.add_argument("jsonl_path", type=Path)
+    heuristic_target_parser.add_argument("--target-field", required=True)
+    heuristic_target_parser.add_argument(
+        "--heuristic-method",
+        help="Optional heuristic.method filter.",
+    )
+    heuristic_target_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for split assignment.",
+    )
+    heuristic_target_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the heuristic target report JSON.",
+    )
+
     signature_contract_parser = subcommands.add_parser(
         "signature-profile-contract-report",
         help="Validate a signature-profile search report as a diagnostic target contract.",
@@ -3381,6 +3529,26 @@ def cli_main(argv: list[str] | None = None) -> int:
             split_key_mode=args.split_key_mode,
             holdout_family=args.holdout_family,
         )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+
+    if args.command == "heuristic-target-report":
+        try:
+            report = evaluate_heuristic_target_report(
+                args.jsonl_path,
+                args.target_field,
+                split_key_mode=args.split_key_mode,
+                heuristic_method=args.heuristic_method,
+            )
+        except ValueError as error:
+            print(str(error), file=sys.stderr)
+            return 1
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(

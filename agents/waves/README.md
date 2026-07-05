@@ -19,16 +19,16 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_39_signature_target_diagnostic_shard.json` is the current execution
-target. It materializes the Wave 37 signature-profile selections as
-schema-valid heuristic rows so the target can be split and audited while
-remaining outside exact supervision:
+`wave_40_heuristic_target_floor.json` is the current execution target. It adds
+a deterministic train-majority floor over the Wave 39 heuristic
+signature-target shard while keeping those rows outside exact supervision:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
                              -> versioned signature diagnostic
                              -> support gate + promotion blockers
                              -> heuristic diagnostic shard
+                             -> deterministic heuristic target floor
                              -> replayed exact value-rule/split/baseline work
 ```
 

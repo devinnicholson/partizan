@@ -13,6 +13,7 @@ from ml_model import (
     evaluate_family_holdout_report,
     evaluate_family_holdout_report_with_mode,
     evaluate_frontier_target_report,
+    evaluate_heuristic_target_report,
     evaluate_label_shard_baseline,
     evaluate_split_baseline_report,
     evaluate_split_report,
@@ -675,6 +676,90 @@ def run_signature_profile_contract_report_smoke():
         "reuse component signatures" in error
         for error in duplicate_contract_report["support_gate"]["validation_errors"]
     )
+
+
+def run_heuristic_target_report_smoke():
+    rows = [
+        _heuristic_fixture_row_for_split(
+            "heuristic-train-a",
+            "train",
+            "signature-a",
+            start_index=0,
+        ),
+        _heuristic_fixture_row_for_split(
+            "heuristic-train-b",
+            "train",
+            "signature-b",
+            start_index=1000,
+        ),
+        _heuristic_fixture_row_for_split(
+            "heuristic-dev",
+            "dev",
+            "signature-dev",
+            start_index=2000,
+        ),
+        _heuristic_fixture_row_for_split(
+            "heuristic-test",
+            "test",
+            "signature-test",
+            start_index=3000,
+        ),
+    ]
+    with TemporaryDirectory() as temp_dir:
+        shard_path = Path(temp_dir) / "heuristic-target-smoke.jsonl"
+        shard_path.write_text(
+            "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
+            encoding="utf-8",
+        )
+        report = evaluate_heuristic_target_report(
+            shard_path,
+            "result_signature_key",
+            heuristic_method="signature_profile_target_diagnostic",
+        )
+
+    assert report["report_id"] == "heuristic_target_train_majority_report_v0"
+    assert report["target"] == "heuristic.outputs.result_signature_key"
+    assert report["included_target_count"] == 4
+    assert report["excluded_from_target_metrics"] == {}
+    assert report["train_majority_prediction"] == "signature-a"
+    assert report["split_metrics"]["train"]["support"] == 2
+    assert report["split_metrics"]["train"]["accuracy"] == 0.5
+    assert report["split_metrics"]["dev"]["accuracy"] == 0.0
+    assert report["split_metrics"]["test"]["accuracy"] == 0.0
+    assert report["target_support_coverage"]["unseen_labels_by_split"]["dev"] == [
+        "signature-dev"
+    ]
+    assert report["target_support_coverage"]["unseen_labels_by_split"]["test"] == [
+        "signature-test"
+    ]
+
+
+def _heuristic_fixture_row_for_split(
+    row_id: str,
+    target_split: str,
+    target: str,
+    start_index: int = 0,
+) -> dict[str, object]:
+    for index in range(start_index, start_index + 1000):
+        fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
+        split_key = f"unprovenanced_heuristic|fen:{fen}"
+        if split_for_key(split_key) == target_split:
+            return {
+                "schema_version": "partizan.dataset_label.v0",
+                "row_id": row_id,
+                "domain": "formal_domain:bitmesh_composed_board_material:v0",
+                "position": {"encoding": "fen", "text": fen},
+                "label_kind": "heuristic",
+                "heuristic": {
+                    "method": "signature_profile_target_diagnostic",
+                    "method_version": "v0",
+                    "outputs": {
+                        "result_signature_key": target,
+                        "supervision_eligible": "false",
+                    },
+                },
+            }
+    raise AssertionError(f"could not find heuristic FEN for split {target_split!r}")
 
 
 def _composition_fixture_certificate(
@@ -1374,6 +1459,7 @@ def main():
     run_composition_topology_benchmark_report_smoke()
     run_composition_component_sum_parser_scope_smoke()
     run_signature_profile_contract_report_smoke()
+    run_heuristic_target_report_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()

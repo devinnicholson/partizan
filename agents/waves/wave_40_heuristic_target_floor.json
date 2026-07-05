@@ -1,0 +1,100 @@
+{
+  "wave_id": "wave_40_heuristic_target_floor",
+  "objective": "Add a deterministic floor for the Wave 39 heuristic signature-target shard without promoting those rows into exact supervision.",
+  "non_negotiables": [
+    "The baseline must evaluate only label_kind=heuristic rows.",
+    "The target must be read from heuristic.outputs and must support a heuristic.method filter.",
+    "The report must preserve train/dev/test target-support coverage, including labels unseen relative to train.",
+    "The result is a diagnostic floor only; it must not activate exact supervision or learned-model claims."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w40_partizan_heuristic_target_floor_tooling"
+      ]
+    },
+    {
+      "parallel": [
+        "w40_partizan_heuristic_target_floor_evidence"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w40_partizan_heuristic_target_floor_tooling",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py"
+      ],
+      "depends_on": [],
+      "prompt": "Add a heuristic-target-report CLI command that evaluates a train-majority floor over heuristic.outputs.<target_field>, filters by heuristic.method, records exclusions, and reports split target-support coverage.",
+      "outputs": [
+        "heuristic-target-report CLI command",
+        "Smoke coverage for train/dev/test heuristic targets and unseen labels"
+      ],
+      "commands": [
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "The smoke test proves that only heuristic rows feed target metrics.",
+        "The train-majority predictor is deterministic.",
+        "Dev/test labels unseen relative to train are recorded."
+      ]
+    },
+    {
+      "id": "w40_partizan_heuristic_target_floor_evidence",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_diagnostic_wave_40_baseline_report.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/README.md",
+        "agents/waves/wave_40_heuristic_target_floor.json"
+      ],
+      "depends_on": [
+        "w40_partizan_heuristic_target_floor_tooling"
+      ],
+      "prompt": "Run the deterministic train-majority floor on docs/signature_target_diagnostic_wave_39.jsonl, record the report hash and metrics, and update ledgers while keeping promotion closed.",
+      "outputs": [
+        "Wave 40 heuristic target baseline report",
+        "Experiment matrix and claim-gate updates"
+      ],
+      "commands": [
+        "python3 engine/ml_model.py heuristic-target-report docs/signature_target_diagnostic_wave_39.jsonl --target-field result_signature_key --heuristic-method signature_profile_target_diagnostic --output docs/signature_target_diagnostic_wave_40_baseline_report.json",
+        "shasum -a 256 docs/signature_target_diagnostic_wave_40_baseline_report.json",
+        "jq empty docs/signature_target_diagnostic_wave_40_baseline_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_40_heuristic_target_floor.json"
+      ],
+      "acceptance": [
+        "The report includes 30 heuristic targets with train/dev/test counts 25/3/2.",
+        "The train-majority floor scores 0.04 train accuracy and 0.0 dev/test accuracy.",
+        "All dev/test labels are recorded as unseen relative to train.",
+        "Docs state that this is a diagnostic floor, not exact or learned-model evidence."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_40_heuristic_target_floor.json",
+      "success_signal": "The Wave 40 plan is internally consistent."
+    },
+    {
+      "id": "heuristic_floor_report_valid_json",
+      "command": "jq empty docs/signature_target_diagnostic_wave_40_baseline_report.json",
+      "success_signal": "The heuristic target floor report is valid JSON."
+    },
+    {
+      "id": "heuristic_floor_smoke_tests",
+      "command": "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py && python3 engine/test.py",
+      "success_signal": "The heuristic floor implementation and regression smoke pass."
+    }
+  ]
+}
