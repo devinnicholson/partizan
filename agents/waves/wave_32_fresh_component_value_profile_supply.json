@@ -1,0 +1,149 @@
+{
+  "wave_id": "wave_32_fresh_component_value_profile_supply",
+  "objective": "Increase leakage-clean generated non-fixture composition support by broadening fresh component-value profile supply while preserving replay, no-reuse leakage gates, and the already pinned Wave 18, Wave 22, and Wave 27 artifacts.",
+  "non_negotiables": [
+    "Do not relax Wave 27 no-reuse gates for positions, decomposition digests, composition digests, decomposition-qualified component identities, component value digests, component value identities, component value pairs, or result value digests.",
+    "Wave 18 default SHA remains ae01fe8256a1c7a699e5f6f0358d499d6c1f4850148c9251e1c494bb059d3aa8.",
+    "Wave 22 expanded SHA remains 9d1b2754b880e64498b5deec12ac14c5b4be320446ed1319a67252599bd5dcc7 unless an explicit migration artifact is created.",
+    "Wave 27 clean SHA remains 7e1085cb0a212d7f3e620885c11bf709f8ce2bfa28204c664bbc0aa02875ef9c unless an explicit Wave 32 command/artifact supersedes it.",
+    "A learned decomposition-benefit claim remains blocked until a larger leakage-clean split beats deterministic floors and matched no-decomposition controls on the same split."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w32_astralbase_fresh_component_profile_supply"
+      ]
+    },
+    {
+      "parallel": [
+        "w33_partizan_scaled_clean_reports"
+      ]
+    },
+    {
+      "parallel": [
+        "w34_model_readiness_gate"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w32_astralbase_fresh_component_profile_supply",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Use the Wave 31 diagnostic to broaden fresh component-value profile supply for the leakage-clean non-fixture composition generator. Prefer a separate Wave 32 command or clearly versioned profile source if needed to preserve older artifact bytes. The target is at least 30 leakage-clean generated exact rows, with at least 10 in each generated depth-two topology family. Keep every exact row replay-verifiable and keep all Wave 27 no-reuse identity gates active.",
+      "outputs": [
+        "Wave 32 clean JSONL candidate or explicit capacity-failure report",
+        "Profile-search report with candidate-pair counts and rejection reasons",
+        "Tests proving no-reuse identities and pinned artifact stability"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo run --quiet -- --generated-depth-two-profile-search --rows-per-family 10 > /tmp/astralbase-w32-profile-search.json",
+        "cargo run --quiet -- --non-fixture-composed-domain-shard > /tmp/astralbase-w18-stability.jsonl",
+        "shasum -a 256 /tmp/astralbase-w18-stability.jsonl",
+        "cargo run --quiet -- --expanded-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w22-stability.jsonl",
+        "shasum -a 256 /tmp/astralbase-w22-stability.jsonl",
+        "cargo run --quiet -- --leakage-clean-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w27-stability.jsonl",
+        "shasum -a 256 /tmp/astralbase-w27-stability.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w27-stability.jsonl"
+      ],
+      "acceptance": [
+        "Profile-search rejection counts show component-value reuse pressure has been materially reduced or an explicit capacity failure is documented.",
+        "If a Wave 32 clean shard is promoted, it has at least 30 generated exact rows and at least 10 rows in each generated depth-two topology family.",
+        "Every promoted exact row replay-verifies under Astralbase.",
+        "Pinned Wave 18, Wave 22, and Wave 27 hashes remain stable unless a new command/artifact is explicitly recorded."
+      ]
+    },
+    {
+      "id": "w33_partizan_scaled_clean_reports",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_*wave_32*.json",
+        "docs/non_fixture_composition_*wave_32*.md",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w32_astralbase_fresh_component_profile_supply"
+      ],
+      "prompt": "Generate Partizan schema, topology, source holdout, and deterministic baseline reports for the Wave 32 clean candidate if Astralbase produces one. If support remains below 30 generated exact rows or below 10 per generated topology family, write a capacity no-go instead of model reports.",
+      "outputs": [
+        "Wave 32 topology/source/baseline reports or capacity no-go",
+        "Experiment matrix row with artifact hashes and exact support counts",
+        "Research claim and verification-gate updates"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_32_fresh_component_value_profile_supply.json",
+        "python3 agents/label_schema.py validate /tmp/astralbase-w32-clean-composition.jsonl",
+        "python3 engine/ml_model.py composition-topology-benchmark-report /tmp/astralbase-w32-clean-composition.jsonl --split-key-mode symmetry --fail-on-leakage --output docs/non_fixture_composition_topology_wave_32_benchmark_report.json",
+        "python3 engine/ml_model.py composition-holdout-report /tmp/astralbase-w32-clean-composition.jsonl --holdout-selector composition_spec_source --holdout-value profiled_depth2_component_pair_generator_v0 --split-key-mode symmetry --fail-on-leakage --output docs/non_fixture_composition_source_wave_32_holdout_report.json",
+        "python3 engine/ml_model.py composition-baseline-report /tmp/astralbase-w32-clean-composition.jsonl --holdout-selector composition_spec_source --holdout-value profiled_depth2_component_pair_generator_v0 --split-key-mode symmetry --output docs/non_fixture_composition_source_wave_32_baseline_report.json",
+        "python3 engine/ml_model.py validate-report docs/non_fixture_composition_source_wave_32_baseline_report.json --fail-on-leakage",
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py"
+      ],
+      "acceptance": [
+        "Promoted Wave 32 reports pass --fail-on-leakage.",
+        "Reports expose generated-source support, topology support, unseen labels, abstentions, and deterministic floors.",
+        "If support remains below threshold, docs state no-go and no learned model evidence is claimed."
+      ]
+    },
+    {
+      "id": "w34_model_readiness_gate",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_wave_32_model_go_no_go.md",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md"
+      ],
+      "depends_on": [
+        "w33_partizan_scaled_clean_reports"
+      ],
+      "prompt": "Decide whether Wave 32 support is sufficient for learned baselines. Require at least 30 leakage-clean generated exact rows, 10 per generated topology family, replay, schema validation, Partizan leakage validation, and deterministic floors on the same split. If these are not all satisfied, write a no-go report.",
+      "outputs": [
+        "Wave 32 model go/no-go note",
+        "Claim ledger update preserving the evidence boundary",
+        "Next-wave recommendation"
+      ],
+      "commands": [
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py",
+        "python3 engine/ml_model.py validate-report docs/non_fixture_composition_source_wave_32_baseline_report.json --fail-on-leakage"
+      ],
+      "acceptance": [
+        "No learned model is trained or claimed below the support threshold.",
+        "Any go decision names matched deterministic floors and controls.",
+        "Any no-go decision states the missing support or validation gate."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_32_fresh_component_value_profile_supply.json",
+      "success_signal": "The Wave 32 plan is internally consistent."
+    },
+    {
+      "id": "fresh_profile_supply_gate",
+      "command": "cd ../astralbase && cargo run --quiet -- --generated-depth-two-profile-search --rows-per-family 10 > /tmp/astralbase-w32-profile-search.json",
+      "success_signal": "The profile-search report exposes support counts and rejection reasons."
+    },
+    {
+      "id": "scaled_clean_report_gate",
+      "command": "python3 engine/ml_model.py validate-report docs/non_fixture_composition_source_wave_32_baseline_report.json --fail-on-leakage",
+      "success_signal": "A promoted Wave 32 report passes leakage validation."
+    }
+  ]
+}
