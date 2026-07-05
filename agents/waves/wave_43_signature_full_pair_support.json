@@ -1,0 +1,93 @@
+{
+  "wave_id": "wave_43_signature_full_pair_support",
+  "objective": "Run the bounded signature support diagnostic at the full candidate-pair cap to determine whether rows_per_family=20 support is attainable.",
+  "non_negotiables": [
+    "The result is a support diagnostic, not a materialized shard.",
+    "The report must preserve candidate offsets and cap-hit flags per topology family.",
+    "A positive support result must still require schema validation, split reports, floors, and projection inventories before model work.",
+    "Existing rows_per_family=10 artifacts remain the current materialized diagnostic shard until a new shard is generated and audited."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w43_astralbase_full_pair_support_probe"
+      ]
+    },
+    {
+      "parallel": [
+        "w43_partizan_full_pair_support_evidence"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w43_astralbase_full_pair_support_probe",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Use the Wave 42 bounded-support CLI at candidate-pair-limit 8280 to test whether rpf20 signature support is reachable without hitting the candidate cap.",
+      "outputs": [
+        "Full-pair bounded rpf20 support report"
+      ],
+      "commands": [
+        "cargo run --quiet -- --generated-depth-two-signature-bounded-support --rows-per-family 20 --candidate-pair-limit 8280 > /tmp/astralbase-w43-signature-bounded-rpf20-limit8280.json",
+        "shasum -a 256 /tmp/astralbase-w43-signature-bounded-rpf20-limit8280.json"
+      ],
+      "acceptance": [
+        "The report completes and records candidate offsets for all topology families.",
+        "The report states whether each topology family reaches the 20-row target.",
+        "The report states whether any topology family hit the 8280-pair cap."
+      ]
+    },
+    {
+      "id": "w43_partizan_full_pair_support_evidence",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_signature_bounded_support_wave_43_report.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/README.md",
+        "agents/waves/wave_43_signature_full_pair_support.json"
+      ],
+      "depends_on": [
+        "w43_astralbase_full_pair_support_probe"
+      ],
+      "prompt": "Record the full-pair bounded support report, its hash, and the interpretation that rpf20 support is attainable but not yet materialized or split.",
+      "outputs": [
+        "Wave 43 full-pair bounded support report",
+        "Experiment matrix and claim-gate updates"
+      ],
+      "commands": [
+        "cp /tmp/astralbase-w43-signature-bounded-rpf20-limit8280.json docs/non_fixture_composition_signature_bounded_support_wave_43_report.json",
+        "shasum -a 256 docs/non_fixture_composition_signature_bounded_support_wave_43_report.json",
+        "jq empty docs/non_fixture_composition_signature_bounded_support_wave_43_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_43_signature_full_pair_support.json"
+      ],
+      "acceptance": [
+        "The report records 60 selected rows, split 20/20/20 across the three topology families.",
+        "No topology family hits the 8280 candidate-pair cap.",
+        "Docs state that the next wave must materialize and audit the rpf20 heuristic shard before model claims."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_43_signature_full_pair_support.json",
+      "success_signal": "The Wave 43 plan is internally consistent."
+    },
+    {
+      "id": "full_pair_report_valid_json",
+      "command": "jq empty docs/non_fixture_composition_signature_bounded_support_wave_43_report.json",
+      "success_signal": "The full-pair bounded support report is valid JSON."
+    }
+  ]
+}

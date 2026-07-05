@@ -378,6 +378,17 @@ All three topology families hit the candidate-pair cap and none reaches the
 20-per-family target. Future scale reports must expose equivalent cap/offset
 fields and must not describe bounded partial support as a promoted shard.
 
+Wave 43 runs the bounded higher-support diagnostic at the full 8280 candidate
+pairs per topology family:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-signature-bounded-support --rows-per-family 20 --candidate-pair-limit 8280`.
+The report reaches the 20-per-family target with 60 selected rows and no
+candidate-pair cap hits. Candidate offsets are 6299 asymmetric-fan, 6108
+local-move, and 6316 pawn-phalanx. This proves support reachability for an
+rpf20 diagnostic shard, but it is not yet a dataset: the next gate must
+materialize the shard, run Partizan schema validation, split/leakage reporting,
+target floors, and projection inventories before any model experiment can use
+it.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -391,7 +402,7 @@ that support machine-checkable. Wave 39 adds row-level heuristic diagnostics
 and Wave 40 adds a deterministic heuristic floor while keeping promotion
 closed. Wave 41 shows that simple projection choice does not solve informative
 target support, and Wave 42 shows naive higher-support scaling hits a bounded
-candidate-pair cap before reaching rpf20. Promotion remains closed until the
-signature becomes a replayed exact value target with explicit split and
-learned-baseline rules, or the generator produces enough repeated support for
-an informative diagnostic projection.
+candidate-pair cap before reaching rpf20. Wave 43 shows rpf20 support is
+reachable with a full-pair scan. Promotion remains closed until the support is
+materialized, split-audited, and eventually converted into a replayed exact
+value target with explicit split and learned-baseline rules.

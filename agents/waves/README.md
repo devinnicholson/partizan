@@ -19,9 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_42_signature_bounded_support.json` is the current execution target. It
-adds a bounded Astralbase support diagnostic for higher rows-per-family
-signature generation while keeping those rows outside exact supervision:
+`wave_43_signature_full_pair_support.json` is the current execution target. It
+uses the bounded Astralbase support diagnostic at the full candidate-pair cap to
+test whether rows-per-family 20 signature support is attainable while keeping
+those rows outside exact supervision:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -31,6 +32,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> deterministic heuristic target floor
                              -> projection support inventory
                              -> bounded higher-support diagnostic
+                             -> full-pair rpf20 support gate
                              -> replayed exact value-rule/split/baseline work
 ```
 
