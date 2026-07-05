@@ -274,6 +274,15 @@ selected only 7 generated rows and increased component-value reuse rejections to
 strategy; the next generator change must introduce genuinely new
 component-value diversity or document a different evaluation split rule.
 
+Wave 33 adds a profile-inventory command:
+`cargo run --quiet -- --generated-depth-two-profile-inventory`. The current
+inventory shows white profile generation collapses from 526 patterns to 129
+wall-safe patterns and 14 accepted profiles, while black collapses from 527
+patterns to 365 wall-safe patterns and 13 accepted profiles. Future
+profile-source changes must report which loss modes they improve:
+`wall_safety`, `component_recursive_node_budget`, `materialization_failure`, or
+`duplicate_value_digest`.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
