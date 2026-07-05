@@ -368,6 +368,16 @@ signature-target work must either increase repeated support for an informative
 projection or define a replayed exact value rule; it must not promote topology
 classification as decomposition-value evidence.
 
+Wave 42 adds a bounded higher-support diagnostic:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-signature-bounded-support --rows-per-family 20 --candidate-pair-limit 2500`.
+The report records selected counts, candidate offsets, target-reached flags,
+candidate-limit flags, and rejection counts while preserving the existing
+unbounded rpf10 signature path. With the 2500-pair cap, the rpf20 diagnostic
+selects only 35 rows: 12 asymmetric-fan, 12 local-move, and 11 pawn-phalanx.
+All three topology families hit the candidate-pair cap and none reaches the
+20-per-family target. Future scale reports must expose equivalent cap/offset
+fields and must not describe bounded partial support as a promoted shard.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -378,8 +388,10 @@ exact rows. Wave 31 identifies the immediate clean-support bottleneck as
 component-value reuse pressure, not report validation. Wave 37 shows a richer
 material/mobility signature can recover 30 diagnostic rows, and Wave 38 makes
 that support machine-checkable. Wave 39 adds row-level heuristic diagnostics
-and Wave 40 adds a deterministic heuristic floor while keeping promotion closed
-Wave 41 shows that simple projection choice does not solve informative target
-support. Promotion remains closed until the signature becomes a replayed exact
-value target with explicit split and learned-baseline rules, or the generator
-produces enough repeated support for an informative diagnostic projection.
+and Wave 40 adds a deterministic heuristic floor while keeping promotion
+closed. Wave 41 shows that simple projection choice does not solve informative
+target support, and Wave 42 shows naive higher-support scaling hits a bounded
+candidate-pair cap before reaching rpf20. Promotion remains closed until the
+signature becomes a replayed exact value target with explicit split and
+learned-baseline rules, or the generator produces enough repeated support for
+an informative diagnostic projection.

@@ -1,0 +1,104 @@
+{
+  "wave_id": "wave_42_signature_bounded_support",
+  "objective": "Add a bounded Astralbase diagnostic for higher-support signature target generation and record whether naive rows_per_family=20 scaling is practical.",
+  "non_negotiables": [
+    "The bounded diagnostic must not change existing unbounded rows_per_family=10 signature support behavior.",
+    "The report must expose candidate offsets and whether each topology family hit the candidate-pair limit.",
+    "A bounded partial result must be recorded as diagnostic only, not as a promoted shard.",
+    "Partizan ledgers must keep heuristic target promotion closed."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w42_astralbase_bounded_signature_support"
+      ]
+    },
+    {
+      "parallel": [
+        "w42_partizan_bounded_signature_support_evidence"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w42_astralbase_bounded_signature_support",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add a bounded signature-support CLI/report that reuses the existing signature selector with a per-family candidate-pair limit and reports selected counts, offsets, limit-hit flags, and rejection counts.",
+      "outputs": [
+        "generated_depth_two_signature_bounded_support_report API",
+        "--generated-depth-two-signature-bounded-support CLI",
+        "Regression test proving the candidate-pair limit is respected"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test generated_depth_two_signature_bounded_support_respects_candidate_limit",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo run --quiet -- --generated-depth-two-signature-bounded-support --rows-per-family 20 --candidate-pair-limit 2500 > /tmp/astralbase-w42-signature-bounded-rpf20-limit2500.json"
+      ],
+      "acceptance": [
+        "Existing rows_per_family=10 signature tests still pass.",
+        "The bounded report completes under the 2500 candidate-pair cap.",
+        "The bounded report records candidate offsets and limit-hit flags per topology family."
+      ]
+    },
+    {
+      "id": "w42_partizan_bounded_signature_support_evidence",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_signature_bounded_support_wave_42_report.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/README.md",
+        "agents/waves/wave_42_signature_bounded_support.json"
+      ],
+      "depends_on": [
+        "w42_astralbase_bounded_signature_support"
+      ],
+      "prompt": "Record the bounded rows_per_family=20 signature-support report, its hash, and the interpretation that naive higher-support scaling remains capped at 12/12/11 under the 2500-pair limit.",
+      "outputs": [
+        "Wave 42 bounded signature-support report",
+        "Experiment matrix and claim-gate updates"
+      ],
+      "commands": [
+        "cp /tmp/astralbase-w42-signature-bounded-rpf20-limit2500.json docs/non_fixture_composition_signature_bounded_support_wave_42_report.json",
+        "shasum -a 256 docs/non_fixture_composition_signature_bounded_support_wave_42_report.json",
+        "jq empty docs/non_fixture_composition_signature_bounded_support_wave_42_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_42_signature_bounded_support.json"
+      ],
+      "acceptance": [
+        "The report hash is recorded.",
+        "The report records 35 selected rows, split 12/12/11 across the three topology families.",
+        "All three topology families hit the 2500 candidate-pair cap before reaching the 20-per-family target.",
+        "Docs state that this is a bounded scale diagnostic, not a promoted shard."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_42_signature_bounded_support.json",
+      "success_signal": "The Wave 42 plan is internally consistent."
+    },
+    {
+      "id": "bounded_report_valid_json",
+      "command": "jq empty docs/non_fixture_composition_signature_bounded_support_wave_42_report.json",
+      "success_signal": "The bounded support report is valid JSON."
+    },
+    {
+      "id": "astralbase_bounded_support_validated",
+      "command": "cargo test && cargo clippy --all-targets --all-features -- -D warnings",
+      "success_signal": "Astralbase bounded support tooling passes test and lint gates."
+    }
+  ]
+}

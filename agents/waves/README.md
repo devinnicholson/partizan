@@ -19,10 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_41_signature_target_projection_inventory.json` is the current execution
-target. It screens coarser projections of the Wave 39 heuristic
-signature-target shard to see whether any diagnostic target has usable split
-support while keeping those rows outside exact supervision:
+`wave_42_signature_bounded_support.json` is the current execution target. It
+adds a bounded Astralbase support diagnostic for higher rows-per-family
+signature generation while keeping those rows outside exact supervision:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -31,6 +30,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> heuristic diagnostic shard
                              -> deterministic heuristic target floor
                              -> projection support inventory
+                             -> bounded higher-support diagnostic
                              -> replayed exact value-rule/split/baseline work
 ```
 
