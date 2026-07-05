@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 58 topology feature-ablation gates, with Wave 3 negative controls
+Status: Wave 59 interior mixed-hook source gates, with Wave 3 negative controls
 and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
@@ -584,6 +584,17 @@ beats train-majority on both dev and test. The current report has no such
 group: component material reaches 0.4444 test but 0.2222 dev, and full
 signature metadata reaches 0.3889 test but 0.2778 dev.
 
+Wave 59 adds an interior mixed-hook source diagnostic:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-interior-mixed-hook-source --rows-per-family 50`.
+The standalone interior source is fully selected and must remain
+diagnostic-only: it selects 11 rows at rpf50 with topology counts 4/4/3, far
+below the 150-row target. The interior-first current/expanded combinations are
+capacity-only reports. They reach capacity 81, below the rpf50 target and below
+Wave 56's expanded mixed-hook supply because pattern-limit ordering truncates
+stronger prior source patterns. Future source-composition work must therefore
+report pattern-limit ordering and must not treat capacity-only rows as selected
+support.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -611,6 +622,8 @@ a topology no-go plus a material-control result, and Wave 55 expands exact
 support to rpf36 while exposing rpf50 as source-limited. Wave 56's expanded
 mixed-hook source remains below rpf50, Wave 57's balanced split does not
 produce matched dev/test lift, and Wave 58's feature-group ablation localizes
-that no-go to every current topology feature group. The active gate is a
-materially different source family or a model class that improves both dev and
+that no-go to every current topology feature group. Wave 59's interior source
+does not solve rpf50 and exposes pattern-limit truncation as an additional
+source-ordering risk. The active gate is a source family that clears rpf50
+without pattern-limit truncation, or a model class that improves both dev and
 test before any learned structure claim.

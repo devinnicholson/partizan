@@ -19,9 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_58_topology_feature_ablation.json` is the current execution target. It
-runs feature-group ablations for the rpf36 exact projection probes on the
-topology-balanced split before any learned-structure claim:
+`wave_59_interior_mixed_hook_source_no_go.json` is the current execution target.
+It tests whether an interior mixed-hook source family solves the rpf50 exact
+support blocker before any learned-structure claim:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -48,6 +48,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> expanded source no-go / next source design
                              -> topology-balanced baseline ablation
                              -> topology feature-group ablation no-go
+                             -> interior mixed-hook source no-go
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
