@@ -13,6 +13,7 @@ from ml_model import (
     evaluate_family_holdout_report,
     evaluate_family_holdout_report_with_mode,
     evaluate_frontier_target_report,
+    evaluate_heuristic_target_projection_report,
     evaluate_heuristic_target_report,
     evaluate_label_shard_baseline,
     evaluate_split_baseline_report,
@@ -734,11 +735,96 @@ def run_heuristic_target_report_smoke():
     ]
 
 
+def run_heuristic_target_projection_report_smoke():
+    rows = [
+        _heuristic_fixture_row_for_split(
+            "heuristic-projection-train-a",
+            "train",
+            "signature-train-a",
+            start_index=4000,
+            topology="topology-a",
+            left_digest="left-a",
+            right_digest="right-a",
+            left_material=1,
+            right_material=-1,
+        ),
+        _heuristic_fixture_row_for_split(
+            "heuristic-projection-train-b",
+            "train",
+            "signature-train-b",
+            start_index=5000,
+            topology="topology-b",
+            left_digest="left-b",
+            right_digest="right-b",
+            left_material=2,
+            right_material=-2,
+        ),
+        _heuristic_fixture_row_for_split(
+            "heuristic-projection-dev",
+            "dev",
+            "signature-dev",
+            start_index=6000,
+            topology="topology-a",
+            left_digest="left-a",
+            right_digest="right-a",
+            left_material=1,
+            right_material=-1,
+        ),
+        _heuristic_fixture_row_for_split(
+            "heuristic-projection-test",
+            "test",
+            "signature-test",
+            start_index=7000,
+            topology="topology-c",
+            left_digest="left-c",
+            right_digest="right-c",
+            left_material=3,
+            right_material=-1,
+        ),
+    ]
+    with TemporaryDirectory() as temp_dir:
+        shard_path = Path(temp_dir) / "heuristic-projection-smoke.jsonl"
+        shard_path.write_text(
+            "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
+            encoding="utf-8",
+        )
+        report = evaluate_heuristic_target_projection_report(
+            shard_path,
+            heuristic_method="signature_profile_target_diagnostic",
+        )
+
+    assert report["report_id"] == "heuristic_signature_target_projection_report_v0"
+    projections = {
+        projection["projection_id"]: projection for projection in report["projections"]
+    }
+    topology = projections["component_topology_family"]
+    assert topology["target_label_count"] == 3
+    assert topology["train_majority_prediction"] == "topology-a"
+    assert topology["split_metrics"]["dev"]["majority_accuracy"] == 1.0
+    assert topology["split_metrics"]["test"]["majority_accuracy"] == 0.0
+    assert topology["split_metrics"]["test"]["unseen_labels"] == ["topology-c"]
+
+    material = projections["component_material_pair"]
+    assert material["split_metrics"]["dev"]["unseen_label_count"] == 0
+    assert material["split_metrics"]["test"]["unseen_label_count"] == 1
+    assert projections["net_material_balance"]["target_counts"] == {
+        "net:0": 3,
+        "net:2": 1,
+    }
+
+
 def _heuristic_fixture_row_for_split(
     row_id: str,
     target_split: str,
     target: str,
     start_index: int = 0,
+    topology: str = "topology-a",
+    left_digest: str = "left-digest-a",
+    right_digest: str = "right-digest-a",
+    left_material: int = 1,
+    right_material: int = -1,
+    left_moves: str = "white:1,black:0",
+    right_moves: str = "white:0,black:1",
 ) -> dict[str, object]:
     for index in range(start_index, start_index + 1000):
         fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
@@ -754,7 +840,18 @@ def _heuristic_fixture_row_for_split(
                     "method": "signature_profile_target_diagnostic",
                     "method_version": "v0",
                     "outputs": {
+                        "component_topology_family": topology,
+                        "left_component_signature": (
+                            f"value:{left_digest};material:{left_material};"
+                            f"moves:{left_moves}"
+                        ),
+                        "left_component_value_digest": left_digest,
                         "result_signature_key": target,
+                        "right_component_signature": (
+                            f"value:{right_digest};material:{right_material};"
+                            f"moves:{right_moves}"
+                        ),
+                        "right_component_value_digest": right_digest,
                         "supervision_eligible": "false",
                     },
                 },
@@ -1460,6 +1557,7 @@ def main():
     run_composition_component_sum_parser_scope_smoke()
     run_signature_profile_contract_report_smoke()
     run_heuristic_target_report_smoke()
+    run_heuristic_target_projection_report_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()

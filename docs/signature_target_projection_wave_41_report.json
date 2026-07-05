@@ -1,0 +1,864 @@
+{
+  "dataset_path": "docs/signature_target_diagnostic_wave_39.jsonl",
+  "dataset_sha256": "4208f0fc076f4b5a9be3ed80293684bb492b1b890202b1fe38d41678e69c02a4",
+  "eligible_label_kinds": [
+    "heuristic"
+  ],
+  "heuristic_method": "signature_profile_target_diagnostic",
+  "projection_count": 9,
+  "projections": [
+    {
+      "description": "Full diagnostic signature target key.",
+      "excluded_from_target_metrics": {},
+      "included_target_count": 30,
+      "projection_id": "result_signature_key",
+      "split_metrics": {
+        "dev": {
+          "majority_accuracy": 0.0,
+          "support": 3,
+          "target_counts": {
+            "dfile_two_component_depth2_local_move_v0;left:value:986f5c6b25e8d086;material:15;moves:white:6,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:9": 1,
+            "dfile_two_component_depth2_local_move_v0;left:value:b1231ce80334616e;material:6;moves:white:7,black:0;right:value:05631564af32123a;material:-7;moves:white:0,black:4": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:60ebee880a925aa7;material:7;moves:white:4,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:7": 1
+          },
+          "target_label_count": 3,
+          "unseen_label_count": 3,
+          "unseen_labels": [
+            "dfile_two_component_depth2_local_move_v0;left:value:986f5c6b25e8d086;material:15;moves:white:6,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:9",
+            "dfile_two_component_depth2_local_move_v0;left:value:b1231ce80334616e;material:6;moves:white:7,black:0;right:value:05631564af32123a;material:-7;moves:white:0,black:4",
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:60ebee880a925aa7;material:7;moves:white:4,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:7"
+          ]
+        },
+        "test": {
+          "majority_accuracy": 0.0,
+          "support": 2,
+          "target_counts": {
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:999c2d34dcc0a10b;material:10;moves:white:4,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:6": 1,
+            "dfile_two_component_depth2_local_move_v0;left:value:a56b7865290bf909;material:12;moves:white:13,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:12": 1
+          },
+          "target_label_count": 2,
+          "unseen_label_count": 2,
+          "unseen_labels": [
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:999c2d34dcc0a10b;material:10;moves:white:4,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:6",
+            "dfile_two_component_depth2_local_move_v0;left:value:a56b7865290bf909;material:12;moves:white:13,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:12"
+          ]
+        },
+        "train": {
+          "majority_accuracy": 0.04,
+          "support": 25,
+          "target_counts": {
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:2b525ca581b1d3e9;material:9;moves:white:10,black:0;right:value:b11a21f1ea92fd1c;material:-14;moves:white:0,black:12": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:2b525ca581b1d3e9;material:9;moves:white:7,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:5": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:999c2d34dcc0a10b;material:10;moves:white:12,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:14": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:a56b7865290bf909;material:12;moves:white:11,black:0;right:value:829478f700df97e8;material:-10;moves:white:0,black:13": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:b1231ce80334616e;material:6;moves:white:2,black:0;right:value:44a7109f9920cb51;material:-4;moves:white:0,black:6": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:b1231ce80334616e;material:6;moves:white:4,black:0;right:value:44a7109f9920cb51;material:-4;moves:white:0,black:3": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:d872e10a5dd78aa0;material:8;moves:white:11,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:13": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:d9efe6ea0eb7c325;material:5;moves:white:6,black:0;right:value:9be343ff64350998;material:-5;moves:white:0,black:6": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0;left:value:dd20db8dbb70dbf2;material:11;moves:white:6,black:0;right:value:c7c440b1b2c7cd21;material:-11;moves:white:0,black:7": 1,
+            "dfile_two_component_depth2_local_move_v0;left:value:0a9e056b8ad2ef1f;material:14;moves:white:12,black:0;right:value:e0a1d2f9e449e554;material:-9;moves:white:0,black:10": 1,
+            "dfile_two_component_depth2_local_move_v0;left:value:33612fded7c41844;material:17;moves:white:7,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:8": 1,
+            "dfile_two_component_depth2_local_move_v0;left:value:b1231ce80334616e;material:6;moves:white:11,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:12": 1,
+            "dfile_two_component_depth2_local_move_v0;left:value:b1231ce80334616e;material:6;moves:white:5,black:0;right:value:829478f700df97e8;material:-10;moves:white:0,black:8": 1,
+            "dfile_two_component_depth2_local_move_v0;left:value:bb06b4d7aadc8eac;material:4;moves:white:3,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:5": 1,
+            "dfile_two_component_depth2_local_move_v0;left:value:bb06b4d7aadc8eac;material:4;moves:white:4,black:0;right:value:44a7109f9920cb51;material:-4;moves:white:0,black:4": 1,
+            "dfile_two_component_depth2_local_move_v0;left:value:d9efe6ea0eb7c325;material:5;moves:white:4,black:0;right:value:9be343ff64350998;material:-5;moves:white:0,black:4": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:999c2d34dcc0a10b;material:10;moves:white:11,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:7": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:a56b7865290bf909;material:12;moves:white:12,black:0;right:value:71287af854999b1e;material:-16;moves:white:0,black:6": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:a56b7865290bf909;material:12;moves:white:6,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:4": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:b1231ce80334616e;material:6;moves:white:6,black:0;right:value:829478f700df97e8;material:-10;moves:white:0,black:4": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:bb06b4d7aadc8eac;material:4;moves:white:2,black:0;right:value:44a7109f9920cb51;material:-4;moves:white:0,black:5": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:d872e10a5dd78aa0;material:8;moves:white:10,black:0;right:value:14f3ec156db6e78a;material:-12;moves:white:0,black:10": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:d872e10a5dd78aa0;material:8;moves:white:5,black:0;right:value:e0a1d2f9e449e554;material:-9;moves:white:0,black:7": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:d872e10a5dd78aa0;material:8;moves:white:8,black:0;right:value:c66b7e75b4d9d195;material:-15;moves:white:0,black:6": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0;left:value:d872e10a5dd78aa0;material:8;moves:white:9,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:11": 1
+          },
+          "target_label_count": 25,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        }
+      },
+      "status": "evaluated",
+      "target": "heuristic.outputs.result_signature_key",
+      "target_counts": {
+        "dfile_two_component_depth2_asymmetric_fan_v0;left:value:2b525ca581b1d3e9;material:9;moves:white:10,black:0;right:value:b11a21f1ea92fd1c;material:-14;moves:white:0,black:12": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0;left:value:2b525ca581b1d3e9;material:9;moves:white:7,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:5": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0;left:value:999c2d34dcc0a10b;material:10;moves:white:12,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:14": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0;left:value:999c2d34dcc0a10b;material:10;moves:white:4,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:6": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0;left:value:a56b7865290bf909;material:12;moves:white:11,black:0;right:value:829478f700df97e8;material:-10;moves:white:0,black:13": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0;left:value:b1231ce80334616e;material:6;moves:white:2,black:0;right:value:44a7109f9920cb51;material:-4;moves:white:0,black:6": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0;left:value:b1231ce80334616e;material:6;moves:white:4,black:0;right:value:44a7109f9920cb51;material:-4;moves:white:0,black:3": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0;left:value:d872e10a5dd78aa0;material:8;moves:white:11,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:13": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0;left:value:d9efe6ea0eb7c325;material:5;moves:white:6,black:0;right:value:9be343ff64350998;material:-5;moves:white:0,black:6": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0;left:value:dd20db8dbb70dbf2;material:11;moves:white:6,black:0;right:value:c7c440b1b2c7cd21;material:-11;moves:white:0,black:7": 1,
+        "dfile_two_component_depth2_local_move_v0;left:value:0a9e056b8ad2ef1f;material:14;moves:white:12,black:0;right:value:e0a1d2f9e449e554;material:-9;moves:white:0,black:10": 1,
+        "dfile_two_component_depth2_local_move_v0;left:value:33612fded7c41844;material:17;moves:white:7,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:8": 1,
+        "dfile_two_component_depth2_local_move_v0;left:value:986f5c6b25e8d086;material:15;moves:white:6,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:9": 1,
+        "dfile_two_component_depth2_local_move_v0;left:value:a56b7865290bf909;material:12;moves:white:13,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:12": 1,
+        "dfile_two_component_depth2_local_move_v0;left:value:b1231ce80334616e;material:6;moves:white:11,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:12": 1,
+        "dfile_two_component_depth2_local_move_v0;left:value:b1231ce80334616e;material:6;moves:white:5,black:0;right:value:829478f700df97e8;material:-10;moves:white:0,black:8": 1,
+        "dfile_two_component_depth2_local_move_v0;left:value:b1231ce80334616e;material:6;moves:white:7,black:0;right:value:05631564af32123a;material:-7;moves:white:0,black:4": 1,
+        "dfile_two_component_depth2_local_move_v0;left:value:bb06b4d7aadc8eac;material:4;moves:white:3,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:5": 1,
+        "dfile_two_component_depth2_local_move_v0;left:value:bb06b4d7aadc8eac;material:4;moves:white:4,black:0;right:value:44a7109f9920cb51;material:-4;moves:white:0,black:4": 1,
+        "dfile_two_component_depth2_local_move_v0;left:value:d9efe6ea0eb7c325;material:5;moves:white:4,black:0;right:value:9be343ff64350998;material:-5;moves:white:0,black:4": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0;left:value:60ebee880a925aa7;material:7;moves:white:4,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:7": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0;left:value:999c2d34dcc0a10b;material:10;moves:white:11,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:7": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0;left:value:a56b7865290bf909;material:12;moves:white:12,black:0;right:value:71287af854999b1e;material:-16;moves:white:0,black:6": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0;left:value:a56b7865290bf909;material:12;moves:white:6,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:4": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0;left:value:b1231ce80334616e;material:6;moves:white:6,black:0;right:value:829478f700df97e8;material:-10;moves:white:0,black:4": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0;left:value:bb06b4d7aadc8eac;material:4;moves:white:2,black:0;right:value:44a7109f9920cb51;material:-4;moves:white:0,black:5": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0;left:value:d872e10a5dd78aa0;material:8;moves:white:10,black:0;right:value:14f3ec156db6e78a;material:-12;moves:white:0,black:10": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0;left:value:d872e10a5dd78aa0;material:8;moves:white:5,black:0;right:value:e0a1d2f9e449e554;material:-9;moves:white:0,black:7": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0;left:value:d872e10a5dd78aa0;material:8;moves:white:8,black:0;right:value:c66b7e75b4d9d195;material:-15;moves:white:0,black:6": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0;left:value:d872e10a5dd78aa0;material:8;moves:white:9,black:0;right:value:88306de687f0fded;material:-8;moves:white:0,black:11": 1
+      },
+      "target_label_count": 30,
+      "train_majority_prediction": "dfile_two_component_depth2_asymmetric_fan_v0;left:value:2b525ca581b1d3e9;material:9;moves:white:10,black:0;right:value:b11a21f1ea92fd1c;material:-14;moves:white:0,black:12"
+    },
+    {
+      "description": "Generated depth-two topology family only.",
+      "excluded_from_target_metrics": {},
+      "included_target_count": 30,
+      "projection_id": "component_topology_family",
+      "split_metrics": {
+        "dev": {
+          "majority_accuracy": 0.0,
+          "support": 3,
+          "target_counts": {
+            "dfile_two_component_depth2_local_move_v0": 2,
+            "dfile_two_component_depth2_pawn_phalanx_v0": 1
+          },
+          "target_label_count": 2,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        },
+        "test": {
+          "majority_accuracy": 0.5,
+          "support": 2,
+          "target_counts": {
+            "dfile_two_component_depth2_asymmetric_fan_v0": 1,
+            "dfile_two_component_depth2_local_move_v0": 1
+          },
+          "target_label_count": 2,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        },
+        "train": {
+          "majority_accuracy": 0.36,
+          "support": 25,
+          "target_counts": {
+            "dfile_two_component_depth2_asymmetric_fan_v0": 9,
+            "dfile_two_component_depth2_local_move_v0": 7,
+            "dfile_two_component_depth2_pawn_phalanx_v0": 9
+          },
+          "target_label_count": 3,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        }
+      },
+      "status": "evaluated",
+      "target": "heuristic.outputs.component_topology_family",
+      "target_counts": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 10,
+        "dfile_two_component_depth2_local_move_v0": 10,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 10
+      },
+      "target_label_count": 3,
+      "train_majority_prediction": "dfile_two_component_depth2_asymmetric_fan_v0"
+    },
+    {
+      "description": "Ordered pair of left and right component value digests.",
+      "excluded_from_target_metrics": {},
+      "included_target_count": 30,
+      "projection_id": "component_value_digest_pair",
+      "split_metrics": {
+        "dev": {
+          "majority_accuracy": 0.0,
+          "support": 3,
+          "target_counts": {
+            "left:60ebee880a925aa7;right:ae554422032926b3": 1,
+            "left:986f5c6b25e8d086;right:88306de687f0fded": 1,
+            "left:b1231ce80334616e;right:05631564af32123a": 1
+          },
+          "target_label_count": 3,
+          "unseen_label_count": 3,
+          "unseen_labels": [
+            "left:60ebee880a925aa7;right:ae554422032926b3",
+            "left:986f5c6b25e8d086;right:88306de687f0fded",
+            "left:b1231ce80334616e;right:05631564af32123a"
+          ]
+        },
+        "test": {
+          "majority_accuracy": 0.0,
+          "support": 2,
+          "target_counts": {
+            "left:999c2d34dcc0a10b;right:ae554422032926b3": 1,
+            "left:a56b7865290bf909;right:ae554422032926b3": 1
+          },
+          "target_label_count": 2,
+          "unseen_label_count": 1,
+          "unseen_labels": [
+            "left:999c2d34dcc0a10b;right:ae554422032926b3"
+          ]
+        },
+        "train": {
+          "majority_accuracy": 0.08,
+          "support": 25,
+          "target_counts": {
+            "left:0a9e056b8ad2ef1f;right:e0a1d2f9e449e554": 1,
+            "left:2b525ca581b1d3e9;right:88306de687f0fded": 1,
+            "left:2b525ca581b1d3e9;right:b11a21f1ea92fd1c": 1,
+            "left:33612fded7c41844;right:ae554422032926b3": 1,
+            "left:999c2d34dcc0a10b;right:88306de687f0fded": 2,
+            "left:a56b7865290bf909;right:71287af854999b1e": 1,
+            "left:a56b7865290bf909;right:829478f700df97e8": 1,
+            "left:a56b7865290bf909;right:ae554422032926b3": 1,
+            "left:b1231ce80334616e;right:44a7109f9920cb51": 2,
+            "left:b1231ce80334616e;right:829478f700df97e8": 2,
+            "left:b1231ce80334616e;right:88306de687f0fded": 1,
+            "left:bb06b4d7aadc8eac;right:44a7109f9920cb51": 2,
+            "left:bb06b4d7aadc8eac;right:ae554422032926b3": 1,
+            "left:d872e10a5dd78aa0;right:14f3ec156db6e78a": 1,
+            "left:d872e10a5dd78aa0;right:88306de687f0fded": 2,
+            "left:d872e10a5dd78aa0;right:c66b7e75b4d9d195": 1,
+            "left:d872e10a5dd78aa0;right:e0a1d2f9e449e554": 1,
+            "left:d9efe6ea0eb7c325;right:9be343ff64350998": 2,
+            "left:dd20db8dbb70dbf2;right:c7c440b1b2c7cd21": 1
+          },
+          "target_label_count": 19,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        }
+      },
+      "status": "evaluated",
+      "target": "heuristic.outputs.left_component_value_digest + right_component_value_digest",
+      "target_counts": {
+        "left:0a9e056b8ad2ef1f;right:e0a1d2f9e449e554": 1,
+        "left:2b525ca581b1d3e9;right:88306de687f0fded": 1,
+        "left:2b525ca581b1d3e9;right:b11a21f1ea92fd1c": 1,
+        "left:33612fded7c41844;right:ae554422032926b3": 1,
+        "left:60ebee880a925aa7;right:ae554422032926b3": 1,
+        "left:986f5c6b25e8d086;right:88306de687f0fded": 1,
+        "left:999c2d34dcc0a10b;right:88306de687f0fded": 2,
+        "left:999c2d34dcc0a10b;right:ae554422032926b3": 1,
+        "left:a56b7865290bf909;right:71287af854999b1e": 1,
+        "left:a56b7865290bf909;right:829478f700df97e8": 1,
+        "left:a56b7865290bf909;right:ae554422032926b3": 2,
+        "left:b1231ce80334616e;right:05631564af32123a": 1,
+        "left:b1231ce80334616e;right:44a7109f9920cb51": 2,
+        "left:b1231ce80334616e;right:829478f700df97e8": 2,
+        "left:b1231ce80334616e;right:88306de687f0fded": 1,
+        "left:bb06b4d7aadc8eac;right:44a7109f9920cb51": 2,
+        "left:bb06b4d7aadc8eac;right:ae554422032926b3": 1,
+        "left:d872e10a5dd78aa0;right:14f3ec156db6e78a": 1,
+        "left:d872e10a5dd78aa0;right:88306de687f0fded": 2,
+        "left:d872e10a5dd78aa0;right:c66b7e75b4d9d195": 1,
+        "left:d872e10a5dd78aa0;right:e0a1d2f9e449e554": 1,
+        "left:d9efe6ea0eb7c325;right:9be343ff64350998": 2,
+        "left:dd20db8dbb70dbf2;right:c7c440b1b2c7cd21": 1
+      },
+      "target_label_count": 23,
+      "train_majority_prediction": "left:999c2d34dcc0a10b;right:88306de687f0fded"
+    },
+    {
+      "description": "Ordered pair of left and right component material balances.",
+      "excluded_from_target_metrics": {},
+      "included_target_count": 30,
+      "projection_id": "component_material_pair",
+      "split_metrics": {
+        "dev": {
+          "majority_accuracy": 0.0,
+          "support": 3,
+          "target_counts": {
+            "left:15;right:-8": 1,
+            "left:6;right:-7": 1,
+            "left:7;right:-6": 1
+          },
+          "target_label_count": 3,
+          "unseen_label_count": 3,
+          "unseen_labels": [
+            "left:15;right:-8",
+            "left:6;right:-7",
+            "left:7;right:-6"
+          ]
+        },
+        "test": {
+          "majority_accuracy": 0.0,
+          "support": 2,
+          "target_counts": {
+            "left:10;right:-6": 1,
+            "left:12;right:-6": 1
+          },
+          "target_label_count": 2,
+          "unseen_label_count": 1,
+          "unseen_labels": [
+            "left:10;right:-6"
+          ]
+        },
+        "train": {
+          "majority_accuracy": 0.08,
+          "support": 25,
+          "target_counts": {
+            "left:10;right:-8": 2,
+            "left:11;right:-11": 1,
+            "left:12;right:-10": 1,
+            "left:12;right:-16": 1,
+            "left:12;right:-6": 1,
+            "left:14;right:-9": 1,
+            "left:17;right:-6": 1,
+            "left:4;right:-4": 2,
+            "left:4;right:-6": 1,
+            "left:5;right:-5": 2,
+            "left:6;right:-10": 2,
+            "left:6;right:-4": 2,
+            "left:6;right:-8": 1,
+            "left:8;right:-12": 1,
+            "left:8;right:-15": 1,
+            "left:8;right:-8": 2,
+            "left:8;right:-9": 1,
+            "left:9;right:-14": 1,
+            "left:9;right:-8": 1
+          },
+          "target_label_count": 19,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        }
+      },
+      "status": "evaluated",
+      "target": "material fields parsed from component signatures",
+      "target_counts": {
+        "left:10;right:-6": 1,
+        "left:10;right:-8": 2,
+        "left:11;right:-11": 1,
+        "left:12;right:-10": 1,
+        "left:12;right:-16": 1,
+        "left:12;right:-6": 2,
+        "left:14;right:-9": 1,
+        "left:15;right:-8": 1,
+        "left:17;right:-6": 1,
+        "left:4;right:-4": 2,
+        "left:4;right:-6": 1,
+        "left:5;right:-5": 2,
+        "left:6;right:-10": 2,
+        "left:6;right:-4": 2,
+        "left:6;right:-7": 1,
+        "left:6;right:-8": 1,
+        "left:7;right:-6": 1,
+        "left:8;right:-12": 1,
+        "left:8;right:-15": 1,
+        "left:8;right:-8": 2,
+        "left:8;right:-9": 1,
+        "left:9;right:-14": 1,
+        "left:9;right:-8": 1
+      },
+      "target_label_count": 23,
+      "train_majority_prediction": "left:10;right:-8"
+    },
+    {
+      "description": "Ordered pair of left and right local move-count signatures.",
+      "excluded_from_target_metrics": {},
+      "included_target_count": 30,
+      "projection_id": "component_mobility_pair",
+      "split_metrics": {
+        "dev": {
+          "majority_accuracy": 0.0,
+          "support": 3,
+          "target_counts": {
+            "left:white:4,black:0;right:white:0,black:7": 1,
+            "left:white:6,black:0;right:white:0,black:9": 1,
+            "left:white:7,black:0;right:white:0,black:4": 1
+          },
+          "target_label_count": 3,
+          "unseen_label_count": 3,
+          "unseen_labels": [
+            "left:white:4,black:0;right:white:0,black:7",
+            "left:white:6,black:0;right:white:0,black:9",
+            "left:white:7,black:0;right:white:0,black:4"
+          ]
+        },
+        "test": {
+          "majority_accuracy": 0.0,
+          "support": 2,
+          "target_counts": {
+            "left:white:13,black:0;right:white:0,black:12": 1,
+            "left:white:4,black:0;right:white:0,black:6": 1
+          },
+          "target_label_count": 2,
+          "unseen_label_count": 2,
+          "unseen_labels": [
+            "left:white:13,black:0;right:white:0,black:12",
+            "left:white:4,black:0;right:white:0,black:6"
+          ]
+        },
+        "train": {
+          "majority_accuracy": 0.08,
+          "support": 25,
+          "target_counts": {
+            "left:white:10,black:0;right:white:0,black:10": 1,
+            "left:white:10,black:0;right:white:0,black:12": 1,
+            "left:white:11,black:0;right:white:0,black:12": 1,
+            "left:white:11,black:0;right:white:0,black:13": 2,
+            "left:white:11,black:0;right:white:0,black:7": 1,
+            "left:white:12,black:0;right:white:0,black:10": 1,
+            "left:white:12,black:0;right:white:0,black:14": 1,
+            "left:white:12,black:0;right:white:0,black:6": 1,
+            "left:white:2,black:0;right:white:0,black:5": 1,
+            "left:white:2,black:0;right:white:0,black:6": 1,
+            "left:white:3,black:0;right:white:0,black:5": 1,
+            "left:white:4,black:0;right:white:0,black:3": 1,
+            "left:white:4,black:0;right:white:0,black:4": 2,
+            "left:white:5,black:0;right:white:0,black:7": 1,
+            "left:white:5,black:0;right:white:0,black:8": 1,
+            "left:white:6,black:0;right:white:0,black:4": 2,
+            "left:white:6,black:0;right:white:0,black:6": 1,
+            "left:white:6,black:0;right:white:0,black:7": 1,
+            "left:white:7,black:0;right:white:0,black:5": 1,
+            "left:white:7,black:0;right:white:0,black:8": 1,
+            "left:white:8,black:0;right:white:0,black:6": 1,
+            "left:white:9,black:0;right:white:0,black:11": 1
+          },
+          "target_label_count": 22,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        }
+      },
+      "status": "evaluated",
+      "target": "moves fields parsed from component signatures",
+      "target_counts": {
+        "left:white:10,black:0;right:white:0,black:10": 1,
+        "left:white:10,black:0;right:white:0,black:12": 1,
+        "left:white:11,black:0;right:white:0,black:12": 1,
+        "left:white:11,black:0;right:white:0,black:13": 2,
+        "left:white:11,black:0;right:white:0,black:7": 1,
+        "left:white:12,black:0;right:white:0,black:10": 1,
+        "left:white:12,black:0;right:white:0,black:14": 1,
+        "left:white:12,black:0;right:white:0,black:6": 1,
+        "left:white:13,black:0;right:white:0,black:12": 1,
+        "left:white:2,black:0;right:white:0,black:5": 1,
+        "left:white:2,black:0;right:white:0,black:6": 1,
+        "left:white:3,black:0;right:white:0,black:5": 1,
+        "left:white:4,black:0;right:white:0,black:3": 1,
+        "left:white:4,black:0;right:white:0,black:4": 2,
+        "left:white:4,black:0;right:white:0,black:6": 1,
+        "left:white:4,black:0;right:white:0,black:7": 1,
+        "left:white:5,black:0;right:white:0,black:7": 1,
+        "left:white:5,black:0;right:white:0,black:8": 1,
+        "left:white:6,black:0;right:white:0,black:4": 2,
+        "left:white:6,black:0;right:white:0,black:6": 1,
+        "left:white:6,black:0;right:white:0,black:7": 1,
+        "left:white:6,black:0;right:white:0,black:9": 1,
+        "left:white:7,black:0;right:white:0,black:4": 1,
+        "left:white:7,black:0;right:white:0,black:5": 1,
+        "left:white:7,black:0;right:white:0,black:8": 1,
+        "left:white:8,black:0;right:white:0,black:6": 1,
+        "left:white:9,black:0;right:white:0,black:11": 1
+      },
+      "target_label_count": 27,
+      "train_majority_prediction": "left:white:11,black:0;right:white:0,black:13"
+    },
+    {
+      "description": "Net material balance after composing both components.",
+      "excluded_from_target_metrics": {},
+      "included_target_count": 30,
+      "projection_id": "net_material_balance",
+      "split_metrics": {
+        "dev": {
+          "majority_accuracy": 0.0,
+          "support": 3,
+          "target_counts": {
+            "net:-1": 1,
+            "net:1": 1,
+            "net:7": 1
+          },
+          "target_label_count": 3,
+          "unseen_label_count": 1,
+          "unseen_labels": [
+            "net:7"
+          ]
+        },
+        "test": {
+          "majority_accuracy": 0.0,
+          "support": 2,
+          "target_counts": {
+            "net:4": 1,
+            "net:6": 1
+          },
+          "target_label_count": 2,
+          "unseen_label_count": 1,
+          "unseen_labels": [
+            "net:4"
+          ]
+        },
+        "train": {
+          "majority_accuracy": 0.28,
+          "support": 25,
+          "target_counts": {
+            "net:-1": 1,
+            "net:-2": 2,
+            "net:-4": 4,
+            "net:-5": 1,
+            "net:-7": 1,
+            "net:0": 7,
+            "net:1": 1,
+            "net:11": 1,
+            "net:2": 5,
+            "net:5": 1,
+            "net:6": 1
+          },
+          "target_label_count": 11,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        }
+      },
+      "status": "evaluated",
+      "target": "sum of parsed component material fields",
+      "target_counts": {
+        "net:-1": 2,
+        "net:-2": 2,
+        "net:-4": 4,
+        "net:-5": 1,
+        "net:-7": 1,
+        "net:0": 7,
+        "net:1": 2,
+        "net:11": 1,
+        "net:2": 5,
+        "net:4": 1,
+        "net:5": 1,
+        "net:6": 2,
+        "net:7": 1
+      },
+      "target_label_count": 13,
+      "train_majority_prediction": "net:0"
+    },
+    {
+      "description": "Topology family joined with the component material pair.",
+      "excluded_from_target_metrics": {},
+      "included_target_count": 30,
+      "projection_id": "topology_material_pair",
+      "split_metrics": {
+        "dev": {
+          "majority_accuracy": 0.0,
+          "support": 3,
+          "target_counts": {
+            "dfile_two_component_depth2_local_move_v0|left:15;right:-8": 1,
+            "dfile_two_component_depth2_local_move_v0|left:6;right:-7": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:7;right:-6": 1
+          },
+          "target_label_count": 3,
+          "unseen_label_count": 3,
+          "unseen_labels": [
+            "dfile_two_component_depth2_local_move_v0|left:15;right:-8",
+            "dfile_two_component_depth2_local_move_v0|left:6;right:-7",
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:7;right:-6"
+          ]
+        },
+        "test": {
+          "majority_accuracy": 0.0,
+          "support": 2,
+          "target_counts": {
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-6": 1,
+            "dfile_two_component_depth2_local_move_v0|left:12;right:-6": 1
+          },
+          "target_label_count": 2,
+          "unseen_label_count": 2,
+          "unseen_labels": [
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-6",
+            "dfile_two_component_depth2_local_move_v0|left:12;right:-6"
+          ]
+        },
+        "train": {
+          "majority_accuracy": 0.08,
+          "support": 25,
+          "target_counts": {
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-8": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:11;right:-11": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:12;right:-10": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:5;right:-5": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:6;right:-4": 2,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:8;right:-8": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:9;right:-14": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:9;right:-8": 1,
+            "dfile_two_component_depth2_local_move_v0|left:14;right:-9": 1,
+            "dfile_two_component_depth2_local_move_v0|left:17;right:-6": 1,
+            "dfile_two_component_depth2_local_move_v0|left:4;right:-4": 1,
+            "dfile_two_component_depth2_local_move_v0|left:4;right:-6": 1,
+            "dfile_two_component_depth2_local_move_v0|left:5;right:-5": 1,
+            "dfile_two_component_depth2_local_move_v0|left:6;right:-10": 1,
+            "dfile_two_component_depth2_local_move_v0|left:6;right:-8": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:10;right:-8": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:12;right:-16": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:12;right:-6": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:4;right:-4": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:6;right:-10": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-12": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-15": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-8": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-9": 1
+          },
+          "target_label_count": 24,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        }
+      },
+      "status": "evaluated",
+      "target": "component_topology_family + component_material_pair",
+      "target_counts": {
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-6": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-8": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:11;right:-11": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:12;right:-10": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:5;right:-5": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:6;right:-4": 2,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:8;right:-8": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:9;right:-14": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:9;right:-8": 1,
+        "dfile_two_component_depth2_local_move_v0|left:12;right:-6": 1,
+        "dfile_two_component_depth2_local_move_v0|left:14;right:-9": 1,
+        "dfile_two_component_depth2_local_move_v0|left:15;right:-8": 1,
+        "dfile_two_component_depth2_local_move_v0|left:17;right:-6": 1,
+        "dfile_two_component_depth2_local_move_v0|left:4;right:-4": 1,
+        "dfile_two_component_depth2_local_move_v0|left:4;right:-6": 1,
+        "dfile_two_component_depth2_local_move_v0|left:5;right:-5": 1,
+        "dfile_two_component_depth2_local_move_v0|left:6;right:-10": 1,
+        "dfile_two_component_depth2_local_move_v0|left:6;right:-7": 1,
+        "dfile_two_component_depth2_local_move_v0|left:6;right:-8": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:10;right:-8": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:12;right:-16": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:12;right:-6": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:4;right:-4": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:6;right:-10": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:7;right:-6": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-12": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-15": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-8": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-9": 1
+      },
+      "target_label_count": 29,
+      "train_majority_prediction": "dfile_two_component_depth2_asymmetric_fan_v0|left:6;right:-4"
+    },
+    {
+      "description": "Topology family joined with the component mobility pair.",
+      "excluded_from_target_metrics": {},
+      "included_target_count": 30,
+      "projection_id": "topology_mobility_pair",
+      "split_metrics": {
+        "dev": {
+          "majority_accuracy": 0.0,
+          "support": 3,
+          "target_counts": {
+            "dfile_two_component_depth2_local_move_v0|left:white:6,black:0;right:white:0,black:9": 1,
+            "dfile_two_component_depth2_local_move_v0|left:white:7,black:0;right:white:0,black:4": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:white:4,black:0;right:white:0,black:7": 1
+          },
+          "target_label_count": 3,
+          "unseen_label_count": 3,
+          "unseen_labels": [
+            "dfile_two_component_depth2_local_move_v0|left:white:6,black:0;right:white:0,black:9",
+            "dfile_two_component_depth2_local_move_v0|left:white:7,black:0;right:white:0,black:4",
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:white:4,black:0;right:white:0,black:7"
+          ]
+        },
+        "test": {
+          "majority_accuracy": 0.0,
+          "support": 2,
+          "target_counts": {
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:white:4,black:0;right:white:0,black:6": 1,
+            "dfile_two_component_depth2_local_move_v0|left:white:13,black:0;right:white:0,black:12": 1
+          },
+          "target_label_count": 2,
+          "unseen_label_count": 2,
+          "unseen_labels": [
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:white:4,black:0;right:white:0,black:6",
+            "dfile_two_component_depth2_local_move_v0|left:white:13,black:0;right:white:0,black:12"
+          ]
+        },
+        "train": {
+          "majority_accuracy": 0.08,
+          "support": 25,
+          "target_counts": {
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:white:10,black:0;right:white:0,black:12": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:white:11,black:0;right:white:0,black:13": 2,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:white:12,black:0;right:white:0,black:14": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:white:2,black:0;right:white:0,black:6": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:white:4,black:0;right:white:0,black:3": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:white:6,black:0;right:white:0,black:6": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:white:6,black:0;right:white:0,black:7": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:white:7,black:0;right:white:0,black:5": 1,
+            "dfile_two_component_depth2_local_move_v0|left:white:11,black:0;right:white:0,black:12": 1,
+            "dfile_two_component_depth2_local_move_v0|left:white:12,black:0;right:white:0,black:10": 1,
+            "dfile_two_component_depth2_local_move_v0|left:white:3,black:0;right:white:0,black:5": 1,
+            "dfile_two_component_depth2_local_move_v0|left:white:4,black:0;right:white:0,black:4": 2,
+            "dfile_two_component_depth2_local_move_v0|left:white:5,black:0;right:white:0,black:8": 1,
+            "dfile_two_component_depth2_local_move_v0|left:white:7,black:0;right:white:0,black:8": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:white:10,black:0;right:white:0,black:10": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:white:11,black:0;right:white:0,black:7": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:white:12,black:0;right:white:0,black:6": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:white:2,black:0;right:white:0,black:5": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:white:5,black:0;right:white:0,black:7": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:white:6,black:0;right:white:0,black:4": 2,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:white:8,black:0;right:white:0,black:6": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:white:9,black:0;right:white:0,black:11": 1
+          },
+          "target_label_count": 22,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        }
+      },
+      "status": "evaluated",
+      "target": "component_topology_family + component_mobility_pair",
+      "target_counts": {
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:white:10,black:0;right:white:0,black:12": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:white:11,black:0;right:white:0,black:13": 2,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:white:12,black:0;right:white:0,black:14": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:white:2,black:0;right:white:0,black:6": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:white:4,black:0;right:white:0,black:3": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:white:4,black:0;right:white:0,black:6": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:white:6,black:0;right:white:0,black:6": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:white:6,black:0;right:white:0,black:7": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:white:7,black:0;right:white:0,black:5": 1,
+        "dfile_two_component_depth2_local_move_v0|left:white:11,black:0;right:white:0,black:12": 1,
+        "dfile_two_component_depth2_local_move_v0|left:white:12,black:0;right:white:0,black:10": 1,
+        "dfile_two_component_depth2_local_move_v0|left:white:13,black:0;right:white:0,black:12": 1,
+        "dfile_two_component_depth2_local_move_v0|left:white:3,black:0;right:white:0,black:5": 1,
+        "dfile_two_component_depth2_local_move_v0|left:white:4,black:0;right:white:0,black:4": 2,
+        "dfile_two_component_depth2_local_move_v0|left:white:5,black:0;right:white:0,black:8": 1,
+        "dfile_two_component_depth2_local_move_v0|left:white:6,black:0;right:white:0,black:9": 1,
+        "dfile_two_component_depth2_local_move_v0|left:white:7,black:0;right:white:0,black:4": 1,
+        "dfile_two_component_depth2_local_move_v0|left:white:7,black:0;right:white:0,black:8": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:white:10,black:0;right:white:0,black:10": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:white:11,black:0;right:white:0,black:7": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:white:12,black:0;right:white:0,black:6": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:white:2,black:0;right:white:0,black:5": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:white:4,black:0;right:white:0,black:7": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:white:5,black:0;right:white:0,black:7": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:white:6,black:0;right:white:0,black:4": 2,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:white:8,black:0;right:white:0,black:6": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:white:9,black:0;right:white:0,black:11": 1
+      },
+      "target_label_count": 27,
+      "train_majority_prediction": "dfile_two_component_depth2_asymmetric_fan_v0|left:white:11,black:0;right:white:0,black:13"
+    },
+    {
+      "description": "Topology family joined with component material and mobility signatures, excluding value digests.",
+      "excluded_from_target_metrics": {},
+      "included_target_count": 30,
+      "projection_id": "topology_material_mobility_pair",
+      "split_metrics": {
+        "dev": {
+          "majority_accuracy": 0.0,
+          "support": 3,
+          "target_counts": {
+            "dfile_two_component_depth2_local_move_v0|left:15;right:-8|left:white:6,black:0;right:white:0,black:9": 1,
+            "dfile_two_component_depth2_local_move_v0|left:6;right:-7|left:white:7,black:0;right:white:0,black:4": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:7;right:-6|left:white:4,black:0;right:white:0,black:7": 1
+          },
+          "target_label_count": 3,
+          "unseen_label_count": 3,
+          "unseen_labels": [
+            "dfile_two_component_depth2_local_move_v0|left:15;right:-8|left:white:6,black:0;right:white:0,black:9",
+            "dfile_two_component_depth2_local_move_v0|left:6;right:-7|left:white:7,black:0;right:white:0,black:4",
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:7;right:-6|left:white:4,black:0;right:white:0,black:7"
+          ]
+        },
+        "test": {
+          "majority_accuracy": 0.0,
+          "support": 2,
+          "target_counts": {
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-6|left:white:4,black:0;right:white:0,black:6": 1,
+            "dfile_two_component_depth2_local_move_v0|left:12;right:-6|left:white:13,black:0;right:white:0,black:12": 1
+          },
+          "target_label_count": 2,
+          "unseen_label_count": 2,
+          "unseen_labels": [
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-6|left:white:4,black:0;right:white:0,black:6",
+            "dfile_two_component_depth2_local_move_v0|left:12;right:-6|left:white:13,black:0;right:white:0,black:12"
+          ]
+        },
+        "train": {
+          "majority_accuracy": 0.04,
+          "support": 25,
+          "target_counts": {
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-8|left:white:12,black:0;right:white:0,black:14": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:11;right:-11|left:white:6,black:0;right:white:0,black:7": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:12;right:-10|left:white:11,black:0;right:white:0,black:13": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:5;right:-5|left:white:6,black:0;right:white:0,black:6": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:6;right:-4|left:white:2,black:0;right:white:0,black:6": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:6;right:-4|left:white:4,black:0;right:white:0,black:3": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:8;right:-8|left:white:11,black:0;right:white:0,black:13": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:9;right:-14|left:white:10,black:0;right:white:0,black:12": 1,
+            "dfile_two_component_depth2_asymmetric_fan_v0|left:9;right:-8|left:white:7,black:0;right:white:0,black:5": 1,
+            "dfile_two_component_depth2_local_move_v0|left:14;right:-9|left:white:12,black:0;right:white:0,black:10": 1,
+            "dfile_two_component_depth2_local_move_v0|left:17;right:-6|left:white:7,black:0;right:white:0,black:8": 1,
+            "dfile_two_component_depth2_local_move_v0|left:4;right:-4|left:white:4,black:0;right:white:0,black:4": 1,
+            "dfile_two_component_depth2_local_move_v0|left:4;right:-6|left:white:3,black:0;right:white:0,black:5": 1,
+            "dfile_two_component_depth2_local_move_v0|left:5;right:-5|left:white:4,black:0;right:white:0,black:4": 1,
+            "dfile_two_component_depth2_local_move_v0|left:6;right:-10|left:white:5,black:0;right:white:0,black:8": 1,
+            "dfile_two_component_depth2_local_move_v0|left:6;right:-8|left:white:11,black:0;right:white:0,black:12": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:10;right:-8|left:white:11,black:0;right:white:0,black:7": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:12;right:-16|left:white:12,black:0;right:white:0,black:6": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:12;right:-6|left:white:6,black:0;right:white:0,black:4": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:4;right:-4|left:white:2,black:0;right:white:0,black:5": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:6;right:-10|left:white:6,black:0;right:white:0,black:4": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-12|left:white:10,black:0;right:white:0,black:10": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-15|left:white:8,black:0;right:white:0,black:6": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-8|left:white:9,black:0;right:white:0,black:11": 1,
+            "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-9|left:white:5,black:0;right:white:0,black:7": 1
+          },
+          "target_label_count": 25,
+          "unseen_label_count": 0,
+          "unseen_labels": []
+        }
+      },
+      "status": "evaluated",
+      "target": "component_topology_family + component_material_pair + component_mobility_pair",
+      "target_counts": {
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-6|left:white:4,black:0;right:white:0,black:6": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-8|left:white:12,black:0;right:white:0,black:14": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:11;right:-11|left:white:6,black:0;right:white:0,black:7": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:12;right:-10|left:white:11,black:0;right:white:0,black:13": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:5;right:-5|left:white:6,black:0;right:white:0,black:6": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:6;right:-4|left:white:2,black:0;right:white:0,black:6": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:6;right:-4|left:white:4,black:0;right:white:0,black:3": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:8;right:-8|left:white:11,black:0;right:white:0,black:13": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:9;right:-14|left:white:10,black:0;right:white:0,black:12": 1,
+        "dfile_two_component_depth2_asymmetric_fan_v0|left:9;right:-8|left:white:7,black:0;right:white:0,black:5": 1,
+        "dfile_two_component_depth2_local_move_v0|left:12;right:-6|left:white:13,black:0;right:white:0,black:12": 1,
+        "dfile_two_component_depth2_local_move_v0|left:14;right:-9|left:white:12,black:0;right:white:0,black:10": 1,
+        "dfile_two_component_depth2_local_move_v0|left:15;right:-8|left:white:6,black:0;right:white:0,black:9": 1,
+        "dfile_two_component_depth2_local_move_v0|left:17;right:-6|left:white:7,black:0;right:white:0,black:8": 1,
+        "dfile_two_component_depth2_local_move_v0|left:4;right:-4|left:white:4,black:0;right:white:0,black:4": 1,
+        "dfile_two_component_depth2_local_move_v0|left:4;right:-6|left:white:3,black:0;right:white:0,black:5": 1,
+        "dfile_two_component_depth2_local_move_v0|left:5;right:-5|left:white:4,black:0;right:white:0,black:4": 1,
+        "dfile_two_component_depth2_local_move_v0|left:6;right:-10|left:white:5,black:0;right:white:0,black:8": 1,
+        "dfile_two_component_depth2_local_move_v0|left:6;right:-7|left:white:7,black:0;right:white:0,black:4": 1,
+        "dfile_two_component_depth2_local_move_v0|left:6;right:-8|left:white:11,black:0;right:white:0,black:12": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:10;right:-8|left:white:11,black:0;right:white:0,black:7": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:12;right:-16|left:white:12,black:0;right:white:0,black:6": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:12;right:-6|left:white:6,black:0;right:white:0,black:4": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:4;right:-4|left:white:2,black:0;right:white:0,black:5": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:6;right:-10|left:white:6,black:0;right:white:0,black:4": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:7;right:-6|left:white:4,black:0;right:white:0,black:7": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-12|left:white:10,black:0;right:white:0,black:10": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-15|left:white:8,black:0;right:white:0,black:6": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-8|left:white:9,black:0;right:white:0,black:11": 1,
+        "dfile_two_component_depth2_pawn_phalanx_v0|left:8;right:-9|left:white:5,black:0;right:white:0,black:7": 1
+      },
+      "target_label_count": 30,
+      "train_majority_prediction": "dfile_two_component_depth2_asymmetric_fan_v0|left:10;right:-8|left:white:12,black:0;right:white:0,black:14"
+    }
+  ],
+  "report_id": "heuristic_signature_target_projection_report_v0",
+  "row_counts": {
+    "dev": 3,
+    "test": 2,
+    "train": 25
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|position.encoding:position.text",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_position_hash_v0"
+}

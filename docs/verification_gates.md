@@ -356,6 +356,18 @@ train. Future diagnostic-model experiments over the signature shard must report
 against this floor, but exact metrics and learned exact-label claims must still
 exclude these heuristic rows.
 
+Wave 41 adds a projection inventory:
+`python3 engine/ml_model.py heuristic-target-projection-report docs/signature_target_diagnostic_wave_39.jsonl --heuristic-method signature_profile_target_diagnostic --output docs/signature_target_projection_wave_41_report.json`.
+The report screens 9 heuristic-only projections and records target cardinality,
+train-majority accuracy, and unseen dev/test label counts for each. The only
+projection with zero dev/test unseen labels is `component_topology_family`, a
+3-label generator-family target with train/dev/test majority accuracy
+0.36/0.0/0.5. Value-digest, material, mobility, and richer topology-joined
+projections remain sparse with 23-30 labels and unseen dev/test labels. Future
+signature-target work must either increase repeated support for an informative
+projection or define a replayed exact value rule; it must not promote topology
+classification as decomposition-value evidence.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -367,5 +379,7 @@ component-value reuse pressure, not report validation. Wave 37 shows a richer
 material/mobility signature can recover 30 diagnostic rows, and Wave 38 makes
 that support machine-checkable. Wave 39 adds row-level heuristic diagnostics
 and Wave 40 adds a deterministic heuristic floor while keeping promotion closed
-until the signature becomes a replayed exact value target with explicit split
-and learned-baseline rules.
+Wave 41 shows that simple projection choice does not solve informative target
+support. Promotion remains closed until the signature becomes a replayed exact
+value target with explicit split and learned-baseline rules, or the generator
+produces enough repeated support for an informative diagnostic projection.

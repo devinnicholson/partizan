@@ -1,0 +1,100 @@
+{
+  "wave_id": "wave_41_signature_target_projection_inventory",
+  "objective": "Screen candidate projections of the Wave 39 heuristic signature target to identify whether any coarser diagnostic target has usable train/dev/test support.",
+  "non_negotiables": [
+    "The inventory must evaluate only label_kind=heuristic rows.",
+    "Projection metrics must report unseen dev/test labels relative to train.",
+    "The inventory must not promote heuristic rows into exact supervision.",
+    "Any projection with good split support must still be treated as diagnostic until a replay-compatible exact value rule exists."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w41_partizan_projection_inventory_tooling"
+      ]
+    },
+    {
+      "parallel": [
+        "w41_partizan_projection_inventory_evidence"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w41_partizan_projection_inventory_tooling",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py"
+      ],
+      "depends_on": [],
+      "prompt": "Add a heuristic-target-projection-report CLI command that screens direct and derived projections of signature diagnostic outputs with compact split-support metrics.",
+      "outputs": [
+        "heuristic-target-projection-report CLI command",
+        "Projection smoke test covering seen and unseen split labels"
+      ],
+      "commands": [
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Projection extraction parses component material and mobility signatures deterministically.",
+        "The report records per-split majority accuracy and unseen-label counts.",
+        "The smoke test covers a seen dev projection label and an unseen test projection label."
+      ]
+    },
+    {
+      "id": "w41_partizan_projection_inventory_evidence",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_projection_wave_41_report.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/README.md",
+        "agents/waves/wave_41_signature_target_projection_inventory.json"
+      ],
+      "depends_on": [
+        "w41_partizan_projection_inventory_tooling"
+      ],
+      "prompt": "Run the projection inventory over docs/signature_target_diagnostic_wave_39.jsonl, record the report hash and projection summary, and update ledgers without opening promotion.",
+      "outputs": [
+        "Wave 41 heuristic projection inventory report",
+        "Experiment matrix and claim-gate updates"
+      ],
+      "commands": [
+        "python3 engine/ml_model.py heuristic-target-projection-report docs/signature_target_diagnostic_wave_39.jsonl --heuristic-method signature_profile_target_diagnostic --output docs/signature_target_projection_wave_41_report.json",
+        "shasum -a 256 docs/signature_target_projection_wave_41_report.json",
+        "jq empty docs/signature_target_projection_wave_41_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_41_signature_target_projection_inventory.json"
+      ],
+      "acceptance": [
+        "The report screens 9 projections over 30 heuristic rows.",
+        "Only component_topology_family has zero dev/test unseen labels.",
+        "Full signature and topology-material-mobility projections remain 30-label targets.",
+        "Docs state that projection support is diagnostic only."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_41_signature_target_projection_inventory.json",
+      "success_signal": "The Wave 41 plan is internally consistent."
+    },
+    {
+      "id": "projection_report_valid_json",
+      "command": "jq empty docs/signature_target_projection_wave_41_report.json",
+      "success_signal": "The projection inventory report is valid JSON."
+    },
+    {
+      "id": "projection_inventory_smoke_tests",
+      "command": "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py && python3 engine/test.py",
+      "success_signal": "The projection inventory implementation and regression smoke pass."
+    }
+  ]
+}

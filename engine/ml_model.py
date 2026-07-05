@@ -42,6 +42,53 @@ COMPOSITION_HOLDOUT_SELECTORS = (
 )
 SUPPORTED_POSITION_ENCODINGS = {"fen", "cgt_canonical"}
 FEN_GATE_POSITION_ENCODING = "fen"
+HEURISTIC_SIGNATURE_TARGET_PROJECTIONS = (
+    {
+        "projection_id": "result_signature_key",
+        "target": "heuristic.outputs.result_signature_key",
+        "description": "Full diagnostic signature target key.",
+    },
+    {
+        "projection_id": "component_topology_family",
+        "target": "heuristic.outputs.component_topology_family",
+        "description": "Generated depth-two topology family only.",
+    },
+    {
+        "projection_id": "component_value_digest_pair",
+        "target": "heuristic.outputs.left_component_value_digest + right_component_value_digest",
+        "description": "Ordered pair of left and right component value digests.",
+    },
+    {
+        "projection_id": "component_material_pair",
+        "target": "material fields parsed from component signatures",
+        "description": "Ordered pair of left and right component material balances.",
+    },
+    {
+        "projection_id": "component_mobility_pair",
+        "target": "moves fields parsed from component signatures",
+        "description": "Ordered pair of left and right local move-count signatures.",
+    },
+    {
+        "projection_id": "net_material_balance",
+        "target": "sum of parsed component material fields",
+        "description": "Net material balance after composing both components.",
+    },
+    {
+        "projection_id": "topology_material_pair",
+        "target": "component_topology_family + component_material_pair",
+        "description": "Topology family joined with the component material pair.",
+    },
+    {
+        "projection_id": "topology_mobility_pair",
+        "target": "component_topology_family + component_mobility_pair",
+        "description": "Topology family joined with the component mobility pair.",
+    },
+    {
+        "projection_id": "topology_material_mobility_pair",
+        "target": "component_topology_family + component_material_pair + component_mobility_pair",
+        "description": "Topology family joined with component material and mobility signatures, excluding value digests.",
+    },
+)
 PIECE_VALUES = {
     "P": 1,
     "N": 3,
@@ -1484,6 +1531,51 @@ def evaluate_heuristic_target_report(
     }
 
 
+def evaluate_heuristic_target_projection_report(
+    jsonl_path: str | Path,
+    split_key_mode: str = "position",
+    heuristic_method: str | None = None,
+) -> dict[str, Any]:
+    """Screen candidate projections of heuristic signature targets."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = split_assignments_for_rows(rows, split_key_mode)
+    splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=False)
+    split_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
+    split_names = sorted({str(assignment["split"]) for assignment in assignments})
+    projection_reports = []
+    for definition in HEURISTIC_SIGNATURE_TARGET_PROJECTIONS:
+        examples, excluded = heuristic_projection_examples(
+            rows,
+            assignments,
+            str(definition["projection_id"]),
+            heuristic_method=heuristic_method,
+        )
+        projection_reports.append(
+            heuristic_projection_report_entry(
+                definition,
+                examples,
+                excluded,
+                split_names,
+            )
+        )
+
+    return {
+        "report_id": "heuristic_signature_target_projection_report_v0",
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "eligible_label_kinds": ["heuristic"],
+        "heuristic_method": heuristic_method,
+        "splitter_id": splitter_id,
+        "split_policy": split_policy,
+        "row_counts": _count_by(assignments, "split"),
+        "projection_count": len(projection_reports),
+        "projections": projection_reports,
+    }
+
+
 def evaluate_signature_profile_contract_report(
     report_json_path: str | Path,
     rows_per_family_target: int = 10,
@@ -1758,6 +1850,199 @@ def heuristic_target_examples(
         for key, counter in excluded.items()
         if counter
     }
+
+
+def heuristic_projection_examples(
+    rows: list[dict[str, Any]],
+    assignments: list[dict[str, Any]],
+    projection_id: str,
+    heuristic_method: str | None = None,
+) -> tuple[list[dict[str, str]], dict[str, dict[str, int]]]:
+    examples = []
+    excluded: dict[str, Counter[str]] = {
+        "non_heuristic_rows_by_split": Counter(),
+        "method_mismatch_rows_by_split": Counter(),
+        "projection_missing_rows_by_split": Counter(),
+    }
+    for row, assignment in zip(rows, assignments):
+        split = str(assignment["split"])
+        heuristic = row.get("heuristic")
+        if row.get("label_kind") != "heuristic" or not isinstance(heuristic, dict):
+            excluded["non_heuristic_rows_by_split"][split] += 1
+            continue
+        method = str(heuristic.get("method") or "")
+        if heuristic_method is not None and method != heuristic_method:
+            excluded["method_mismatch_rows_by_split"][split] += 1
+            continue
+        outputs = heuristic.get("outputs")
+        if not isinstance(outputs, dict):
+            excluded["projection_missing_rows_by_split"][split] += 1
+            continue
+        target = heuristic_projection_value(outputs, projection_id)
+        if target is None:
+            excluded["projection_missing_rows_by_split"][split] += 1
+            continue
+        examples.append(
+            {
+                "split": split,
+                "target": target,
+                "heuristic_method": method,
+                "row_id": str(row.get("row_id")),
+            }
+        )
+    return examples, {
+        key: dict(sorted(counter.items()))
+        for key, counter in excluded.items()
+        if counter
+    }
+
+
+def heuristic_projection_report_entry(
+    definition: dict[str, str],
+    examples: list[dict[str, str]],
+    excluded: dict[str, dict[str, int]],
+    split_names: list[str],
+) -> dict[str, Any]:
+    target_counts = Counter(example["target"] for example in examples)
+    train_targets = [
+        example["target"] for example in examples if example["split"] == "train"
+    ]
+    train_labels = set(train_targets)
+    majority_prediction = _majority_label(train_targets) if train_targets else None
+    split_metrics = {}
+    for split in split_names:
+        split_targets = [
+            example["target"] for example in examples if example["split"] == split
+        ]
+        split_target_counts = Counter(split_targets)
+        split_labels = set(split_targets)
+        correct = (
+            sum(1 for target in split_targets if target == majority_prediction)
+            if majority_prediction is not None
+            else 0
+        )
+        unseen_labels = sorted(split_labels - train_labels)
+        split_metrics[split] = {
+            "support": len(split_targets),
+            "target_label_count": len(split_labels),
+            "target_counts": dict(sorted(split_target_counts.items())),
+            "majority_accuracy": (
+                _safe_div(correct, len(split_targets))
+                if majority_prediction is not None
+                else None
+            ),
+            "unseen_label_count": len(unseen_labels),
+            "unseen_labels": unseen_labels,
+        }
+
+    return {
+        "projection_id": definition["projection_id"],
+        "target": definition["target"],
+        "description": definition["description"],
+        "status": "evaluated" if train_targets else "no_train_support",
+        "included_target_count": len(examples),
+        "excluded_from_target_metrics": excluded,
+        "target_label_count": len(target_counts),
+        "target_counts": dict(sorted(target_counts.items())),
+        "train_majority_prediction": majority_prediction,
+        "split_metrics": split_metrics,
+    }
+
+
+def heuristic_projection_value(
+    outputs: dict[str, Any],
+    projection_id: str,
+) -> str | None:
+    if projection_id in ("result_signature_key", "component_topology_family"):
+        return _nonempty_output_string(outputs, projection_id)
+    if projection_id == "component_value_digest_pair":
+        return _projection_pair(
+            _nonempty_output_string(outputs, "left_component_value_digest"),
+            _nonempty_output_string(outputs, "right_component_value_digest"),
+        )
+
+    topology = _nonempty_output_string(outputs, "component_topology_family")
+    material_pair = _component_material_pair(outputs)
+    mobility_pair = _component_mobility_pair(outputs)
+    if projection_id == "component_material_pair":
+        return material_pair
+    if projection_id == "component_mobility_pair":
+        return mobility_pair
+    if projection_id == "net_material_balance":
+        return _net_material_balance(outputs)
+    if projection_id == "topology_material_pair":
+        return _projection_join(topology, material_pair)
+    if projection_id == "topology_mobility_pair":
+        return _projection_join(topology, mobility_pair)
+    if projection_id == "topology_material_mobility_pair":
+        return _projection_join(topology, material_pair, mobility_pair)
+    return None
+
+
+def _nonempty_output_string(outputs: dict[str, Any], field: str) -> str | None:
+    value = outputs.get(field)
+    if value is None:
+        return None
+    text = str(value)
+    return text if text else None
+
+
+def _component_material_pair(outputs: dict[str, Any]) -> str | None:
+    left_parts = _component_signature_parts(outputs, "left")
+    right_parts = _component_signature_parts(outputs, "right")
+    if left_parts is None or right_parts is None:
+        return None
+    return _projection_pair(left_parts.get("material"), right_parts.get("material"))
+
+
+def _component_mobility_pair(outputs: dict[str, Any]) -> str | None:
+    left_parts = _component_signature_parts(outputs, "left")
+    right_parts = _component_signature_parts(outputs, "right")
+    if left_parts is None or right_parts is None:
+        return None
+    return _projection_pair(left_parts.get("moves"), right_parts.get("moves"))
+
+
+def _net_material_balance(outputs: dict[str, Any]) -> str | None:
+    left_parts = _component_signature_parts(outputs, "left")
+    right_parts = _component_signature_parts(outputs, "right")
+    if left_parts is None or right_parts is None:
+        return None
+    try:
+        net = int(str(left_parts.get("material"))) + int(str(right_parts.get("material")))
+    except ValueError:
+        return None
+    return f"net:{net}"
+
+
+def _component_signature_parts(
+    outputs: dict[str, Any],
+    side: str,
+) -> dict[str, str] | None:
+    signature = _nonempty_output_string(outputs, f"{side}_component_signature")
+    if signature is None:
+        return None
+    parts = {}
+    for part in signature.split(";"):
+        if ":" not in part:
+            return None
+        key, value = part.split(":", 1)
+        if not key or not value:
+            return None
+        parts[key] = value
+    return parts
+
+
+def _projection_pair(left: str | None, right: str | None) -> str | None:
+    if left is None or right is None:
+        return None
+    return f"left:{left};right:{right}"
+
+
+def _projection_join(*parts: str | None) -> str | None:
+    if any(part is None for part in parts):
+        return None
+    return "|".join(str(part) for part in parts)
 
 
 def composition_baseline_examples(
@@ -3345,6 +3630,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the heuristic target report JSON.",
     )
 
+    heuristic_projection_parser = subcommands.add_parser(
+        "heuristic-target-projection-report",
+        help="Screen candidate projections of heuristic signature targets.",
+    )
+    heuristic_projection_parser.add_argument("jsonl_path", type=Path)
+    heuristic_projection_parser.add_argument(
+        "--heuristic-method",
+        help="Optional heuristic.method filter.",
+    )
+    heuristic_projection_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for split assignment.",
+    )
+    heuristic_projection_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the heuristic projection report JSON.",
+    )
+
     signature_contract_parser = subcommands.add_parser(
         "signature-profile-contract-report",
         help="Validate a signature-profile search report as a diagnostic target contract.",
@@ -3549,6 +3855,21 @@ def cli_main(argv: list[str] | None = None) -> int:
         except ValueError as error:
             print(str(error), file=sys.stderr)
             return 1
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+
+    if args.command == "heuristic-target-projection-report":
+        report = evaluate_heuristic_target_projection_report(
+            args.jsonl_path,
+            split_key_mode=args.split_key_mode,
+            heuristic_method=args.heuristic_method,
+        )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(
