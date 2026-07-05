@@ -257,10 +257,21 @@ profile-search audit must report target support, selected row count,
 topology/source counts, and the reuse constraints used for component and result
 digests.
 
+Wave 31 upgrades the profile-search audit with candidate-pair counts and
+rejection reasons. At Astralbase commit
+`46f6607d6003c7d74f11aacb4584f57f69d053e1`, the 10-per-family clean target
+still selects only 7 generated rows from 14 left profiles and 13 right profiles.
+The report records 182 candidate pairs per generated topology family and 539
+`component_value_digest_reuse_before_materialization` rejections. Future scale
+waves must increase fresh component-value profile supply under the no-reuse
+rule, or explicitly document a new split/grouping rule before claiming useful
+clean support.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
 command and replayed the expanded artifact successfully. The active gate is now
 useful clean support: Wave 27 avoids generated component/decomposition identity
 reuse and passes leakage validation, but it currently supports only 7 generated
-exact rows.
+exact rows. Wave 31 identifies the immediate clean-support bottleneck as
+component-value reuse pressure, not report validation.

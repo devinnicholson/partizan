@@ -1,0 +1,98 @@
+{
+  "rows_per_family_target": 10,
+  "left_profile_count": 14,
+  "right_profile_count": 13,
+  "candidate_pair_counts_by_topology_family": {
+    "dfile_two_component_depth2_asymmetric_fan_v0": 182,
+    "dfile_two_component_depth2_local_move_v0": 182,
+    "dfile_two_component_depth2_pawn_phalanx_v0": 182
+  },
+  "selected_row_count": 7,
+  "selected_counts_by_topology_family": {
+    "dfile_two_component_depth2_asymmetric_fan_v0": 2,
+    "dfile_two_component_depth2_local_move_v0": 3,
+    "dfile_two_component_depth2_pawn_phalanx_v0": 2
+  },
+  "rejection_counts": {
+    "component_value_digest_reuse_before_materialization": 539
+  },
+  "candidates": [
+    {
+      "row_number": 12,
+      "topology_family": "dfile_two_component_depth2_local_move_v0",
+      "left_profile_index": 9,
+      "right_profile_index": 11,
+      "total_recursive_nodes": 216,
+      "active_pieces": "a1R,b1B,a2P,b2P,c2P,f7n,f8q",
+      "left_component_value_digest": "dd20db8dbb70dbf2",
+      "right_component_value_digest": "14f3ec156db6e78a",
+      "result_value_digest": "25c5d19e39744784"
+    },
+    {
+      "row_number": 13,
+      "topology_family": "dfile_two_component_depth2_asymmetric_fan_v0",
+      "left_profile_index": 12,
+      "right_profile_index": 7,
+      "total_recursive_nodes": 261,
+      "active_pieces": "a1B,b1Q,b2P,f7p,g7p,g8b,h8q",
+      "left_component_value_digest": "ff2112cc9065eec0",
+      "right_component_value_digest": "b11a21f1ea92fd1c",
+      "result_value_digest": "4b3862cfce46b663"
+    },
+    {
+      "row_number": 14,
+      "topology_family": "dfile_two_component_depth2_pawn_phalanx_v0",
+      "left_profile_index": 10,
+      "right_profile_index": 10,
+      "total_recursive_nodes": 237,
+      "active_pieces": "a1R,b1R,a2P,c2P,g7p,h7p,g8r,h8q",
+      "left_component_value_digest": "a56b7865290bf909",
+      "right_component_value_digest": "71287af854999b1e",
+      "result_value_digest": "016d2a3258938c22"
+    },
+    {
+      "row_number": 15,
+      "topology_family": "dfile_two_component_depth2_local_move_v0",
+      "left_profile_index": 7,
+      "right_profile_index": 9,
+      "total_recursive_nodes": 269,
+      "active_pieces": "a1Q,b1B,b2P,c2P,g7p,h7p,h8q",
+      "left_component_value_digest": "0a9e056b8ad2ef1f",
+      "right_component_value_digest": "c7c440b1b2c7cd21",
+      "result_value_digest": "19dedfa17da405fe"
+    },
+    {
+      "row_number": 16,
+      "topology_family": "dfile_two_component_depth2_asymmetric_fan_v0",
+      "left_profile_index": 6,
+      "right_profile_index": 8,
+      "total_recursive_nodes": 76,
+      "active_pieces": "a1R,b1B,a2P,c2P,f7p,g7p,h7p,g8b,h8q",
+      "left_component_value_digest": "999c2d34dcc0a10b",
+      "right_component_value_digest": "c66b7e75b4d9d195",
+      "result_value_digest": "7b222612801d1e91"
+    },
+    {
+      "row_number": 17,
+      "topology_family": "dfile_two_component_depth2_pawn_phalanx_v0",
+      "left_profile_index": 11,
+      "right_profile_index": 6,
+      "total_recursive_nodes": 88,
+      "active_pieces": "a1Q,b1R,a2P,b2P,c2P,f7p,h7p,g8b,h8r",
+      "left_component_value_digest": "33612fded7c41844",
+      "right_component_value_digest": "829478f700df97e8",
+      "result_value_digest": "ffbca32b32bfe0ac"
+    },
+    {
+      "row_number": 18,
+      "topology_family": "dfile_two_component_depth2_local_move_v0",
+      "left_profile_index": 8,
+      "right_profile_index": 12,
+      "total_recursive_nodes": 182,
+      "active_pieces": "a1Q,b1B,a2P,b2P,c2P,f7p,g7n,f8q",
+      "left_component_value_digest": "986f5c6b25e8d086",
+      "right_component_value_digest": "180b3b4f81e9a743",
+      "result_value_digest": "ebb9ea9e05d81141"
+    }
+  ]
+}
