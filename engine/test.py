@@ -21,6 +21,7 @@ from ml_model import (
     exact_certificate_digest,
     fen_d4_symmetry_key,
     fixture_component_integer_sum,
+    generator_family,
     leakage_report_violations,
     report_passes_leakage_gate,
     split_for_key,
@@ -575,6 +576,10 @@ def run_composition_component_sum_parser_scope_smoke():
 
 
 def run_signature_profile_contract_report_smoke():
+    assert generator_family({"row_id": "diagnostic-row", "label_kind": "heuristic"}) == (
+        "unprovenanced_heuristic"
+    )
+
     families = [
         "dfile_two_component_depth2_local_move_v0",
         "dfile_two_component_depth2_asymmetric_fan_v0",

@@ -1,0 +1,117 @@
+{
+  "wave_id": "wave_39_signature_target_diagnostic_shard",
+  "objective": "Materialize the Wave 37 signature-profile selections as schema-valid heuristic rows so the target can be split and audited without entering exact supervision.",
+  "non_negotiables": [
+    "Rows must use label_kind=heuristic, not label_kind=exact.",
+    "Every row must carry supervision_eligible=false and diagnostic_only target status.",
+    "The shard must validate under the Partizan label schema and pass split/leakage reporting.",
+    "Existing exact composition shards and exact-value claims must remain unchanged."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w39_astralbase_signature_target_diagnostic_shard"
+      ]
+    },
+    {
+      "parallel": [
+        "w39_partizan_signature_target_diagnostic_evidence"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w39_astralbase_signature_target_diagnostic_shard",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add a CLI command that emits selected signature-profile targets as heuristic dataset-label rows with diagnostic-only outputs, explicit promotion blockers, and no exact provenance.",
+      "outputs": [
+        "signature-target-diagnostic-shard CLI command",
+        "Regression test proving rows are heuristic and schema-valid",
+        "Stable W18/W22/W27 hashes and replay reports"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo run --quiet -- --signature-target-diagnostic-shard --rows-per-family 10 > /tmp/astralbase-w39-signature-target-diagnostic.jsonl",
+        "shasum -a 256 /tmp/astralbase-w39-signature-target-diagnostic.jsonl",
+        "cargo run --quiet -- --non-fixture-composed-domain-shard > /tmp/astralbase-w18-traceable-composition.jsonl",
+        "cargo run --quiet -- --expanded-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --leakage-clean-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w27-clean-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w18-traceable-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w27-clean-composition.jsonl"
+      ],
+      "acceptance": [
+        "The shard has 30 heuristic rows and zero exact rows.",
+        "Rows are balanced 10/10/10 across the three generated topology families.",
+        "Every row carries target_status=diagnostic_only and supervision_eligible=false."
+      ]
+    },
+    {
+      "id": "w39_partizan_signature_target_diagnostic_evidence",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_diagnostic_wave_39.jsonl",
+        "docs/signature_target_diagnostic_wave_39_split_report.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/README.md",
+        "agents/waves/wave_39_signature_target_diagnostic_shard.json",
+        "engine/ml_model.py"
+      ],
+      "depends_on": [
+        "w39_astralbase_signature_target_diagnostic_shard"
+      ],
+      "prompt": "Record the Wave 39 heuristic shard, validate schema, run split/leakage reporting, and update ledgers. Keep the result outside exact target metrics and note that split reports now preserve unprovenanced heuristic fallback names.",
+      "outputs": [
+        "Wave 39 heuristic signature target shard",
+        "Wave 39 split/leakage report",
+        "Experiment matrix and claim-gate updates"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-diagnostic-shard --rows-per-family 10 > docs/signature_target_diagnostic_wave_39.jsonl",
+        "python3 agents/label_schema.py validate docs/signature_target_diagnostic_wave_39.jsonl",
+        "python3 engine/ml_model.py split-report docs/signature_target_diagnostic_wave_39.jsonl --output docs/signature_target_diagnostic_wave_39_split_report.json",
+        "python3 engine/ml_model.py validate-report docs/signature_target_diagnostic_wave_39_split_report.json --fail-on-leakage",
+        "shasum -a 256 docs/signature_target_diagnostic_wave_39.jsonl docs/signature_target_diagnostic_wave_39_split_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_39_signature_target_diagnostic_shard.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Schema validation reports 30 rows.",
+        "Split report has train/dev/test counts 25/3/2 and zero leakage violations.",
+        "Docs state that heuristic diagnostic rows are not exact training data."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_39_signature_target_diagnostic_shard.json",
+      "success_signal": "The Wave 39 plan is internally consistent."
+    },
+    {
+      "id": "heuristic_shard_schema_gate",
+      "command": "python3 agents/label_schema.py validate docs/signature_target_diagnostic_wave_39.jsonl",
+      "success_signal": "The signature target diagnostic shard is schema-valid."
+    },
+    {
+      "id": "heuristic_split_gate",
+      "command": "python3 engine/ml_model.py validate-report docs/signature_target_diagnostic_wave_39_split_report.json --fail-on-leakage",
+      "success_signal": "The signature target diagnostic split report has no leakage violations."
+    }
+  ]
+}

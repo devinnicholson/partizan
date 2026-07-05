@@ -1,0 +1,120 @@
+{
+  "component_topology_family_counts": {
+    "dev": {},
+    "test": {},
+    "train": {}
+  },
+  "composition_certificate_counts": {
+    "component_count_by_split": {},
+    "component_family_by_split": {},
+    "component_root_counts_by_split": {},
+    "component_value_digest_counts_by_split": {},
+    "rows_by_split": {}
+  },
+  "composition_spec_source_counts": {
+    "dev": {},
+    "test": {},
+    "train": {}
+  },
+  "dataset_path": "docs/signature_target_diagnostic_wave_39.jsonl",
+  "dataset_sha256": "4208f0fc076f4b5a9be3ed80293684bb492b1b890202b1fe38d41678e69c02a4",
+  "exact_solver_scope_counts": {
+    "dev": {},
+    "test": {},
+    "train": {}
+  },
+  "exact_value_class_counts": {
+    "dev": {},
+    "test": {},
+    "train": {}
+  },
+  "frontier_value_class_counts": {
+    "dev": {},
+    "test": {},
+    "train": {}
+  },
+  "generator_family_counts": {
+    "dev": {
+      "unprovenanced_heuristic": 3
+    },
+    "test": {
+      "unprovenanced_heuristic": 2
+    },
+    "train": {
+      "unprovenanced_heuristic": 25
+    }
+  },
+  "label_kind_counts": {
+    "dev": {
+      "heuristic": 3
+    },
+    "test": {
+      "heuristic": 2
+    },
+    "train": {
+      "heuristic": 25
+    }
+  },
+  "leakage_checks": {
+    "component_root_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "component_value_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "component_value_pair_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "composition_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "decomposition_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "duplicate_component_roots": 0,
+    "duplicate_component_value_digests": 0,
+    "duplicate_component_value_pairs": 0,
+    "duplicate_composition_digests": 0,
+    "duplicate_decomposition_digests": 0,
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_result_value_digests": 0,
+    "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 0,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "result_value_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_eligible_rows": 30
+  },
+  "row_counts": {
+    "dev": 3,
+    "test": 2,
+    "train": 25
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|position.encoding:position.text",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_position_hash_v0"
+}

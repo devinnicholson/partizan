@@ -19,16 +19,17 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_38_signature_target_contract.json` is the current execution target. It
-turns the Wave 37 signature-profile support diagnostic into an explicit target
-contract gate: support may pass, but promotion stays blocked until replay,
-split, and baseline semantics exist:
+`wave_39_signature_target_diagnostic_shard.json` is the current execution
+target. It materializes the Wave 37 signature-profile selections as
+schema-valid heuristic rows so the target can be split and audited while
+remaining outside exact supervision:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
                              -> versioned signature diagnostic
                              -> support gate + promotion blockers
-                             -> replayed value-rule/split/baseline work
+                             -> heuristic diagnostic shard
+                             -> replayed exact value-rule/split/baseline work
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

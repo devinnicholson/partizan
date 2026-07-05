@@ -2486,7 +2486,8 @@ def generator_family(row: dict[str, Any]) -> str:
         return "astralbase_kbk_frontier_generator"
     if row_id.startswith("astralbase-w12-knk-frontier-"):
         return "astralbase_knk_frontier_generator"
-    return "unprovenanced_rejected"
+    label_kind = str(row.get("label_kind") or "unknown")
+    return f"unprovenanced_{label_kind}"
 
 
 def position_key_for_row(row: dict[str, Any]) -> str:

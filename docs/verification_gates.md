@@ -337,6 +337,15 @@ provenance, no split/leakage semantics, and no deterministic/model baselines.
 Any future signature-derived target must clear those blockers before it is
 eligible for exact supervision or OOD model evaluation.
 
+Wave 39 adds a diagnostic heuristic shard:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-diagnostic-shard --rows-per-family 10`.
+The shard has 30 rows with `label_kind=heuristic`, zero exact rows,
+`target_status=diagnostic_only`, and `supervision_eligible=false`. Partizan
+schema validation passes, and the split report has train/dev/test counts 25/3/2
+with zero duplicate or cross-split leakage violations. These rows may be used
+for audit, visualization, and future contract development only; exact target
+metrics and learned exact-label claims must exclude them.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -346,6 +355,6 @@ reuse and passes leakage validation, but it currently supports only 7 generated
 exact rows. Wave 31 identifies the immediate clean-support bottleneck as
 component-value reuse pressure, not report validation. Wave 37 shows a richer
 material/mobility signature can recover 30 diagnostic rows, and Wave 38 makes
-that support machine-checkable while keeping promotion closed until the
-signature becomes a replayed value target with explicit split and baseline
-rules.
+that support machine-checkable. Wave 39 adds row-level heuristic diagnostics
+while keeping promotion closed until the signature becomes a replayed exact
+value target with explicit split and baseline rules.
