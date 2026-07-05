@@ -283,6 +283,17 @@ profile-source changes must report which loss modes they improve:
 `wall_safety`, `component_recursive_node_budget`, `materialization_failure`, or
 `duplicate_value_digest`.
 
+Wave 34 adds a depth-three profile-inventory command:
+`cargo run --quiet -- --generated-depth-three-profile-inventory`. It is a
+diagnostic no-go, not a promoted shard path. The current report keeps the same
+526/527 generated patterns and wall-safety filters but accepts only 6 white
+profiles and 4 black profiles under the existing recursive-node budget.
+Component recursive-node budget rejections rise to 91 on white and 337 on
+black, so increasing local-move depth under the same budget is not a valid
+clean-scale strategy. Future attempts that use deeper component values must
+state a versioned value rule, a new budget, or a split/grouping rule before
+claiming useful generated support.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded

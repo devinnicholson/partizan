@@ -19,15 +19,16 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_22_expanded_composition_benchmark.json` is the current execution target.
-It turns the replay-audited Wave 18/21 composition machinery into a larger
-benchmark whose first real model question is whether decomposition helps on
-generated source/topology holdouts:
+`wave_34_depth_three_profile_inventory.json` is the current execution target.
+It tests whether increasing generated component local-move depth from 2 to 3
+creates fresh component-value profile supply, and records the result as a
+bounded no-go if the recursive-node budget collapses support:
 
 ```text
-expanded profile pool -> expanded JSONL shard -> replay gate
-                      -> source/topology reports -> baseline suite
-                      -> decomposition-aware model -> claim audit
+depth-two profile bottleneck -> depth-three inventory command
+                             -> support/rejection report
+                             -> shard stability checks
+                             -> next generator design constraint
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

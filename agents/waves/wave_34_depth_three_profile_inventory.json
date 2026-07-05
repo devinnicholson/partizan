@@ -1,0 +1,154 @@
+{
+  "wave_id": "wave_34_depth_three_profile_inventory",
+  "objective": "Evaluate whether increasing generated component local-move depth from 2 to 3 broadens fresh component-value profile supply, and record an explicit no-go if recursive-node budget pressure collapses usable profiles.",
+  "non_negotiables": [
+    "Do not promote a new clean composition shard from an inventory-only diagnostic.",
+    "Do not relax Wave 27 no-reuse leakage gates for positions, decomposition digests, composition digests, decomposition-qualified component identities, component value digests, component value identities, component value pairs, or result value digests.",
+    "Wave 18 default SHA remains ae01fe8256a1c7a699e5f6f0358d499d6c1f4850148c9251e1c494bb059d3aa8.",
+    "Wave 22 expanded SHA remains 9d1b2754b880e64498b5deec12ac14c5b4be320446ed1319a67252599bd5dcc7.",
+    "Wave 27 clean SHA remains 7e1085cb0a212d7f3e620885c11bf709f8ce2bfa28204c664bbc0aa02875ef9c.",
+    "A learned decomposition-benefit claim remains blocked until a larger leakage-clean split beats deterministic floors and matched no-decomposition controls on the same split."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w34_astralbase_depth_three_inventory"
+      ]
+    },
+    {
+      "parallel": [
+        "w35_partizan_depth_three_inventory_evidence"
+      ]
+    },
+    {
+      "parallel": [
+        "w36_next_profile_supply_design_gate"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w34_astralbase_depth_three_inventory",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add a report-only generated-depth-three profile inventory command that reuses the existing generated component patterns and wall-safety rules while evaluating component values at local-move depth 3. Pin the observed support and rejection counts in tests, and prove the Wave 18, Wave 22, and Wave 27 artifacts remain byte-stable.",
+      "outputs": [
+        "Report-only --generated-depth-three-profile-inventory command",
+        "Regression test for depth-three accepted profile counts and rejection counts",
+        "Stability evidence for Wave 18, Wave 22, and Wave 27 shard hashes and replay reports"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test generated_depth_three_profile_inventory_reports_recursive_budget_collapse",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo run --quiet -- --generated-depth-three-profile-inventory > /tmp/astralbase-depth3-profile-inventory.json",
+        "shasum -a 256 /tmp/astralbase-depth3-profile-inventory.json",
+        "cargo run --quiet -- --non-fixture-composed-domain-shard > /tmp/astralbase-w18-traceable-composition.jsonl",
+        "shasum -a 256 /tmp/astralbase-w18-traceable-composition.jsonl",
+        "cargo run --quiet -- --expanded-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w22-expanded-composition.jsonl",
+        "shasum -a 256 /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --leakage-clean-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w27-clean-composition.jsonl",
+        "shasum -a 256 /tmp/astralbase-w27-clean-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w18-traceable-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w27-clean-composition.jsonl"
+      ],
+      "acceptance": [
+        "Depth-three inventory reports component_depth=3.",
+        "Accepted profile counts and rejection counts are pinned by a regression test.",
+        "If support is worse than depth two, the result is documented as a no-go rather than a scale solution.",
+        "Pinned Wave 18, Wave 22, and Wave 27 hashes and replay reports remain stable."
+      ]
+    },
+    {
+      "id": "w35_partizan_depth_three_inventory_evidence",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_depth_three_profile_inventory_wave_34_report.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/wave_34_depth_three_profile_inventory.json"
+      ],
+      "depends_on": [
+        "w34_astralbase_depth_three_inventory"
+      ],
+      "prompt": "Generate the Partizan Wave 34 depth-three inventory report, record its SHA-256, update the experiment matrix, research claims, and verification gates, and keep the evidence boundary clear: this is a report-only no-go diagnostic, not a promoted shard or model result.",
+      "outputs": [
+        "Wave 34 depth-three profile inventory JSON report",
+        "Experiment matrix row with artifact hash, source commit, support counts, and no-go boundary",
+        "Claim and verification-gate updates preserving the model-readiness blocker"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-three-profile-inventory > docs/non_fixture_composition_depth_three_profile_inventory_wave_34_report.json",
+        "jq empty docs/non_fixture_composition_depth_three_profile_inventory_wave_34_report.json",
+        "shasum -a 256 docs/non_fixture_composition_depth_three_profile_inventory_wave_34_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_34_depth_three_profile_inventory.json",
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Wave 34 report SHA-256 is recorded.",
+        "Docs state that depth-three support falls to 6 white and 4 black profiles.",
+        "Docs identify recursive-node budget pressure as the main new blocker.",
+        "No learned or scale claim is activated from the diagnostic."
+      ]
+    },
+    {
+      "id": "w36_next_profile_supply_design_gate",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "docs/research_claims.md",
+        "docs/experiment_matrix.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w35_partizan_depth_three_inventory_evidence"
+      ],
+      "prompt": "Use the Wave 34 no-go to constrain the next generator design. The next attempt should not simply increase local-move depth under the same node budget; it must introduce new low-node component geometry, a versioned value rule with explicit split semantics, or a formally documented grouping rule before claiming clean scale.",
+      "outputs": [
+        "Next-wave design constraint in the claim ledger",
+        "Verification-gate language preventing repeated depth-increase no-gos",
+        "Clear owner handoff to topology_engineer, retrograde_engineer, and dataset_foundry"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_34_depth_three_profile_inventory.json",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "The next-wave recommendation rules out naive depth increase as the scale strategy.",
+        "The blocker remains fresh component-value diversity under no-reuse gates.",
+        "The claim ledger still blocks learned decomposition-benefit evidence until clean support increases materially."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_34_depth_three_profile_inventory.json",
+      "success_signal": "The Wave 34 plan is internally consistent."
+    },
+    {
+      "id": "depth_three_inventory_gate",
+      "command": "cd ../astralbase && cargo run --quiet -- --generated-depth-three-profile-inventory > /tmp/astralbase-depth3-profile-inventory.json",
+      "success_signal": "The report exposes depth-three support counts and rejection reasons."
+    },
+    {
+      "id": "partizan_report_gate",
+      "command": "jq empty docs/non_fixture_composition_depth_three_profile_inventory_wave_34_report.json",
+      "success_signal": "The committed Wave 34 report is valid JSON."
+    }
+  ]
+}
