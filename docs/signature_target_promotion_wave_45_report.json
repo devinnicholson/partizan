@@ -1,0 +1,101 @@
+{
+  "contract_status": "row_contract_passed_promotion_blocked",
+  "dataset_path": "docs/signature_target_diagnostic_wave_44_rpf20.jsonl",
+  "dataset_sha256": "3294d3207191db59371ad48761c762963871563ce4a9decc605783f29141908c",
+  "eligible_label_kinds": [
+    "heuristic"
+  ],
+  "excluded_from_contract_metrics": {},
+  "heuristic_method": "signature_profile_target_diagnostic",
+  "included_row_count": 60,
+  "promotion_gate": {
+    "blocker_counts": {
+      "deterministic_and_model_baselines_missing": 60,
+      "replay_compatible_provenance_missing": 60,
+      "split_semantics_missing": 60,
+      "versioned_exact_value_rule_missing": 60
+    },
+    "blockers": [
+      "versioned exact value rule is not defined",
+      "replay-compatible provenance is not defined",
+      "split and leakage semantics for the signature target are not defined",
+      "deterministic floors and learned-model baselines are not implemented"
+    ],
+    "next_required_evidence": [
+      "versioned exact value rule",
+      "replay-compatible provenance checker",
+      "split and leakage semantics for promoted targets",
+      "deterministic floors and learned-model baselines on the promoted split"
+    ],
+    "passed": false,
+    "required_blocker_ids": [
+      "versioned_exact_value_rule_missing",
+      "replay_compatible_provenance_missing",
+      "split_semantics_missing",
+      "deterministic_and_model_baselines_missing"
+    ]
+  },
+  "report_id": "heuristic_signature_promotion_readiness_report_v0",
+  "reuse_checks": {
+    "component_signature_count": 120,
+    "current_result_value_digest_count": 60,
+    "duplicate_component_signatures": 0,
+    "duplicate_current_result_value_digests": 17,
+    "duplicate_result_signature_keys": 0,
+    "result_signature_key_count": 60
+  },
+  "row_contract_gate": {
+    "component_signature_rule_counts": {
+      "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0": 60
+    },
+    "component_topology_family_counts": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 20,
+      "dfile_two_component_depth2_local_move_v0": 20,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 20
+    },
+    "contract_id": "depth2_material_mobility_signature_target_contract_v0",
+    "contract_id_counts": {
+      "depth2_material_mobility_signature_target_contract_v0": 60
+    },
+    "malformed_component_signature_rows": [],
+    "missing_output_fields": {},
+    "missing_required_blockers_by_row": {},
+    "passed": true,
+    "required_output_fields": [
+      "component_signature_rule",
+      "component_topology_family",
+      "composition_spec_source",
+      "current_result_value_digest",
+      "left_component_signature",
+      "left_component_value_digest",
+      "promotion_blockers",
+      "result_signature_key",
+      "right_component_signature",
+      "right_component_value_digest",
+      "supervision_eligible",
+      "target_contract_id",
+      "target_status"
+    ],
+    "result_signature_key_mismatch_rows": [],
+    "supervision_eligible_counts": {
+      "false": 60
+    },
+    "target_status_counts": {
+      "diagnostic_only": 60
+    },
+    "validation_errors": []
+  },
+  "row_counts": {
+    "dev": 11,
+    "test": 3,
+    "train": 46
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|position.encoding:position.text",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_position_hash_v0"
+}

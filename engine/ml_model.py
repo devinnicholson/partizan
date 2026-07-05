@@ -127,6 +127,27 @@ SIGNATURE_PROFILE_PROMOTION_BLOCKERS = (
     "split and leakage semantics for the signature target are not defined",
     "deterministic floors and learned-model baselines are not implemented",
 )
+HEURISTIC_SIGNATURE_REQUIRED_OUTPUT_FIELDS = (
+    "component_signature_rule",
+    "component_topology_family",
+    "composition_spec_source",
+    "current_result_value_digest",
+    "left_component_signature",
+    "left_component_value_digest",
+    "promotion_blockers",
+    "result_signature_key",
+    "right_component_signature",
+    "right_component_value_digest",
+    "supervision_eligible",
+    "target_contract_id",
+    "target_status",
+)
+HEURISTIC_SIGNATURE_PROMOTION_BLOCKER_IDS = (
+    "versioned_exact_value_rule_missing",
+    "replay_compatible_provenance_missing",
+    "split_semantics_missing",
+    "deterministic_and_model_baselines_missing",
+)
 
 
 def _require_torch() -> None:
@@ -1576,6 +1597,203 @@ def evaluate_heuristic_target_projection_report(
     }
 
 
+def evaluate_heuristic_signature_promotion_report(
+    jsonl_path: str | Path,
+    split_key_mode: str = "position",
+    heuristic_method: str | None = None,
+) -> dict[str, Any]:
+    """Audit whether heuristic signature rows are contract-complete but blocked."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = split_assignments_for_rows(rows, split_key_mode)
+    splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=False)
+    split_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
+
+    included: list[dict[str, Any]] = []
+    excluded: dict[str, Counter[str]] = {
+        "non_heuristic_rows_by_split": Counter(),
+        "method_mismatch_rows_by_split": Counter(),
+        "missing_outputs_rows_by_split": Counter(),
+    }
+    missing_output_fields: Counter[str] = Counter()
+    target_status_counts: Counter[str] = Counter()
+    supervision_eligible_counts: Counter[str] = Counter()
+    contract_id_counts: Counter[str] = Counter()
+    signature_rule_counts: Counter[str] = Counter()
+    topology_counts: Counter[str] = Counter()
+    blocker_counts: Counter[str] = Counter()
+    component_signatures: list[str] = []
+    result_signature_keys: list[str] = []
+    current_result_value_digests: list[str] = []
+    malformed_component_signature_rows: list[str] = []
+    result_signature_key_mismatch_rows: list[str] = []
+    missing_required_blockers_by_row: dict[str, list[str]] = {}
+
+    for row, assignment in zip(rows, assignments):
+        split = str(assignment["split"])
+        heuristic = row.get("heuristic")
+        if row.get("label_kind") != "heuristic" or not isinstance(heuristic, dict):
+            excluded["non_heuristic_rows_by_split"][split] += 1
+            continue
+        method = str(heuristic.get("method") or "")
+        if heuristic_method is not None and method != heuristic_method:
+            excluded["method_mismatch_rows_by_split"][split] += 1
+            continue
+        outputs = heuristic.get("outputs")
+        if not isinstance(outputs, dict):
+            excluded["missing_outputs_rows_by_split"][split] += 1
+            continue
+
+        row_id = str(row.get("row_id"))
+        included.append(row)
+        for field in HEURISTIC_SIGNATURE_REQUIRED_OUTPUT_FIELDS:
+            if _nonempty_output_string(outputs, field) is None:
+                missing_output_fields[field] += 1
+
+        target_status = _nonempty_output_string(outputs, "target_status") or "__missing__"
+        supervision_eligible = (
+            _nonempty_output_string(outputs, "supervision_eligible") or "__missing__"
+        )
+        contract_id = _nonempty_output_string(outputs, "target_contract_id") or "__missing__"
+        signature_rule = (
+            _nonempty_output_string(outputs, "component_signature_rule") or "__missing__"
+        )
+        topology = (
+            _nonempty_output_string(outputs, "component_topology_family") or "__missing__"
+        )
+        target_status_counts[target_status] += 1
+        supervision_eligible_counts[supervision_eligible] += 1
+        contract_id_counts[contract_id] += 1
+        signature_rule_counts[signature_rule] += 1
+        topology_counts[topology] += 1
+
+        left_signature = _nonempty_output_string(outputs, "left_component_signature")
+        right_signature = _nonempty_output_string(outputs, "right_component_signature")
+        if left_signature is not None:
+            component_signatures.append(left_signature)
+        if right_signature is not None:
+            component_signatures.append(right_signature)
+        result_signature_key = _nonempty_output_string(outputs, "result_signature_key")
+        if result_signature_key is not None:
+            result_signature_keys.append(result_signature_key)
+        result_value_digest = _nonempty_output_string(
+            outputs, "current_result_value_digest"
+        )
+        if result_value_digest is not None:
+            current_result_value_digests.append(result_value_digest)
+
+        left_parts = _component_signature_parts(outputs, "left")
+        right_parts = _component_signature_parts(outputs, "right")
+        if not _component_signature_has_required_parts(
+            left_parts
+        ) or not _component_signature_has_required_parts(right_parts):
+            malformed_component_signature_rows.append(row_id)
+        if (
+            topology != "__missing__"
+            and left_signature is not None
+            and right_signature is not None
+            and result_signature_key is not None
+        ):
+            expected_key = (
+                f"{topology};left:{left_signature};right:{right_signature}"
+            )
+            if result_signature_key != expected_key:
+                result_signature_key_mismatch_rows.append(row_id)
+
+        blockers = _promotion_blocker_ids(outputs)
+        blocker_counts.update(blockers)
+        missing_blockers = sorted(
+            set(HEURISTIC_SIGNATURE_PROMOTION_BLOCKER_IDS) - set(blockers)
+        )
+        if missing_blockers:
+            missing_required_blockers_by_row[row_id] = missing_blockers
+
+    duplicate_component_signatures = duplicate_total(Counter(component_signatures))
+    duplicate_result_signature_keys = duplicate_total(Counter(result_signature_keys))
+    row_contract_errors = heuristic_signature_row_contract_errors(
+        included_count=len(included),
+        missing_output_fields=missing_output_fields,
+        target_status_counts=target_status_counts,
+        supervision_eligible_counts=supervision_eligible_counts,
+        contract_id_counts=contract_id_counts,
+        malformed_component_signature_rows=malformed_component_signature_rows,
+        result_signature_key_mismatch_rows=result_signature_key_mismatch_rows,
+        duplicate_component_signatures=duplicate_component_signatures,
+        duplicate_result_signature_keys=duplicate_result_signature_keys,
+        missing_required_blockers_by_row=missing_required_blockers_by_row,
+    )
+    row_contract_passed = not row_contract_errors
+
+    return {
+        "report_id": "heuristic_signature_promotion_readiness_report_v0",
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "eligible_label_kinds": ["heuristic"],
+        "heuristic_method": heuristic_method,
+        "splitter_id": splitter_id,
+        "split_policy": split_policy,
+        "row_counts": _count_by(assignments, "split"),
+        "included_row_count": len(included),
+        "excluded_from_contract_metrics": {
+            key: dict(sorted(counter.items()))
+            for key, counter in excluded.items()
+            if counter
+        },
+        "row_contract_gate": {
+            "passed": row_contract_passed,
+            "contract_id": SIGNATURE_PROFILE_CONTRACT_ID,
+            "required_output_fields": list(HEURISTIC_SIGNATURE_REQUIRED_OUTPUT_FIELDS),
+            "missing_output_fields": dict(sorted(missing_output_fields.items())),
+            "target_status_counts": dict(sorted(target_status_counts.items())),
+            "supervision_eligible_counts": dict(
+                sorted(supervision_eligible_counts.items())
+            ),
+            "contract_id_counts": dict(sorted(contract_id_counts.items())),
+            "component_signature_rule_counts": dict(
+                sorted(signature_rule_counts.items())
+            ),
+            "component_topology_family_counts": dict(sorted(topology_counts.items())),
+            "malformed_component_signature_rows": sorted(
+                malformed_component_signature_rows
+            ),
+            "result_signature_key_mismatch_rows": sorted(
+                result_signature_key_mismatch_rows
+            ),
+            "missing_required_blockers_by_row": missing_required_blockers_by_row,
+            "validation_errors": row_contract_errors,
+        },
+        "reuse_checks": {
+            "duplicate_component_signatures": duplicate_component_signatures,
+            "duplicate_result_signature_keys": duplicate_result_signature_keys,
+            "duplicate_current_result_value_digests": duplicate_total(
+                Counter(current_result_value_digests)
+            ),
+            "component_signature_count": len(component_signatures),
+            "result_signature_key_count": len(result_signature_keys),
+            "current_result_value_digest_count": len(current_result_value_digests),
+        },
+        "promotion_gate": {
+            "passed": False,
+            "required_blocker_ids": list(HEURISTIC_SIGNATURE_PROMOTION_BLOCKER_IDS),
+            "blocker_counts": dict(sorted(blocker_counts.items())),
+            "blockers": list(SIGNATURE_PROFILE_PROMOTION_BLOCKERS),
+            "next_required_evidence": [
+                "versioned exact value rule",
+                "replay-compatible provenance checker",
+                "split and leakage semantics for promoted targets",
+                "deterministic floors and learned-model baselines on the promoted split",
+            ],
+        },
+        "contract_status": (
+            "row_contract_passed_promotion_blocked"
+            if row_contract_passed
+            else "row_contract_failed_promotion_blocked"
+        ),
+    }
+
+
 def evaluate_signature_profile_contract_report(
     report_json_path: str | Path,
     rows_per_family_target: int = 10,
@@ -1775,6 +1993,62 @@ def signature_profile_report_validation_errors(
         )
 
     return errors
+
+
+def heuristic_signature_row_contract_errors(
+    included_count: int,
+    missing_output_fields: Counter[str],
+    target_status_counts: Counter[str],
+    supervision_eligible_counts: Counter[str],
+    contract_id_counts: Counter[str],
+    malformed_component_signature_rows: list[str],
+    result_signature_key_mismatch_rows: list[str],
+    duplicate_component_signatures: int,
+    duplicate_result_signature_keys: int,
+    missing_required_blockers_by_row: dict[str, list[str]],
+) -> list[str]:
+    errors = []
+    if included_count < 1:
+        errors.append("no eligible heuristic signature rows")
+    if missing_output_fields:
+        for field, count in sorted(missing_output_fields.items()):
+            errors.append(f"missing output field {field} on {count} row(s)")
+    if target_status_counts != Counter({"diagnostic_only": included_count}):
+        errors.append("target_status must be diagnostic_only for every included row")
+    if supervision_eligible_counts != Counter({"false": included_count}):
+        errors.append("supervision_eligible must be false for every included row")
+    if contract_id_counts != Counter({SIGNATURE_PROFILE_CONTRACT_ID: included_count}):
+        errors.append(f"target_contract_id must be {SIGNATURE_PROFILE_CONTRACT_ID}")
+    if malformed_component_signature_rows:
+        errors.append("component signatures must parse into value/material/moves fields")
+    if result_signature_key_mismatch_rows:
+        errors.append(
+            "result_signature_key must equal topology plus left/right signatures"
+        )
+    if duplicate_component_signatures:
+        errors.append("component signatures must not be reused")
+    if duplicate_result_signature_keys:
+        errors.append("result_signature_key values must not be reused")
+    if missing_required_blockers_by_row:
+        errors.append("promotion_blockers must include every required blocker id")
+    return errors
+
+
+def _promotion_blocker_ids(outputs: dict[str, Any]) -> list[str]:
+    raw_blockers = outputs.get("promotion_blockers")
+    if isinstance(raw_blockers, list):
+        return [
+            str(blocker).strip()
+            for blocker in raw_blockers
+            if str(blocker).strip()
+        ]
+    if raw_blockers is None:
+        return []
+    return [
+        blocker.strip()
+        for blocker in str(raw_blockers).split(";")
+        if blocker.strip()
+    ]
 
 
 def _string_int_dict(value: Any) -> dict[str, int]:
@@ -2031,6 +2305,12 @@ def _component_signature_parts(
             return None
         parts[key] = value
     return parts
+
+
+def _component_signature_has_required_parts(parts: dict[str, str] | None) -> bool:
+    if parts is None:
+        return False
+    return all(parts.get(key) for key in ("value", "material", "moves"))
 
 
 def _projection_pair(left: str | None, right: str | None) -> str | None:
@@ -3651,6 +3931,32 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the heuristic projection report JSON.",
     )
 
+    heuristic_signature_promotion_parser = subcommands.add_parser(
+        "heuristic-signature-promotion-report",
+        help="Audit heuristic signature rows for promotion readiness and blockers.",
+    )
+    heuristic_signature_promotion_parser.add_argument("jsonl_path", type=Path)
+    heuristic_signature_promotion_parser.add_argument(
+        "--heuristic-method",
+        help="Optional heuristic.method filter.",
+    )
+    heuristic_signature_promotion_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for split assignment.",
+    )
+    heuristic_signature_promotion_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the promotion-readiness report JSON.",
+    )
+    heuristic_signature_promotion_parser.add_argument(
+        "--fail-on-row-contract",
+        action="store_true",
+        help="Exit nonzero when heuristic signature row contract checks fail.",
+    )
+
     signature_contract_parser = subcommands.add_parser(
         "signature-profile-contract-report",
         help="Validate a signature-profile search report as a diagnostic target contract.",
@@ -3877,6 +4183,25 @@ def cli_main(argv: list[str] | None = None) -> int:
                 encoding="utf-8",
             )
         print_json_report(report)
+        return 0
+
+    if args.command == "heuristic-signature-promotion-report":
+        report = evaluate_heuristic_signature_promotion_report(
+            args.jsonl_path,
+            split_key_mode=args.split_key_mode,
+            heuristic_method=args.heuristic_method,
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        if args.fail_on_row_contract and not report["row_contract_gate"]["passed"]:
+            for error in report["row_contract_gate"]["validation_errors"]:
+                print(f"signature row-contract violation: {error}", file=sys.stderr)
+            return 1
         return 0
 
     if args.command == "signature-profile-contract-report":

@@ -19,11 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_44_rpf20_signature_diagnostic_shard.json` is the current execution
-target. It materializes the rows-per-family 20 signature diagnostic shard after
-Wave 43 proved full-pair support reachability, then runs schema validation,
-split/leakage reporting, deterministic floors, and projection inventory while
-keeping those rows outside exact supervision:
+`wave_45_signature_promotion_readiness.json` is the current execution target.
+It makes promotion readiness executable for the rows-per-family 20 signature
+diagnostic shard by checking row-level contract fields, blocker IDs, duplicate
+signature reuse, and the still-closed promotion gate:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -35,6 +34,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> bounded higher-support diagnostic
                              -> full-pair rpf20 support gate
                              -> materialized rpf20 diagnostic shard
+                             -> promotion-readiness row contract
                              -> replayed exact value-rule/split/baseline work
 ```
 

@@ -13,6 +13,7 @@ from ml_model import (
     evaluate_family_holdout_report,
     evaluate_family_holdout_report_with_mode,
     evaluate_frontier_target_report,
+    evaluate_heuristic_signature_promotion_report,
     evaluate_heuristic_target_projection_report,
     evaluate_heuristic_target_report,
     evaluate_label_shard_baseline,
@@ -813,6 +814,104 @@ def run_heuristic_target_projection_report_smoke():
     }
 
 
+def run_heuristic_signature_promotion_report_smoke():
+    specs = [
+        ("heuristic-promotion-train", "train", 8000, "topology-a", "left-a", "right-a", 1, -1),
+        ("heuristic-promotion-dev", "dev", 9000, "topology-b", "left-b", "right-b", 2, -2),
+        ("heuristic-promotion-test", "test", 10000, "topology-c", "left-c", "right-c", 3, -3),
+    ]
+    rows = []
+    for row_id, split, start_index, topology, left_digest, right_digest, left_material, right_material in specs:
+        target = _heuristic_signature_target(
+            topology,
+            left_digest,
+            right_digest,
+            left_material,
+            right_material,
+        )
+        rows.append(
+            _heuristic_fixture_row_for_split(
+                row_id,
+                split,
+                target,
+                start_index=start_index,
+                topology=topology,
+                left_digest=left_digest,
+                right_digest=right_digest,
+                left_material=left_material,
+                right_material=right_material,
+            )
+        )
+
+    with TemporaryDirectory() as temp_dir:
+        shard_path = Path(temp_dir) / "heuristic-promotion-smoke.jsonl"
+        shard_path.write_text(
+            "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
+            encoding="utf-8",
+        )
+        report = evaluate_heuristic_signature_promotion_report(
+            shard_path,
+            heuristic_method="signature_profile_target_diagnostic",
+        )
+
+        bad_rows = json.loads(json.dumps(rows))
+        del bad_rows[0]["heuristic"]["outputs"]["target_contract_id"]
+        bad_rows[1]["heuristic"]["outputs"]["left_component_signature"] = (
+            "value:left-b;material:2"
+        )
+        bad_path = Path(temp_dir) / "heuristic-promotion-bad.jsonl"
+        bad_path.write_text(
+            "\n".join(json.dumps(row, sort_keys=True) for row in bad_rows) + "\n",
+            encoding="utf-8",
+        )
+        bad_report = evaluate_heuristic_signature_promotion_report(
+            bad_path,
+            heuristic_method="signature_profile_target_diagnostic",
+        )
+
+    assert report["report_id"] == "heuristic_signature_promotion_readiness_report_v0"
+    assert report["included_row_count"] == 3
+    assert report["row_contract_gate"]["passed"] is True
+    assert report["row_contract_gate"]["validation_errors"] == []
+    assert report["row_contract_gate"]["target_status_counts"] == {
+        "diagnostic_only": 3
+    }
+    assert report["row_contract_gate"]["supervision_eligible_counts"] == {
+        "false": 3
+    }
+    assert report["reuse_checks"]["duplicate_component_signatures"] == 0
+    assert report["reuse_checks"]["duplicate_result_signature_keys"] == 0
+    assert report["promotion_gate"]["passed"] is False
+    assert report["promotion_gate"]["blocker_counts"][
+        "versioned_exact_value_rule_missing"
+    ] == 3
+    assert report["contract_status"] == "row_contract_passed_promotion_blocked"
+
+    assert bad_report["row_contract_gate"]["passed"] is False
+    assert any(
+        "missing output field target_contract_id" in error
+        for error in bad_report["row_contract_gate"]["validation_errors"]
+    )
+    assert any(
+        "component signatures" in error
+        for error in bad_report["row_contract_gate"]["validation_errors"]
+    )
+
+
+def _heuristic_signature_target(
+    topology: str,
+    left_digest: str,
+    right_digest: str,
+    left_material: int,
+    right_material: int,
+    left_moves: str = "white:1,black:0",
+    right_moves: str = "white:0,black:1",
+) -> str:
+    left_signature = f"value:{left_digest};material:{left_material};moves:{left_moves}"
+    right_signature = f"value:{right_digest};material:{right_material};moves:{right_moves}"
+    return f"{topology};left:{left_signature};right:{right_signature}"
+
+
 def _heuristic_fixture_row_for_split(
     row_id: str,
     target_split: str,
@@ -840,19 +939,38 @@ def _heuristic_fixture_row_for_split(
                     "method": "signature_profile_target_diagnostic",
                     "method_version": "v0",
                     "outputs": {
+                        "component_signature_rule": (
+                            "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0"
+                        ),
                         "component_topology_family": topology,
+                        "composition_spec_source": "signature_profile_target_diagnostic_v0",
+                        "current_result_value_digest": f"result-{row_id}",
                         "left_component_signature": (
                             f"value:{left_digest};material:{left_material};"
                             f"moves:{left_moves}"
                         ),
                         "left_component_value_digest": left_digest,
+                        "left_profile_index": "0",
+                        "promotion_blockers": (
+                            "versioned_exact_value_rule_missing;"
+                            "replay_compatible_provenance_missing;"
+                            "split_semantics_missing;"
+                            "deterministic_and_model_baselines_missing"
+                        ),
                         "result_signature_key": target,
                         "right_component_signature": (
                             f"value:{right_digest};material:{right_material};"
                             f"moves:{right_moves}"
                         ),
                         "right_component_value_digest": right_digest,
+                        "right_profile_index": "1",
+                        "row_number": row_id,
                         "supervision_eligible": "false",
+                        "target_contract_id": (
+                            "depth2_material_mobility_signature_target_contract_v0"
+                        ),
+                        "target_status": "diagnostic_only",
+                        "total_recursive_nodes": "47",
                     },
                 },
             }
@@ -1558,6 +1676,7 @@ def main():
     run_signature_profile_contract_report_smoke()
     run_heuristic_target_report_smoke()
     run_heuristic_target_projection_report_smoke()
+    run_heuristic_signature_promotion_report_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()

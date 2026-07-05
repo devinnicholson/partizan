@@ -1,0 +1,122 @@
+{
+  "wave_id": "wave_45_signature_promotion_readiness",
+  "objective": "Make signature-target promotion readiness executable by auditing the Wave 44 heuristic rows for contract completeness and explicit promotion blockers.",
+  "non_negotiables": [
+    "A passing row-contract gate is not a passing promotion gate.",
+    "The report must keep heuristic rows outside exact supervision.",
+    "Duplicate component signatures and result signature keys must remain zero before any future promotion work.",
+    "Duplicate current result value digests must be recorded as replay-rule pressure, not hidden."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w45_partizan_promotion_report_cli"
+      ]
+    },
+    {
+      "parallel": [
+        "w45_partizan_generate_promotion_report"
+      ]
+    },
+    {
+      "parallel": [
+        "w45_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w45_partizan_promotion_report_cli",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py"
+      ],
+      "depends_on": [],
+      "prompt": "Add a Partizan report command that audits heuristic signature rows for required output fields, contract IDs, diagnostic-only status, blocker IDs, duplicate signatures, and promotion status.",
+      "outputs": [
+        "heuristic-signature-promotion-report CLI",
+        "Smoke tests for pass and fail row-contract cases"
+      ],
+      "commands": [
+        "python3 -m py_compile engine/ml_model.py engine/test.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "The report exposes a row_contract_gate separate from promotion_gate.",
+        "Well-formed diagnostic rows pass row_contract_gate and still keep promotion_gate.passed=false.",
+        "Rows missing required contract fields fail row_contract_gate."
+      ]
+    },
+    {
+      "id": "w45_partizan_generate_promotion_report",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_promotion_wave_45_report.json"
+      ],
+      "depends_on": [
+        "w45_partizan_promotion_report_cli"
+      ],
+      "prompt": "Run the promotion-readiness report on the Wave 44 rpf20 heuristic diagnostic shard and record the artifact hash.",
+      "outputs": [
+        "Wave 45 promotion-readiness report"
+      ],
+      "commands": [
+        "python3 engine/ml_model.py heuristic-signature-promotion-report docs/signature_target_diagnostic_wave_44_rpf20.jsonl --heuristic-method signature_profile_target_diagnostic --output docs/signature_target_promotion_wave_45_report.json --fail-on-row-contract",
+        "shasum -a 256 docs/signature_target_promotion_wave_45_report.json"
+      ],
+      "acceptance": [
+        "The report includes 60 rows and row_contract_gate.passed=true.",
+        "Duplicate component signatures and duplicate result signature keys are zero.",
+        "promotion_gate.passed=false and all four blocker IDs remain present on all 60 rows.",
+        "Duplicate current_result_value_digest count is recorded."
+      ]
+    },
+    {
+      "id": "w45_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_45_signature_promotion_readiness.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w45_partizan_generate_promotion_report"
+      ],
+      "prompt": "Record Wave 45 as an executable promotion-readiness gate and keep exact supervision blocked until a replay-compatible exact value rule exists.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_45_signature_promotion_readiness.json",
+        "jq empty docs/signature_target_promotion_wave_45_report.json"
+      ],
+      "acceptance": [
+        "Docs distinguish row-contract readiness from promotion eligibility.",
+        "Claims C2 and C5 identify replay-compatible exact value semantics as the next blocker.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_45_signature_promotion_readiness.json",
+      "success_signal": "The Wave 45 plan is internally consistent."
+    },
+    {
+      "id": "promotion_report_row_contract_passes",
+      "command": "python3 engine/ml_model.py heuristic-signature-promotion-report docs/signature_target_diagnostic_wave_44_rpf20.jsonl --heuristic-method signature_profile_target_diagnostic --output docs/signature_target_promotion_wave_45_report.json --fail-on-row-contract",
+      "success_signal": "The Wave 44 diagnostic shard passes row-contract checks while promotion stays blocked."
+    }
+  ]
+}

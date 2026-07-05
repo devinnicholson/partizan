@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 44 rpf20 signature diagnostic audit gates, with Wave 3 negative
+Status: Wave 45 signature promotion-readiness gates, with Wave 3 negative
 controls and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
@@ -410,6 +410,24 @@ experiment over this shard must report the Wave 44 floor and projection
 inventory on the same split, and any exact-value claim must first add
 replay-compatible value-rule semantics.
 
+Wave 45 adds the executable promotion-readiness gate:
+`python3 engine/ml_model.py heuristic-signature-promotion-report docs/signature_target_diagnostic_wave_44_rpf20.jsonl --heuristic-method signature_profile_target_diagnostic --output docs/signature_target_promotion_wave_45_report.json --fail-on-row-contract`.
+The gate separates `row_contract_gate` from `promotion_gate`. On the Wave 44
+shard, `row_contract_gate.passed=true`: all 60 rows have the required diagnostic
+output fields, the versioned contract ID, `target_status=diagnostic_only`,
+`supervision_eligible=false`, parseable component signatures, and result
+signature keys matching topology plus left/right component signatures. Duplicate
+component signatures and duplicate result signature keys are both zero.
+
+Wave 45 keeps promotion closed. `promotion_gate.passed=false`, and all 60 rows
+retain all four blocker IDs: missing versioned exact value rule, missing
+replay-compatible provenance, missing split semantics, and missing deterministic
+and learned-model baselines. The report also records 17 duplicate
+`current_result_value_digest` values. Future promotion work must not remove
+those blockers or train exact models from these rows until an external replay
+checker supplies exact target semantics and the promoted split/reporting rules
+are regenerated.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -425,6 +443,7 @@ closed. Wave 41 shows that simple projection choice does not solve informative
 target support, and Wave 42 shows naive higher-support scaling hits a bounded
 candidate-pair cap before reaching rpf20. Wave 43 shows rpf20 support is
 reachable with a full-pair scan. Wave 44 materializes and audits the rpf20
-heuristic shard, so promotion now remains closed until the diagnostic signature
-target is converted into a replayed exact value target with explicit split and
+heuristic shard. Wave 45 adds an executable row-contract/promotion-readiness
+gate, so promotion now remains closed until the diagnostic signature target is
+converted into a replayed exact value target with explicit split and
 learned-baseline rules.
