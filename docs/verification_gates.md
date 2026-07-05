@@ -315,6 +315,18 @@ future richer target may be justified, but those signatures are not labels until
 a versioned value rule, replay semantics, split rules, and baselines are
 defined.
 
+Wave 37 adds a signature-profile support diagnostic:
+`cargo run --quiet -- --generated-depth-two-signature-profile-search --rows-per-family 10`.
+It uses the diagnostic signature rule
+`depth2_value_digest_plus_material_balance_plus_local_move_counts_v0`, combining
+component value digest, material balance, and local move counts. The current
+report reaches 30 selected diagnostic rows, balanced 10/10/10 across local-move,
+asymmetric-fan, and pawn-phalanx topology families, from 90 left and 92 right
+signature profiles. This is not a promoted shard and not exact-value evidence.
+Future use must define a versioned value rule, replay-compatible provenance,
+split semantics, deterministic floors, and model baselines before any
+signature-derived target can enter supervision or evaluation claims.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -322,4 +334,7 @@ command and replayed the expanded artifact successfully. The active gate is now
 useful clean support: Wave 27 avoids generated component/decomposition identity
 reuse and passes leakage validation, but it currently supports only 7 generated
 exact rows. Wave 31 identifies the immediate clean-support bottleneck as
-component-value reuse pressure, not report validation.
+component-value reuse pressure, not report validation. Wave 37 shows a richer
+material/mobility signature can recover 30 diagnostic rows, but the gate remains
+closed until that signature becomes a replayed value target with explicit split
+and baseline rules.

@@ -19,15 +19,16 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_36_duplicate_profile_clusters.json` is the current execution target. It
-tests whether duplicate depth-two component value digests hide distinct
-material and local-mobility signatures that could justify a versioned richer
-agency/value target:
+`wave_37_signature_profile_support.json` is the current execution target. It
+tests whether a versioned component signature that combines depth-two value
+digest, material balance, and local move counts can recover 10-per-topology
+generated support after the duplicate-cluster diagnostic exposed hidden
+material/mobility diversity:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
-                             -> material/mobility signatures
-                             -> value-grammar decision gate
+                             -> versioned signature diagnostic
+                             -> value-rule/replay/split decision gate
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

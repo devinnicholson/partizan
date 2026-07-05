@@ -1,0 +1,113 @@
+{
+  "wave_id": "wave_37_signature_profile_support",
+  "objective": "Test whether a versioned component signature target can recover 10-per-topology generated support after the depth-two value digest collapsed material and local-mobility diversity.",
+  "non_negotiables": [
+    "Keep the signature-profile search diagnostic-only until a richer value rule has replay-compatible provenance, split semantics, and baselines.",
+    "Do not promote a new clean composition shard from the signature-profile search report alone.",
+    "Do not claim exact-value, agency, or decomposition-benefit model evidence from signature support.",
+    "Keep Wave 18, Wave 22, and Wave 27 shard hashes stable while adding diagnostics."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w37_astralbase_signature_profile_search"
+      ]
+    },
+    {
+      "parallel": [
+        "w37_partizan_signature_profile_evidence"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w37_astralbase_signature_profile_search",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add a report-only generated depth-two signature-profile search. Use a versioned diagnostic signature that combines component value digest, material balance, and local move counts, then report selected row counts and rejection reasons without changing shard generation.",
+      "outputs": [
+        "Signature-profile search CLI report",
+        "Regression test pinning 10-per-topology diagnostic support",
+        "Stable Wave 18, Wave 22, and Wave 27 shard hashes and replay outputs"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo run --quiet -- --generated-depth-two-signature-profile-search --rows-per-family 10 > /tmp/astralbase-signature-profile-search.json",
+        "shasum -a 256 /tmp/astralbase-signature-profile-search.json",
+        "cargo run --quiet -- --non-fixture-composed-domain-shard > /tmp/astralbase-w18-traceable-composition.jsonl",
+        "cargo run --quiet -- --expanded-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --leakage-clean-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w27-clean-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w18-traceable-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w27-clean-composition.jsonl"
+      ],
+      "acceptance": [
+        "Report uses a versioned signature rule string and records source, profile counts, candidate pairs, selected row counts, and rejection counts.",
+        "Report reaches 30 selected diagnostic rows, balanced 10/10/10 across local-move, asymmetric-fan, and pawn-phalanx topology families.",
+        "No default, expanded, or leakage-clean shard bytes change."
+      ]
+    },
+    {
+      "id": "w37_partizan_signature_profile_evidence",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_signature_profile_search_wave_37_report.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/README.md",
+        "agents/waves/wave_37_signature_profile_support.json"
+      ],
+      "depends_on": [
+        "w37_astralbase_signature_profile_search"
+      ],
+      "prompt": "Record the signature-profile diagnostic and update the claim ledger. State that the diagnostic recovers target support only under a richer versioned component signature, and that this is not exact-value supervision until a value rule, replay semantics, split rules, and baselines exist.",
+      "outputs": [
+        "Wave 37 signature-profile report",
+        "Experiment matrix row with report hash and aggregate counts",
+        "Claim and verification-gate updates that keep the result diagnostic-only"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-signature-profile-search --rows-per-family 10 > docs/non_fixture_composition_signature_profile_search_wave_37_report.json",
+        "jq empty docs/non_fixture_composition_signature_profile_search_wave_37_report.json",
+        "shasum -a 256 docs/non_fixture_composition_signature_profile_search_wave_37_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_37_signature_profile_support.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Docs record 90 left and 92 right signature profiles, 8280 candidate pairs per generated topology family, and 30 selected rows.",
+        "Docs record rejection counts of 4806 component-signature reuse blocks, 21 decomposition-digest reuse blocks, and 1 materialization failure.",
+        "Docs state that the richer signature target is a design gate only until replay-compatible provenance, split semantics, deterministic floors, and learned-model baselines are implemented."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_37_signature_profile_support.json",
+      "success_signal": "The Wave 37 plan is internally consistent."
+    },
+    {
+      "id": "signature_profile_report_gate",
+      "command": "jq empty docs/non_fixture_composition_signature_profile_search_wave_37_report.json && shasum -a 256 docs/non_fixture_composition_signature_profile_search_wave_37_report.json",
+      "success_signal": "The Wave 37 signature-profile report is valid JSON and hashable."
+    },
+    {
+      "id": "partizan_smoke_gate",
+      "command": "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py && python3 engine/test.py && git diff --check",
+      "success_signal": "Partizan docs and Python gates remain healthy."
+    }
+  ]
+}
