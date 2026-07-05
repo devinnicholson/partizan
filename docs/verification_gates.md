@@ -267,6 +267,13 @@ waves must increase fresh component-value profile supply under the no-reuse
 rule, or explicitly document a new split/grouping rule before claiming useful
 clean support.
 
+Wave 32 tested one bounded supply expansion using rank-3/rank-6 supplemental
+profile-source groups, then reverted it after measurement. The experiment still
+selected only 7 generated rows and increased component-value reuse rejections to
+616, with 7 materialization failures. Repeating this variant is not a scale
+strategy; the next generator change must introduce genuinely new
+component-value diversity or document a different evaluation split rule.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
