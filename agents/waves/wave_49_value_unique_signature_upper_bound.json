@@ -1,0 +1,126 @@
+{
+  "wave_id": "wave_49_value_unique_signature_upper_bound",
+  "objective": "Measure whether the Wave 47/48 13-row value-unique exact support limit is a greedy selector artifact or a current component-value capacity ceiling.",
+  "non_negotiables": [
+    "This is an upper-bound diagnostic, not a promoted shard.",
+    "The report must keep the current selected row count separate from the component-value capacity upper bound.",
+    "Future exact support claims must increase fresh component-value supply or document a different value/split rule.",
+    "Stop after this wave and push the completed commits."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w49_astralbase_upper_bound_report"
+      ]
+    },
+    {
+      "parallel": [
+        "w49_partizan_record_upper_bound"
+      ]
+    },
+    {
+      "parallel": [
+        "w49_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w49_astralbase_upper_bound_report",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add a value-unique signature upper-bound report that counts current left/right unique component values, combined value capacity, candidate value-pair counts, and current greedy selector output.",
+      "outputs": [
+        "--generated-depth-two-value-unique-signature-upper-bound [--rows-per-family N]",
+        "generated_depth_two_value_unique_signature_upper_bound_report",
+        "Regression test for the component-value ceiling"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings"
+      ],
+      "acceptance": [
+        "The report records 15 left and 14 right unique component value digests.",
+        "The report records component_value_capacity_upper_bound=14 and current_selected_row_count=13.",
+        "The report does not run expensive all-pairs thermograph result digest calculations."
+      ]
+    },
+    {
+      "id": "w49_partizan_record_upper_bound",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_value_unique_signature_upper_bound_wave_49_report.json"
+      ],
+      "depends_on": [
+        "w49_astralbase_upper_bound_report"
+      ],
+      "prompt": "Run the Wave 49 upper-bound report and record the hash.",
+      "outputs": [
+        "Wave 49 upper-bound report"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-upper-bound --rows-per-family 20 > docs/non_fixture_composition_value_unique_signature_upper_bound_wave_49_report.json",
+        "jq empty docs/non_fixture_composition_value_unique_signature_upper_bound_wave_49_report.json",
+        "shasum -a 256 docs/non_fixture_composition_value_unique_signature_upper_bound_wave_49_report.json"
+      ],
+      "acceptance": [
+        "The report hash is recorded.",
+        "component_value_capacity_upper_bound is 14.",
+        "current_selected_row_count is 13.",
+        "target_row_count is 60."
+      ]
+    },
+    {
+      "id": "w49_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_49_value_unique_signature_upper_bound.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w49_partizan_record_upper_bound"
+      ],
+      "prompt": "Record Wave 49 as evidence that the current exact support limit is near the component-value capacity ceiling.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_49_value_unique_signature_upper_bound.json",
+        "jq empty docs/non_fixture_composition_value_unique_signature_upper_bound_wave_49_report.json"
+      ],
+      "acceptance": [
+        "Docs state that new component-value diversity is required before exact support can scale materially.",
+        "Docs do not present Wave 49 as a new shard or model result.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_49_value_unique_signature_upper_bound.json",
+      "success_signal": "The Wave 49 plan is internally consistent."
+    },
+    {
+      "id": "upper_bound_matches_current_capacity",
+      "command": "jq '.component_value_capacity_upper_bound == 14 and .current_selected_row_count == 13 and .target_row_count == 60' docs/non_fixture_composition_value_unique_signature_upper_bound_wave_49_report.json",
+      "success_signal": "The current source is capacity-limited by component-value diversity."
+    }
+  ]
+}

@@ -19,10 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_48_value_unique_signature_support_diagnostic.json` is the current
-execution target. It measures why the Wave 47 value-unique exact metadata shard
-stops at 13 rows instead of the 60-row heuristic diagnostic support. This is a
-support-collapse diagnostic, not a new promoted shard:
+`wave_49_value_unique_signature_upper_bound.json` is the current execution
+target. It measures whether the Wave 47/48 13-row exact support limit is a
+greedy selector artifact or a current component-value capacity ceiling. This is
+an upper-bound diagnostic, not a new promoted shard:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -38,6 +38,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> replay preflight for diagnostic fields
                              -> value-unique exact metadata shard
                              -> value-unique exact support bottleneck report
+                             -> component-value capacity upper bound
                              -> new component-value diversity + learned baselines
 ```
 

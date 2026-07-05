@@ -474,6 +474,15 @@ pairs per topology family, and only 13 selected rows. The dominant blocker is
 support claims must either increase `selected_row_count` under this report or
 explicitly document a new value rule or split rule before changing the gate.
 
+Wave 49 adds the matching component-value capacity upper-bound report:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-upper-bound --rows-per-family 20`.
+The current source has 15 left and 14 right unique component value digests, zero
+overlap, 29 combined unique component values, and a simple component-value
+capacity upper bound of 14 rows against the 60-row target. The current selector
+selects 13 rows. Future scale work should therefore add fresh component-value
+diversity before spending effort on longer pair scans or greedy selector
+tuning.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -492,6 +501,6 @@ reachable with a full-pair scan. Wave 44 materializes and audits the rpf20
 heuristic shard. Wave 45 adds an executable row-contract/promotion-readiness
 gate. Wave 46 adds field-by-field Astralbase replay preflight. Wave 47 converts
 that target into a small leakage-clean exact metadata shard. Wave 48 measures
-the exact support collapse and shows component-value reuse as the dominant
-blocker, so the active gate is new component-value diversity plus deterministic
-and learned baselines on a scaled exact split.
+the exact support collapse and Wave 49 shows that the current component-value
+capacity ceiling is 14 rows, so the active gate is fresh component-value supply
+plus deterministic and learned baselines on a scaled exact split.
