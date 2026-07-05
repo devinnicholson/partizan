@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 63 left-supply bounded selector gates, with Wave 3 negative controls
+Status: Wave 64 static value-spread selector gates, with Wave 3 negative controls
 and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
@@ -636,6 +636,15 @@ materialization (3,986) and component-value digest reuse before materialization
 value-aware pairing, or materialization-aware search before claiming rpf50
 selected support.
 
+Wave 64 adds a static value-digest-spread ordering diagnostic:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-left-supply-value-spread-selection --rows-per-family 50 --candidate-pair-limit 2500`.
+The report uses the same source and candidate-pair budget as Wave 63 but sorts
+pairs by component-value digest ranks. It selects only 4 rows with topology
+counts 1/2/1, worse than Wave 63's 12 rows, and still hits the candidate-pair
+limit in every topology. Static digest-spread ordering is therefore not the
+selector fix; future work needs dynamic unseen-value/signature pairing or
+materialization-aware search.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -670,8 +679,9 @@ to 129, still below rpf50. Wave 61 shows logistic-probe hyperparameter tuning
 has zero matched dev/test topology candidates. Wave 62 clears the rpf50
 capacity gate with left-supply variants, but only in capacity-only reports.
 Wave 63 shows the first bounded selector over that source still selects only
-12 rows under a 2,500-pair per-family budget. The active gate is value-aware
-pairing or selector ordering that yields selected, materialized, replayed,
-leakage-clean exact rows from a capacity-clearing source, or a materially
-different model class that improves both dev and test before any learned
-structure claim.
+12 rows under a 2,500-pair per-family budget. Wave 64 shows static
+value-digest-spread ordering worsens the bounded result to 4 rows. The active
+gate is dynamic unseen-value/signature pairing or materialization-aware search
+that yields selected, materialized, replayed, leakage-clean exact rows from a
+capacity-clearing source, or a materially different model class that improves
+both dev and test before any learned structure claim.

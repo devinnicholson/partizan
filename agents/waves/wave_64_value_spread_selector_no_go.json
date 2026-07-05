@@ -1,0 +1,102 @@
+{
+  "wave_id": "wave_64_value_spread_selector_no_go",
+  "objective": "Test whether static component-value-digest-spread candidate ordering improves the Wave 63 bounded selector bottleneck.",
+  "non_negotiables": [
+    "Use the same Wave 62 capacity-clearing source and 2,500 candidate-pair budget as Wave 63.",
+    "Treat worse or limit-hit results as a selector-ordering no-go, not as source-capacity evidence.",
+    "Do not promote exact support from bounded selector diagnostics.",
+    "Route next work toward dynamic unseen-value pairing if static digest spread does not improve selected rows."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w64_astralbase_value_spread_selector"
+      ]
+    },
+    {
+      "parallel": [
+        "w64_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w64_astralbase_value_spread_selector",
+      "agent": "topology_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs",
+        "../partizan/docs/signature_target_mixed_hook_left_supply_value_spread_selection_wave_64_rpf50_limit2500_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add and run a value-digest-spread bounded selector ordering for the Wave 62 left-supply source.",
+      "outputs": [
+        "value-spread selector CLI command",
+        "rpf50 value-spread bounded selector report"
+      ],
+      "commands": [
+        "cargo fmt",
+        "cargo test --quiet left_supply_value_spread_selection_is_not_enough -- --exact",
+        "cargo test --quiet",
+        "cargo run --quiet -- --generated-depth-two-value-unique-signature-left-supply-value-spread-selection --rows-per-family 50 --candidate-pair-limit 2500 > ../partizan/docs/signature_target_mixed_hook_left_supply_value_spread_selection_wave_64_rpf50_limit2500_report.json",
+        "shasum -a 256 ../partizan/docs/signature_target_mixed_hook_left_supply_value_spread_selection_wave_64_rpf50_limit2500_report.json"
+      ],
+      "acceptance": [
+        "The report uses the same candidate-pair budget as Wave 63.",
+        "The report records selected rows, topology counts, limit-hit status, and rejection counts.",
+        "Docs compare selected-row count directly against Wave 63.",
+        "Docs keep rpf50 promotion blocked."
+      ]
+    },
+    {
+      "id": "w64_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_64_value_spread_selector_no_go.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "docs/signature_target_mixed_hook_left_supply_value_spread_selection_wave_64_rpf50_limit2500_report.json"
+      ],
+      "depends_on": [
+        "w64_astralbase_value_spread_selector"
+      ],
+      "prompt": "Record Wave 64 as a static value-spread selector no-go and route next work to dynamic unseen-value selection.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "jq empty agents/waves/wave_64_value_spread_selector_no_go.json docs/signature_target_mixed_hook_left_supply_value_spread_selection_wave_64_rpf50_limit2500_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_64_value_spread_selector_no_go.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that value-spread ordering selects 4 rows under the 2,500-pair bound.",
+        "Docs state that Wave 63's profile-index order selected 12 rows under the same bound.",
+        "Docs identify static digest-spread ordering as a no-go.",
+        "Docs identify dynamic unseen-value pairing or materialization-aware search as the next source-support gate."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_64_value_spread_selector_no_go.json",
+      "success_signal": "The Wave 64 plan is internally consistent."
+    },
+    {
+      "id": "value_spread_report_validates",
+      "command": "jq empty docs/signature_target_mixed_hook_left_supply_value_spread_selection_wave_64_rpf50_limit2500_report.json",
+      "success_signal": "The Wave 64 value-spread selector report is valid JSON."
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "source": "unbounded_expanded_plus_outer_left_vs_expanded_right_value_spread_v0",
+  "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+  "rows_per_family_target": 50,
+  "candidate_pair_limit_per_family": 2500,
+  "left_signature_profile_count": 279,
+  "right_signature_profile_count": 371,
+  "candidate_pair_counts_by_topology_family": {
+    "dfile_two_component_depth2_asymmetric_fan_v0": 103489,
+    "dfile_two_component_depth2_local_move_v0": 103489,
+    "dfile_two_component_depth2_pawn_phalanx_v0": 103489
+  },
+  "candidate_offsets_by_topology_family": {
+    "dfile_two_component_depth2_asymmetric_fan_v0": 2500,
+    "dfile_two_component_depth2_local_move_v0": 2500,
+    "dfile_two_component_depth2_pawn_phalanx_v0": 2500
+  },
+  "selected_row_count": 4,
+  "selected_counts_by_topology_family": {
+    "dfile_two_component_depth2_asymmetric_fan_v0": 1,
+    "dfile_two_component_depth2_local_move_v0": 2,
+    "dfile_two_component_depth2_pawn_phalanx_v0": 1
+  },
+  "reached_target_by_topology_family": {
+    "dfile_two_component_depth2_asymmetric_fan_v0": false,
+    "dfile_two_component_depth2_local_move_v0": false,
+    "dfile_two_component_depth2_pawn_phalanx_v0": false
+  },
+  "candidate_pair_limit_hit_by_topology_family": {
+    "dfile_two_component_depth2_asymmetric_fan_v0": true,
+    "dfile_two_component_depth2_local_move_v0": true,
+    "dfile_two_component_depth2_pawn_phalanx_v0": true
+  },
+  "rejection_counts": {
+    "component_signature_reuse_before_materialization": 1164,
+    "component_value_digest_reuse_before_materialization": 6327,
+    "materialization_failure": 5
+  },
+  "candidates": [
+    {
+      "row_number": 12,
+      "topology_family": "dfile_two_component_depth2_local_move_v0",
+      "left_profile_index": 77,
+      "right_profile_index": 30,
+      "total_recursive_nodes": 26,
+      "active_pieces": "a1B,b2P,a3P,g7p,h8b",
+      "left_component_value_digest": "d9efe6ea0eb7c325",
+      "right_component_value_digest": "44a7109f9920cb51",
+      "left_component_signature": "value:d9efe6ea0eb7c325;material:5;moves:white:3,black:0",
+      "right_component_signature": "value:44a7109f9920cb51;material:-4;moves:white:0,black:2",
+      "result_signature_key": "dfile_two_component_depth2_local_move_v0;left:value:d9efe6ea0eb7c325;material:5;moves:white:3,black:0;right:value:44a7109f9920cb51;material:-4;moves:white:0,black:2",
+      "current_result_value_digest": "e4a46a6e36a53245"
+    },
+    {
+      "row_number": 13,
+      "topology_family": "dfile_two_component_depth2_asymmetric_fan_v0",
+      "left_profile_index": 17,
+      "right_profile_index": 88,
+      "total_recursive_nodes": 27,
+      "active_pieces": "a1B,b2P,g6p,h6p,h7b",
+      "left_component_value_digest": "bb06b4d7aadc8eac",
+      "right_component_value_digest": "9be343ff64350998",
+      "left_component_signature": "value:bb06b4d7aadc8eac;material:4;moves:white:2,black:0",
+      "right_component_signature": "value:9be343ff64350998;material:-5;moves:white:0,black:3",
+      "result_signature_key": "dfile_two_component_depth2_asymmetric_fan_v0;left:value:bb06b4d7aadc8eac;material:4;moves:white:2,black:0;right:value:9be343ff64350998;material:-5;moves:white:0,black:3",
+      "current_result_value_digest": "e34e588a712a0edf"
+    },
+    {
+      "row_number": 14,
+      "topology_family": "dfile_two_component_depth2_pawn_phalanx_v0",
+      "left_profile_index": 16,
+      "right_profile_index": 29,
+      "total_recursive_nodes": 48,
+      "active_pieces": "a1B,b2N,g7n,h8b",
+      "left_component_value_digest": "b1231ce80334616e",
+      "right_component_value_digest": "ae554422032926b3",
+      "left_component_signature": "value:b1231ce80334616e;material:6;moves:white:2,black:0",
+      "right_component_signature": "value:ae554422032926b3;material:-6;moves:white:0,black:4",
+      "result_signature_key": "dfile_two_component_depth2_pawn_phalanx_v0;left:value:b1231ce80334616e;material:6;moves:white:2,black:0;right:value:ae554422032926b3;material:-6;moves:white:0,black:4",
+      "current_result_value_digest": "8874870c75ab6ae2"
+    },
+    {
+      "row_number": 15,
+      "topology_family": "dfile_two_component_depth2_local_move_v0",
+      "left_profile_index": 89,
+      "right_profile_index": 67,
+      "total_recursive_nodes": 34,
+      "active_pieces": "b1B,a2B,b3P,g7p,f8b,h8b",
+      "left_component_value_digest": "60ebee880a925aa7",
+      "right_component_value_digest": "05631564af32123a",
+      "left_component_signature": "value:60ebee880a925aa7;material:7;moves:white:2,black:0",
+      "right_component_signature": "value:05631564af32123a;material:-7;moves:white:0,black:3",
+      "result_signature_key": "dfile_two_component_depth2_local_move_v0;left:value:60ebee880a925aa7;material:7;moves:white:2,black:0;right:value:05631564af32123a;material:-7;moves:white:0,black:3",
+      "current_result_value_digest": "0ae108e30e6f0a70"
+    }
+  ]
+}

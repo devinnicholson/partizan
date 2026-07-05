@@ -19,9 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_63_left_supply_bounded_selector.json` is the current execution target. It
-tests whether the Wave 62 capacity-clearing source survives the value-unique
-selector and materialization path under a bounded candidate-pair budget:
+`wave_64_value_spread_selector_no_go.json` is the current execution target. It
+tests whether a static value-digest-spread candidate order improves the Wave 63
+bounded selector bottleneck:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -53,6 +53,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> topology ablation hyperparameter sweep
                              -> left-supply capacity atlas
                              -> left-supply bounded selector diagnostic
+                             -> static value-spread selector no-go
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
