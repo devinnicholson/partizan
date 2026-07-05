@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 59 interior mixed-hook source gates, with Wave 3 negative controls
+Status: Wave 60 pattern-limit source atlas gates, with Wave 3 negative controls
 and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
@@ -595,6 +595,16 @@ stronger prior source patterns. Future source-composition work must therefore
 report pattern-limit ordering and must not treat capacity-only rows as selected
 support.
 
+Wave 60 adds a capacity-only pattern-limit atlas:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-pattern-limit-atlas --rows-per-family 50`.
+The report compares bounded and unbounded source combinations without running
+selection. Bounded expanded capacity is 125, bounded expanded+interior remains
+125, bounded interior-first+expanded drops to 81, and unbounded
+expanded+interior reaches only 129. Since rpf50 requires 150 rows, removing the
+global generated-component pattern limit is not enough. Future source work must
+add genuinely new component-value supply rather than only reordering or
+unbounding the current mixed-hook sources.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -624,6 +634,7 @@ mixed-hook source remains below rpf50, Wave 57's balanced split does not
 produce matched dev/test lift, and Wave 58's feature-group ablation localizes
 that no-go to every current topology feature group. Wave 59's interior source
 does not solve rpf50 and exposes pattern-limit truncation as an additional
-source-ordering risk. The active gate is a source family that clears rpf50
-without pattern-limit truncation, or a model class that improves both dev and
-test before any learned structure claim.
+source-ordering risk. Wave 60 shows pattern-limit removal raises capacity only
+to 129, still below rpf50. The active gate is genuinely new component-value
+supply that clears rpf50, or a model class that improves both dev and test
+before any learned structure claim.

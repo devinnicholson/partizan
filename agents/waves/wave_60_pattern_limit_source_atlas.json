@@ -1,0 +1,101 @@
+{
+  "wave_id": "wave_60_pattern_limit_source_atlas",
+  "objective": "Measure whether the global generated-component pattern limit is the main blocker for rpf50 mixed-hook exact support.",
+  "non_negotiables": [
+    "This is a capacity-only diagnostic and must not be treated as selected exact support.",
+    "Bounded and unbounded source variants must be compared against the 150-row rpf50 target.",
+    "Any unbounded improvement must be recorded with whether it actually clears rpf50.",
+    "No exact shard or model claim can be promoted from this report alone."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w60_astralbase_pattern_limit_atlas"
+      ]
+    },
+    {
+      "parallel": [
+        "w60_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w60_astralbase_pattern_limit_atlas",
+      "agent": "topology_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs",
+        "../partizan/docs/signature_target_mixed_hook_pattern_limit_atlas_wave_60_rpf50_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add and run a capacity-only pattern-limit atlas for bounded and unbounded mixed-hook source combinations.",
+      "outputs": [
+        "pattern-limit atlas CLI command",
+        "rpf50 pattern-limit atlas report"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test --quiet pattern_limit_atlas_is_capacity_only",
+        "cargo test --quiet",
+        "cargo run --quiet -- --generated-depth-two-value-unique-signature-pattern-limit-atlas --rows-per-family 50 > ../partizan/docs/signature_target_mixed_hook_pattern_limit_atlas_wave_60_rpf50_report.json",
+        "shasum -a 256 ../partizan/docs/signature_target_mixed_hook_pattern_limit_atlas_wave_60_rpf50_report.json"
+      ],
+      "acceptance": [
+        "The report is capacity-only for every source.",
+        "Bounded expanded source capacity is recorded.",
+        "Unbounded expanded-plus-interior capacity is recorded.",
+        "Docs state whether unbounded capacity reaches the 150-row rpf50 target."
+      ]
+    },
+    {
+      "id": "w60_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_60_pattern_limit_source_atlas.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "docs/signature_target_mixed_hook_pattern_limit_atlas_wave_60_rpf50_report.json"
+      ],
+      "depends_on": [
+        "w60_astralbase_pattern_limit_atlas"
+      ],
+      "prompt": "Record Wave 60 as a pattern-limit capacity diagnostic and keep exact-support claims blocked unless rpf50 capacity clears 150.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "jq empty agents/waves/wave_60_pattern_limit_source_atlas.json docs/signature_target_mixed_hook_pattern_limit_atlas_wave_60_rpf50_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_60_pattern_limit_source_atlas.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py"
+      ],
+      "acceptance": [
+        "Docs state that bounded expanded capacity is 125.",
+        "Docs state that unbounded expanded-plus-interior capacity is 129.",
+        "Docs state that unbounded capacity remains below the 150-row rpf50 target.",
+        "Docs route next work toward genuinely new value supply, not just pattern-limit tuning."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_60_pattern_limit_source_atlas.json",
+      "success_signal": "The Wave 60 plan is internally consistent."
+    },
+    {
+      "id": "pattern_limit_report_validates",
+      "command": "jq empty docs/signature_target_mixed_hook_pattern_limit_atlas_wave_60_rpf50_report.json",
+      "success_signal": "The Wave 60 pattern-limit atlas is valid JSON."
+    }
+  ]
+}

@@ -19,9 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_59_interior_mixed_hook_source_no_go.json` is the current execution target.
-It tests whether an interior mixed-hook source family solves the rpf50 exact
-support blocker before any learned-structure claim:
+`wave_60_pattern_limit_source_atlas.json` is the current execution target. It
+tests whether the global generated-component pattern limit is the main blocker
+for rpf50 exact support before any learned-structure claim:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -49,6 +49,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> topology-balanced baseline ablation
                              -> topology feature-group ablation no-go
                              -> interior mixed-hook source no-go
+                             -> pattern-limit capacity atlas
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
