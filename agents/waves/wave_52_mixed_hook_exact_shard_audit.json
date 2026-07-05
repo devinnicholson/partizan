@@ -1,0 +1,166 @@
+{
+  "wave_id": "wave_52_mixed_hook_exact_shard_audit",
+  "objective": "Materialize and audit the Wave 51 mixed-hook value-unique support as a 60-row exact metadata shard.",
+  "non_negotiables": [
+    "The shard must remain exact metadata over depth-two local-move thermograph values, not a new ExactValueClass.",
+    "The shard must pass schema validation, Astralbase replay, split/leakage validation, and a deterministic result-signature floor before model work.",
+    "Wave 52 may be cited as an audited exact shard, but not as learned-model evidence.",
+    "Future model claims must use this exact split and report the deterministic floor."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w52_astralbase_mixed_hook_exact_generator"
+      ]
+    },
+    {
+      "parallel": [
+        "w52_partizan_materialize_shard"
+      ]
+    },
+    {
+      "parallel": [
+        "w52_partizan_audit_reports"
+      ]
+    },
+    {
+      "parallel": [
+        "w52_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w52_astralbase_mixed_hook_exact_generator",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add a distinct mixed-hook exact-shard generator with Wave 52 row IDs and replay-compatible exact metadata.",
+      "outputs": [
+        "--signature-target-mixed-hook-exact-shard [--rows-per-family N]",
+        "signature_target_mixed_hook_exact_shard_jsonl",
+        "Regression test for rpf1 schema validation and Astralbase replay"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test signature_target_mixed_hook_exact_shard_promotes_replayed_metadata",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo test"
+      ],
+      "acceptance": [
+        "The rpf1 mixed-hook exact shard has 3 exact rows.",
+        "Rows use the astralbase-w52-mixed-hook-signature-target-exact prefix.",
+        "Rows replay with zero skipped non-target rows.",
+        "The original Wave 47 exact-shard command remains available."
+      ]
+    },
+    {
+      "id": "w52_partizan_materialize_shard",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_mixed_hook_exact_wave_52.jsonl"
+      ],
+      "depends_on": [
+        "w52_astralbase_mixed_hook_exact_generator"
+      ],
+      "prompt": "Materialize the rpf20 mixed-hook exact shard and validate schema.",
+      "outputs": [
+        "60-row mixed-hook exact JSONL shard"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-mixed-hook-exact-shard --rows-per-family 20 > docs/signature_target_mixed_hook_exact_wave_52.jsonl",
+        "wc -l docs/signature_target_mixed_hook_exact_wave_52.jsonl",
+        "python3 agents/label_schema.py validate docs/signature_target_mixed_hook_exact_wave_52.jsonl",
+        "shasum -a 256 docs/signature_target_mixed_hook_exact_wave_52.jsonl"
+      ],
+      "acceptance": [
+        "The shard has 60 rows.",
+        "Schema validation reports labels: ok (60 row(s)).",
+        "The shard hash is recorded."
+      ]
+    },
+    {
+      "id": "w52_partizan_audit_reports",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_mixed_hook_exact_wave_52_replay_report.json",
+        "docs/signature_target_mixed_hook_exact_wave_52_split_report.json",
+        "docs/signature_target_mixed_hook_exact_wave_52_result_signature_report.json"
+      ],
+      "depends_on": [
+        "w52_partizan_materialize_shard"
+      ],
+      "prompt": "Replay, split/leakage-check, and score deterministic target floors for the mixed-hook exact shard.",
+      "outputs": [
+        "Astralbase replay report",
+        "Split/leakage report",
+        "result_signature_key deterministic floor"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --replay-non-fixture-composed-domain-shard docs/signature_target_mixed_hook_exact_wave_52.jsonl > docs/signature_target_mixed_hook_exact_wave_52_replay_report.json",
+        "python3 engine/ml_model.py split-report docs/signature_target_mixed_hook_exact_wave_52.jsonl --output docs/signature_target_mixed_hook_exact_wave_52_split_report.json",
+        "python3 engine/ml_model.py validate-report docs/signature_target_mixed_hook_exact_wave_52_split_report.json --fail-on-leakage",
+        "python3 engine/ml_model.py frontier-target-report docs/signature_target_mixed_hook_exact_wave_52.jsonl --target-field result_signature_key --output docs/signature_target_mixed_hook_exact_wave_52_result_signature_report.json",
+        "shasum -a 256 docs/signature_target_mixed_hook_exact_wave_52_replay_report.json docs/signature_target_mixed_hook_exact_wave_52_split_report.json docs/signature_target_mixed_hook_exact_wave_52_result_signature_report.json"
+      ],
+      "acceptance": [
+        "Replay checks 60 exact rows and skips zero non-target rows.",
+        "Split report is train/dev/test 48/5/7.",
+        "Leakage validation passes with zero duplicate component/result value digests and zero cross-split digest leakage.",
+        "The result_signature_key floor scores train/dev/test 0.0208/0.0/0.0 with all dev/test labels unseen."
+      ]
+    },
+    {
+      "id": "w52_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_52_mixed_hook_exact_shard_audit.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w52_partizan_audit_reports"
+      ],
+      "prompt": "Record Wave 52 as an audited exact-shard milestone and route the next wave toward model baselines on the exact split.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_52_mixed_hook_exact_shard_audit.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that Wave 52 is an audited exact shard, not model evidence.",
+        "Docs require future models to report against the Wave 52 split and deterministic floor.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_52_mixed_hook_exact_shard_audit.json",
+      "success_signal": "The Wave 52 plan is internally consistent."
+    },
+    {
+      "id": "mixed_hook_exact_shard_audits",
+      "command": "python3 agents/label_schema.py validate docs/signature_target_mixed_hook_exact_wave_52.jsonl && python3 engine/ml_model.py validate-report docs/signature_target_mixed_hook_exact_wave_52_split_report.json --fail-on-leakage",
+      "success_signal": "The mixed-hook exact shard passes schema and leakage gates."
+    }
+  ]
+}

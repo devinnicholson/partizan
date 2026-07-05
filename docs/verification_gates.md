@@ -506,6 +506,20 @@ shard. Future model or dataset claims must first materialize the mixed-hook
 exact rows, validate schema, replay in Astralbase, run split/leakage reports,
 and report deterministic floors.
 
+Wave 52 adds that mixed-hook exact-shard audit:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-mixed-hook-exact-shard --rows-per-family 20`.
+The shard has 60 exact rows and must pass
+`python3 agents/label_schema.py validate`,
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --replay-non-fixture-composed-domain-shard`,
+`python3 engine/ml_model.py split-report`, and
+`python3 engine/ml_model.py validate-report --fail-on-leakage`. The current
+artifact replays all 60 exact rows, has train/dev/test counts 48/5/7, and has
+zero duplicate component/result value digests or cross-split digest leakage.
+The required deterministic floor is
+`python3 engine/ml_model.py frontier-target-report docs/signature_target_mixed_hook_exact_wave_52.jsonl --target-field result_signature_key`,
+which scores train/dev/test 0.0208/0.0/0.0 with all dev/test labels unseen.
+Future model claims must report against this split and floor.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -527,5 +541,5 @@ that target into a small leakage-clean exact metadata shard. Wave 48 measures
 the exact support collapse and Wave 49 shows that the current component-value
 capacity ceiling is 14 rows. Wave 50 shows the tested rank-4/5 ladder source
 does not raise that ceiling. Wave 51 breaks the ceiling with mixed-color hooks,
-so the active gate is materializing and auditing the rpf20 mixed-hook exact
-shard before deterministic and learned baselines on a scaled exact split.
+and Wave 52 materializes and audits the rpf20 mixed-hook exact shard, so the
+active gate is deterministic and learned model baselines on that exact split.

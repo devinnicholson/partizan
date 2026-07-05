@@ -19,10 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_51_mixed_hook_value_source_breakthrough.json` is the current execution
-target. It records the mixed-color hook component-source breakthrough after
-Wave 49/50 established the old 14-row component-value capacity ceiling. This
-is support evidence and source-design evidence, not a promoted shard:
+`wave_52_mixed_hook_exact_shard_audit.json` is the current execution target.
+It materializes the Wave 51 mixed-hook support breakthrough as a 60-row exact
+metadata shard and records schema, replay, split/leakage, and deterministic
+floor audits. This is audited dataset evidence, not learned-model evidence:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -41,6 +41,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> component-value capacity upper bound
                              -> component-source capacity sweep
                              -> mixed-hook value source breakthrough
+                             -> mixed-hook exact shard audit
                              -> new component-value diversity + learned baselines
 ```
 
