@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 60 pattern-limit source atlas gates, with Wave 3 negative controls
+Status: Wave 61 topology ablation sweep gates, with Wave 3 negative controls
 and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
@@ -605,6 +605,14 @@ global generated-component pattern limit is not enough. Future source work must
 add genuinely new component-value supply rather than only reordering or
 unbounding the current mixed-hook sources.
 
+Wave 61 adds a topology ablation hyperparameter sweep:
+`python3 engine/ml_model.py exact-projection-topology-balanced-ablation-sweep-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output docs/signature_target_mixed_hook_topology_balanced_sweep_wave_61_rpf36_report.json`.
+The sweep stays on the Wave 57 topology-balanced split and tests 10 feature
+groups across 18 deterministic logistic-probe settings each. A setting is
+claim-eligible only if the same trial beats train-majority on both dev and
+test. The current report has `claim_candidate_count=0`; therefore simple
+logistic-probe tuning cannot unlock a topology claim.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -635,6 +643,7 @@ produce matched dev/test lift, and Wave 58's feature-group ablation localizes
 that no-go to every current topology feature group. Wave 59's interior source
 does not solve rpf50 and exposes pattern-limit truncation as an additional
 source-ordering risk. Wave 60 shows pattern-limit removal raises capacity only
-to 129, still below rpf50. The active gate is genuinely new component-value
-supply that clears rpf50, or a model class that improves both dev and test
-before any learned structure claim.
+to 129, still below rpf50. Wave 61 shows logistic-probe hyperparameter tuning
+has zero matched dev/test topology candidates. The active gate is genuinely new
+component-value supply that clears rpf50, or a materially different model class
+that improves both dev and test before any learned structure claim.

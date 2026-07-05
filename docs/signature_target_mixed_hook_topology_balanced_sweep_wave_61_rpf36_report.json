@@ -1,0 +1,1450 @@
+{
+  "claim_candidate_count": 0,
+  "claim_rule": "claim candidate iff dev and test accuracy both exceed train-majority on the same split",
+  "dataset_path": "docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl",
+  "dataset_sha256": "86022f1abd7b4c10cda55fdc84f07c4c0252191dad55a3824786b1f0dd43f850",
+  "eligible_label_kinds": [
+    "exact"
+  ],
+  "excluded_from_target_metrics": {},
+  "feature_group_summaries": [
+    {
+      "best_by_dev_then_test": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "fen_material",
+        "l2": 0.0,
+        "learning_rate": 0.05,
+        "model_summary": {
+          "feature_count": 14,
+          "label_count": 3,
+          "max_abs_weight": 0.25147819473472094
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.16666666666666666,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_local_move_v0": 5,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.4861111111111111,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 29,
+              "dfile_two_component_depth2_local_move_v0": 15,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 28
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "best_by_test_then_dev": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "fen_material",
+        "l2": 0.0,
+        "learning_rate": 0.05,
+        "model_summary": {
+          "feature_count": 14,
+          "label_count": 3,
+          "max_abs_weight": 0.25147819473472094
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.16666666666666666,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_local_move_v0": 5,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.4861111111111111,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 29,
+              "dfile_two_component_depth2_local_move_v0": 15,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 28
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "claim_candidate_count": 0,
+      "claim_candidates": [],
+      "control_scope": "board material control",
+      "description": "Full-board FEN material/count control.",
+      "feature_group_id": "fen_material",
+      "feature_names": [
+        "bias",
+        "empty_square_count",
+        "piece_count",
+        "white_piece_count",
+        "black_piece_count",
+        "king_count",
+        "queen_count",
+        "rook_count",
+        "bishop_count",
+        "knight_count",
+        "pawn_count",
+        "material_balance",
+        "absolute_material",
+        "side_to_move_is_white"
+      ],
+      "trial_count": 18
+    },
+    {
+      "best_by_dev_then_test": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 250,
+        "feature_group_id": "component_material",
+        "l2": 0.0,
+        "learning_rate": 0.02,
+        "model_summary": {
+          "feature_count": 4,
+          "label_count": 3,
+          "max_abs_weight": 0.13695072651294032
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 9,
+              "dfile_two_component_depth2_local_move_v0": 2,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 7
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.4444444444444444,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_local_move_v0": 3,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.375,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 34,
+              "dfile_two_component_depth2_local_move_v0": 3,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 35
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "best_by_test_then_dev": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 250,
+        "feature_group_id": "component_material",
+        "l2": 0.0,
+        "learning_rate": 0.02,
+        "model_summary": {
+          "feature_count": 4,
+          "label_count": 3,
+          "max_abs_weight": 0.13695072651294032
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 9,
+              "dfile_two_component_depth2_local_move_v0": 2,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 7
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.4444444444444444,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_local_move_v0": 3,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.375,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 34,
+              "dfile_two_component_depth2_local_move_v0": 3,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 35
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "claim_candidate_count": 0,
+      "claim_candidates": [],
+      "control_scope": "component material ablation",
+      "description": "Parsed component material balances only.",
+      "feature_group_id": "component_material",
+      "feature_names": [
+        "bias",
+        "left_component_material",
+        "right_component_material",
+        "net_component_material"
+      ],
+      "trial_count": 18
+    },
+    {
+      "best_by_dev_then_test": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 250,
+        "feature_group_id": "component_mobility",
+        "l2": 0.01,
+        "learning_rate": 0.05,
+        "model_summary": {
+          "feature_count": 8,
+          "label_count": 3,
+          "max_abs_weight": 0.19661038447756402
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 8,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 4
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.2777777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 3,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 9
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.4305555555555556,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 23,
+              "dfile_two_component_depth2_local_move_v0": 22,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 27
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "best_by_test_then_dev": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 250,
+        "feature_group_id": "component_mobility",
+        "l2": 0.01,
+        "learning_rate": 0.05,
+        "model_summary": {
+          "feature_count": 8,
+          "label_count": 3,
+          "max_abs_weight": 0.19661038447756402
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 8,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 4
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.2777777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 3,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 9
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.4305555555555556,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 23,
+              "dfile_two_component_depth2_local_move_v0": 22,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 27
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "claim_candidate_count": 0,
+      "claim_candidates": [],
+      "control_scope": "component mobility ablation",
+      "description": "Parsed component local-move counts only.",
+      "feature_group_id": "component_mobility",
+      "feature_names": [
+        "bias",
+        "left_white_local_moves",
+        "left_black_local_moves",
+        "right_white_local_moves",
+        "right_black_local_moves",
+        "total_white_local_moves",
+        "total_black_local_moves",
+        "component_local_move_imbalance"
+      ],
+      "trial_count": 18
+    },
+    {
+      "best_by_dev_then_test": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "component_nodes",
+        "l2": 0.0,
+        "learning_rate": 0.02,
+        "model_summary": {
+          "feature_count": 3,
+          "label_count": 3,
+          "max_abs_weight": 0.13088810859728664
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.3333333333333333,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 5,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 9
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 11
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.3888888888888889,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 37,
+              "dfile_two_component_depth2_local_move_v0": 1,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 34
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "best_by_test_then_dev": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "component_nodes",
+        "l2": 0.0,
+        "learning_rate": 0.02,
+        "model_summary": {
+          "feature_count": 3,
+          "label_count": 3,
+          "max_abs_weight": 0.13088810859728664
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.3333333333333333,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 5,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 9
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 11
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.3888888888888889,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 37,
+              "dfile_two_component_depth2_local_move_v0": 1,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 34
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "claim_candidate_count": 0,
+      "claim_candidates": [],
+      "control_scope": "component size ablation",
+      "description": "Component recursive-node counts only.",
+      "feature_group_id": "component_nodes",
+      "feature_names": [
+        "bias",
+        "component_recursive_total_nodes",
+        "total_recursive_nodes"
+      ],
+      "trial_count": 18
+    },
+    {
+      "best_by_dev_then_test": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "component_profile_indices",
+        "l2": 0.001,
+        "learning_rate": 0.1,
+        "model_summary": {
+          "feature_count": 3,
+          "label_count": 3,
+          "max_abs_weight": 0.29545252170165914
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.4444444444444444,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 5,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 7
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.2777777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 7
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.375,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 29,
+              "dfile_two_component_depth2_local_move_v0": 20,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 23
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "best_by_test_then_dev": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 250,
+        "feature_group_id": "component_profile_indices",
+        "l2": 0.0,
+        "learning_rate": 0.05,
+        "model_summary": {
+          "feature_count": 3,
+          "label_count": 3,
+          "max_abs_weight": 0.05786355834283475
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 10,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.4444444444444444,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 8,
+              "dfile_two_component_depth2_local_move_v0": 2,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.3472222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 34,
+              "dfile_two_component_depth2_local_move_v0": 7,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 31
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "claim_candidate_count": 0,
+      "claim_candidates": [],
+      "control_scope": "generator metadata diagnostic",
+      "description": "Generator profile indices only; diagnostic for source-order leakage.",
+      "feature_group_id": "component_profile_indices",
+      "feature_names": [
+        "bias",
+        "left_profile_index",
+        "right_profile_index"
+      ],
+      "trial_count": 18
+    },
+    {
+      "best_by_dev_then_test": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "component_material_mobility",
+        "l2": 0.0,
+        "learning_rate": 0.1,
+        "model_summary": {
+          "feature_count": 11,
+          "label_count": 3,
+          "max_abs_weight": 0.6152083616045377
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.16666666666666666,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_local_move_v0": 5,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.3888888888888889,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 4,
+              "dfile_two_component_depth2_local_move_v0": 7,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 7
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.4305555555555556,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 23,
+              "dfile_two_component_depth2_local_move_v0": 19,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 30
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "best_by_test_then_dev": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "component_material_mobility",
+        "l2": 0.0,
+        "learning_rate": 0.1,
+        "model_summary": {
+          "feature_count": 11,
+          "label_count": 3,
+          "max_abs_weight": 0.6152083616045377
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.16666666666666666,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_local_move_v0": 5,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.3888888888888889,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 4,
+              "dfile_two_component_depth2_local_move_v0": 7,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 7
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.4305555555555556,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 23,
+              "dfile_two_component_depth2_local_move_v0": 19,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 30
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "claim_candidate_count": 0,
+      "claim_candidates": [],
+      "control_scope": "component signature ablation",
+      "description": "Component material and local-move counts without board FEN features.",
+      "feature_group_id": "component_material_mobility",
+      "feature_names": [
+        "bias",
+        "left_component_material",
+        "right_component_material",
+        "net_component_material",
+        "left_white_local_moves",
+        "left_black_local_moves",
+        "right_white_local_moves",
+        "right_black_local_moves",
+        "total_white_local_moves",
+        "total_black_local_moves",
+        "component_local_move_imbalance"
+      ],
+      "trial_count": 18
+    },
+    {
+      "best_by_dev_then_test": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "component_metadata_no_fen_no_profile",
+        "l2": 0.0,
+        "learning_rate": 0.1,
+        "model_summary": {
+          "feature_count": 13,
+          "label_count": 3,
+          "max_abs_weight": 0.4840900015373437
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 5,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 9
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.2777777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.4722222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 21,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 27
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "best_by_test_then_dev": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "component_metadata_no_fen_no_profile",
+        "l2": 0.01,
+        "learning_rate": 0.02,
+        "model_summary": {
+          "feature_count": 13,
+          "label_count": 3,
+          "max_abs_weight": 0.31304502565517023
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.16666666666666666,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 5,
+              "dfile_two_component_depth2_local_move_v0": 5,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.3333333333333333,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 5,
+              "dfile_two_component_depth2_local_move_v0": 5,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.4861111111111111,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 18,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 30
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "claim_candidate_count": 0,
+      "claim_candidates": [],
+      "control_scope": "component metadata ablation without generator indices",
+      "description": "Component material, mobility, and recursive-node counts without board FEN features or profile indices.",
+      "feature_group_id": "component_metadata_no_fen_no_profile",
+      "feature_names": [
+        "bias",
+        "left_component_material",
+        "right_component_material",
+        "net_component_material",
+        "left_white_local_moves",
+        "left_black_local_moves",
+        "right_white_local_moves",
+        "right_black_local_moves",
+        "total_white_local_moves",
+        "total_black_local_moves",
+        "component_local_move_imbalance",
+        "component_recursive_total_nodes",
+        "total_recursive_nodes"
+      ],
+      "trial_count": 18
+    },
+    {
+      "best_by_dev_then_test": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "component_metadata_no_fen_full",
+        "l2": 0.0,
+        "learning_rate": 0.1,
+        "model_summary": {
+          "feature_count": 15,
+          "label_count": 3,
+          "max_abs_weight": 0.48291085705396786
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2222222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 5,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 9
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.2777777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 5,
+              "dfile_two_component_depth2_local_move_v0": 5,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.4722222222222222,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 23,
+              "dfile_two_component_depth2_local_move_v0": 21,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 28
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "best_by_test_then_dev": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 250,
+        "feature_group_id": "component_metadata_no_fen_full",
+        "l2": 0.0,
+        "learning_rate": 0.05,
+        "model_summary": {
+          "feature_count": 15,
+          "label_count": 3,
+          "max_abs_weight": 0.27993405845347175
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.16666666666666666,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 5,
+              "dfile_two_component_depth2_local_move_v0": 5,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.3333333333333333,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 5,
+              "dfile_two_component_depth2_local_move_v0": 5,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.5,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 26,
+              "dfile_two_component_depth2_local_move_v0": 15,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 31
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "claim_candidate_count": 0,
+      "claim_candidates": [],
+      "control_scope": "component metadata ablation",
+      "description": "All parsed component metadata without board FEN features.",
+      "feature_group_id": "component_metadata_no_fen_full",
+      "feature_names": [
+        "bias",
+        "left_component_material",
+        "right_component_material",
+        "net_component_material",
+        "left_white_local_moves",
+        "left_black_local_moves",
+        "right_white_local_moves",
+        "right_black_local_moves",
+        "total_white_local_moves",
+        "total_black_local_moves",
+        "component_local_move_imbalance",
+        "component_recursive_total_nodes",
+        "total_recursive_nodes",
+        "left_profile_index",
+        "right_profile_index"
+      ],
+      "trial_count": 18
+    },
+    {
+      "best_by_dev_then_test": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "signature_metadata_no_profile",
+        "l2": 0.01,
+        "learning_rate": 0.1,
+        "model_summary": {
+          "feature_count": 26,
+          "label_count": 3,
+          "max_abs_weight": 0.495888867541552
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2777777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 7,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 5
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.3888888888888889,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.5277777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 19,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 29
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "best_by_test_then_dev": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "signature_metadata_no_profile",
+        "l2": 0.01,
+        "learning_rate": 0.1,
+        "model_summary": {
+          "feature_count": 26,
+          "label_count": 3,
+          "max_abs_weight": 0.495888867541552
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2777777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 7,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 5
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.3888888888888889,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.5277777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 19,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 29
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "claim_candidate_count": 0,
+      "claim_candidates": [],
+      "control_scope": "signature metadata ablation without generator indices",
+      "description": "Board FEN plus parsed component metadata excluding generator profile indices.",
+      "feature_group_id": "signature_metadata_no_profile",
+      "feature_names": [
+        "bias",
+        "empty_square_count",
+        "piece_count",
+        "white_piece_count",
+        "black_piece_count",
+        "king_count",
+        "queen_count",
+        "rook_count",
+        "bishop_count",
+        "knight_count",
+        "pawn_count",
+        "material_balance",
+        "absolute_material",
+        "side_to_move_is_white",
+        "left_component_material",
+        "right_component_material",
+        "net_component_material",
+        "left_white_local_moves",
+        "left_black_local_moves",
+        "right_white_local_moves",
+        "right_black_local_moves",
+        "total_white_local_moves",
+        "total_black_local_moves",
+        "component_local_move_imbalance",
+        "component_recursive_total_nodes",
+        "total_recursive_nodes"
+      ],
+      "trial_count": 18
+    },
+    {
+      "best_by_dev_then_test": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "signature_metadata_full",
+        "l2": 0.0,
+        "learning_rate": 0.05,
+        "model_summary": {
+          "feature_count": 28,
+          "label_count": 3,
+          "max_abs_weight": 0.4627894447314212
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2777777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 5
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.3888888888888889,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.5833333333333334,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 25,
+              "dfile_two_component_depth2_local_move_v0": 19,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 28
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "best_by_test_then_dev": {
+        "beats_majority_on_dev_and_test": false,
+        "epochs": 1000,
+        "feature_group_id": "signature_metadata_full",
+        "l2": 0.0,
+        "learning_rate": 0.05,
+        "model_summary": {
+          "feature_count": 28,
+          "label_count": 3,
+          "max_abs_weight": 0.4627894447314212
+        },
+        "split_metrics": {
+          "dev": {
+            "accuracy": 0.2777777777777778,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 7,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 5
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "test": {
+            "accuracy": 0.3888888888888889,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 4,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 8
+            },
+            "support": 18,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+              "dfile_two_component_depth2_local_move_v0": 6,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 6
+            }
+          },
+          "train": {
+            "accuracy": 0.5833333333333334,
+            "prediction_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 25,
+              "dfile_two_component_depth2_local_move_v0": 19,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 28
+            },
+            "support": 72,
+            "target_counts": {
+              "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+              "dfile_two_component_depth2_local_move_v0": 24,
+              "dfile_two_component_depth2_pawn_phalanx_v0": 24
+            }
+          }
+        }
+      },
+      "claim_candidate_count": 0,
+      "claim_candidates": [],
+      "control_scope": "full signature metadata control",
+      "description": "Existing board FEN plus component signature metadata probe.",
+      "feature_group_id": "signature_metadata_full",
+      "feature_names": [
+        "bias",
+        "empty_square_count",
+        "piece_count",
+        "white_piece_count",
+        "black_piece_count",
+        "king_count",
+        "queen_count",
+        "rook_count",
+        "bishop_count",
+        "knight_count",
+        "pawn_count",
+        "material_balance",
+        "absolute_material",
+        "side_to_move_is_white",
+        "left_component_material",
+        "right_component_material",
+        "net_component_material",
+        "left_white_local_moves",
+        "left_black_local_moves",
+        "right_white_local_moves",
+        "right_black_local_moves",
+        "total_white_local_moves",
+        "total_black_local_moves",
+        "component_local_move_imbalance",
+        "component_recursive_total_nodes",
+        "total_recursive_nodes",
+        "left_profile_index",
+        "right_profile_index"
+      ],
+      "trial_count": 18
+    }
+  ],
+  "hyperparameter_grid": {
+    "epochs": [
+      250,
+      1000
+    ],
+    "l2": [
+      0.0,
+      0.001,
+      0.01
+    ],
+    "learning_rates": [
+      0.02,
+      0.05,
+      0.1
+    ],
+    "optimizer": "full_batch_gradient_descent",
+    "standardization": "train_split_mean_std_except_bias",
+    "trial_count_per_feature_group": 18
+  },
+  "included_target_count": 108,
+  "majority_predictor": {
+    "prediction": "dfile_two_component_depth2_asymmetric_fan_v0",
+    "split_metrics": {
+      "dev": {
+        "accuracy": 0.3333333333333333,
+        "prediction_counts": {
+          "dfile_two_component_depth2_asymmetric_fan_v0": 18
+        },
+        "support": 18,
+        "target_counts": {
+          "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+          "dfile_two_component_depth2_local_move_v0": 6,
+          "dfile_two_component_depth2_pawn_phalanx_v0": 6
+        }
+      },
+      "test": {
+        "accuracy": 0.3333333333333333,
+        "prediction_counts": {
+          "dfile_two_component_depth2_asymmetric_fan_v0": 18
+        },
+        "support": 18,
+        "target_counts": {
+          "dfile_two_component_depth2_asymmetric_fan_v0": 6,
+          "dfile_two_component_depth2_local_move_v0": 6,
+          "dfile_two_component_depth2_pawn_phalanx_v0": 6
+        }
+      },
+      "train": {
+        "accuracy": 0.3333333333333333,
+        "prediction_counts": {
+          "dfile_two_component_depth2_asymmetric_fan_v0": 72
+        },
+        "support": 72,
+        "target_counts": {
+          "dfile_two_component_depth2_asymmetric_fan_v0": 24,
+          "dfile_two_component_depth2_local_move_v0": 24,
+          "dfile_two_component_depth2_pawn_phalanx_v0": 24
+        }
+      }
+    }
+  },
+  "report_id": "exact_projection_feature_ablation_sweep_report_v0",
+  "row_counts": {
+    "dev": 18,
+    "test": 18,
+    "train": 72
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "balance_key": "exact.value.component_topology_family",
+    "dev": "next 1/6 of rows by sha256(split_key), within exact.value.component_topology_family",
+    "split_key": "generator_family|position.encoding:position.text",
+    "test": "remaining rows by sha256(split_key), within exact.value.component_topology_family",
+    "train": "first 2/3 of rows by sha256(split_key), within exact.value.component_topology_family"
+  },
+  "splitter_id": "component_topology_balanced_position_hash_v0",
+  "status": "evaluated",
+  "target": "exact.value.component_topology_family",
+  "target_counts": {
+    "dfile_two_component_depth2_asymmetric_fan_v0": 36,
+    "dfile_two_component_depth2_local_move_v0": 36,
+    "dfile_two_component_depth2_pawn_phalanx_v0": 36
+  },
+  "target_label_count": 3,
+  "target_projection": "component_topology_family",
+  "train_label_count": 3,
+  "train_labels": [
+    "dfile_two_component_depth2_asymmetric_fan_v0",
+    "dfile_two_component_depth2_local_move_v0",
+    "dfile_two_component_depth2_pawn_phalanx_v0"
+  ],
+  "unseen_labels_by_split": {
+    "dev": [],
+    "test": [],
+    "train": []
+  }
+}

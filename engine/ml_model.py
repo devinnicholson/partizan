@@ -1972,6 +1972,198 @@ def evaluate_exact_projection_topology_balanced_ablation_report(
     }
 
 
+def evaluate_exact_projection_topology_balanced_ablation_sweep_report(
+    jsonl_path: str | Path,
+    target_projection: str = "component_topology_family",
+    split_key_mode: str = "position",
+    sweep_epochs: list[int] | None = None,
+    sweep_learning_rates: list[float] | None = None,
+    sweep_l2: list[float] | None = None,
+) -> dict[str, Any]:
+    """Sweep feature-group probe hyperparameters on the topology-balanced split."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = topology_balanced_assignments_for_rows(rows, split_key_mode)
+    split_key = split_policy_for_mode(split_key_mode, family_holdout=False)[
+        "split_key"
+    ]
+    split_policy = {
+        "train": "first 2/3 of rows by sha256(split_key), within exact.value.component_topology_family",
+        "dev": "next 1/6 of rows by sha256(split_key), within exact.value.component_topology_family",
+        "test": "remaining rows by sha256(split_key), within exact.value.component_topology_family",
+        "split_key": split_key,
+        "balance_key": "exact.value.component_topology_family",
+    }
+    splitter_id = (
+        "component_topology_balanced_position_hash_v0"
+        if split_key_mode == "position"
+        else "component_topology_balanced_symmetry_hash_v0"
+    )
+    examples, excluded = exact_projection_ablation_examples(
+        rows,
+        assignments,
+        target_projection,
+    )
+    train_examples = [example for example in examples if example["split"] == "train"]
+    if not train_examples:
+        return {
+            "report_id": "exact_projection_feature_ablation_sweep_report_v0",
+            "status": "no_train_support",
+            "dataset_path": str(path),
+            "dataset_sha256": _sha256_file(path),
+            "schema_version": SCHEMA_VERSION,
+            "eligible_label_kinds": ["exact"],
+            "splitter_id": splitter_id,
+            "split_policy": split_policy,
+            "row_counts": _count_by(assignments, "split"),
+            "target_projection": target_projection,
+            "excluded_from_target_metrics": excluded,
+        }
+
+    epochs_values = sweep_epochs or [250, 1_000]
+    learning_rate_values = sweep_learning_rates or [0.02, 0.05, 0.1]
+    l2_values = sweep_l2 or [0.0, 0.001, 0.01]
+    target_labels = tuple(sorted({example["target"] for example in examples}))
+    train_labels = tuple(sorted({example["target"] for example in train_examples}))
+    train_targets = [example["target"] for example in train_examples]
+    majority_prediction = _majority_label(train_targets)
+    majority_predictions = [majority_prediction for _example in examples]
+    majority_metrics = exact_projection_accuracy_by_split(examples, majority_predictions)
+    majority_dev_accuracy = majority_metrics.get("dev", {}).get("accuracy", 0.0)
+    majority_test_accuracy = majority_metrics.get("test", {}).get("accuracy", 0.0)
+
+    feature_group_summaries = []
+    all_trials = []
+    for group in EXACT_PROJECTION_ABLATION_FEATURE_GROUPS:
+        group_id = str(group["feature_group_id"])
+        group_trials = []
+        for epoch_count in epochs_values:
+            for learning_rate in learning_rate_values:
+                for l2 in l2_values:
+                    model = train_multiclass_logistic_probe(
+                        [
+                            example["feature_groups"][group_id]
+                            for example in train_examples
+                        ],
+                        train_targets,
+                        labels=train_labels,
+                        epochs=epoch_count,
+                        learning_rate=learning_rate,
+                        l2=l2,
+                    )
+                    predictions = [
+                        multiclass_logistic_predict(
+                            model,
+                            example["feature_groups"][group_id],
+                        )
+                        for example in examples
+                    ]
+                    split_metrics = exact_projection_accuracy_by_split(
+                        examples,
+                        predictions,
+                    )
+                    dev_accuracy = split_metrics.get("dev", {}).get("accuracy", 0.0)
+                    test_accuracy = split_metrics.get("test", {}).get("accuracy", 0.0)
+                    trial = {
+                        "feature_group_id": group_id,
+                        "epochs": epoch_count,
+                        "learning_rate": learning_rate,
+                        "l2": l2,
+                        "split_metrics": split_metrics,
+                        "beats_majority_on_dev_and_test": (
+                            dev_accuracy > majority_dev_accuracy
+                            and test_accuracy > majority_test_accuracy
+                        ),
+                        "model_summary": multiclass_model_summary(model),
+                    }
+                    group_trials.append(trial)
+                    all_trials.append(trial)
+
+        best_by_dev_then_test = max(
+            group_trials,
+            key=lambda trial: exact_projection_sweep_sort_key(
+                trial,
+                primary_split="dev",
+                secondary_split="test",
+            ),
+        )
+        best_by_test_then_dev = max(
+            group_trials,
+            key=lambda trial: exact_projection_sweep_sort_key(
+                trial,
+                primary_split="test",
+                secondary_split="dev",
+            ),
+        )
+        claim_candidates = [
+            trial for trial in group_trials if trial["beats_majority_on_dev_and_test"]
+        ]
+        claim_candidates.sort(
+            key=lambda trial: exact_projection_sweep_sort_key(
+                trial,
+                primary_split="dev",
+                secondary_split="test",
+            ),
+            reverse=True,
+        )
+        feature_group_summaries.append(
+            {
+                "feature_group_id": group_id,
+                "description": str(group["description"]),
+                "control_scope": str(group["control_scope"]),
+                "feature_names": list(group["feature_names"]),
+                "trial_count": len(group_trials),
+                "claim_candidate_count": len(claim_candidates),
+                "best_by_dev_then_test": best_by_dev_then_test,
+                "best_by_test_then_dev": best_by_test_then_dev,
+                "claim_candidates": claim_candidates[:5],
+            }
+        )
+
+    claim_candidate_count = sum(
+        summary["claim_candidate_count"] for summary in feature_group_summaries
+    )
+
+    return {
+        "report_id": "exact_projection_feature_ablation_sweep_report_v0",
+        "status": "evaluated",
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "eligible_label_kinds": ["exact"],
+        "splitter_id": splitter_id,
+        "split_policy": split_policy,
+        "row_counts": _count_by(assignments, "split"),
+        "target_projection": target_projection,
+        "target": exact_projection_definition_target(target_projection),
+        "included_target_count": len(examples),
+        "excluded_from_target_metrics": excluded,
+        "target_label_count": len(target_labels),
+        "target_counts": dict(sorted(Counter(example["target"] for example in examples).items())),
+        "train_label_count": len(train_labels),
+        "train_labels": list(train_labels),
+        "unseen_labels_by_split": unseen_labels_by_split(examples, set(train_labels)),
+        "hyperparameter_grid": {
+            "epochs": epochs_values,
+            "learning_rates": learning_rate_values,
+            "l2": l2_values,
+            "trial_count_per_feature_group": (
+                len(epochs_values) * len(learning_rate_values) * len(l2_values)
+            ),
+            "optimizer": "full_batch_gradient_descent",
+            "standardization": "train_split_mean_std_except_bias",
+        },
+        "majority_predictor": {
+            "prediction": majority_prediction,
+            "split_metrics": majority_metrics,
+        },
+        "claim_rule": "claim candidate iff dev and test accuracy both exceed train-majority on the same split",
+        "claim_candidate_count": claim_candidate_count,
+        "feature_group_summaries": feature_group_summaries,
+    }
+
+
 def evaluate_heuristic_signature_promotion_report(
     jsonl_path: str | Path,
     split_key_mode: str = "position",
@@ -2930,6 +3122,49 @@ def exact_projection_predictor_report(
     if metadata:
         report.update(metadata)
     return report
+
+
+def exact_projection_accuracy_by_split(
+    examples: list[dict[str, Any]],
+    predictions: list[str],
+) -> dict[str, dict[str, Any]]:
+    split_metrics = {}
+    for split in sorted({example["split"] for example in examples}):
+        split_indices = [
+            index
+            for index, example in enumerate(examples)
+            if example["split"] == split
+        ]
+        targets = [examples[index]["target"] for index in split_indices]
+        split_predictions = [predictions[index] for index in split_indices]
+        correct = sum(
+            1
+            for target, prediction in zip(targets, split_predictions)
+            if target == prediction
+        )
+        split_metrics[split] = {
+            "support": len(split_indices),
+            "accuracy": _safe_div(correct, len(split_indices)),
+            "target_counts": dict(sorted(Counter(targets).items())),
+            "prediction_counts": dict(sorted(Counter(split_predictions).items())),
+        }
+    return split_metrics
+
+
+def exact_projection_sweep_sort_key(
+    trial: dict[str, Any],
+    primary_split: str,
+    secondary_split: str,
+) -> tuple[float, float, float, int, float, float]:
+    split_metrics = trial["split_metrics"]
+    return (
+        float(split_metrics.get(primary_split, {}).get("accuracy", 0.0)),
+        float(split_metrics.get(secondary_split, {}).get("accuracy", 0.0)),
+        float(split_metrics.get("train", {}).get("accuracy", 0.0)),
+        int(trial["epochs"]),
+        -float(trial["l2"]),
+        -float(trial["learning_rate"]),
+    )
 
 
 def keyed_majority_predictions(
@@ -5250,6 +5485,50 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the topology-balanced ablation report JSON.",
     )
 
+    exact_projection_topology_sweep_parser = subcommands.add_parser(
+        "exact-projection-topology-balanced-ablation-sweep-report",
+        help="Sweep feature-group probe hyperparameters on a topology-balanced split.",
+    )
+    exact_projection_topology_sweep_parser.add_argument("jsonl_path", type=Path)
+    exact_projection_topology_sweep_parser.add_argument(
+        "--target-projection",
+        choices=tuple(
+            definition["projection_id"]
+            for definition in EXACT_SIGNATURE_TARGET_PROJECTIONS
+        ),
+        default="component_topology_family",
+        help="Projection id to sweep. Defaults to component_topology_family.",
+    )
+    exact_projection_topology_sweep_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for ordering rows within each topology.",
+    )
+    exact_projection_topology_sweep_parser.add_argument(
+        "--sweep-epoch",
+        action="append",
+        type=int,
+        help="Epoch count to include in the sweep. Repeat for multiple values.",
+    )
+    exact_projection_topology_sweep_parser.add_argument(
+        "--sweep-learning-rate",
+        action="append",
+        type=float,
+        help="Learning rate to include in the sweep. Repeat for multiple values.",
+    )
+    exact_projection_topology_sweep_parser.add_argument(
+        "--sweep-l2",
+        action="append",
+        type=float,
+        help="L2 regularization value to include in the sweep. Repeat for multiple values.",
+    )
+    exact_projection_topology_sweep_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the topology-balanced sweep report JSON.",
+    )
+
     heuristic_signature_promotion_parser = subcommands.add_parser(
         "heuristic-signature-promotion-report",
         help="Audit heuristic signature rows for promotion readiness and blockers.",
@@ -5562,6 +5841,24 @@ def cli_main(argv: list[str] | None = None) -> int:
             epochs=args.epochs,
             learning_rate=args.learning_rate,
             l2=args.l2,
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+
+    if args.command == "exact-projection-topology-balanced-ablation-sweep-report":
+        report = evaluate_exact_projection_topology_balanced_ablation_sweep_report(
+            args.jsonl_path,
+            target_projection=args.target_projection,
+            split_key_mode=args.split_key_mode,
+            sweep_epochs=args.sweep_epoch,
+            sweep_learning_rates=args.sweep_learning_rate,
+            sweep_l2=args.sweep_l2,
         )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)

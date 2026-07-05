@@ -1,0 +1,96 @@
+{
+  "wave_id": "wave_61_topology_ablation_hyperparameter_sweep",
+  "objective": "Test whether the Wave 58 topology feature-ablation no-go is sensitive to small deterministic logistic-probe hyperparameter choices.",
+  "non_negotiables": [
+    "A topology result is claim-eligible only if the same setting beats train-majority on both dev and test.",
+    "The sweep must stay on the Wave 57 topology-balanced split.",
+    "Test-only improvements must remain no-go evidence.",
+    "This is a stability diagnostic, not a new model class."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w61_partizan_ablation_sweep_command"
+      ]
+    },
+    {
+      "parallel": [
+        "w61_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w61_partizan_ablation_sweep_command",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "docs/signature_target_mixed_hook_topology_balanced_sweep_wave_61_rpf36_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add and run a topology-balanced feature-group hyperparameter sweep over the Wave 55 rpf36 exact shard.",
+      "outputs": [
+        "exact-projection-topology-balanced-ablation-sweep-report CLI command",
+        "Topology feature-group sweep report"
+      ],
+      "commands": [
+        "python3 engine/ml_model.py exact-projection-topology-balanced-ablation-sweep-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output docs/signature_target_mixed_hook_topology_balanced_sweep_wave_61_rpf36_report.json",
+        "jq empty docs/signature_target_mixed_hook_topology_balanced_sweep_wave_61_rpf36_report.json",
+        "shasum -a 256 docs/signature_target_mixed_hook_topology_balanced_sweep_wave_61_rpf36_report.json"
+      ],
+      "acceptance": [
+        "The report sweeps 10 feature groups.",
+        "Each feature group has 18 deterministic hyperparameter trials.",
+        "The claim candidate count is recorded.",
+        "Any dev/test majority-beating result is explicitly listed."
+      ]
+    },
+    {
+      "id": "w61_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_61_topology_ablation_hyperparameter_sweep.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w61_partizan_ablation_sweep_command"
+      ],
+      "prompt": "Record Wave 61 as a hyperparameter-stability no-go for topology feature-group probes.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_61_topology_ablation_hyperparameter_sweep.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that claim_candidate_count is 0.",
+        "Docs state that the best dev-only result and best test-only result do not align.",
+        "Docs keep model claims blocked.",
+        "Docs route next work toward genuinely new value supply or a materially different model class."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_61_topology_ablation_hyperparameter_sweep.json",
+      "success_signal": "The Wave 61 plan is internally consistent."
+    },
+    {
+      "id": "sweep_report_validates",
+      "command": "jq empty docs/signature_target_mixed_hook_topology_balanced_sweep_wave_61_rpf36_report.json",
+      "success_signal": "The Wave 61 sweep report is valid JSON."
+    }
+  ]
+}

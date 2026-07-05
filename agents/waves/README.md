@@ -19,9 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_60_pattern_limit_source_atlas.json` is the current execution target. It
-tests whether the global generated-component pattern limit is the main blocker
-for rpf50 exact support before any learned-structure claim:
+`wave_61_topology_ablation_hyperparameter_sweep.json` is the current execution
+target. It tests whether the topology feature-ablation no-go is stable under
+small deterministic logistic-probe hyperparameter sweeps:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -50,6 +50,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> topology feature-group ablation no-go
                              -> interior mixed-hook source no-go
                              -> pattern-limit capacity atlas
+                             -> topology ablation hyperparameter sweep
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
