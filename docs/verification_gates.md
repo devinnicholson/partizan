@@ -543,6 +543,20 @@ control target rather than decomposition-benefit evidence. Future reports must
 preserve this distinction and should scale exact support or add stronger
 ablations before claiming learned structure.
 
+Wave 55 expands the current mixed-hook exact support envelope. The support sweep
+must record all three targets: rpf30 selects 90 rows, rpf36 selects 108 rows,
+and rpf50 selects only 109 rows rather than 150. The promoted expansion is the
+rpf36 exact shard:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-mixed-hook-exact-shard --rows-per-family 36`.
+It must pass schema validation, Astralbase replay, split/leakage validation,
+full-signature floors, exact projection inventory, and compact projection
+baselines. The current artifact replays all 108 rows, splits 89/9/10, and has
+zero duplicate or cross-split leakage checks. Full signatures remain unlearnable
+under the current split because all dev/test labels are unseen. The topology
+projection has a small test lift for the FEN/material logistic probe, but dev is
+weaker than majority and test support is only 10 rows, so it remains tentative
+baseline evidence.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -565,7 +579,8 @@ the exact support collapse and Wave 49 shows that the current component-value
 capacity ceiling is 14 rows. Wave 50 shows the tested rank-4/5 ladder source
 does not raise that ceiling. Wave 51 breaks the ceiling with mixed-color hooks,
 Wave 52 materializes and audits the rpf20 mixed-hook exact shard, Wave 53
-selects compact exact projections, and Wave 54 shows the first compact
-baselines are a topology no-go plus a material-control result. The active gate
-is exact-support expansion and ablation design before any learned structure
+selects compact exact projections, Wave 54 shows the first compact baselines are
+a topology no-go plus a material-control result, and Wave 55 expands exact
+support to rpf36 while exposing rpf50 as source-limited. The active gate is a
+new source expansion or stronger OOD ablation before any learned structure
 claim.

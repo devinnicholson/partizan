@@ -1,0 +1,412 @@
+{
+  "component_topology_family_counts": {
+    "dev": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 4,
+      "dfile_two_component_depth2_local_move_v0": 2,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 3
+    },
+    "test": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 4,
+      "dfile_two_component_depth2_local_move_v0": 2,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 4
+    },
+    "train": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 28,
+      "dfile_two_component_depth2_local_move_v0": 32,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 29
+    }
+  },
+  "composition_certificate_counts": {
+    "component_count_by_split": {
+      "dev": {
+        "2": 9
+      },
+      "test": {
+        "2": 10
+      },
+      "train": {
+        "2": 89
+      }
+    },
+    "component_family_by_split": {
+      "dev": {
+        "count:2|roots:13,9": 9
+      },
+      "test": {
+        "count:2|roots:13,9": 10
+      },
+      "train": {
+        "count:2|roots:13,25": 1,
+        "count:2|roots:13,9": 88
+      }
+    },
+    "component_root_counts_by_split": {
+      "dev": {
+        "13": 9,
+        "9": 9
+      },
+      "test": {
+        "13": 10,
+        "9": 10
+      },
+      "train": {
+        "13": 89,
+        "25": 1,
+        "9": 88
+      }
+    },
+    "component_value_digest_counts_by_split": {
+      "dev": {
+        "1479bc222d2b49c4": 1,
+        "1fb77dab570e72f5": 1,
+        "2365fef3605c1c17": 1,
+        "264801e556b59fcd": 1,
+        "2cddc19e9601ba67": 1,
+        "3709133bfd3962da": 1,
+        "3758ab6d32e0c425": 1,
+        "4aa3ceca77abb27d": 1,
+        "626a8a1f2bfb6ed0": 1,
+        "63ce5af714d79684": 1,
+        "783fef6647ca7a6c": 1,
+        "807082dfa54cc3b0": 1,
+        "953a28b0c169b9f5": 1,
+        "9be343ff64350998": 1,
+        "a0490848fd042d84": 1,
+        "d84a7087527d63b4": 1,
+        "d9efe6ea0eb7c325": 1,
+        "ede6ea505ae20e9b": 1
+      },
+      "test": {
+        "090cb7b1422509ef": 1,
+        "2f002a9934c37821": 1,
+        "3ced44d86bb3af63": 1,
+        "42e2a1060e5c94d6": 1,
+        "439f84df03e3093a": 1,
+        "446080a60c9d9b5b": 1,
+        "5ea3ceb361462498": 1,
+        "8affdb549b7f9599": 1,
+        "986f5c6b25e8d086": 1,
+        "9a577b2dce41e9d0": 1,
+        "a903ae523dd2eef6": 1,
+        "c030a608d2f952f2": 1,
+        "c6f94d4b9a6202c4": 1,
+        "c7c440b1b2c7cd21": 1,
+        "d716b322ae7ed30b": 1,
+        "e68baaaa6a20315c": 1,
+        "ef7fd87e2b0e4b02": 1,
+        "f5318282516edf75": 1,
+        "f8fd7d2e5f2115cd": 1,
+        "fd0a22c33f1c816b": 1
+      },
+      "train": {
+        "02740398f4faba7e": 1,
+        "034eb5a7e061d562": 1,
+        "03f00c647ee81c59": 1,
+        "04255365fd839c30": 1,
+        "05631564af32123a": 1,
+        "07852be3b8537716": 1,
+        "0805c14e3f5fa810": 1,
+        "08b8b60fc84bbe70": 1,
+        "08ec18b19ce80a8d": 1,
+        "0a9e056b8ad2ef1f": 1,
+        "0db9d9612382dfbb": 1,
+        "0e15c6497476d519": 1,
+        "0fff671b84a2f66b": 1,
+        "1415090b3a646184": 1,
+        "14f3ec156db6e78a": 1,
+        "171396a59087da43": 1,
+        "180b3b4f81e9a743": 1,
+        "18300f9b5c4bcb49": 1,
+        "195a6f311fe8963d": 1,
+        "19f3133e601a773f": 1,
+        "1c07eb433ea3e2c3": 1,
+        "1d0205ac7fa9c3dd": 1,
+        "1e2cea3b980f71ec": 1,
+        "2334d9d1296eeaa5": 1,
+        "24db1b250d5921c3": 1,
+        "24ed56a01b7d73fc": 1,
+        "2af6dfa685f21aa9": 1,
+        "2b525ca581b1d3e9": 1,
+        "2d20ba79c7135e3f": 1,
+        "2de62792ff7c5786": 1,
+        "2f1ac45859a487e3": 1,
+        "33612fded7c41844": 1,
+        "342b2480fa3aa42a": 1,
+        "34731b27b0166bf5": 1,
+        "352e7aac7426b85a": 1,
+        "38be388d3babf7c3": 1,
+        "39d92f374bb2a1b0": 1,
+        "3a35fd122d44a500": 1,
+        "3a877ef94c7cbec1": 1,
+        "3de5752558d00e02": 1,
+        "3ee29c551edde919": 1,
+        "3f0fee9de4338ae4": 1,
+        "424df01071b073f1": 1,
+        "4257b15615523bb9": 1,
+        "4407d260d2279c94": 1,
+        "44a7109f9920cb51": 1,
+        "4a4cb172a2a1be36": 1,
+        "4b1db61db6d8b8b6": 1,
+        "4c05c902ad99215e": 1,
+        "4ca6d7010d673da9": 1,
+        "4d4ae5b2fd21711f": 1,
+        "4ed47d2fc29d4864": 1,
+        "5286ef7b359a8a36": 1,
+        "54279de48929e9ba": 1,
+        "5550781aeacb4d62": 1,
+        "570c8c9e37859a41": 1,
+        "60ebee880a925aa7": 1,
+        "614ed23d137b5aa9": 1,
+        "627b2bca30d58bde": 1,
+        "68cfc6ce1a276342": 1,
+        "6a9d111e13b56717": 1,
+        "6f75a1188a37c77c": 1,
+        "70f59f2ff332e028": 1,
+        "710b05b04b26a014": 1,
+        "71287af854999b1e": 1,
+        "77f5ccfa3092692a": 1,
+        "78ccfafaf1e0ab02": 1,
+        "790d1ef0dc9fc052": 1,
+        "7bc110046d75ea00": 1,
+        "7cd78a001679075c": 1,
+        "7d15d93f7dd08dcc": 1,
+        "7d3691d092c88450": 1,
+        "7ec3d65e81f6eacf": 1,
+        "7f770cf2a36c12fa": 1,
+        "7fb753c236f29808": 1,
+        "7fdf4e159f464705": 1,
+        "7ff32c7523c2e4b5": 1,
+        "812df753538af8f7": 1,
+        "829478f700df97e8": 1,
+        "82f372e18579b9ab": 1,
+        "87619541a19e223d": 1,
+        "88306de687f0fded": 1,
+        "8a14f6d7746569bc": 1,
+        "8a2c82231756c1c0": 1,
+        "8e39144adcbcd751": 1,
+        "9032560d4316a5fd": 1,
+        "9041c3a2d07ac24e": 1,
+        "936228d73642ca36": 1,
+        "9458d13b0540f466": 1,
+        "9498acf904df92ce": 1,
+        "9515623bdcafde67": 1,
+        "95c215a56aa19054": 1,
+        "96747cc41ad53a06": 1,
+        "96b3f4789f2369cb": 1,
+        "981a475f9c0baf40": 1,
+        "999c2d34dcc0a10b": 1,
+        "9c2aa5281ab01a04": 1,
+        "9d7d730331e28cc0": 1,
+        "9e60f90d64f62a64": 1,
+        "a1ce0f519d01017d": 1,
+        "a20878bd329555c5": 1,
+        "a289080d2973bab5": 1,
+        "a417e658db9f4a65": 1,
+        "a52ad66a5abd4b94": 1,
+        "a56b7865290bf909": 1,
+        "a7cd89f5c4639cbb": 1,
+        "a818847b06cea3a7": 1,
+        "a893339dd8d670e2": 1,
+        "aa0e0039871f38e5": 1,
+        "aa45e7a8f62091f9": 1,
+        "ad059134838e8030": 1,
+        "ae554422032926b3": 1,
+        "af8afa94c8d456e2": 1,
+        "b0eafeea5f2646c8": 1,
+        "b0f5dbfbe5b7b548": 1,
+        "b11a21f1ea92fd1c": 1,
+        "b1231ce80334616e": 1,
+        "b2654c626fa6a56b": 1,
+        "b5963c7241fdb217": 1,
+        "b8f26366cb295d94": 1,
+        "b98c162296f11944": 1,
+        "bb06b4d7aadc8eac": 1,
+        "bb2dcebdcf15e198": 1,
+        "bea06b092ddd1189": 1,
+        "beb80e1d0ceedafb": 1,
+        "bec7a48710f82db1": 1,
+        "c24e52c05ec2025e": 1,
+        "c286e33848162108": 1,
+        "c31727c12d7bbc8c": 1,
+        "c66b7e75b4d9d195": 1,
+        "c78e663f89264fd6": 1,
+        "c8c42a50447be2a7": 1,
+        "c9809f9a273b1c5b": 1,
+        "ca2b3ca019923312": 1,
+        "ca3ea4477193b413": 1,
+        "cd6ec2bbe2c2a030": 1,
+        "cd8aeb9d163eaa51": 1,
+        "d2ff8bbfb49d258e": 1,
+        "d4635e0757e912f9": 1,
+        "d4fa0bc6599062c2": 1,
+        "d562fdb6cc891c96": 1,
+        "d5ac73b0d225e84b": 1,
+        "d5e7fb52263cc5dd": 1,
+        "d80202523bd0e77b": 1,
+        "d872e10a5dd78aa0": 1,
+        "d8c12a550fb36c69": 1,
+        "d9ae51454872d768": 1,
+        "dc1c735165ae8f32": 1,
+        "dcdf419adf782675": 1,
+        "dcf6779cd2342054": 1,
+        "dd20db8dbb70dbf2": 1,
+        "de54ca80557477cb": 1,
+        "deb64c44bd97eacb": 1,
+        "e0a1d2f9e449e554": 1,
+        "e160e0eb4fa655f2": 1,
+        "e2832dc396feb331": 1,
+        "e32bf6705a1c3262": 1,
+        "e3965f829abe8ce6": 1,
+        "e5cb46fbb1602ece": 1,
+        "e838f172629dfe0d": 1,
+        "ea7b1cad3773bdca": 1,
+        "ecffee42be63868c": 1,
+        "ee86cae1240bf953": 1,
+        "efe2f0be6050e600": 1,
+        "f1d53d4b9c951df5": 1,
+        "f21333d3b76acd86": 1,
+        "f460b36dd03ee7fa": 1,
+        "f5ca75088db335eb": 1,
+        "f5fcbf4eae7eaee1": 1,
+        "f80ad2a4f7553c8b": 1,
+        "f856e57e4ae29761": 1,
+        "fc026b66ba7a1202": 1,
+        "fc1d207918f89014": 1,
+        "fcdd5ffce4dc8fb9": 1,
+        "fe9f716b95ee806f": 1,
+        "ff2112cc9065eec0": 1,
+        "ff892bd705ecebe4": 1,
+        "ffa6c6daccec3261": 1
+      }
+    },
+    "rows_by_split": {
+      "dev": 9,
+      "test": 10,
+      "train": 89
+    }
+  },
+  "composition_spec_source_counts": {
+    "dev": {
+      "signature_target_mixed_hook_replay_exact_metadata_v0": 9
+    },
+    "test": {
+      "signature_target_mixed_hook_replay_exact_metadata_v0": 10
+    },
+    "train": {
+      "signature_target_mixed_hook_replay_exact_metadata_v0": 89
+    }
+  },
+  "dataset_path": "docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl",
+  "dataset_sha256": "86022f1abd7b4c10cda55fdc84f07c4c0252191dad55a3824786b1f0dd43f850",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "composition_board_component_depth2_local_moves": 9
+    },
+    "test": {
+      "composition_board_component_depth2_local_moves": 10
+    },
+    "train": {
+      "composition_board_component_depth2_local_moves": 89
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "game_tree": 9
+    },
+    "test": {
+      "game_tree": 10
+    },
+    "train": {
+      "game_tree": 89
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {},
+    "test": {},
+    "train": {}
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_non_fixture_composed_board_generator": 9
+    },
+    "test": {
+      "astralbase_non_fixture_composed_board_generator": 10
+    },
+    "train": {
+      "astralbase_non_fixture_composed_board_generator": 89
+    }
+  },
+  "label_kind_counts": {
+    "dev": {
+      "exact": 9
+    },
+    "test": {
+      "exact": 10
+    },
+    "train": {
+      "exact": 89
+    }
+  },
+  "leakage_checks": {
+    "component_root_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "component_value_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "component_value_pair_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "composition_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "decomposition_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "duplicate_component_roots": 0,
+    "duplicate_component_value_digests": 0,
+    "duplicate_component_value_pairs": 0,
+    "duplicate_composition_digests": 0,
+    "duplicate_decomposition_digests": 0,
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_result_value_digests": 0,
+    "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 0,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "result_value_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_eligible_rows": 108
+  },
+  "row_counts": {
+    "dev": 9,
+    "test": 10,
+    "train": 89
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|position.encoding:position.text",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_position_hash_v0"
+}

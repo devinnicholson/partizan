@@ -1,0 +1,171 @@
+{
+  "wave_id": "wave_55_mixed_hook_rpf36_exact_support_expansion",
+  "objective": "Expand the mixed-hook exact shard from rpf20 to the largest balanced target supported by the current source and rerun exact audit/baseline gates.",
+  "non_negotiables": [
+    "Support expansion must remain value-unique and replay-compatible.",
+    "The rpf36 exact shard must pass schema, replay, split/leakage, full-signature floor, projection inventory, and compact baseline reports.",
+    "rpf50 shortfall must be recorded as a source-capacity blocker rather than hidden.",
+    "Any baseline lift on the 10-row test split is tentative and cannot activate a decomposition-benefit claim."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w55_astralbase_support_sweep"
+      ]
+    },
+    {
+      "parallel": [
+        "w55_partizan_materialize_rpf36_exact_shard"
+      ]
+    },
+    {
+      "parallel": [
+        "w55_partizan_audit_rpf36_exact_shard"
+      ]
+    },
+    {
+      "parallel": [
+        "w55_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w55_astralbase_support_sweep",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "../partizan/docs/signature_target_mixed_hook_support_wave_55_rpf30_report.json",
+        "../partizan/docs/signature_target_mixed_hook_support_wave_55_rpf36_report.json",
+        "../partizan/docs/signature_target_mixed_hook_support_wave_55_rpf50_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Measure current mixed-hook support at rpf30, rpf36, and rpf50 before materializing a larger exact shard.",
+      "outputs": [
+        "rpf30 support report",
+        "rpf36 support report",
+        "rpf50 support report"
+      ],
+      "commands": [
+        "cargo run --quiet -- --generated-depth-two-value-unique-signature-mixed-hook-upper-bound --rows-per-family 30 > /tmp/astralbase-wave55-mixed-hook-rpf30-support.json",
+        "cargo run --quiet -- --generated-depth-two-value-unique-signature-mixed-hook-upper-bound --rows-per-family 36 > /tmp/astralbase-wave55-mixed-hook-rpf36-support.json",
+        "cargo run --quiet -- --generated-depth-two-value-unique-signature-mixed-hook-upper-bound --rows-per-family 50 > /tmp/astralbase-wave55-mixed-hook-rpf50-support.json",
+        "shasum -a 256 /tmp/astralbase-wave55-mixed-hook-rpf30-support.json /tmp/astralbase-wave55-mixed-hook-rpf36-support.json /tmp/astralbase-wave55-mixed-hook-rpf50-support.json"
+      ],
+      "acceptance": [
+        "rpf30 selects 90 rows balanced 30/30/30.",
+        "rpf36 selects 108 rows balanced 36/36/36.",
+        "rpf50 selects only 109 rows and is recorded as the next source-capacity blocker."
+      ]
+    },
+    {
+      "id": "w55_partizan_materialize_rpf36_exact_shard",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl"
+      ],
+      "depends_on": [
+        "w55_astralbase_support_sweep"
+      ],
+      "prompt": "Materialize the current largest balanced mixed-hook exact shard at rpf36 and validate schema.",
+      "outputs": [
+        "108-row rpf36 mixed-hook exact JSONL shard"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-mixed-hook-exact-shard --rows-per-family 36 > docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl",
+        "wc -l docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl",
+        "python3 agents/label_schema.py validate docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl",
+        "shasum -a 256 docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl"
+      ],
+      "acceptance": [
+        "The shard has 108 exact rows.",
+        "Schema validation reports labels: ok (108 row(s)).",
+        "The shard hash is recorded."
+      ]
+    },
+    {
+      "id": "w55_partizan_audit_rpf36_exact_shard",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_mixed_hook_exact_wave_55_rpf36_replay_report.json",
+        "docs/signature_target_mixed_hook_exact_wave_55_rpf36_split_report.json",
+        "docs/signature_target_mixed_hook_exact_wave_55_rpf36_result_signature_report.json",
+        "docs/signature_target_mixed_hook_projection_wave_55_rpf36_report.json",
+        "docs/signature_target_mixed_hook_projection_baseline_wave_55_rpf36_report.json"
+      ],
+      "depends_on": [
+        "w55_partizan_materialize_rpf36_exact_shard"
+      ],
+      "prompt": "Replay, leakage-check, projection-audit, and baseline the rpf36 exact shard.",
+      "outputs": [
+        "Replay report",
+        "Split/leakage report",
+        "Full result-signature floor",
+        "Projection inventory",
+        "Compact projection baseline report"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --replay-non-fixture-composed-domain-shard docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl > docs/signature_target_mixed_hook_exact_wave_55_rpf36_replay_report.json",
+        "python3 engine/ml_model.py split-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output docs/signature_target_mixed_hook_exact_wave_55_rpf36_split_report.json",
+        "python3 engine/ml_model.py validate-report docs/signature_target_mixed_hook_exact_wave_55_rpf36_split_report.json --fail-on-leakage",
+        "python3 engine/ml_model.py frontier-target-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --target-field result_signature_key --output docs/signature_target_mixed_hook_exact_wave_55_rpf36_result_signature_report.json",
+        "python3 engine/ml_model.py exact-target-projection-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output docs/signature_target_mixed_hook_projection_wave_55_rpf36_report.json",
+        "python3 engine/ml_model.py exact-projection-baseline-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output docs/signature_target_mixed_hook_projection_baseline_wave_55_rpf36_report.json"
+      ],
+      "acceptance": [
+        "Replay checks all 108 exact rows and skips zero non-target rows.",
+        "Split/leakage validation passes with train/dev/test 89/9/10 and zero duplicate/cross-split leakage checks.",
+        "Full result_signature_key remains sparse with all dev/test labels unseen.",
+        "component_topology_family has zero unseen labels, but baseline evidence is marked tentative because the test split has only 10 rows."
+      ]
+    },
+    {
+      "id": "w55_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_55_mixed_hook_rpf36_exact_support_expansion.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w55_partizan_audit_rpf36_exact_shard"
+      ],
+      "prompt": "Record Wave 55 as exact-support expansion plus tentative baseline evidence and route the next wave to source expansion or stronger ablations.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_55_mixed_hook_rpf36_exact_support_expansion.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that Wave 55 expands exact support from 60 to 108 rows.",
+        "Docs state that rpf50 is not supported by the current source.",
+        "Docs keep learned-structure claims blocked by small test support and weak dev evidence.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_55_mixed_hook_rpf36_exact_support_expansion.json",
+      "success_signal": "The Wave 55 plan is internally consistent."
+    },
+    {
+      "id": "rpf36_exact_audit_passes",
+      "command": "python3 agents/label_schema.py validate docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl && python3 engine/ml_model.py validate-report docs/signature_target_mixed_hook_exact_wave_55_rpf36_split_report.json --fail-on-leakage",
+      "success_signal": "The rpf36 mixed-hook exact shard passes schema and leakage gates."
+    }
+  ]
+}

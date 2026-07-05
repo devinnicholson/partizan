@@ -19,10 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_54_compact_exact_projection_baselines.json` is the current execution
-target. It runs deterministic and small learned baselines for the compact Wave
-53 exact projections and keeps model claims blocked unless those baselines beat
-the matched floors:
+`wave_55_mixed_hook_rpf36_exact_support_expansion.json` is the current
+execution target. It expands the mixed-hook exact shard to the largest balanced
+target currently supported by the source, then reruns replay, leakage,
+projection, and baseline gates:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -45,6 +45,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> exact target projection inventory
                              -> compact exact-projection learned baselines
                              -> exact support expansion + ablation design
+                             -> source-capacity expansion or stronger OOD splits
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
