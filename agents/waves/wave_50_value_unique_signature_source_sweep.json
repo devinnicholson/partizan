@@ -1,0 +1,129 @@
+{
+  "wave_id": "wave_50_value_unique_signature_source_sweep",
+  "objective": "Sweep current and candidate component-source families for fresh value-unique signature capacity after the Wave 49 14-row ceiling.",
+  "non_negotiables": [
+    "This is a capacity-only source sweep, not a promoted shard.",
+    "The report must mark current_selection_evaluated=false so zero current-selection fields are not mistaken for selector failures.",
+    "A source family only counts as scale progress if it raises the component-value capacity ceiling or later increases selected exact rows under the value-unique selector.",
+    "If the rank-4/5 ladder does not improve capacity, route the next wave toward a different component-value source family or a documented value/split rule."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w50_astralbase_source_sweep_report"
+      ]
+    },
+    {
+      "parallel": [
+        "w50_partizan_record_source_sweep"
+      ]
+    },
+    {
+      "parallel": [
+        "w50_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w50_astralbase_source_sweep_report",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add a value-unique signature source-sweep report over baseline, edge ladder, current combined source, rank-4/5 ladder, and combined rank-4/5 variants.",
+      "outputs": [
+        "--generated-depth-two-value-unique-signature-source-sweep [--rows-per-family N]",
+        "generated_depth_two_value_unique_signature_source_sweep_report",
+        "Regression test recording the rank-4/5 no-gain result"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test value_unique_signature_source_sweep_identifies_capacity_dead_ends",
+        "cargo test value_unique_signature_upper_bound_shows_component_value_ceiling",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo test"
+      ],
+      "acceptance": [
+        "The current combined source remains at component_value_capacity_upper_bound=14.",
+        "The rank-4/5 ladder source has component_value_capacity_upper_bound=9.",
+        "The combined rank-4/5 source raises signature-profile counts to 96/96 but keeps component_value_capacity_upper_bound=14.",
+        "The report is fast enough for routine source sweeps because it does not run current selection for every source."
+      ]
+    },
+    {
+      "id": "w50_partizan_record_source_sweep",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_value_unique_signature_source_sweep_wave_50_report.json"
+      ],
+      "depends_on": [
+        "w50_astralbase_source_sweep_report"
+      ],
+      "prompt": "Run the Wave 50 source-sweep report and record the hash.",
+      "outputs": [
+        "Wave 50 source-sweep report"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-source-sweep --rows-per-family 20 > docs/non_fixture_composition_value_unique_signature_source_sweep_wave_50_report.json",
+        "jq empty docs/non_fixture_composition_value_unique_signature_source_sweep_wave_50_report.json",
+        "shasum -a 256 docs/non_fixture_composition_value_unique_signature_source_sweep_wave_50_report.json"
+      ],
+      "acceptance": [
+        "The report hash is recorded.",
+        "All sources have current_selection_evaluated=false.",
+        "No swept source exceeds the Wave 49 14-row capacity ceiling.",
+        "The rank-4/5 ladder no-go is documented as evidence for the next source-design wave."
+      ]
+    },
+    {
+      "id": "w50_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_50_value_unique_signature_source_sweep.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w50_partizan_record_source_sweep"
+      ],
+      "prompt": "Record Wave 50 as evidence that the tested rank-4/5 component-source family does not resolve the current component-value capacity ceiling.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_50_value_unique_signature_source_sweep.json",
+        "jq empty docs/non_fixture_composition_value_unique_signature_source_sweep_wave_50_report.json"
+      ],
+      "acceptance": [
+        "Docs state that the rank-4/5 ladder is a no-gain source under the current value rule.",
+        "Docs do not present capacity-only source sweeps as exact shards or model results.",
+        "Docs route the next wave toward a different component-value source family or value/split rule."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_50_value_unique_signature_source_sweep.json",
+      "success_signal": "The Wave 50 plan is internally consistent."
+    },
+    {
+      "id": "source_sweep_records_no_gain",
+      "command": "jq 'all(.sources[]; .current_selection_evaluated == false) and ([.sources[].component_value_capacity_upper_bound] | max == 14) and (.sources[] | select(.source == \"rank4_minor_ladder_v0\") | .component_value_capacity_upper_bound == 9)' docs/non_fixture_composition_value_unique_signature_source_sweep_wave_50_report.json",
+      "success_signal": "The rank-4/5 source sweep is recorded as a capacity no-go."
+    }
+  ]
+}

@@ -19,10 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_49_value_unique_signature_upper_bound.json` is the current execution
-target. It measures whether the Wave 47/48 13-row exact support limit is a
-greedy selector artifact or a current component-value capacity ceiling. This is
-an upper-bound diagnostic, not a new promoted shard:
+`wave_50_value_unique_signature_source_sweep.json` is the current execution
+target. It sweeps current and candidate component-source families after the
+Wave 49 14-row component-value capacity ceiling. This is a capacity-only
+diagnostic, not a new promoted shard:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -39,6 +39,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> value-unique exact metadata shard
                              -> value-unique exact support bottleneck report
                              -> component-value capacity upper bound
+                             -> component-source capacity sweep
                              -> new component-value diversity + learned baselines
 ```
 

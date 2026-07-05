@@ -483,6 +483,16 @@ selects 13 rows. Future scale work should therefore add fresh component-value
 diversity before spending effort on longer pair scans or greedy selector
 tuning.
 
+Wave 50 adds a capacity-only source sweep:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-source-sweep --rows-per-family 20`.
+Every swept source has `current_selection_evaluated=false`; this report is not
+a selected-row or shard-materialization report. The tested rank-4/5 ladder
+source caps at 9 rows, and the current-plus-rank-4/5 combined source remains at
+14 despite raising signature-profile counts to 96/96. Future work must not cite
+this branch as scale progress unless a later report exceeds capacity 14,
+increases value-unique selected exact rows, or explicitly changes the value or
+split rule.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -502,5 +512,7 @@ heuristic shard. Wave 45 adds an executable row-contract/promotion-readiness
 gate. Wave 46 adds field-by-field Astralbase replay preflight. Wave 47 converts
 that target into a small leakage-clean exact metadata shard. Wave 48 measures
 the exact support collapse and Wave 49 shows that the current component-value
-capacity ceiling is 14 rows, so the active gate is fresh component-value supply
-plus deterministic and learned baselines on a scaled exact split.
+capacity ceiling is 14 rows. Wave 50 shows the tested rank-4/5 ladder source
+does not raise that ceiling, so the active gate is a different component-value
+source family or documented value/split rule plus deterministic and learned
+baselines on a scaled exact split.
