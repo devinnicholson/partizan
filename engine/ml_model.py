@@ -89,6 +89,13 @@ HEURISTIC_SIGNATURE_TARGET_PROJECTIONS = (
         "description": "Topology family joined with component material and mobility signatures, excluding value digests.",
     },
 )
+EXACT_SIGNATURE_TARGET_PROJECTIONS = tuple(
+    {
+        **definition,
+        "target": str(definition["target"]).replace("heuristic.outputs", "exact.value"),
+    }
+    for definition in HEURISTIC_SIGNATURE_TARGET_PROJECTIONS
+)
 PIECE_VALUES = {
     "P": 1,
     "N": 3,
@@ -1597,6 +1604,48 @@ def evaluate_heuristic_target_projection_report(
     }
 
 
+def evaluate_exact_target_projection_report(
+    jsonl_path: str | Path,
+    split_key_mode: str = "position",
+) -> dict[str, Any]:
+    """Screen candidate projections of exact signature metadata targets."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = split_assignments_for_rows(rows, split_key_mode)
+    splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=False)
+    split_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
+    split_names = sorted({str(assignment["split"]) for assignment in assignments})
+    projection_reports = []
+    for definition in EXACT_SIGNATURE_TARGET_PROJECTIONS:
+        examples, excluded = exact_projection_examples(
+            rows,
+            assignments,
+            str(definition["projection_id"]),
+        )
+        projection_reports.append(
+            heuristic_projection_report_entry(
+                definition,
+                examples,
+                excluded,
+                split_names,
+            )
+        )
+
+    return {
+        "report_id": "exact_signature_target_projection_report_v0",
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "eligible_label_kinds": ["exact"],
+        "splitter_id": splitter_id,
+        "split_policy": split_policy,
+        "row_counts": _count_by(assignments, "split"),
+        "projection_count": len(projection_reports),
+        "projections": projection_reports,
+    }
+
+
 def evaluate_heuristic_signature_promotion_report(
     jsonl_path: str | Path,
     split_key_mode: str = "position",
@@ -2171,6 +2220,43 @@ def heuristic_projection_examples(
     }
 
 
+def exact_projection_examples(
+    rows: list[dict[str, Any]],
+    assignments: list[dict[str, Any]],
+    projection_id: str,
+) -> tuple[list[dict[str, str]], dict[str, dict[str, int]]]:
+    examples = []
+    excluded: dict[str, Counter[str]] = {
+        "non_exact_rows_by_split": Counter(),
+        "projection_missing_rows_by_split": Counter(),
+    }
+    for row, assignment in zip(rows, assignments):
+        split = str(assignment["split"])
+        if row.get("label_kind") != "exact":
+            excluded["non_exact_rows_by_split"][split] += 1
+            continue
+        value = exact_value_payload(row)
+        if not value:
+            excluded["projection_missing_rows_by_split"][split] += 1
+            continue
+        target = exact_projection_value(value, projection_id)
+        if target is None:
+            excluded["projection_missing_rows_by_split"][split] += 1
+            continue
+        examples.append(
+            {
+                "split": split,
+                "target": target,
+                "row_id": str(row.get("row_id")),
+            }
+        )
+    return examples, {
+        key: dict(sorted(counter.items()))
+        for key, counter in excluded.items()
+        if counter
+    }
+
+
 def heuristic_projection_report_entry(
     definition: dict[str, str],
     examples: list[dict[str, str]],
@@ -2251,6 +2337,13 @@ def heuristic_projection_value(
     if projection_id == "topology_material_mobility_pair":
         return _projection_join(topology, material_pair, mobility_pair)
     return None
+
+
+def exact_projection_value(
+    value: dict[str, Any],
+    projection_id: str,
+) -> str | None:
+    return heuristic_projection_value(value, projection_id)
 
 
 def _nonempty_output_string(outputs: dict[str, Any], field: str) -> str | None:
@@ -3931,6 +4024,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the heuristic projection report JSON.",
     )
 
+    exact_projection_parser = subcommands.add_parser(
+        "exact-target-projection-report",
+        help="Screen candidate projections of exact signature metadata targets.",
+    )
+    exact_projection_parser.add_argument("jsonl_path", type=Path)
+    exact_projection_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for split assignment.",
+    )
+    exact_projection_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the exact projection report JSON.",
+    )
+
     heuristic_signature_promotion_parser = subcommands.add_parser(
         "heuristic-signature-promotion-report",
         help="Audit heuristic signature rows for promotion readiness and blockers.",
@@ -4175,6 +4285,20 @@ def cli_main(argv: list[str] | None = None) -> int:
             args.jsonl_path,
             split_key_mode=args.split_key_mode,
             heuristic_method=args.heuristic_method,
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+
+    if args.command == "exact-target-projection-report":
+        report = evaluate_exact_target_projection_report(
+            args.jsonl_path,
+            split_key_mode=args.split_key_mode,
         )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)

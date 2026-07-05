@@ -1,0 +1,124 @@
+{
+  "wave_id": "wave_53_mixed_hook_exact_projection_inventory",
+  "objective": "Screen exact target projections on the Wave 52 mixed-hook shard and choose the next model-baseline target.",
+  "non_negotiables": [
+    "Projection reports must use only exact rows from the Wave 52 mixed-hook shard.",
+    "Full result-signature sparsity must remain visible; compact projections are next targets, not proof of decomposition-aware learning.",
+    "Any learned-model wave must report deterministic floors and unseen-label counts for the selected projection.",
+    "Signature metadata remains exact-value metadata, not a new ExactValueClass."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w53_partizan_exact_projection_report"
+      ]
+    },
+    {
+      "parallel": [
+        "w53_partizan_projection_gate_analysis"
+      ]
+    },
+    {
+      "parallel": [
+        "w53_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w53_partizan_exact_projection_report",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "docs/signature_target_mixed_hook_projection_wave_53_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add and run an exact-target projection report over the Wave 52 mixed-hook exact shard.",
+      "outputs": [
+        "exact-target-projection-report CLI command",
+        "Wave 53 exact projection support report"
+      ],
+      "commands": [
+        "python3 engine/ml_model.py exact-target-projection-report docs/signature_target_mixed_hook_exact_wave_52.jsonl --output docs/signature_target_mixed_hook_projection_wave_53_report.json",
+        "jq empty docs/signature_target_mixed_hook_projection_wave_53_report.json",
+        "shasum -a 256 docs/signature_target_mixed_hook_projection_wave_53_report.json"
+      ],
+      "acceptance": [
+        "The report covers 60 exact rows from the Wave 52 shard.",
+        "The report evaluates 9 target projections using the Wave 52 train/dev/test split.",
+        "The report records train-majority floors and unseen-label counts per projection.",
+        "The report hash is recorded in docs."
+      ]
+    },
+    {
+      "id": "w53_partizan_projection_gate_analysis",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_mixed_hook_projection_wave_53_report.json"
+      ],
+      "depends_on": [
+        "w53_partizan_exact_projection_report"
+      ],
+      "prompt": "Identify which exact projections are viable next model targets and which remain label-sparse.",
+      "outputs": [
+        "Projection target decision"
+      ],
+      "commands": [
+        "jq -c '[.projections[] | {id:.projection_id, labels:.target_label_count, train:.split_metrics.train.majority_accuracy, dev:.split_metrics.dev.majority_accuracy, test:.split_metrics.test.majority_accuracy, dev_unseen:.split_metrics.dev.unseen_label_count, test_unseen:.split_metrics.test.unseen_label_count}]' docs/signature_target_mixed_hook_projection_wave_53_report.json"
+      ],
+      "acceptance": [
+        "Full result_signature_key remains sparse with 60 labels and all dev/test labels unseen.",
+        "component_topology_family has 3 labels, zero dev/test unseen labels, and train/dev/test majority floors 0.3542/0.2/0.2857.",
+        "net_material_balance has 15 labels, zero dev/test unseen labels, and train/dev/test majority floors 0.1458/0.4/0.1429.",
+        "The next learned-baseline wave targets compact exact projections before full result_signature_key classification."
+      ]
+    },
+    {
+      "id": "w53_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_53_mixed_hook_exact_projection_inventory.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w53_partizan_projection_gate_analysis"
+      ],
+      "prompt": "Record Wave 53 as the exact-target selection gate for the next learned-baseline wave.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_53_mixed_hook_exact_projection_inventory.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that Wave 53 is a target-selection gate, not model evidence.",
+        "Docs route Wave 54 toward deterministic and learned baselines for compact exact projections.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_53_mixed_hook_exact_projection_inventory.json",
+      "success_signal": "The Wave 53 plan is internally consistent."
+    },
+    {
+      "id": "exact_projection_report_validates",
+      "command": "jq empty docs/signature_target_mixed_hook_projection_wave_53_report.json && python3 engine/ml_model.py exact-target-projection-report docs/signature_target_mixed_hook_exact_wave_52.jsonl --output /tmp/partizan-wave-53-projection-smoke.json",
+      "success_signal": "The exact projection report is well-formed and reproducible."
+    }
+  ]
+}

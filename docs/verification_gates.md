@@ -520,6 +520,18 @@ The required deterministic floor is
 which scores train/dev/test 0.0208/0.0/0.0 with all dev/test labels unseen.
 Future model claims must report against this split and floor.
 
+Wave 53 adds the matching exact projection inventory:
+`python3 engine/ml_model.py exact-target-projection-report docs/signature_target_mixed_hook_exact_wave_52.jsonl --output docs/signature_target_mixed_hook_projection_wave_53_report.json`.
+The report covers 60 exact rows, uses the Wave 52 48/5/7 split, and screens 9
+metadata target projections. Full `result_signature_key` remains unsuitable as
+an immediate learned target because it has 60 labels and all dev/test labels are
+unseen. Compact projections are the next gate: `component_topology_family` has
+3 labels, zero dev/test unseen labels, and train/dev/test majority floors
+0.3542/0.2/0.2857; `net_material_balance` has 15 labels, zero dev/test unseen
+labels, and train/dev/test majority floors 0.1458/0.4/0.1429. Future learned
+model reports must name the exact projection target, report its deterministic
+floor, and preserve the unseen-label counts.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -532,7 +544,7 @@ material/mobility signature can recover 30 diagnostic rows, and Wave 38 makes
 that support machine-checkable. Wave 39 adds row-level heuristic diagnostics
 and Wave 40 adds a deterministic heuristic floor while keeping promotion
 closed. Wave 41 shows that simple projection choice does not solve informative
-target support, and Wave 42 shows naive higher-support scaling hits a bounded
+heuristic target support, and Wave 42 shows naive higher-support scaling hits a bounded
 candidate-pair cap before reaching rpf20. Wave 43 shows rpf20 support is
 reachable with a full-pair scan. Wave 44 materializes and audits the rpf20
 heuristic shard. Wave 45 adds an executable row-contract/promotion-readiness
@@ -541,5 +553,6 @@ that target into a small leakage-clean exact metadata shard. Wave 48 measures
 the exact support collapse and Wave 49 shows that the current component-value
 capacity ceiling is 14 rows. Wave 50 shows the tested rank-4/5 ladder source
 does not raise that ceiling. Wave 51 breaks the ceiling with mixed-color hooks,
-and Wave 52 materializes and audits the rpf20 mixed-hook exact shard, so the
-active gate is deterministic and learned model baselines on that exact split.
+Wave 52 materializes and audits the rpf20 mixed-hook exact shard, and Wave 53
+selects compact exact projections, so the active gate is deterministic and
+learned model baselines on those exact projection targets.

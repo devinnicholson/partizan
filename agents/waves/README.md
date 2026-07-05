@@ -19,10 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_52_mixed_hook_exact_shard_audit.json` is the current execution target.
-It materializes the Wave 51 mixed-hook support breakthrough as a 60-row exact
-metadata shard and records schema, replay, split/leakage, and deterministic
-floor audits. This is audited dataset evidence, not learned-model evidence:
+`wave_53_mixed_hook_exact_projection_inventory.json` is the current execution
+target. It screens exact target projections over the Wave 52 mixed-hook shard
+and routes the next learned-baseline wave toward compact targets that do not
+hide unseen-label support:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -42,7 +42,8 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> component-source capacity sweep
                              -> mixed-hook value source breakthrough
                              -> mixed-hook exact shard audit
-                             -> new component-value diversity + learned baselines
+                             -> exact target projection inventory
+                             -> compact exact-projection learned baselines
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
