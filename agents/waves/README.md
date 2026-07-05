@@ -19,9 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_62_left_supply_source_atlas.json` is the current execution target. It
-tests whether genuinely new left-side component-value supply can clear the
-rpf50 capacity gate before selector/materialization work:
+`wave_63_left_supply_bounded_selector.json` is the current execution target. It
+tests whether the Wave 62 capacity-clearing source survives the value-unique
+selector and materialization path under a bounded candidate-pair budget:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -52,6 +52,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> pattern-limit capacity atlas
                              -> topology ablation hyperparameter sweep
                              -> left-supply capacity atlas
+                             -> left-supply bounded selector diagnostic
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

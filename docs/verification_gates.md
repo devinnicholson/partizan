@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 62 left-supply capacity gates, with Wave 3 negative controls
+Status: Wave 63 left-supply bounded selector gates, with Wave 3 negative controls
 and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
@@ -625,6 +625,17 @@ digests. `unbounded_all_left_supply_vs_expanded_right_v0` also reaches capacity
 selected rows; promotion still requires selector, materialization, replay,
 leakage, and baseline gates.
 
+Wave 63 adds a value-unique bounded selector diagnostic:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-left-supply-bounded-selection --rows-per-family 50 --candidate-pair-limit 2500`.
+The report runs the Wave 62 capacity-clearing outer-left source through the
+selector/materialization path with 2,500 candidate pairs per topology family. It
+selects only 12 rows, balanced 4/4/4, and every topology hits the candidate-pair
+limit. Rejections are dominated by component-signature reuse before
+materialization (3,986) and component-value digest reuse before materialization
+(3,491). Future promotion work must therefore improve candidate ordering,
+value-aware pairing, or materialization-aware search before claiming rpf50
+selected support.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -657,7 +668,10 @@ does not solve rpf50 and exposes pattern-limit truncation as an additional
 source-ordering risk. Wave 60 shows pattern-limit removal raises capacity only
 to 129, still below rpf50. Wave 61 shows logistic-probe hyperparameter tuning
 has zero matched dev/test topology candidates. Wave 62 clears the rpf50
-capacity gate with left-supply variants, but only in capacity-only reports. The
-active gate is selected, materialized, replayed, leakage-clean exact rows from
-a capacity-clearing source, or a materially different model class that improves
-both dev and test before any learned structure claim.
+capacity gate with left-supply variants, but only in capacity-only reports.
+Wave 63 shows the first bounded selector over that source still selects only
+12 rows under a 2,500-pair per-family budget. The active gate is value-aware
+pairing or selector ordering that yields selected, materialized, replayed,
+leakage-clean exact rows from a capacity-clearing source, or a materially
+different model class that improves both dev and test before any learned
+structure claim.

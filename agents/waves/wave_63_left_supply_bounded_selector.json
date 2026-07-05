@@ -1,0 +1,102 @@
+{
+  "wave_id": "wave_63_left_supply_bounded_selector",
+  "objective": "Measure whether the Wave 62 capacity-clearing left-supply source survives the value-unique selector and materialization path under a bounded candidate-pair budget.",
+  "non_negotiables": [
+    "This is a bounded selector diagnostic and must not be treated as full rpf50 support.",
+    "The report must preserve value-unique selection rules.",
+    "Candidate-pair limits and limit-hit status must be recorded.",
+    "A low selected count after capacity clearing must be treated as a selector/materialization bottleneck, not as source capacity failure."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w63_astralbase_left_supply_bounded_selector"
+      ]
+    },
+    {
+      "parallel": [
+        "w63_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w63_astralbase_left_supply_bounded_selector",
+      "agent": "topology_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs",
+        "../partizan/docs/signature_target_mixed_hook_left_supply_bounded_selection_wave_63_rpf50_limit2500_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add and run a value-unique bounded selector report for the Wave 62 unbounded expanded-plus-outer left-supply source.",
+      "outputs": [
+        "left-supply bounded-selector CLI command",
+        "rpf50 bounded selector report with candidate offsets and rejection counts"
+      ],
+      "commands": [
+        "cargo fmt",
+        "cargo test --quiet left_supply_bounded_selection_exposes_selector_bottleneck -- --exact",
+        "cargo test --quiet",
+        "cargo run --quiet -- --generated-depth-two-value-unique-signature-left-supply-bounded-selection --rows-per-family 50 --candidate-pair-limit 2500 > ../partizan/docs/signature_target_mixed_hook_left_supply_bounded_selection_wave_63_rpf50_limit2500_report.json",
+        "shasum -a 256 ../partizan/docs/signature_target_mixed_hook_left_supply_bounded_selection_wave_63_rpf50_limit2500_report.json"
+      ],
+      "acceptance": [
+        "The report uses the Wave 62 capacity-clearing source.",
+        "The report records selected rows and selected topology counts.",
+        "The report records candidate offsets and whether each topology hit the candidate-pair limit.",
+        "The report records value-unique rejection counts."
+      ]
+    },
+    {
+      "id": "w63_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_63_left_supply_bounded_selector.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "docs/signature_target_mixed_hook_left_supply_bounded_selection_wave_63_rpf50_limit2500_report.json"
+      ],
+      "depends_on": [
+        "w63_astralbase_left_supply_bounded_selector"
+      ],
+      "prompt": "Record Wave 63 as a bounded selector bottleneck diagnostic and keep rpf50 support claims closed.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "jq empty agents/waves/wave_63_left_supply_bounded_selector.json docs/signature_target_mixed_hook_left_supply_bounded_selection_wave_63_rpf50_limit2500_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_63_left_supply_bounded_selector.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that the 2500-pair bounded selector selects 12 rows.",
+        "Docs state that every topology hits the candidate-pair limit.",
+        "Docs preserve the Wave 62 capacity-clearing result while blocking support promotion.",
+        "Docs route next work toward selector ordering, value-aware pairing, or materialization-aware search."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_63_left_supply_bounded_selector.json",
+      "success_signal": "The Wave 63 plan is internally consistent."
+    },
+    {
+      "id": "bounded_selector_report_validates",
+      "command": "jq empty docs/signature_target_mixed_hook_left_supply_bounded_selection_wave_63_rpf50_limit2500_report.json",
+      "success_signal": "The Wave 63 bounded-selector report is valid JSON."
+    }
+  ]
+}
