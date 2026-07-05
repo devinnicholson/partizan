@@ -1,0 +1,137 @@
+{
+  "wave_id": "wave_47_signature_exact_metadata_shard",
+  "objective": "Promote the replay-preflighted signature target into a small exact metadata shard with value-unique split semantics and deterministic floors.",
+  "non_negotiables": [
+    "The promoted shard must be exact rows, not heuristic diagnostics.",
+    "Signature fields are auxiliary exact.value metadata over the depth-two local-move exact thermograph value, not a new ExactValueClass.",
+    "The exact shard must pass replay and Partizan leakage gates.",
+    "The support limit must be stated: value-unique exact promotion reaches 13 rows, not the full 60-row diagnostic support."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w47_astralbase_signature_exact_shard"
+      ]
+    },
+    {
+      "parallel": [
+        "w47_partizan_generate_exact_artifacts"
+      ]
+    },
+    {
+      "parallel": [
+        "w47_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w47_astralbase_signature_exact_shard",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add an Astralbase signature-target exact shard command that emits verified depth-two local-move exact rows and preserves signature metadata under exact.value, with self-unique component/result value digests for leakage-safe Partizan splits.",
+      "outputs": [
+        "--signature-target-exact-shard [--rows-per-family N]",
+        "signature_target_exact_shard_jsonl",
+        "Focused exact metadata replay test"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings"
+      ],
+      "acceptance": [
+        "Rows are label_kind=exact with exact.status=verified.",
+        "exact.value.current_result_value_digest equals exact.value.digest.",
+        "exact.value.result_signature_key and component signatures are present.",
+        "The exact shard replays under the existing non-fixture composed-domain replay verifier."
+      ]
+    },
+    {
+      "id": "w47_partizan_generate_exact_artifacts",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_exact_wave_47.jsonl",
+        "docs/signature_target_exact_wave_47_replay_report.json",
+        "docs/signature_target_exact_wave_47_split_report.json",
+        "docs/signature_target_exact_wave_47_result_signature_report.json"
+      ],
+      "depends_on": [
+        "w47_astralbase_signature_exact_shard"
+      ],
+      "prompt": "Generate the Wave 47 exact metadata shard from Astralbase, replay it, validate schema, build a leakage split report, and build a deterministic train-majority floor over exact.value.result_signature_key.",
+      "outputs": [
+        "Wave 47 exact metadata JSONL",
+        "Wave 47 replay report",
+        "Wave 47 split/leakage report",
+        "Wave 47 result-signature target floor"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-exact-shard --rows-per-family 20 > docs/signature_target_exact_wave_47.jsonl",
+        "python3 agents/label_schema.py validate docs/signature_target_exact_wave_47.jsonl",
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --replay-non-fixture-composed-domain-shard docs/signature_target_exact_wave_47.jsonl > docs/signature_target_exact_wave_47_replay_report.json",
+        "python3 engine/ml_model.py split-report docs/signature_target_exact_wave_47.jsonl --output docs/signature_target_exact_wave_47_split_report.json",
+        "python3 engine/ml_model.py validate-report docs/signature_target_exact_wave_47_split_report.json --fail-on-leakage",
+        "python3 engine/ml_model.py frontier-target-report docs/signature_target_exact_wave_47.jsonl --target-field result_signature_key --output docs/signature_target_exact_wave_47_result_signature_report.json",
+        "shasum -a 256 docs/signature_target_exact_wave_47.jsonl docs/signature_target_exact_wave_47_replay_report.json docs/signature_target_exact_wave_47_split_report.json docs/signature_target_exact_wave_47_result_signature_report.json"
+      ],
+      "acceptance": [
+        "The shard contains 13 exact rows and no heuristic rows.",
+        "The replay report checks all 13 exact rows with zero skipped non-target rows.",
+        "The split report has zero duplicate positions, row IDs, component value digests, result value digests, and cross-split digest leakage.",
+        "The target floor reports train/dev/test accuracy 0.0909/0.0/0.0 with dev/test labels unseen."
+      ]
+    },
+    {
+      "id": "w47_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_47_signature_exact_metadata_shard.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w47_partizan_generate_exact_artifacts"
+      ],
+      "prompt": "Record Wave 47 as a small leakage-clean exact metadata shard and keep model readiness blocked by support scale and learned-baseline evidence.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_47_signature_exact_metadata_shard.json",
+        "jq empty docs/signature_target_exact_wave_47_replay_report.json docs/signature_target_exact_wave_47_split_report.json docs/signature_target_exact_wave_47_result_signature_report.json"
+      ],
+      "acceptance": [
+        "Docs state that Wave 47 is exact and replay-valid but small.",
+        "Claims C2 and C5 identify support scale and learned baselines as the remaining blockers.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_47_signature_exact_metadata_shard.json",
+      "success_signal": "The Wave 47 plan is internally consistent."
+    },
+    {
+      "id": "exact_shard_replay_and_split_pass",
+      "command": "python3 agents/label_schema.py validate docs/signature_target_exact_wave_47.jsonl && python3 engine/ml_model.py validate-report docs/signature_target_exact_wave_47_split_report.json --fail-on-leakage",
+      "success_signal": "The Wave 47 exact shard is schema-valid and leakage-clean."
+    }
+  ]
+}

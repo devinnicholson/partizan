@@ -1,0 +1,216 @@
+{
+  "component_topology_family_counts": {
+    "dev": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 1
+    },
+    "test": {
+      "dfile_two_component_depth2_pawn_phalanx_v0": 1
+    },
+    "train": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 3,
+      "dfile_two_component_depth2_local_move_v0": 5,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 3
+    }
+  },
+  "composition_certificate_counts": {
+    "component_count_by_split": {
+      "dev": {
+        "2": 1
+      },
+      "test": {
+        "2": 1
+      },
+      "train": {
+        "2": 11
+      }
+    },
+    "component_family_by_split": {
+      "dev": {
+        "count:2|roots:13,9": 1
+      },
+      "test": {
+        "count:2|roots:13,9": 1
+      },
+      "train": {
+        "count:2|roots:13,9": 11
+      }
+    },
+    "component_root_counts_by_split": {
+      "dev": {
+        "13": 1,
+        "9": 1
+      },
+      "test": {
+        "13": 1,
+        "9": 1
+      },
+      "train": {
+        "13": 11,
+        "9": 11
+      }
+    },
+    "component_value_digest_counts_by_split": {
+      "dev": {
+        "9be343ff64350998": 1,
+        "d9efe6ea0eb7c325": 1
+      },
+      "test": {
+        "986f5c6b25e8d086": 1,
+        "c7c440b1b2c7cd21": 1
+      },
+      "train": {
+        "05631564af32123a": 1,
+        "0a9e056b8ad2ef1f": 1,
+        "14f3ec156db6e78a": 1,
+        "180b3b4f81e9a743": 1,
+        "2b525ca581b1d3e9": 1,
+        "33612fded7c41844": 1,
+        "44a7109f9920cb51": 1,
+        "60ebee880a925aa7": 1,
+        "71287af854999b1e": 1,
+        "829478f700df97e8": 1,
+        "88306de687f0fded": 1,
+        "999c2d34dcc0a10b": 1,
+        "a56b7865290bf909": 1,
+        "ae554422032926b3": 1,
+        "b11a21f1ea92fd1c": 1,
+        "b1231ce80334616e": 1,
+        "bb06b4d7aadc8eac": 1,
+        "c66b7e75b4d9d195": 1,
+        "d872e10a5dd78aa0": 1,
+        "dd20db8dbb70dbf2": 1,
+        "e0a1d2f9e449e554": 1,
+        "ff2112cc9065eec0": 1
+      }
+    },
+    "rows_by_split": {
+      "dev": 1,
+      "test": 1,
+      "train": 11
+    }
+  },
+  "composition_spec_source_counts": {
+    "dev": {
+      "signature_target_replay_exact_metadata_v0": 1
+    },
+    "test": {
+      "signature_target_replay_exact_metadata_v0": 1
+    },
+    "train": {
+      "signature_target_replay_exact_metadata_v0": 11
+    }
+  },
+  "dataset_path": "docs/signature_target_exact_wave_47.jsonl",
+  "dataset_sha256": "ca2efe473ef4d4622ecf3b7000740fcf0f8dad2473a41661bb902555bced9c82",
+  "exact_solver_scope_counts": {
+    "dev": {
+      "composition_board_component_depth2_local_moves": 1
+    },
+    "test": {
+      "composition_board_component_depth2_local_moves": 1
+    },
+    "train": {
+      "composition_board_component_depth2_local_moves": 11
+    }
+  },
+  "exact_value_class_counts": {
+    "dev": {
+      "game_tree": 1
+    },
+    "test": {
+      "game_tree": 1
+    },
+    "train": {
+      "game_tree": 11
+    }
+  },
+  "frontier_value_class_counts": {
+    "dev": {},
+    "test": {},
+    "train": {}
+  },
+  "generator_family_counts": {
+    "dev": {
+      "astralbase_non_fixture_composed_board_generator": 1
+    },
+    "test": {
+      "astralbase_non_fixture_composed_board_generator": 1
+    },
+    "train": {
+      "astralbase_non_fixture_composed_board_generator": 11
+    }
+  },
+  "label_kind_counts": {
+    "dev": {
+      "exact": 1
+    },
+    "test": {
+      "exact": 1
+    },
+    "train": {
+      "exact": 11
+    }
+  },
+  "leakage_checks": {
+    "component_root_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "component_value_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "component_value_pair_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "composition_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "decomposition_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "duplicate_component_roots": 0,
+    "duplicate_component_value_digests": 0,
+    "duplicate_component_value_pairs": 0,
+    "duplicate_composition_digests": 0,
+    "duplicate_decomposition_digests": 0,
+    "duplicate_exact_certificate_digests": 0,
+    "duplicate_positions": 0,
+    "duplicate_result_value_digests": 0,
+    "duplicate_row_ids": 0,
+    "duplicate_symmetry_positions": 0,
+    "exact_certificate_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "result_value_digest_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_cross_split": {
+      "examples": [],
+      "violation_count": 0
+    },
+    "symmetry_position_key_eligible_rows": 13
+  },
+  "row_counts": {
+    "dev": 1,
+    "test": 1,
+    "train": 11
+  },
+  "schema_version": "partizan.dataset_label.v0",
+  "split_policy": {
+    "dev": "80 <= sha256(split_key) % 100 < 90",
+    "split_key": "generator_family|position.encoding:position.text",
+    "test": "90 <= sha256(split_key) % 100",
+    "train": "sha256(split_key) % 100 < 80"
+  },
+  "splitter_id": "deterministic_generator_position_hash_v0"
+}

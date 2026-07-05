@@ -19,10 +19,11 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_46_signature_replay_preflight.json` is the current execution target. It
-adds an Astralbase replay preflight for the rows-per-family 20 signature
-diagnostic shard, recomputing diagnostic fields from each FEN board while
-keeping the exact promotion gate closed:
+`wave_47_signature_exact_metadata_shard.json` is the current execution target.
+It adds a small leakage-clean exact metadata shard for the replay-preflighted
+signature target. The promoted rows are verified depth-two local-move exact
+thermograph values with signature fields recorded under `exact.value`; they are
+not a new exact value class and they do not yet provide model evidence:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -36,7 +37,8 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> materialized rpf20 diagnostic shard
                              -> promotion-readiness row contract
                              -> replay preflight for diagnostic fields
-                             -> replayed exact value-rule/split/baseline work
+                             -> value-unique exact metadata shard
+                             -> exact support scaling + learned baselines
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

@@ -445,6 +445,25 @@ this replay-preflighted diagnostic into a versioned exact value rule, regenerate
 split semantics and deterministic floors for the promoted target, and only then
 run learned models.
 
+Wave 47 adds the promoted exact metadata shard:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-exact-shard --rows-per-family 20`.
+The generated shard must pass `python3 agents/label_schema.py validate`,
+Astralbase non-fixture composed-domain replay, and
+`python3 engine/ml_model.py validate-report docs/signature_target_exact_wave_47_split_report.json --fail-on-leakage`.
+The current artifact has 13 exact rows and no heuristic rows. It is
+self-value-unique: duplicate component value digests, duplicate result value
+digests, component-value cross-split leakage, and result-value cross-split
+leakage are all zero.
+
+Wave 47 exact rows are verified depth-two local-move exact thermograph values.
+The signature fields live under `exact.value` as metadata:
+`signature_target_rule`, `component_signature_rule`, component signatures,
+component value digests, and `result_signature_key`. They must not be treated
+as a new `ExactValueClass`. Any model experiment over this shard must use the
+Wave 47 split and report the `exact.value.result_signature_key` train-majority
+floor: train/dev/test accuracy 0.0909/0.0/0.0, with one unseen label in dev and
+one unseen label in test.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -461,6 +480,7 @@ target support, and Wave 42 shows naive higher-support scaling hits a bounded
 candidate-pair cap before reaching rpf20. Wave 43 shows rpf20 support is
 reachable with a full-pair scan. Wave 44 materializes and audits the rpf20
 heuristic shard. Wave 45 adds an executable row-contract/promotion-readiness
-gate. Wave 46 adds field-by-field Astralbase replay preflight, so promotion now
-remains closed until the diagnostic signature target is converted into a
-versioned exact value target with explicit split and learned-baseline rules.
+gate. Wave 46 adds field-by-field Astralbase replay preflight. Wave 47 converts
+that target into a small leakage-clean exact metadata shard, so the active gate
+is no longer basic exact semantics; it is scaling exact support beyond 13 rows
+and producing deterministic plus learned baselines on the exact split.
