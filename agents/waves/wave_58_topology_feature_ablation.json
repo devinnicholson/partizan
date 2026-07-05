@@ -1,0 +1,96 @@
+{
+  "wave_id": "wave_58_topology_feature_ablation",
+  "objective": "Run feature-group ablations for compact exact-projection probes on the Wave 55 rpf36 topology-balanced split.",
+  "non_negotiables": [
+    "The ablation split is diagnostic and must not replace the replay/leakage audit split.",
+    "The report must isolate board material, component material, component mobility, recursive-node, profile-index, and combined signature feature groups.",
+    "Topology evidence requires improvement over train-majority on both dev and test, not a test-only bump.",
+    "Net-material results remain material-control evidence, not decomposition-benefit evidence."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w58_partizan_feature_ablation_command"
+      ]
+    },
+    {
+      "parallel": [
+        "w58_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w58_partizan_feature_ablation_command",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "docs/signature_target_mixed_hook_topology_balanced_ablation_wave_58_rpf36_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add and run topology-balanced exact-projection feature-group ablations over the Wave 55 rpf36 exact shard.",
+      "outputs": [
+        "exact-projection-topology-balanced-ablation-report CLI command",
+        "Feature-group ablation report for compact exact projections"
+      ],
+      "commands": [
+        "python3 engine/ml_model.py exact-projection-topology-balanced-ablation-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output docs/signature_target_mixed_hook_topology_balanced_ablation_wave_58_rpf36_report.json",
+        "jq empty docs/signature_target_mixed_hook_topology_balanced_ablation_wave_58_rpf36_report.json",
+        "shasum -a 256 docs/signature_target_mixed_hook_topology_balanced_ablation_wave_58_rpf36_report.json"
+      ],
+      "acceptance": [
+        "The split has row counts 72/18/18.",
+        "The report records 10 feature groups.",
+        "The topology target has zero dev/test unseen labels.",
+        "No topology feature group is promoted unless it beats train-majority on both dev and test."
+      ]
+    },
+    {
+      "id": "w58_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_58_topology_feature_ablation.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w58_partizan_feature_ablation_command"
+      ],
+      "prompt": "Record Wave 58 as a feature-ablation no-go for topology evidence and keep learned-structure claims blocked.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_58_topology_feature_ablation.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that no topology ablation beats majority on both dev and test.",
+        "Docs keep the component-material 0.4444 topology test score tied to its 0.2222 dev miss.",
+        "Docs keep full signature metadata tied to its 0.2778 dev miss.",
+        "Docs route next work toward source diversity or models with matched dev/test lift."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_58_topology_feature_ablation.json",
+      "success_signal": "The Wave 58 plan is internally consistent."
+    },
+    {
+      "id": "ablation_report_reproduces",
+      "command": "python3 engine/ml_model.py exact-projection-topology-balanced-ablation-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output /tmp/partizan-wave-58-ablation-smoke.json && cmp docs/signature_target_mixed_hook_topology_balanced_ablation_wave_58_rpf36_report.json /tmp/partizan-wave-58-ablation-smoke.json",
+      "success_signal": "The topology-balanced feature ablation report is reproducible."
+    }
+  ]
+}

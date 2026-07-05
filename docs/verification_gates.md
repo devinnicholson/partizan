@@ -1,7 +1,7 @@
 # Verification Gates
 
-Status: Wave 46 signature replay-preflight gates, with Wave 3 negative
-controls and Wave 22/27 composition replay and leakage gates retained.
+Status: Wave 58 topology feature-ablation gates, with Wave 3 negative controls
+and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
 training shard. It intentionally mixes rows that the current schema validator
@@ -575,6 +575,15 @@ best test result, signature-metadata logistic at 0.3889, misses on dev with
 0.2778 against the 0.3333 majority floor. This is a stronger ablation than the
 Wave 55 89/9/10 split, but still not learned-structure evidence.
 
+Wave 58 adds a feature-group topology ablation:
+`python3 engine/ml_model.py exact-projection-topology-balanced-ablation-report docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl --output docs/signature_target_mixed_hook_topology_balanced_ablation_wave_58_rpf36_report.json`.
+The report keeps the same topology-balanced 72/18/18 split and scores board
+material, component material, mobility, node-count, profile-index, and combined
+signature feature groups. A topology feature group is claim-eligible only if it
+beats train-majority on both dev and test. The current report has no such
+group: component material reaches 0.4444 test but 0.2222 dev, and full
+signature metadata reaches 0.3889 test but 0.2778 dev.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -600,7 +609,8 @@ Wave 52 materializes and audits the rpf20 mixed-hook exact shard, Wave 53
 selects compact exact projections, Wave 54 shows the first compact baselines are
 a topology no-go plus a material-control result, and Wave 55 expands exact
 support to rpf36 while exposing rpf50 as source-limited. Wave 56's expanded
-mixed-hook source remains below rpf50, and Wave 57's balanced split does not
-produce matched dev/test lift. The active gate is a materially different source
-family or a model/feature ablation that improves both dev and test before any
-learned structure claim.
+mixed-hook source remains below rpf50, Wave 57's balanced split does not
+produce matched dev/test lift, and Wave 58's feature-group ablation localizes
+that no-go to every current topology feature group. The active gate is a
+materially different source family or a model class that improves both dev and
+test before any learned structure claim.

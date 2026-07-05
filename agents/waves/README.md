@@ -19,9 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_57_topology_balanced_projection_baselines.json` is the current execution
-target. It runs the rpf36 exact projection baselines on a topology-balanced
-split with larger dev/test support before any learned-structure claim:
+`wave_58_topology_feature_ablation.json` is the current execution target. It
+runs feature-group ablations for the rpf36 exact projection probes on the
+topology-balanced split before any learned-structure claim:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -47,6 +47,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> source-capacity expansion or stronger OOD splits
                              -> expanded source no-go / next source design
                              -> topology-balanced baseline ablation
+                             -> topology feature-group ablation no-go
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

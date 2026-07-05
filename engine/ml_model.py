@@ -1338,6 +1338,111 @@ SIGNATURE_METADATA_PROBE_FEATURE_NAMES = (
     "right_profile_index",
 )
 
+COMPONENT_MATERIAL_ABLATION_FEATURE_NAMES = (
+    "bias",
+    "left_component_material",
+    "right_component_material",
+    "net_component_material",
+)
+COMPONENT_MOBILITY_ABLATION_FEATURE_NAMES = (
+    "bias",
+    "left_white_local_moves",
+    "left_black_local_moves",
+    "right_white_local_moves",
+    "right_black_local_moves",
+    "total_white_local_moves",
+    "total_black_local_moves",
+    "component_local_move_imbalance",
+)
+COMPONENT_NODES_ABLATION_FEATURE_NAMES = (
+    "bias",
+    "component_recursive_total_nodes",
+    "total_recursive_nodes",
+)
+COMPONENT_PROFILE_INDEX_ABLATION_FEATURE_NAMES = (
+    "bias",
+    "left_profile_index",
+    "right_profile_index",
+)
+COMPONENT_MATERIAL_MOBILITY_ABLATION_FEATURE_NAMES = (
+    *COMPONENT_MATERIAL_ABLATION_FEATURE_NAMES,
+    *COMPONENT_MOBILITY_ABLATION_FEATURE_NAMES[1:],
+)
+COMPONENT_METADATA_NO_FEN_NO_PROFILE_ABLATION_FEATURE_NAMES = (
+    *COMPONENT_MATERIAL_MOBILITY_ABLATION_FEATURE_NAMES,
+    *COMPONENT_NODES_ABLATION_FEATURE_NAMES[1:],
+)
+COMPONENT_METADATA_NO_FEN_FULL_ABLATION_FEATURE_NAMES = (
+    *COMPONENT_METADATA_NO_FEN_NO_PROFILE_ABLATION_FEATURE_NAMES,
+    *COMPONENT_PROFILE_INDEX_ABLATION_FEATURE_NAMES[1:],
+)
+SIGNATURE_METADATA_NO_PROFILE_ABLATION_FEATURE_NAMES = (
+    *FEN_MATERIAL_PROBE_FEATURE_NAMES,
+    *COMPONENT_METADATA_NO_FEN_NO_PROFILE_ABLATION_FEATURE_NAMES[1:],
+)
+EXACT_PROJECTION_ABLATION_FEATURE_GROUPS = (
+    {
+        "feature_group_id": "fen_material",
+        "description": "Full-board FEN material/count control.",
+        "control_scope": "board material control",
+        "feature_names": FEN_MATERIAL_PROBE_FEATURE_NAMES,
+    },
+    {
+        "feature_group_id": "component_material",
+        "description": "Parsed component material balances only.",
+        "control_scope": "component material ablation",
+        "feature_names": COMPONENT_MATERIAL_ABLATION_FEATURE_NAMES,
+    },
+    {
+        "feature_group_id": "component_mobility",
+        "description": "Parsed component local-move counts only.",
+        "control_scope": "component mobility ablation",
+        "feature_names": COMPONENT_MOBILITY_ABLATION_FEATURE_NAMES,
+    },
+    {
+        "feature_group_id": "component_nodes",
+        "description": "Component recursive-node counts only.",
+        "control_scope": "component size ablation",
+        "feature_names": COMPONENT_NODES_ABLATION_FEATURE_NAMES,
+    },
+    {
+        "feature_group_id": "component_profile_indices",
+        "description": "Generator profile indices only; diagnostic for source-order leakage.",
+        "control_scope": "generator metadata diagnostic",
+        "feature_names": COMPONENT_PROFILE_INDEX_ABLATION_FEATURE_NAMES,
+    },
+    {
+        "feature_group_id": "component_material_mobility",
+        "description": "Component material and local-move counts without board FEN features.",
+        "control_scope": "component signature ablation",
+        "feature_names": COMPONENT_MATERIAL_MOBILITY_ABLATION_FEATURE_NAMES,
+    },
+    {
+        "feature_group_id": "component_metadata_no_fen_no_profile",
+        "description": "Component material, mobility, and recursive-node counts without board FEN features or profile indices.",
+        "control_scope": "component metadata ablation without generator indices",
+        "feature_names": COMPONENT_METADATA_NO_FEN_NO_PROFILE_ABLATION_FEATURE_NAMES,
+    },
+    {
+        "feature_group_id": "component_metadata_no_fen_full",
+        "description": "All parsed component metadata without board FEN features.",
+        "control_scope": "component metadata ablation",
+        "feature_names": COMPONENT_METADATA_NO_FEN_FULL_ABLATION_FEATURE_NAMES,
+    },
+    {
+        "feature_group_id": "signature_metadata_no_profile",
+        "description": "Board FEN plus parsed component metadata excluding generator profile indices.",
+        "control_scope": "signature metadata ablation without generator indices",
+        "feature_names": SIGNATURE_METADATA_NO_PROFILE_ABLATION_FEATURE_NAMES,
+    },
+    {
+        "feature_group_id": "signature_metadata_full",
+        "description": "Existing board FEN plus component signature metadata probe.",
+        "control_scope": "full signature metadata control",
+        "feature_names": SIGNATURE_METADATA_PROBE_FEATURE_NAMES,
+    },
+)
+
 
 def evaluate_geometry_probe_report(
     jsonl_path: str | Path,
@@ -1791,6 +1896,77 @@ def exact_projection_baseline_report_from_assignments(
         "splitter_id": splitter_id,
         "split_policy": split_policy,
         "row_counts": _count_by(assignments, "split"),
+        "target_projection_count": len(projection_reports),
+        "target_projections": projection_reports,
+    }
+
+
+def evaluate_exact_projection_topology_balanced_ablation_report(
+    jsonl_path: str | Path,
+    target_projections: list[str] | None = None,
+    split_key_mode: str = "position",
+    epochs: int = 1_000,
+    learning_rate: float = 0.05,
+    l2: float = 0.001,
+) -> dict[str, Any]:
+    """Score exact projection feature-group ablations on a topology-balanced split."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = topology_balanced_assignments_for_rows(rows, split_key_mode)
+    split_key = split_policy_for_mode(split_key_mode, family_holdout=False)[
+        "split_key"
+    ]
+    split_policy = {
+        "train": "first 2/3 of rows by sha256(split_key), within exact.value.component_topology_family",
+        "dev": "next 1/6 of rows by sha256(split_key), within exact.value.component_topology_family",
+        "test": "remaining rows by sha256(split_key), within exact.value.component_topology_family",
+        "split_key": split_key,
+        "balance_key": "exact.value.component_topology_family",
+    }
+    splitter_id = (
+        "component_topology_balanced_position_hash_v0"
+        if split_key_mode == "position"
+        else "component_topology_balanced_symmetry_hash_v0"
+    )
+    projections = target_projections or list(DEFAULT_EXACT_PROJECTION_BASELINE_TARGETS)
+    projection_reports = []
+    for projection_id in projections:
+        examples, excluded = exact_projection_ablation_examples(
+            rows,
+            assignments,
+            projection_id,
+        )
+        projection_reports.append(
+            exact_projection_ablation_entry(
+                projection_id,
+                examples,
+                excluded,
+                epochs=epochs,
+                learning_rate=learning_rate,
+                l2=l2,
+            )
+        )
+
+    return {
+        "report_id": "exact_projection_feature_ablation_report_v0",
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "eligible_label_kinds": ["exact"],
+        "splitter_id": splitter_id,
+        "split_policy": split_policy,
+        "row_counts": _count_by(assignments, "split"),
+        "feature_group_count": len(EXACT_PROJECTION_ABLATION_FEATURE_GROUPS),
+        "feature_groups": [
+            {
+                "feature_group_id": str(group["feature_group_id"]),
+                "description": str(group["description"]),
+                "control_scope": str(group["control_scope"]),
+                "feature_names": list(group["feature_names"]),
+            }
+            for group in EXACT_PROJECTION_ABLATION_FEATURE_GROUPS
+        ],
         "target_projection_count": len(projection_reports),
         "target_projections": projection_reports,
     }
@@ -2465,6 +2641,51 @@ def exact_projection_model_examples(
     }
 
 
+def exact_projection_ablation_examples(
+    rows: list[dict[str, Any]],
+    assignments: list[dict[str, Any]],
+    projection_id: str,
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, int]]]:
+    examples: list[dict[str, Any]] = []
+    excluded: dict[str, Counter[str]] = {
+        "non_exact_rows_by_split": Counter(),
+        "projection_missing_rows_by_split": Counter(),
+        "ablation_feature_missing_rows_by_split": Counter(),
+    }
+    for row, assignment in zip(rows, assignments):
+        split = str(assignment["split"])
+        if row.get("label_kind") != "exact":
+            excluded["non_exact_rows_by_split"][split] += 1
+            continue
+        value = exact_value_payload(row)
+        if not value:
+            excluded["projection_missing_rows_by_split"][split] += 1
+            continue
+        target = exact_projection_value(value, projection_id)
+        if target is None:
+            excluded["projection_missing_rows_by_split"][split] += 1
+            continue
+
+        feature_groups = exact_projection_ablation_feature_groups(row)
+        if feature_groups is None:
+            excluded["ablation_feature_missing_rows_by_split"][split] += 1
+            continue
+
+        examples.append(
+            {
+                "row_id": str(row.get("row_id")),
+                "split": split,
+                "target": target,
+                "feature_groups": feature_groups,
+            }
+        )
+    return examples, {
+        key: dict(sorted(counter.items()))
+        for key, counter in excluded.items()
+        if counter
+    }
+
+
 def exact_projection_baseline_entry(
     projection_id: str,
     examples: list[dict[str, Any]],
@@ -2560,6 +2781,93 @@ def exact_projection_baseline_entry(
                 {
                     "feature_names": list(feature_names),
                     "control_scope": control_scope,
+                    "training": {
+                        "train_split": "train",
+                        "epochs": epochs,
+                        "learning_rate": learning_rate,
+                        "l2": l2,
+                        "optimizer": "full_batch_gradient_descent",
+                        "standardization": "train_split_mean_std_except_bias",
+                        "train_label_count": len(train_labels),
+                    },
+                    "model_summary": multiclass_model_summary(model),
+                },
+            )
+        )
+
+    return {
+        "projection_id": projection_id,
+        "status": "evaluated",
+        "target": exact_projection_definition_target(projection_id),
+        "included_target_count": len(examples),
+        "excluded_from_target_metrics": excluded,
+        "target_label_count": len(target_labels),
+        "target_counts": dict(sorted(Counter(example["target"] for example in examples).items())),
+        "train_label_count": len(train_labels),
+        "train_labels": list(train_labels),
+        "train_majority_prediction": majority_prediction,
+        "unseen_labels_by_split": unseen_labels_by_split(examples, set(train_labels)),
+        "predictors": predictors,
+    }
+
+
+def exact_projection_ablation_entry(
+    projection_id: str,
+    examples: list[dict[str, Any]],
+    excluded: dict[str, dict[str, int]],
+    epochs: int,
+    learning_rate: float,
+    l2: float,
+) -> dict[str, Any]:
+    train_examples = [example for example in examples if example["split"] == "train"]
+    if not train_examples:
+        return {
+            "projection_id": projection_id,
+            "status": "no_train_support",
+            "included_target_count": len(examples),
+            "excluded_from_target_metrics": excluded,
+        }
+
+    target_labels = tuple(sorted({example["target"] for example in examples}))
+    train_labels = tuple(sorted({example["target"] for example in train_examples}))
+    train_targets = [example["target"] for example in train_examples]
+    majority_prediction = _majority_label(train_targets)
+    predictors = [
+        exact_projection_predictor_report(
+            "train_majority",
+            "Predicts the most common train target for every row.",
+            examples,
+            [majority_prediction for _example in examples],
+            target_labels,
+            {"train_majority_prediction": majority_prediction},
+        )
+    ]
+
+    for group in EXACT_PROJECTION_ABLATION_FEATURE_GROUPS:
+        group_id = str(group["feature_group_id"])
+        model = train_multiclass_logistic_probe(
+            [example["feature_groups"][group_id] for example in train_examples],
+            train_targets,
+            labels=train_labels,
+            epochs=epochs,
+            learning_rate=learning_rate,
+            l2=l2,
+        )
+        predictions = [
+            multiclass_logistic_predict(model, example["feature_groups"][group_id])
+            for example in examples
+        ]
+        predictors.append(
+            exact_projection_predictor_report(
+                f"{group_id}_multiclass_logistic_probe",
+                "Small deterministic multiclass logistic probe trained on one feature group.",
+                examples,
+                predictions,
+                target_labels,
+                {
+                    "feature_group_id": group_id,
+                    "feature_names": list(group["feature_names"]),
+                    "control_scope": str(group["control_scope"]),
                     "training": {
                         "train_split": "train",
                         "epochs": epochs,
@@ -2776,7 +3084,7 @@ def fen_material_probe_features(row: dict[str, Any]) -> list[float] | None:
     ]
 
 
-def signature_metadata_probe_features(row: dict[str, Any]) -> list[float] | None:
+def signature_metadata_probe_parts(row: dict[str, Any]) -> dict[str, Any] | None:
     value = exact_value_payload(row)
     fen_features = fen_material_probe_features(row)
     if fen_features is None or not value:
@@ -2800,23 +3108,122 @@ def signature_metadata_probe_features(row: dict[str, Any]) -> list[float] | None
 
     total_white_moves = left_moves["white"] + right_moves["white"]
     total_black_moves = left_moves["black"] + right_moves["black"]
+    return {
+        "fen_material": fen_features,
+        "left_component_material": float(left_material),
+        "right_component_material": float(right_material),
+        "net_component_material": float(left_material + right_material),
+        "left_white_local_moves": float(left_moves["white"]),
+        "left_black_local_moves": float(left_moves["black"]),
+        "right_white_local_moves": float(right_moves["white"]),
+        "right_black_local_moves": float(right_moves["black"]),
+        "total_white_local_moves": float(total_white_moves),
+        "total_black_local_moves": float(total_black_moves),
+        "component_local_move_imbalance": float(
+            parse_int_metadata(value.get("component_local_move_imbalance")) or 0
+        ),
+        "component_recursive_total_nodes": float(
+            parse_int_metadata(value.get("component_recursive_total_nodes")) or 0
+        ),
+        "total_recursive_nodes": float(
+            parse_int_metadata(value.get("total_recursive_nodes")) or 0
+        ),
+        "left_profile_index": float(
+            parse_int_metadata(value.get("left_profile_index")) or 0
+        ),
+        "right_profile_index": float(
+            parse_int_metadata(value.get("right_profile_index")) or 0
+        ),
+    }
+
+
+def signature_metadata_probe_features(row: dict[str, Any]) -> list[float] | None:
+    parts = signature_metadata_probe_parts(row)
+    if parts is None:
+        return None
     return [
-        *fen_features,
-        float(left_material),
-        float(right_material),
-        float(left_material + right_material),
-        float(left_moves["white"]),
-        float(left_moves["black"]),
-        float(right_moves["white"]),
-        float(right_moves["black"]),
-        float(total_white_moves),
-        float(total_black_moves),
-        float(parse_int_metadata(value.get("component_local_move_imbalance")) or 0),
-        float(parse_int_metadata(value.get("component_recursive_total_nodes")) or 0),
-        float(parse_int_metadata(value.get("total_recursive_nodes")) or 0),
-        float(parse_int_metadata(value.get("left_profile_index")) or 0),
-        float(parse_int_metadata(value.get("right_profile_index")) or 0),
+        *parts["fen_material"],
+        parts["left_component_material"],
+        parts["right_component_material"],
+        parts["net_component_material"],
+        parts["left_white_local_moves"],
+        parts["left_black_local_moves"],
+        parts["right_white_local_moves"],
+        parts["right_black_local_moves"],
+        parts["total_white_local_moves"],
+        parts["total_black_local_moves"],
+        parts["component_local_move_imbalance"],
+        parts["component_recursive_total_nodes"],
+        parts["total_recursive_nodes"],
+        parts["left_profile_index"],
+        parts["right_profile_index"],
     ]
+
+
+def exact_projection_ablation_feature_groups(
+    row: dict[str, Any],
+) -> dict[str, list[float]] | None:
+    parts = signature_metadata_probe_parts(row)
+    if parts is None:
+        return None
+
+    component_material = [
+        1.0,
+        parts["left_component_material"],
+        parts["right_component_material"],
+        parts["net_component_material"],
+    ]
+    component_mobility = [
+        1.0,
+        parts["left_white_local_moves"],
+        parts["left_black_local_moves"],
+        parts["right_white_local_moves"],
+        parts["right_black_local_moves"],
+        parts["total_white_local_moves"],
+        parts["total_black_local_moves"],
+        parts["component_local_move_imbalance"],
+    ]
+    component_nodes = [
+        1.0,
+        parts["component_recursive_total_nodes"],
+        parts["total_recursive_nodes"],
+    ]
+    component_profile_indices = [
+        1.0,
+        parts["left_profile_index"],
+        parts["right_profile_index"],
+    ]
+    component_material_mobility = [
+        *component_material,
+        *component_mobility[1:],
+    ]
+    component_metadata_no_fen_no_profile = [
+        *component_material_mobility,
+        *component_nodes[1:],
+    ]
+    component_metadata_no_fen_full = [
+        *component_metadata_no_fen_no_profile,
+        *component_profile_indices[1:],
+    ]
+    signature_metadata_no_profile = [
+        *parts["fen_material"],
+        *component_metadata_no_fen_no_profile[1:],
+    ]
+    return {
+        "fen_material": list(parts["fen_material"]),
+        "component_material": component_material,
+        "component_mobility": component_mobility,
+        "component_nodes": component_nodes,
+        "component_profile_indices": component_profile_indices,
+        "component_material_mobility": component_material_mobility,
+        "component_metadata_no_fen_no_profile": component_metadata_no_fen_no_profile,
+        "component_metadata_no_fen_full": component_metadata_no_fen_full,
+        "signature_metadata_no_profile": signature_metadata_no_profile,
+        "signature_metadata_full": [
+            *parts["fen_material"],
+            *component_metadata_no_fen_full[1:],
+        ],
+    }
 
 
 def signature_metadata_feature_key(value: dict[str, Any]) -> str:
@@ -4796,6 +5203,53 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the topology-balanced baseline report JSON.",
     )
 
+    exact_projection_topology_ablation_parser = subcommands.add_parser(
+        "exact-projection-topology-balanced-ablation-report",
+        help="Score feature-group ablations for exact projections on a topology-balanced split.",
+    )
+    exact_projection_topology_ablation_parser.add_argument("jsonl_path", type=Path)
+    exact_projection_topology_ablation_parser.add_argument(
+        "--target-projection",
+        action="append",
+        choices=tuple(
+            definition["projection_id"]
+            for definition in EXACT_SIGNATURE_TARGET_PROJECTIONS
+        ),
+        help=(
+            "Projection id to score. Repeat for multiple projections. "
+            "Defaults to compact Wave 53 targets."
+        ),
+    )
+    exact_projection_topology_ablation_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for ordering rows within each topology.",
+    )
+    exact_projection_topology_ablation_parser.add_argument(
+        "--epochs",
+        type=int,
+        default=1000,
+        help="Training epochs for multiclass logistic probes.",
+    )
+    exact_projection_topology_ablation_parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=0.05,
+        help="Learning rate for multiclass logistic probes.",
+    )
+    exact_projection_topology_ablation_parser.add_argument(
+        "--l2",
+        type=float,
+        default=0.001,
+        help="L2 regularization for multiclass logistic probes.",
+    )
+    exact_projection_topology_ablation_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the topology-balanced ablation report JSON.",
+    )
+
     heuristic_signature_promotion_parser = subcommands.add_parser(
         "heuristic-signature-promotion-report",
         help="Audit heuristic signature rows for promotion readiness and blockers.",
@@ -5084,6 +5538,24 @@ def cli_main(argv: list[str] | None = None) -> int:
 
     if args.command == "exact-projection-topology-balanced-baseline-report":
         report = evaluate_exact_projection_topology_balanced_baseline_report(
+            args.jsonl_path,
+            target_projections=args.target_projection,
+            split_key_mode=args.split_key_mode,
+            epochs=args.epochs,
+            learning_rate=args.learning_rate,
+            l2=args.l2,
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+
+    if args.command == "exact-projection-topology-balanced-ablation-report":
+        report = evaluate_exact_projection_topology_balanced_ablation_report(
             args.jsonl_path,
             target_projections=args.target_projection,
             split_key_mode=args.split_key_mode,
