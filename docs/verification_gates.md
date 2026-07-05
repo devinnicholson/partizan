@@ -557,6 +557,15 @@ projection has a small test lift for the FEN/material logistic probe, but dev is
 weaker than majority and test support is only 10 rows, so it remains tentative
 baseline evidence.
 
+Wave 56 adds an expanded mixed-hook source diagnostic:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-expanded-mixed-hook-upper-bound --rows-per-family 50`.
+The diagnostic command is separate from the existing exact-shard generator. It
+raises left/right unique component-value counts to 125/226 and selects 112 rows
+at rpf50 with topology counts 37/38/37. That is a small gain over Wave 55's 109
+selected rows, but it is still below the 150-row target. This source must remain
+diagnostic-only until a later source reaches rpf50 and then passes materialized
+schema, replay, split, projection, and baseline gates.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -581,6 +590,6 @@ does not raise that ceiling. Wave 51 breaks the ceiling with mixed-color hooks,
 Wave 52 materializes and audits the rpf20 mixed-hook exact shard, Wave 53
 selects compact exact projections, Wave 54 shows the first compact baselines are
 a topology no-go plus a material-control result, and Wave 55 expands exact
-support to rpf36 while exposing rpf50 as source-limited. The active gate is a
-new source expansion or stronger OOD ablation before any learned structure
-claim.
+support to rpf36 while exposing rpf50 as source-limited. Wave 56's expanded
+mixed-hook source remains below rpf50. The active gate is a materially different
+source family or stronger OOD ablation before any learned structure claim.

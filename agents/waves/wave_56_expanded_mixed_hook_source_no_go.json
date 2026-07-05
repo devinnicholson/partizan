@@ -1,0 +1,102 @@
+{
+  "wave_id": "wave_56_expanded_mixed_hook_source_no_go",
+  "objective": "Test an expanded mixed-hook source for rpf50 support and record whether it solves the Wave 55 source-capacity blocker.",
+  "non_negotiables": [
+    "The existing mixed-hook exact shard commands must remain stable.",
+    "The expanded source is diagnostic-only unless it reaches rpf50 support and then passes materialization, replay, split, projection, and baseline gates.",
+    "Any support increase below rpf50 must be recorded as a no-go rather than promoted.",
+    "Source-capacity claims must report unique left/right component value counts and selected rows by topology."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w56_astralbase_expanded_mixed_hook_source"
+      ]
+    },
+    {
+      "parallel": [
+        "w56_partizan_record_no_go"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w56_astralbase_expanded_mixed_hook_source",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs",
+        "../partizan/docs/signature_target_mixed_hook_expanded_source_wave_56_rpf50_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add an expanded mixed-hook support diagnostic command and test whether it clears rpf50.",
+      "outputs": [
+        "--generated-depth-two-value-unique-signature-expanded-mixed-hook-upper-bound [--rows-per-family N]",
+        "rpf50 expanded-source support report",
+        "Focused regression test"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test --quiet expanded_mixed_hook_upper_bound_is_diagnostic_only",
+        "cargo test --quiet",
+        "cargo run --quiet -- --generated-depth-two-value-unique-signature-expanded-mixed-hook-upper-bound --rows-per-family 50 > ../partizan/docs/signature_target_mixed_hook_expanded_source_wave_56_rpf50_report.json",
+        "shasum -a 256 ../partizan/docs/signature_target_mixed_hook_expanded_source_wave_56_rpf50_report.json"
+      ],
+      "acceptance": [
+        "The new diagnostic command is separate from the existing mixed-hook exact shard command.",
+        "rpf1 regression reports 125 left and 226 right unique component value digests.",
+        "rpf50 report is recorded and interpreted as no-go unless it reaches 150 selected rows."
+      ]
+    },
+    {
+      "id": "w56_partizan_record_no_go",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_56_expanded_mixed_hook_source_no_go.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "docs/signature_target_mixed_hook_expanded_source_wave_56_rpf50_report.json"
+      ],
+      "depends_on": [
+        "w56_astralbase_expanded_mixed_hook_source"
+      ],
+      "prompt": "Record Wave 56 as a source-expansion no-go and route the next wave to a stronger source family or split/ablation design.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_56_expanded_mixed_hook_source_no_go.json",
+        "jq empty docs/signature_target_mixed_hook_expanded_source_wave_56_rpf50_report.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that expanded mixed hooks improve selected rpf50 rows from 109 to 112 but remain below 150.",
+        "Docs keep rpf50 promotion blocked.",
+        "Docs route next work to materially new source families or stronger ablations.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_56_expanded_mixed_hook_source_no_go.json",
+      "success_signal": "The Wave 56 plan is internally consistent."
+    },
+    {
+      "id": "expanded_source_report_validates",
+      "command": "jq empty docs/signature_target_mixed_hook_expanded_source_wave_56_rpf50_report.json",
+      "success_signal": "The expanded mixed-hook report is well-formed."
+    }
+  ]
+}

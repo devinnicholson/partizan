@@ -19,10 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_55_mixed_hook_rpf36_exact_support_expansion.json` is the current
-execution target. It expands the mixed-hook exact shard to the largest balanced
-target currently supported by the source, then reruns replay, leakage,
-projection, and baseline gates:
+`wave_56_expanded_mixed_hook_source_no_go.json` is the current execution
+target. It tests a larger mixed-hook source against the rpf50 blocker and
+records the result as diagnostic-only unless it reaches full rpf50 support:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -46,6 +45,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> compact exact-projection learned baselines
                              -> exact support expansion + ablation design
                              -> source-capacity expansion or stronger OOD splits
+                             -> expanded source no-go / next source design
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
