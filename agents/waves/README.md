@@ -19,16 +19,15 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_35_edge_ladder_profile_supply.json` is the current execution target. It
-tests whether a low-node edge/minor ladder profile source creates fresh
-component-value supply, and records the result as a no-go if the combined
-source still cannot increase selected leakage-clean rows:
+`wave_36_duplicate_profile_clusters.json` is the current execution target. It
+tests whether duplicate depth-two component value digests hide distinct
+material and local-mobility signatures that could justify a versioned richer
+agency/value target:
 
 ```text
-depth-two profile bottleneck -> edge-ladder source inventory
-                             -> combined-source clean search
-                             -> support/rejection report
-                             -> next diversity strategy constraint
+depth-two profile bottleneck -> duplicate-cluster report
+                             -> material/mobility signatures
+                             -> value-grammar decision gate
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

@@ -304,6 +304,17 @@ materialization and 7 materialization failures. Future supply work should not
 repeat edge-ladder or simple square-shift variants unless it demonstrates lower
 component-value reuse pressure or materially higher selected clean support.
 
+Wave 36 adds a duplicate-cluster diagnostic:
+`cargo run --quiet -- --generated-depth-two-duplicate-clusters`. It groups
+budget-safe corner-plus-edge profiles by depth-two value digest and reports
+bounded material/local-move signatures for the largest duplicate clusters. The
+current report shows 254 white budget-safe profiles collapsing to 15 value
+digests and 517 black budget-safe profiles collapsing to 14 value digests. The
+largest duplicate clusters contain multiple distinct mobility signatures, so a
+future richer target may be justified, but those signatures are not labels until
+a versioned value rule, replay semantics, split rules, and baselines are
+defined.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded

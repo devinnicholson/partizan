@@ -1,0 +1,100 @@
+{
+  "wave_id": "wave_36_duplicate_profile_clusters",
+  "objective": "Determine whether duplicate depth-two component value digests hide distinct material and local-mobility signatures that could justify a versioned richer agency/value target.",
+  "non_negotiables": [
+    "Do not promote a new clean composition shard from a duplicate-cluster diagnostic.",
+    "Do not claim decomposition-benefit model evidence from profile diagnostics alone.",
+    "Keep Wave 18, Wave 22, and Wave 27 shard hashes stable.",
+    "Any next value-rule proposal must be versioned and must state split semantics before it is used for model claims."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w36_astralbase_duplicate_cluster_report"
+      ]
+    },
+    {
+      "parallel": [
+        "w37_partizan_duplicate_cluster_evidence"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w36_astralbase_duplicate_cluster_report",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add a bounded duplicate-cluster report for the corner-plus-edge profile source. Group budget-safe profiles by depth-two value digest, count duplicate clusters, and expose representative material/local-move signatures without changing shard output.",
+      "outputs": [
+        "Duplicate-cluster CLI report",
+        "Regression test pinning aggregate collapse counts",
+        "Stable Wave 18, Wave 22, and Wave 27 shard hashes"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo run --quiet -- --generated-depth-two-duplicate-clusters > /tmp/astralbase-duplicate-clusters.json",
+        "shasum -a 256 /tmp/astralbase-duplicate-clusters.json"
+      ],
+      "acceptance": [
+        "Report exposes budget-safe profile counts, unique digest counts, duplicate cluster counts, and representative signatures.",
+        "Report shows whether duplicate value digests hide distinct material/local-move signatures.",
+        "No default shard command output changes."
+      ]
+    },
+    {
+      "id": "w37_partizan_duplicate_cluster_evidence",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_duplicate_clusters_wave_36_report.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/wave_36_duplicate_profile_clusters.json"
+      ],
+      "depends_on": [
+        "w36_astralbase_duplicate_cluster_report"
+      ],
+      "prompt": "Record the duplicate-cluster report and update the claim ledger. If duplicate digests hide distinct material/local-move signatures, constrain the next wave toward a versioned richer target rather than another square-source variant.",
+      "outputs": [
+        "Wave 36 duplicate-cluster report",
+        "Experiment matrix row with report hash and aggregate counts",
+        "Claim and verification-gate updates"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-duplicate-clusters > docs/non_fixture_composition_duplicate_clusters_wave_36_report.json",
+        "jq empty docs/non_fixture_composition_duplicate_clusters_wave_36_report.json",
+        "shasum -a 256 docs/non_fixture_composition_duplicate_clusters_wave_36_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_36_duplicate_profile_clusters.json",
+        "python3 engine/test.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Docs state that 254 white profiles collapse to 15 digests and 517 black profiles collapse to 14 digests.",
+        "Docs state that the largest white and black clusters contain distinct mobility signatures.",
+        "Docs require a versioned richer target before treating these signatures as supervision."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_36_duplicate_profile_clusters.json",
+      "success_signal": "The Wave 36 plan is internally consistent."
+    },
+    {
+      "id": "duplicate_cluster_report_gate",
+      "command": "jq empty docs/non_fixture_composition_duplicate_clusters_wave_36_report.json",
+      "success_signal": "The Wave 36 duplicate-cluster report is valid JSON."
+    }
+  ]
+}

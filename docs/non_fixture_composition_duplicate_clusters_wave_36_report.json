@@ -1,0 +1,1136 @@
+{
+  "source": "corner_plus_edge_minor_ladder_v0",
+  "white": {
+    "pattern_count": 901,
+    "wall_safe_pattern_count": 262,
+    "budget_profile_count": 254,
+    "unique_value_digest_count": 15,
+    "duplicate_cluster_count": 12,
+    "duplicate_profile_count": 251,
+    "rejection_counts": {
+      "component_recursive_node_budget": 8,
+      "wall_safety": 639
+    },
+    "clusters": [
+      {
+        "value_digest": "60ebee880a925aa7",
+        "profile_count": 45,
+        "distinct_signature_count": 8,
+        "signatures": [
+          "material:7,moves:white:13,black:0",
+          "material:7,moves:white:2,black:0",
+          "material:7,moves:white:3,black:0",
+          "material:7,moves:white:4,black:0",
+          "material:7,moves:white:5,black:0",
+          "material:7,moves:white:6,black:0",
+          "material:7,moves:white:7,black:0",
+          "material:7,moves:white:8,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1B,a2B,b2P",
+            "material_balance": 7,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 30
+          },
+          {
+            "active_pieces": "a1B,a2N,b2P",
+            "material_balance": 7,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 32
+          },
+          {
+            "active_pieces": "a1B,a2P,b2N",
+            "material_balance": 7,
+            "local_move_counts": "white:4,black:0",
+            "recursive_nodes": 25
+          },
+          {
+            "active_pieces": "a1B,b1B,b2P",
+            "material_balance": 7,
+            "local_move_counts": "white:4,black:0",
+            "recursive_nodes": 25
+          },
+          {
+            "active_pieces": "a1B,b2N,a3P",
+            "material_balance": 7,
+            "local_move_counts": "white:3,black:0",
+            "recursive_nodes": 18
+          }
+        ]
+      },
+      {
+        "value_digest": "2b525ca581b1d3e9",
+        "profile_count": 43,
+        "distinct_signature_count": 11,
+        "signatures": [
+          "material:9,moves:white:10,black:0",
+          "material:9,moves:white:11,black:0",
+          "material:9,moves:white:12,black:0",
+          "material:9,moves:white:13,black:0",
+          "material:9,moves:white:3,black:0",
+          "material:9,moves:white:4,black:0",
+          "material:9,moves:white:5,black:0",
+          "material:9,moves:white:6,black:0",
+          "material:9,moves:white:7,black:0",
+          "material:9,moves:white:8,black:0",
+          "material:9,moves:white:9,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1B,a2B,b2N",
+            "material_balance": 9,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 38
+          },
+          {
+            "active_pieces": "a1B,a2N,b2N",
+            "material_balance": 9,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 40
+          },
+          {
+            "active_pieces": "a1B,b1B,b2N",
+            "material_balance": 9,
+            "local_move_counts": "white:4,black:0",
+            "recursive_nodes": 31
+          },
+          {
+            "active_pieces": "a1B,b1R,b2P",
+            "material_balance": 9,
+            "local_move_counts": "white:3,black:0",
+            "recursive_nodes": 25
+          },
+          {
+            "active_pieces": "a1B,b2N,a3N",
+            "material_balance": 9,
+            "local_move_counts": "white:6,black:0",
+            "recursive_nodes": 43
+          }
+        ]
+      },
+      {
+        "value_digest": "b1231ce80334616e",
+        "profile_count": 31,
+        "distinct_signature_count": 8,
+        "signatures": [
+          "material:6,moves:white:10,black:0",
+          "material:6,moves:white:11,black:0",
+          "material:6,moves:white:2,black:0",
+          "material:6,moves:white:3,black:0",
+          "material:6,moves:white:4,black:0",
+          "material:6,moves:white:5,black:0",
+          "material:6,moves:white:6,black:0",
+          "material:6,moves:white:7,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1B,a2P,b2P,c2P",
+            "material_balance": 6,
+            "local_move_counts": "white:6,black:0",
+            "recursive_nodes": 41
+          },
+          {
+            "active_pieces": "a1B,b2N",
+            "material_balance": 6,
+            "local_move_counts": "white:2,black:0",
+            "recursive_nodes": 15
+          },
+          {
+            "active_pieces": "a1N,a2B",
+            "material_balance": 6,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 32
+          },
+          {
+            "active_pieces": "a1N,a2N",
+            "material_balance": 6,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 35
+          },
+          {
+            "active_pieces": "a1N,a2P,a3N",
+            "material_balance": 6,
+            "local_move_counts": "white:6,black:0",
+            "recursive_nodes": 39
+          }
+        ]
+      },
+      {
+        "value_digest": "bb06b4d7aadc8eac",
+        "profile_count": 29,
+        "distinct_signature_count": 6,
+        "signatures": [
+          "material:4,moves:white:1,black:0",
+          "material:4,moves:white:2,black:0",
+          "material:4,moves:white:3,black:0",
+          "material:4,moves:white:4,black:0",
+          "material:4,moves:white:5,black:0",
+          "material:4,moves:white:6,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1B,b2P",
+            "material_balance": 4,
+            "local_move_counts": "white:2,black:0",
+            "recursive_nodes": 9
+          },
+          {
+            "active_pieces": "a1B,b2P,b3P",
+            "material_balance": 4,
+            "local_move_counts": "white:1,black:0",
+            "recursive_nodes": 3
+          },
+          {
+            "active_pieces": "a1N,a2P",
+            "material_balance": 4,
+            "local_move_counts": "white:4,black:0",
+            "recursive_nodes": 22
+          },
+          {
+            "active_pieces": "a1N,a2P,a3P",
+            "material_balance": 4,
+            "local_move_counts": "white:3,black:0",
+            "recursive_nodes": 15
+          },
+          {
+            "active_pieces": "a1N,a3P",
+            "material_balance": 4,
+            "local_move_counts": "white:3,black:0",
+            "recursive_nodes": 15
+          }
+        ]
+      },
+      {
+        "value_digest": "dd20db8dbb70dbf2",
+        "profile_count": 22,
+        "distinct_signature_count": 10,
+        "signatures": [
+          "material:11,moves:white:10,black:0",
+          "material:11,moves:white:11,black:0",
+          "material:11,moves:white:12,black:0",
+          "material:11,moves:white:13,black:0",
+          "material:11,moves:white:3,black:0",
+          "material:11,moves:white:4,black:0",
+          "material:11,moves:white:5,black:0",
+          "material:11,moves:white:6,black:0",
+          "material:11,moves:white:7,black:0",
+          "material:11,moves:white:9,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1B,b1R,b2N",
+            "material_balance": 11,
+            "local_move_counts": "white:3,black:0",
+            "recursive_nodes": 42
+          },
+          {
+            "active_pieces": "a1N,b1R,a2B",
+            "material_balance": 11,
+            "local_move_counts": "white:12,black:0",
+            "recursive_nodes": 162
+          },
+          {
+            "active_pieces": "a1N,b1R,a2N",
+            "material_balance": 11,
+            "local_move_counts": "white:13,black:0",
+            "recursive_nodes": 179
+          },
+          {
+            "active_pieces": "a1N,b1R,a3N",
+            "material_balance": 11,
+            "local_move_counts": "white:13,black:0",
+            "recursive_nodes": 188
+          },
+          {
+            "active_pieces": "a1N,b1R,b2N",
+            "material_balance": 11,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 61
+          }
+        ]
+      },
+      {
+        "value_digest": "ff2112cc9065eec0",
+        "profile_count": 19,
+        "distinct_signature_count": 8,
+        "signatures": [
+          "material:13,moves:white:10,black:0",
+          "material:13,moves:white:11,black:0",
+          "material:13,moves:white:12,black:0",
+          "material:13,moves:white:13,black:0",
+          "material:13,moves:white:5,black:0",
+          "material:13,moves:white:6,black:0",
+          "material:13,moves:white:7,black:0",
+          "material:13,moves:white:9,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1B,b1Q,b2P",
+            "material_balance": 13,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 54
+          },
+          {
+            "active_pieces": "a1N,b1Q,a2P",
+            "material_balance": 13,
+            "local_move_counts": "white:13,black:0",
+            "recursive_nodes": 205
+          },
+          {
+            "active_pieces": "a1N,b1Q,a3P",
+            "material_balance": 13,
+            "local_move_counts": "white:13,black:0",
+            "recursive_nodes": 189
+          },
+          {
+            "active_pieces": "a1N,b1Q,b2P",
+            "material_balance": 13,
+            "local_move_counts": "white:7,black:0",
+            "recursive_nodes": 76
+          },
+          {
+            "active_pieces": "a1N,b1Q,b3P",
+            "material_balance": 13,
+            "local_move_counts": "white:6,black:0",
+            "recursive_nodes": 65
+          }
+        ]
+      },
+      {
+        "value_digest": "d9efe6ea0eb7c325",
+        "profile_count": 15,
+        "distinct_signature_count": 4,
+        "signatures": [
+          "material:5,moves:white:3,black:0",
+          "material:5,moves:white:4,black:0",
+          "material:5,moves:white:5,black:0",
+          "material:5,moves:white:6,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1B,a2P,b2P",
+            "material_balance": 5,
+            "local_move_counts": "white:4,black:0",
+            "recursive_nodes": 21
+          },
+          {
+            "active_pieces": "a1B,b2P,a3P",
+            "material_balance": 5,
+            "local_move_counts": "white:3,black:0",
+            "recursive_nodes": 15
+          },
+          {
+            "active_pieces": "a1B,b2P,c2P",
+            "material_balance": 5,
+            "local_move_counts": "white:4,black:0",
+            "recursive_nodes": 21
+          },
+          {
+            "active_pieces": "a1N,a2P,b2P",
+            "material_balance": 5,
+            "local_move_counts": "white:6,black:0",
+            "recursive_nodes": 39
+          },
+          {
+            "active_pieces": "a1N,a2P,b3P",
+            "material_balance": 5,
+            "local_move_counts": "white:4,black:0",
+            "recursive_nodes": 22
+          }
+        ]
+      },
+      {
+        "value_digest": "986f5c6b25e8d086",
+        "profile_count": 13,
+        "distinct_signature_count": 8,
+        "signatures": [
+          "material:15,moves:white:10,black:0",
+          "material:15,moves:white:11,black:0",
+          "material:15,moves:white:12,black:0",
+          "material:15,moves:white:13,black:0",
+          "material:15,moves:white:5,black:0",
+          "material:15,moves:white:6,black:0",
+          "material:15,moves:white:7,black:0",
+          "material:15,moves:white:9,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1B,b1Q,b2N",
+            "material_balance": 15,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 71
+          },
+          {
+            "active_pieces": "a1N,b1Q,a2B",
+            "material_balance": 15,
+            "local_move_counts": "white:13,black:0",
+            "recursive_nodes": 209
+          },
+          {
+            "active_pieces": "a1N,b1Q,b2N",
+            "material_balance": 15,
+            "local_move_counts": "white:7,black:0",
+            "recursive_nodes": 96
+          },
+          {
+            "active_pieces": "a1Q,a2B,b2N",
+            "material_balance": 15,
+            "local_move_counts": "white:7,black:0",
+            "recursive_nodes": 90
+          },
+          {
+            "active_pieces": "a1Q,a2N,b2N",
+            "material_balance": 15,
+            "local_move_counts": "white:7,black:0",
+            "recursive_nodes": 93
+          }
+        ]
+      },
+      {
+        "value_digest": "d872e10a5dd78aa0",
+        "profile_count": 13,
+        "distinct_signature_count": 9,
+        "signatures": [
+          "material:8,moves:white:10,black:0",
+          "material:8,moves:white:11,black:0",
+          "material:8,moves:white:12,black:0",
+          "material:8,moves:white:4,black:0",
+          "material:8,moves:white:5,black:0",
+          "material:8,moves:white:6,black:0",
+          "material:8,moves:white:7,black:0",
+          "material:8,moves:white:8,black:0",
+          "material:8,moves:white:9,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1N,b1B,a2P,c2P",
+            "material_balance": 8,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 36
+          },
+          {
+            "active_pieces": "a1N,b1R",
+            "material_balance": 8,
+            "local_move_counts": "white:10,black:0",
+            "recursive_nodes": 116
+          },
+          {
+            "active_pieces": "a1R,a2B",
+            "material_balance": 8,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 64
+          },
+          {
+            "active_pieces": "a1R,a2N",
+            "material_balance": 8,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 65
+          },
+          {
+            "active_pieces": "a1R,a2P,a3N",
+            "material_balance": 8,
+            "local_move_counts": "white:6,black:0",
+            "recursive_nodes": 50
+          }
+        ]
+      },
+      {
+        "value_digest": "999c2d34dcc0a10b",
+        "profile_count": 9,
+        "distinct_signature_count": 6,
+        "signatures": [
+          "material:10,moves:white:10,black:0",
+          "material:10,moves:white:11,black:0",
+          "material:10,moves:white:12,black:0",
+          "material:10,moves:white:4,black:0",
+          "material:10,moves:white:5,black:0",
+          "material:10,moves:white:6,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1Q,b2P",
+            "material_balance": 10,
+            "local_move_counts": "white:11,black:0",
+            "recursive_nodes": 150
+          },
+          {
+            "active_pieces": "a1Q,b2P,b3P",
+            "material_balance": 10,
+            "local_move_counts": "white:10,black:0",
+            "recursive_nodes": 120
+          },
+          {
+            "active_pieces": "a1R,b1B,a2P,c2P",
+            "material_balance": 10,
+            "local_move_counts": "white:4,black:0",
+            "recursive_nodes": 24
+          },
+          {
+            "active_pieces": "a1R,b1B,a3P,b3P",
+            "material_balance": 10,
+            "local_move_counts": "white:5,black:0",
+            "recursive_nodes": 34
+          },
+          {
+            "active_pieces": "b1Q,a2P",
+            "material_balance": 10,
+            "local_move_counts": "white:12,black:0",
+            "recursive_nodes": 170
+          }
+        ]
+      },
+      {
+        "value_digest": "a56b7865290bf909",
+        "profile_count": 7,
+        "distinct_signature_count": 5,
+        "signatures": [
+          "material:12,moves:white:11,black:0",
+          "material:12,moves:white:12,black:0",
+          "material:12,moves:white:13,black:0",
+          "material:12,moves:white:14,black:0",
+          "material:12,moves:white:6,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1N,b1Q",
+            "material_balance": 12,
+            "local_move_counts": "white:12,black:0",
+            "recursive_nodes": 174
+          },
+          {
+            "active_pieces": "a1Q,b2N",
+            "material_balance": 12,
+            "local_move_counts": "white:11,black:0",
+            "recursive_nodes": 150
+          },
+          {
+            "active_pieces": "a1R,b1R,a2P,c2P",
+            "material_balance": 12,
+            "local_move_counts": "white:12,black:0",
+            "recursive_nodes": 169
+          },
+          {
+            "active_pieces": "b1Q,a2B",
+            "material_balance": 12,
+            "local_move_counts": "white:12,black:0",
+            "recursive_nodes": 178
+          },
+          {
+            "active_pieces": "b1Q,a2N",
+            "material_balance": 12,
+            "local_move_counts": "white:13,black:0",
+            "recursive_nodes": 191
+          }
+        ]
+      },
+      {
+        "value_digest": "33612fded7c41844",
+        "profile_count": 5,
+        "distinct_signature_count": 4,
+        "signatures": [
+          "material:17,moves:white:10,black:0",
+          "material:17,moves:white:11,black:0",
+          "material:17,moves:white:12,black:0",
+          "material:17,moves:white:7,black:0"
+        ],
+        "examples": [
+          {
+            "active_pieces": "a1Q,b1R,a2P,b2P,c2P",
+            "material_balance": 17,
+            "local_move_counts": "white:7,black:0",
+            "recursive_nodes": 62
+          },
+          {
+            "active_pieces": "a1Q,b1R,b2N",
+            "material_balance": 17,
+            "local_move_counts": "white:10,black:0",
+            "recursive_nodes": 175
+          },
+          {
+            "active_pieces": "a1R,b1Q,a2B",
+            "material_balance": 17,
+            "local_move_counts": "white:11,black:0",
+            "recursive_nodes": 197
+          },
+          {
+            "active_pieces": "a1R,b1Q,a2N",
+            "material_balance": 17,
+            "local_move_counts": "white:12,black:0",
+            "recursive_nodes": 216
+          },
+          {
+            "active_pieces": "a1R,b1Q,b2N",
+            "material_balance": 17,
+            "local_move_counts": "white:12,black:0",
+            "recursive_nodes": 203
+          }
+        ]
+      }
+    ]
+  },
+  "black": {
+    "pattern_count": 934,
+    "wall_safe_pattern_count": 623,
+    "budget_profile_count": 517,
+    "unique_value_digest_count": 14,
+    "duplicate_cluster_count": 13,
+    "duplicate_profile_count": 516,
+    "rejection_counts": {
+      "component_recursive_node_budget": 106,
+      "wall_safety": 311
+    },
+    "clusters": [
+      {
+        "value_digest": "e0a1d2f9e449e554",
+        "profile_count": 125,
+        "distinct_signature_count": 12,
+        "signatures": [
+          "material:-9,moves:white:0,black:10",
+          "material:-9,moves:white:0,black:11",
+          "material:-9,moves:white:0,black:12",
+          "material:-9,moves:white:0,black:13",
+          "material:-9,moves:white:0,black:14",
+          "material:-9,moves:white:0,black:15",
+          "material:-9,moves:white:0,black:4",
+          "material:-9,moves:white:0,black:5",
+          "material:-9,moves:white:0,black:6",
+          "material:-9,moves:white:0,black:7",
+          "material:-9,moves:white:0,black:8",
+          "material:-9,moves:white:0,black:9"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7n,f8b,g8b",
+            "material_balance": -9,
+            "local_move_counts": "white:0,black:8",
+            "recursive_nodes": 86
+          },
+          {
+            "active_pieces": "f7n,f8b,g8n",
+            "material_balance": -9,
+            "local_move_counts": "white:0,black:10",
+            "recursive_nodes": 110
+          },
+          {
+            "active_pieces": "f7n,f8b,h8b",
+            "material_balance": -9,
+            "local_move_counts": "white:0,black:9",
+            "recursive_nodes": 101
+          },
+          {
+            "active_pieces": "f7n,f8b,h8n",
+            "material_balance": -9,
+            "local_move_counts": "white:0,black:7",
+            "recursive_nodes": 72
+          },
+          {
+            "active_pieces": "f7n,g7n,f8b",
+            "material_balance": -9,
+            "local_move_counts": "white:0,black:9",
+            "recursive_nodes": 101
+          }
+        ]
+      },
+      {
+        "value_digest": "05631564af32123a",
+        "profile_count": 115,
+        "distinct_signature_count": 12,
+        "signatures": [
+          "material:-7,moves:white:0,black:10",
+          "material:-7,moves:white:0,black:11",
+          "material:-7,moves:white:0,black:12",
+          "material:-7,moves:white:0,black:13",
+          "material:-7,moves:white:0,black:14",
+          "material:-7,moves:white:0,black:3",
+          "material:-7,moves:white:0,black:4",
+          "material:-7,moves:white:0,black:5",
+          "material:-7,moves:white:0,black:6",
+          "material:-7,moves:white:0,black:7",
+          "material:-7,moves:white:0,black:8",
+          "material:-7,moves:white:0,black:9"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7n,g7n,h7p",
+            "material_balance": -7,
+            "local_move_counts": "white:0,black:10",
+            "recursive_nodes": 103
+          },
+          {
+            "active_pieces": "f7n,g7p,f8b",
+            "material_balance": -7,
+            "local_move_counts": "white:0,black:7",
+            "recursive_nodes": 60
+          },
+          {
+            "active_pieces": "f7n,g7p,g8b",
+            "material_balance": -7,
+            "local_move_counts": "white:0,black:7",
+            "recursive_nodes": 63
+          },
+          {
+            "active_pieces": "f7n,g7p,g8n",
+            "material_balance": -7,
+            "local_move_counts": "white:0,black:9",
+            "recursive_nodes": 87
+          },
+          {
+            "active_pieces": "f7n,g7p,h7n",
+            "material_balance": -7,
+            "local_move_counts": "white:0,black:9",
+            "recursive_nodes": 87
+          }
+        ]
+      },
+      {
+        "value_digest": "ae554422032926b3",
+        "profile_count": 68,
+        "distinct_signature_count": 9,
+        "signatures": [
+          "material:-6,moves:white:0,black:10",
+          "material:-6,moves:white:0,black:11",
+          "material:-6,moves:white:0,black:12",
+          "material:-6,moves:white:0,black:4",
+          "material:-6,moves:white:0,black:5",
+          "material:-6,moves:white:0,black:6",
+          "material:-6,moves:white:0,black:7",
+          "material:-6,moves:white:0,black:8",
+          "material:-6,moves:white:0,black:9"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7n,f8b",
+            "material_balance": -6,
+            "local_move_counts": "white:0,black:7",
+            "recursive_nodes": 60
+          },
+          {
+            "active_pieces": "f7n,g7n",
+            "material_balance": -6,
+            "local_move_counts": "white:0,black:8",
+            "recursive_nodes": 73
+          },
+          {
+            "active_pieces": "f7n,g8b",
+            "material_balance": -6,
+            "local_move_counts": "white:0,black:5",
+            "recursive_nodes": 41
+          },
+          {
+            "active_pieces": "f7n,g8n",
+            "material_balance": -6,
+            "local_move_counts": "white:0,black:7",
+            "recursive_nodes": 57
+          },
+          {
+            "active_pieces": "f7n,h7n",
+            "material_balance": -6,
+            "local_move_counts": "white:0,black:7",
+            "recursive_nodes": 59
+          }
+        ]
+      },
+      {
+        "value_digest": "44a7109f9920cb51",
+        "profile_count": 53,
+        "distinct_signature_count": 8,
+        "signatures": [
+          "material:-4,moves:white:0,black:1",
+          "material:-4,moves:white:0,black:2",
+          "material:-4,moves:white:0,black:3",
+          "material:-4,moves:white:0,black:4",
+          "material:-4,moves:white:0,black:5",
+          "material:-4,moves:white:0,black:6",
+          "material:-4,moves:white:0,black:7",
+          "material:-4,moves:white:0,black:8"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7n,g7p",
+            "material_balance": -4,
+            "local_move_counts": "white:0,black:6",
+            "recursive_nodes": 39
+          },
+          {
+            "active_pieces": "f7n,h7p",
+            "material_balance": -4,
+            "local_move_counts": "white:0,black:6",
+            "recursive_nodes": 37
+          },
+          {
+            "active_pieces": "f7p,f8b",
+            "material_balance": -4,
+            "local_move_counts": "white:0,black:5",
+            "recursive_nodes": 34
+          },
+          {
+            "active_pieces": "f7p,g7n",
+            "material_balance": -4,
+            "local_move_counts": "white:0,black:6",
+            "recursive_nodes": 39
+          },
+          {
+            "active_pieces": "f7p,g8b",
+            "material_balance": -4,
+            "local_move_counts": "white:0,black:3",
+            "recursive_nodes": 18
+          }
+        ]
+      },
+      {
+        "value_digest": "c7c440b1b2c7cd21",
+        "profile_count": 40,
+        "distinct_signature_count": 9,
+        "signatures": [
+          "material:-11,moves:white:0,black:10",
+          "material:-11,moves:white:0,black:11",
+          "material:-11,moves:white:0,black:12",
+          "material:-11,moves:white:0,black:13",
+          "material:-11,moves:white:0,black:14",
+          "material:-11,moves:white:0,black:6",
+          "material:-11,moves:white:0,black:7",
+          "material:-11,moves:white:0,black:8",
+          "material:-11,moves:white:0,black:9"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7n,f8r,g8b",
+            "material_balance": -11,
+            "local_move_counts": "white:0,black:6",
+            "recursive_nodes": 90
+          },
+          {
+            "active_pieces": "f7n,f8r,g8n",
+            "material_balance": -11,
+            "local_move_counts": "white:0,black:8",
+            "recursive_nodes": 114
+          },
+          {
+            "active_pieces": "f7n,f8r,h8b",
+            "material_balance": -11,
+            "local_move_counts": "white:0,black:8",
+            "recursive_nodes": 124
+          },
+          {
+            "active_pieces": "f7n,f8r,h8n",
+            "material_balance": -11,
+            "local_move_counts": "white:0,black:6",
+            "recursive_nodes": 92
+          },
+          {
+            "active_pieces": "f7n,g7n,f8r",
+            "material_balance": -11,
+            "local_move_counts": "white:0,black:11",
+            "recursive_nodes": 170
+          }
+        ]
+      },
+      {
+        "value_digest": "9be343ff64350998",
+        "profile_count": 33,
+        "distinct_signature_count": 6,
+        "signatures": [
+          "material:-5,moves:white:0,black:3",
+          "material:-5,moves:white:0,black:4",
+          "material:-5,moves:white:0,black:5",
+          "material:-5,moves:white:0,black:6",
+          "material:-5,moves:white:0,black:7",
+          "material:-5,moves:white:0,black:8"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7n,g7p,h7p",
+            "material_balance": -5,
+            "local_move_counts": "white:0,black:8",
+            "recursive_nodes": 63
+          },
+          {
+            "active_pieces": "f7p,g7n,h7p",
+            "material_balance": -5,
+            "local_move_counts": "white:0,black:8",
+            "recursive_nodes": 65
+          },
+          {
+            "active_pieces": "f7p,g7p,f8b",
+            "material_balance": -5,
+            "local_move_counts": "white:0,black:5",
+            "recursive_nodes": 34
+          },
+          {
+            "active_pieces": "f7p,g7p,g8b",
+            "material_balance": -5,
+            "local_move_counts": "white:0,black:5",
+            "recursive_nodes": 34
+          },
+          {
+            "active_pieces": "f7p,g7p,g8n",
+            "material_balance": -5,
+            "local_move_counts": "white:0,black:7",
+            "recursive_nodes": 53
+          }
+        ]
+      },
+      {
+        "value_digest": "180b3b4f81e9a743",
+        "profile_count": 26,
+        "distinct_signature_count": 7,
+        "signatures": [
+          "material:-13,moves:white:0,black:10",
+          "material:-13,moves:white:0,black:11",
+          "material:-13,moves:white:0,black:12",
+          "material:-13,moves:white:0,black:13",
+          "material:-13,moves:white:0,black:7",
+          "material:-13,moves:white:0,black:8",
+          "material:-13,moves:white:0,black:9"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7n,g7p,f8q",
+            "material_balance": -13,
+            "local_move_counts": "white:0,black:10",
+            "recursive_nodes": 156
+          },
+          {
+            "active_pieces": "f7n,g7p,g8q",
+            "material_balance": -13,
+            "local_move_counts": "white:0,black:10",
+            "recursive_nodes": 134
+          },
+          {
+            "active_pieces": "f7n,h7p,f8q",
+            "material_balance": -13,
+            "local_move_counts": "white:0,black:12",
+            "recursive_nodes": 198
+          },
+          {
+            "active_pieces": "f7n,h7p,h8q",
+            "material_balance": -13,
+            "local_move_counts": "white:0,black:11",
+            "recursive_nodes": 171
+          },
+          {
+            "active_pieces": "f7p,f8q,g8b",
+            "material_balance": -13,
+            "local_move_counts": "white:0,black:7",
+            "recursive_nodes": 97
+          }
+        ]
+      },
+      {
+        "value_digest": "88306de687f0fded",
+        "profile_count": 26,
+        "distinct_signature_count": 10,
+        "signatures": [
+          "material:-8,moves:white:0,black:10",
+          "material:-8,moves:white:0,black:11",
+          "material:-8,moves:white:0,black:12",
+          "material:-8,moves:white:0,black:13",
+          "material:-8,moves:white:0,black:14",
+          "material:-8,moves:white:0,black:5",
+          "material:-8,moves:white:0,black:6",
+          "material:-8,moves:white:0,black:7",
+          "material:-8,moves:white:0,black:8",
+          "material:-8,moves:white:0,black:9"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7n,f8r",
+            "material_balance": -8,
+            "local_move_counts": "white:0,black:7",
+            "recursive_nodes": 104
+          },
+          {
+            "active_pieces": "f7n,g8r",
+            "material_balance": -8,
+            "local_move_counts": "white:0,black:14",
+            "recursive_nodes": 193
+          },
+          {
+            "active_pieces": "f7n,h8r",
+            "material_balance": -8,
+            "local_move_counts": "white:0,black:13",
+            "recursive_nodes": 182
+          },
+          {
+            "active_pieces": "f7p,g7p,h7p,g8r",
+            "material_balance": -8,
+            "local_move_counts": "white:0,black:9",
+            "recursive_nodes": 95
+          },
+          {
+            "active_pieces": "f7p,h7p,g8b,h8n",
+            "material_balance": -8,
+            "local_move_counts": "white:0,black:5",
+            "recursive_nodes": 40
+          }
+        ]
+      },
+      {
+        "value_digest": "c66b7e75b4d9d195",
+        "profile_count": 14,
+        "distinct_signature_count": 5,
+        "signatures": [
+          "material:-15,moves:white:0,black:10",
+          "material:-15,moves:white:0,black:11",
+          "material:-15,moves:white:0,black:12",
+          "material:-15,moves:white:0,black:6",
+          "material:-15,moves:white:0,black:9"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7n,f8q,g8b",
+            "material_balance": -15,
+            "local_move_counts": "white:0,black:9",
+            "recursive_nodes": 159
+          },
+          {
+            "active_pieces": "f7n,f8q,g8n",
+            "material_balance": -15,
+            "local_move_counts": "white:0,black:11",
+            "recursive_nodes": 191
+          },
+          {
+            "active_pieces": "f7n,f8q,h8b",
+            "material_balance": -15,
+            "local_move_counts": "white:0,black:11",
+            "recursive_nodes": 194
+          },
+          {
+            "active_pieces": "f7n,f8q,h8n",
+            "material_balance": -15,
+            "local_move_counts": "white:0,black:9",
+            "recursive_nodes": 155
+          },
+          {
+            "active_pieces": "f7n,g7n,f8q",
+            "material_balance": -15,
+            "local_move_counts": "white:0,black:12",
+            "recursive_nodes": 207
+          }
+        ]
+      },
+      {
+        "value_digest": "829478f700df97e8",
+        "profile_count": 9,
+        "distinct_signature_count": 6,
+        "signatures": [
+          "material:-10,moves:white:0,black:11",
+          "material:-10,moves:white:0,black:12",
+          "material:-10,moves:white:0,black:13",
+          "material:-10,moves:white:0,black:14",
+          "material:-10,moves:white:0,black:4",
+          "material:-10,moves:white:0,black:8"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7p,f8q",
+            "material_balance": -10,
+            "local_move_counts": "white:0,black:8",
+            "recursive_nodes": 111
+          },
+          {
+            "active_pieces": "f7p,g8q",
+            "material_balance": -10,
+            "local_move_counts": "white:0,black:13",
+            "recursive_nodes": 208
+          },
+          {
+            "active_pieces": "f7p,h7p,g8b,h8r",
+            "material_balance": -10,
+            "local_move_counts": "white:0,black:4",
+            "recursive_nodes": 26
+          },
+          {
+            "active_pieces": "g6p,g7p,h8q",
+            "material_balance": -10,
+            "local_move_counts": "white:0,black:11",
+            "recursive_nodes": 150
+          },
+          {
+            "active_pieces": "g6p,h8q",
+            "material_balance": -10,
+            "local_move_counts": "white:0,black:14",
+            "recursive_nodes": 206
+          }
+        ]
+      },
+      {
+        "value_digest": "14f3ec156db6e78a",
+        "profile_count": 3,
+        "distinct_signature_count": 3,
+        "signatures": [
+          "material:-12,moves:white:0,black:10",
+          "material:-12,moves:white:0,black:11",
+          "material:-12,moves:white:0,black:9"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7n,f8q",
+            "material_balance": -12,
+            "local_move_counts": "white:0,black:10",
+            "recursive_nodes": 172
+          },
+          {
+            "active_pieces": "h6n,h8q",
+            "material_balance": -12,
+            "local_move_counts": "white:0,black:11",
+            "recursive_nodes": 197
+          },
+          {
+            "active_pieces": "h7n,h8q",
+            "material_balance": -12,
+            "local_move_counts": "white:0,black:9",
+            "recursive_nodes": 160
+          }
+        ]
+      },
+      {
+        "value_digest": "9041c3a2d07ac24e",
+        "profile_count": 2,
+        "distinct_signature_count": 2,
+        "signatures": [
+          "material:-3,moves:white:0,black:4",
+          "material:-3,moves:white:0,black:6"
+        ],
+        "examples": [
+          {
+            "active_pieces": "g6n,g7p",
+            "material_balance": -3,
+            "local_move_counts": "white:0,black:6",
+            "recursive_nodes": 29
+          },
+          {
+            "active_pieces": "h6n,h7p",
+            "material_balance": -3,
+            "local_move_counts": "white:0,black:4",
+            "recursive_nodes": 24
+          }
+        ]
+      },
+      {
+        "value_digest": "b11a21f1ea92fd1c",
+        "profile_count": 2,
+        "distinct_signature_count": 2,
+        "signatures": [
+          "material:-14,moves:white:0,black:12",
+          "material:-14,moves:white:0,black:9"
+        ],
+        "examples": [
+          {
+            "active_pieces": "f7p,g7p,g8b,h8q",
+            "material_balance": -14,
+            "local_move_counts": "white:0,black:12",
+            "recursive_nodes": 207
+          },
+          {
+            "active_pieces": "g6p,h7p,g8n,h8q",
+            "material_balance": -14,
+            "local_move_counts": "white:0,black:9",
+            "recursive_nodes": 125
+          }
+        ]
+      }
+    ]
+  }
+}
