@@ -1,0 +1,125 @@
+{
+  "wave_id": "wave_54_compact_exact_projection_baselines",
+  "objective": "Run deterministic and small learned baselines on the compact exact projections selected by Wave 53.",
+  "non_negotiables": [
+    "Baselines must use the Wave 52 exact mixed-hook shard and the same train/dev/test split.",
+    "Topology-family and net-material results must be interpreted separately: net material is a material-control target, not decomposition-aware value learning.",
+    "A learned model result must be compared against train-majority, FEN/material majority, and component-signature metadata controls.",
+    "No decomposition-benefit claim activates if topology test accuracy does not improve over the deterministic majority floor."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w54_partizan_projection_baseline_suite"
+      ]
+    },
+    {
+      "parallel": [
+        "w54_partizan_baseline_gate_analysis"
+      ]
+    },
+    {
+      "parallel": [
+        "w54_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w54_partizan_projection_baseline_suite",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py",
+        "docs/signature_target_mixed_hook_projection_baseline_wave_54_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Implement and run exact-projection baseline reports with majority, FEN/material, signature-metadata, and multiclass logistic probes.",
+      "outputs": [
+        "exact-projection-baseline-report CLI command",
+        "Wave 54 compact exact projection baseline report",
+        "Python smoke coverage for the new report"
+      ],
+      "commands": [
+        "python3 engine/ml_model.py exact-projection-baseline-report docs/signature_target_mixed_hook_exact_wave_52.jsonl --output docs/signature_target_mixed_hook_projection_baseline_wave_54_report.json",
+        "jq empty docs/signature_target_mixed_hook_projection_baseline_wave_54_report.json",
+        "shasum -a 256 docs/signature_target_mixed_hook_projection_baseline_wave_54_report.json"
+      ],
+      "acceptance": [
+        "The report covers component_topology_family and net_material_balance on 60 exact rows.",
+        "Each target reports train-majority, FEN/material majority, signature-metadata majority, FEN/material multiclass logistic, and signature-metadata multiclass logistic predictors.",
+        "The report records split metrics for train/dev/test and preserves unseen-label accounting.",
+        "The report hash is recorded in docs."
+      ]
+    },
+    {
+      "id": "w54_partizan_baseline_gate_analysis",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_mixed_hook_projection_baseline_wave_54_report.json"
+      ],
+      "depends_on": [
+        "w54_partizan_projection_baseline_suite"
+      ],
+      "prompt": "Assess whether any compact exact projection baseline clears a credible model-evidence gate.",
+      "outputs": [
+        "Wave 54 go/no-go interpretation"
+      ],
+      "commands": [
+        "jq -c '.target_projections[] | {projection:.projection_id, predictors:[.predictors[] | {id:.predictor_id, train:.split_metrics.train.accuracy, dev:.split_metrics.dev.accuracy, test:.split_metrics.test.accuracy}]}' docs/signature_target_mixed_hook_projection_baseline_wave_54_report.json"
+      ],
+      "acceptance": [
+        "component_topology_family has no test improvement over the train-majority floor of 0.2857.",
+        "net_material_balance reaches test accuracy 0.5714 under material/signature controls and is recorded as a material-control target.",
+        "The next wave is routed toward exact-support expansion and stronger ablations before model claims."
+      ]
+    },
+    {
+      "id": "w54_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_54_compact_exact_projection_baselines.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w54_partizan_baseline_gate_analysis"
+      ],
+      "prompt": "Record Wave 54 as a compact-projection baseline gate and keep decomposition/model claims blocked.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_54_compact_exact_projection_baselines.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that Wave 54 is a baseline/no-go gate, not decomposition-benefit evidence.",
+        "Docs route Wave 55 toward exact support expansion and ablation design.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_54_compact_exact_projection_baselines.json",
+      "success_signal": "The Wave 54 plan is internally consistent."
+    },
+    {
+      "id": "baseline_report_reproduces",
+      "command": "python3 engine/ml_model.py exact-projection-baseline-report docs/signature_target_mixed_hook_exact_wave_52.jsonl --output /tmp/partizan-wave-54-baseline-smoke.json && cmp docs/signature_target_mixed_hook_projection_baseline_wave_54_report.json /tmp/partizan-wave-54-baseline-smoke.json",
+      "success_signal": "The compact exact-projection baseline report is reproducible."
+    }
+  ]
+}

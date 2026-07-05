@@ -19,10 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_53_mixed_hook_exact_projection_inventory.json` is the current execution
-target. It screens exact target projections over the Wave 52 mixed-hook shard
-and routes the next learned-baseline wave toward compact targets that do not
-hide unseen-label support:
+`wave_54_compact_exact_projection_baselines.json` is the current execution
+target. It runs deterministic and small learned baselines for the compact Wave
+53 exact projections and keeps model claims blocked unless those baselines beat
+the matched floors:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -44,6 +44,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> mixed-hook exact shard audit
                              -> exact target projection inventory
                              -> compact exact-projection learned baselines
+                             -> exact support expansion + ablation design
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

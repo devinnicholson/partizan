@@ -8,6 +8,7 @@ from collections import Counter
 from pathlib import Path
 import hashlib
 import json
+import math
 import os
 import sys
 from typing import Any
@@ -95,6 +96,10 @@ EXACT_SIGNATURE_TARGET_PROJECTIONS = tuple(
         "target": str(definition["target"]).replace("heuristic.outputs", "exact.value"),
     }
     for definition in HEURISTIC_SIGNATURE_TARGET_PROJECTIONS
+)
+DEFAULT_EXACT_PROJECTION_BASELINE_TARGETS = (
+    "component_topology_family",
+    "net_material_balance",
 )
 PIECE_VALUES = {
     "P": 1,
@@ -1298,6 +1303,41 @@ GEOMETRY_PROBE_FEATURE_NAMES = (
     "attacker_is_pawn",
 )
 
+FEN_MATERIAL_PROBE_FEATURE_NAMES = (
+    "bias",
+    "empty_square_count",
+    "piece_count",
+    "white_piece_count",
+    "black_piece_count",
+    "king_count",
+    "queen_count",
+    "rook_count",
+    "bishop_count",
+    "knight_count",
+    "pawn_count",
+    "material_balance",
+    "absolute_material",
+    "side_to_move_is_white",
+)
+
+SIGNATURE_METADATA_PROBE_FEATURE_NAMES = (
+    *FEN_MATERIAL_PROBE_FEATURE_NAMES,
+    "left_component_material",
+    "right_component_material",
+    "net_component_material",
+    "left_white_local_moves",
+    "left_black_local_moves",
+    "right_white_local_moves",
+    "right_black_local_moves",
+    "total_white_local_moves",
+    "total_black_local_moves",
+    "component_local_move_imbalance",
+    "component_recursive_total_nodes",
+    "total_recursive_nodes",
+    "left_profile_index",
+    "right_profile_index",
+)
+
 
 def evaluate_geometry_probe_report(
     jsonl_path: str | Path,
@@ -1643,6 +1683,54 @@ def evaluate_exact_target_projection_report(
         "row_counts": _count_by(assignments, "split"),
         "projection_count": len(projection_reports),
         "projections": projection_reports,
+    }
+
+
+def evaluate_exact_projection_baseline_report(
+    jsonl_path: str | Path,
+    target_projections: list[str] | None = None,
+    split_key_mode: str = "position",
+    epochs: int = 1_000,
+    learning_rate: float = 0.05,
+    l2: float = 0.001,
+) -> dict[str, Any]:
+    """Score deterministic and small learned baselines for exact projections."""
+
+    path = Path(jsonl_path)
+    rows = load_dataset_label_v0_jsonl(path)
+    assignments = split_assignments_for_rows(rows, split_key_mode)
+    splitter_id = split_report_id_for_mode(split_key_mode, family_holdout=False)
+    split_policy = split_policy_for_mode(split_key_mode, family_holdout=False)
+    projections = target_projections or list(DEFAULT_EXACT_PROJECTION_BASELINE_TARGETS)
+    projection_reports = []
+    for projection_id in projections:
+        examples, excluded = exact_projection_model_examples(
+            rows,
+            assignments,
+            projection_id,
+        )
+        projection_reports.append(
+            exact_projection_baseline_entry(
+                projection_id,
+                examples,
+                excluded,
+                epochs=epochs,
+                learning_rate=learning_rate,
+                l2=l2,
+            )
+        )
+
+    return {
+        "report_id": "exact_projection_baseline_report_v0",
+        "dataset_path": str(path),
+        "dataset_sha256": _sha256_file(path),
+        "schema_version": SCHEMA_VERSION,
+        "eligible_label_kinds": ["exact"],
+        "splitter_id": splitter_id,
+        "split_policy": split_policy,
+        "row_counts": _count_by(assignments, "split"),
+        "target_projection_count": len(projection_reports),
+        "target_projections": projection_reports,
     }
 
 
@@ -2257,6 +2345,257 @@ def exact_projection_examples(
     }
 
 
+def exact_projection_model_examples(
+    rows: list[dict[str, Any]],
+    assignments: list[dict[str, Any]],
+    projection_id: str,
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, int]]]:
+    examples: list[dict[str, Any]] = []
+    excluded: dict[str, Counter[str]] = {
+        "non_exact_rows_by_split": Counter(),
+        "projection_missing_rows_by_split": Counter(),
+        "fen_feature_missing_rows_by_split": Counter(),
+        "signature_feature_missing_rows_by_split": Counter(),
+    }
+    for row, assignment in zip(rows, assignments):
+        split = str(assignment["split"])
+        if row.get("label_kind") != "exact":
+            excluded["non_exact_rows_by_split"][split] += 1
+            continue
+        value = exact_value_payload(row)
+        if not value:
+            excluded["projection_missing_rows_by_split"][split] += 1
+            continue
+        target = exact_projection_value(value, projection_id)
+        if target is None:
+            excluded["projection_missing_rows_by_split"][split] += 1
+            continue
+
+        fen_features = fen_material_probe_features(row)
+        signature_features = signature_metadata_probe_features(row)
+        if fen_features is None:
+            excluded["fen_feature_missing_rows_by_split"][split] += 1
+            continue
+        if signature_features is None:
+            excluded["signature_feature_missing_rows_by_split"][split] += 1
+            continue
+
+        examples.append(
+            {
+                "row": row,
+                "row_id": str(row.get("row_id")),
+                "split": split,
+                "target": target,
+                "fen_material_feature_key": fen_material_feature_key(
+                    derive_position_features(row)
+                ),
+                "signature_metadata_feature_key": signature_metadata_feature_key(
+                    value
+                ),
+                "fen_material_features": fen_features,
+                "signature_metadata_features": signature_features,
+            }
+        )
+    return examples, {
+        key: dict(sorted(counter.items()))
+        for key, counter in excluded.items()
+        if counter
+    }
+
+
+def exact_projection_baseline_entry(
+    projection_id: str,
+    examples: list[dict[str, Any]],
+    excluded: dict[str, dict[str, int]],
+    epochs: int,
+    learning_rate: float,
+    l2: float,
+) -> dict[str, Any]:
+    train_examples = [example for example in examples if example["split"] == "train"]
+    if not train_examples:
+        return {
+            "projection_id": projection_id,
+            "status": "no_train_support",
+            "included_target_count": len(examples),
+            "excluded_from_target_metrics": excluded,
+        }
+
+    target_labels = tuple(sorted({example["target"] for example in examples}))
+    train_labels = tuple(sorted({example["target"] for example in train_examples}))
+    train_targets = [example["target"] for example in train_examples]
+    majority_prediction = _majority_label(train_targets)
+    predictors = [
+        exact_projection_predictor_report(
+            "train_majority",
+            "Predicts the most common train target for every row.",
+            examples,
+            [majority_prediction for _example in examples],
+            target_labels,
+            {"train_majority_prediction": majority_prediction},
+        ),
+        exact_projection_predictor_report(
+            "fen_material_feature_majority",
+            "Predicts the train majority label for an exact FEN/material feature key, falling back to train-majority.",
+            examples,
+            keyed_majority_predictions(
+                examples,
+                "fen_material_feature_key",
+                majority_prediction,
+            ),
+            target_labels,
+            {"fallback_prediction": majority_prediction},
+        ),
+        exact_projection_predictor_report(
+            "signature_metadata_feature_majority",
+            "Predicts the train majority label for a component-signature metadata key, falling back to train-majority.",
+            examples,
+            keyed_majority_predictions(
+                examples,
+                "signature_metadata_feature_key",
+                majority_prediction,
+            ),
+            target_labels,
+            {
+                "fallback_prediction": majority_prediction,
+                "control_scope": "uses exact metadata fields; interpret as a structured control, not a no-decomposition model",
+            },
+        ),
+    ]
+
+    for predictor_id, feature_key, feature_names, control_scope in (
+        (
+            "fen_material_multiclass_logistic_probe",
+            "fen_material_features",
+            FEN_MATERIAL_PROBE_FEATURE_NAMES,
+            "full-board FEN/material control",
+        ),
+        (
+            "signature_metadata_multiclass_logistic_probe",
+            "signature_metadata_features",
+            SIGNATURE_METADATA_PROBE_FEATURE_NAMES,
+            "component-signature metadata control",
+        ),
+    ):
+        model = train_multiclass_logistic_probe(
+            [example[feature_key] for example in train_examples],
+            [example["target"] for example in train_examples],
+            labels=train_labels,
+            epochs=epochs,
+            learning_rate=learning_rate,
+            l2=l2,
+        )
+        predictions = [
+            multiclass_logistic_predict(model, example[feature_key])
+            for example in examples
+        ]
+        predictors.append(
+            exact_projection_predictor_report(
+                predictor_id,
+                "Small deterministic multiclass logistic probe trained on the train split.",
+                examples,
+                predictions,
+                target_labels,
+                {
+                    "feature_names": list(feature_names),
+                    "control_scope": control_scope,
+                    "training": {
+                        "train_split": "train",
+                        "epochs": epochs,
+                        "learning_rate": learning_rate,
+                        "l2": l2,
+                        "optimizer": "full_batch_gradient_descent",
+                        "standardization": "train_split_mean_std_except_bias",
+                        "train_label_count": len(train_labels),
+                    },
+                    "model_summary": multiclass_model_summary(model),
+                },
+            )
+        )
+
+    return {
+        "projection_id": projection_id,
+        "status": "evaluated",
+        "target": exact_projection_definition_target(projection_id),
+        "included_target_count": len(examples),
+        "excluded_from_target_metrics": excluded,
+        "target_label_count": len(target_labels),
+        "target_counts": dict(sorted(Counter(example["target"] for example in examples).items())),
+        "train_label_count": len(train_labels),
+        "train_labels": list(train_labels),
+        "train_majority_prediction": majority_prediction,
+        "unseen_labels_by_split": unseen_labels_by_split(examples, set(train_labels)),
+        "predictors": predictors,
+    }
+
+
+def exact_projection_predictor_report(
+    predictor_id: str,
+    description: str,
+    examples: list[dict[str, Any]],
+    predictions: list[str],
+    labels: tuple[str, ...],
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    split_metrics = {}
+    for split in sorted({example["split"] for example in examples}):
+        split_indices = [
+            index
+            for index, example in enumerate(examples)
+            if example["split"] == split
+        ]
+        targets = [examples[index]["target"] for index in split_indices]
+        split_predictions = [predictions[index] for index in split_indices]
+        split_metrics[split] = {
+            "support": len(split_indices),
+            "target_counts": dict(sorted(Counter(targets).items())),
+            "prediction_counts": dict(sorted(Counter(split_predictions).items())),
+            **_classification_metrics(targets, split_predictions, labels),
+        }
+
+    report = {
+        "predictor_id": predictor_id,
+        "description": description,
+        "split_metrics": split_metrics,
+    }
+    if metadata:
+        report.update(metadata)
+    return report
+
+
+def keyed_majority_predictions(
+    examples: list[dict[str, Any]],
+    key_field: str,
+    fallback_prediction: str,
+) -> list[str]:
+    train_targets_by_key: dict[str, list[str]] = {}
+    for example in examples:
+        if example["split"] != "train":
+            continue
+        train_targets_by_key.setdefault(str(example[key_field]), []).append(
+            example["target"]
+        )
+
+    predictions = []
+    for example in examples:
+        matching_train_targets = train_targets_by_key.get(str(example[key_field]), [])
+        if matching_train_targets:
+            predictions.append(_majority_label(matching_train_targets))
+        else:
+            predictions.append(fallback_prediction)
+    return predictions
+
+
+def unseen_labels_by_split(
+    examples: list[dict[str, Any]],
+    train_labels: set[str],
+) -> dict[str, list[str]]:
+    unseen = {}
+    for split in sorted({example["split"] for example in examples}):
+        split_labels = {example["target"] for example in examples if example["split"] == split}
+        unseen[split] = sorted(split_labels - train_labels)
+    return unseen
+
+
 def heuristic_projection_report_entry(
     definition: dict[str, str],
     examples: list[dict[str, str]],
@@ -2344,6 +2683,215 @@ def exact_projection_value(
     projection_id: str,
 ) -> str | None:
     return heuristic_projection_value(value, projection_id)
+
+
+def exact_projection_definition_target(projection_id: str) -> str:
+    for definition in EXACT_SIGNATURE_TARGET_PROJECTIONS:
+        if definition["projection_id"] == projection_id:
+            return str(definition["target"])
+    return f"exact.value.{projection_id}"
+
+
+def fen_material_probe_features(row: dict[str, Any]) -> list[float] | None:
+    features = derive_position_features(row)
+    if features["position_encoding"] != FEN_GATE_POSITION_ENCODING:
+        return None
+    return [
+        1.0,
+        float(features["empty_square_count"]),
+        float(features["piece_count"]),
+        float(features["white_piece_count"]),
+        float(features["black_piece_count"]),
+        float(features["king_count"]),
+        float(features["queen_count"]),
+        float(features["rook_count"]),
+        float(features["bishop_count"]),
+        float(features["knight_count"]),
+        float(features["pawn_count"]),
+        float(features["material_balance"]),
+        float(features["absolute_material"]),
+        1.0 if features["side_to_move"] == "w" else 0.0,
+    ]
+
+
+def signature_metadata_probe_features(row: dict[str, Any]) -> list[float] | None:
+    value = exact_value_payload(row)
+    fen_features = fen_material_probe_features(row)
+    if fen_features is None or not value:
+        return None
+
+    left_parts = _component_signature_parts(value, "left")
+    right_parts = _component_signature_parts(value, "right")
+    if left_parts is None or right_parts is None:
+        return None
+    left_material = parse_int_metadata(left_parts.get("material"))
+    right_material = parse_int_metadata(right_parts.get("material"))
+    left_moves = parse_component_local_move_totals(left_parts.get("moves"))
+    right_moves = parse_component_local_move_totals(right_parts.get("moves"))
+    if (
+        left_material is None
+        or right_material is None
+        or left_moves is None
+        or right_moves is None
+    ):
+        return None
+
+    total_white_moves = left_moves["white"] + right_moves["white"]
+    total_black_moves = left_moves["black"] + right_moves["black"]
+    return [
+        *fen_features,
+        float(left_material),
+        float(right_material),
+        float(left_material + right_material),
+        float(left_moves["white"]),
+        float(left_moves["black"]),
+        float(right_moves["white"]),
+        float(right_moves["black"]),
+        float(total_white_moves),
+        float(total_black_moves),
+        float(parse_int_metadata(value.get("component_local_move_imbalance")) or 0),
+        float(parse_int_metadata(value.get("component_recursive_total_nodes")) or 0),
+        float(parse_int_metadata(value.get("total_recursive_nodes")) or 0),
+        float(parse_int_metadata(value.get("left_profile_index")) or 0),
+        float(parse_int_metadata(value.get("right_profile_index")) or 0),
+    ]
+
+
+def signature_metadata_feature_key(value: dict[str, Any]) -> str:
+    signature = {
+        "component_signature_rule": _nonempty_output_string(
+            value, "component_signature_rule"
+        )
+        or "__missing__",
+        "component_material_pair": _component_material_pair(value) or "__missing__",
+        "component_mobility_pair": _component_mobility_pair(value) or "__missing__",
+        "component_recursive_total_nodes": str(
+            value.get("component_recursive_total_nodes", "__missing__")
+        ),
+        "component_value_classes": str(
+            value.get("component_value_classes", "__missing__")
+        ),
+        "signature_target_rule": str(value.get("signature_target_rule", "__missing__")),
+    }
+    return json.dumps(signature, sort_keys=True, separators=(",", ":"))
+
+
+def train_multiclass_logistic_probe(
+    features: list[list[float]],
+    targets: list[str],
+    labels: tuple[str, ...],
+    epochs: int,
+    learning_rate: float,
+    l2: float,
+) -> dict[str, Any]:
+    if not features:
+        raise ValueError("multiclass logistic probe requires training features")
+    feature_count = len(features[0])
+    means = [0.0] * feature_count
+    scales = [1.0] * feature_count
+    for index in range(1, feature_count):
+        means[index] = sum(vector[index] for vector in features) / len(features)
+        variance = sum(
+            (vector[index] - means[index]) ** 2 for vector in features
+        ) / len(features)
+        scales[index] = variance ** 0.5 or 1.0
+
+    scaled_features = [
+        scale_probe_features(vector, means, scales) for vector in features
+    ]
+    label_to_index = {label: index for index, label in enumerate(labels)}
+    weights = [[0.0] * feature_count for _label in labels]
+    for _epoch in range(epochs):
+        gradients = [[0.0] * feature_count for _label in labels]
+        for vector, target in zip(scaled_features, targets):
+            probabilities = softmax(
+                [
+                    sum(weight * value for weight, value in zip(label_weights, vector))
+                    for label_weights in weights
+                ]
+            )
+            target_index = label_to_index[target]
+            for label_index, probability in enumerate(probabilities):
+                error = probability - (1.0 if label_index == target_index else 0.0)
+                for feature_index, value in enumerate(vector):
+                    gradients[label_index][feature_index] += error * value
+        for label_index, label_weights in enumerate(weights):
+            for feature_index in range(feature_count):
+                regularization = (
+                    0.0
+                    if feature_index == 0
+                    else l2 * label_weights[feature_index]
+                )
+                label_weights[feature_index] -= learning_rate * (
+                    gradients[label_index][feature_index] / len(scaled_features)
+                    + regularization
+                )
+
+    return {
+        "labels": list(labels),
+        "weights": weights,
+        "means": means,
+        "scales": scales,
+    }
+
+
+def multiclass_logistic_predict(model: dict[str, Any], features: list[float]) -> str:
+    probabilities = multiclass_logistic_probabilities(model, features)
+    labels = list(model["labels"])
+    best_index = max(range(len(labels)), key=lambda index: probabilities[index])
+    return labels[best_index]
+
+
+def multiclass_logistic_probabilities(
+    model: dict[str, Any],
+    features: list[float],
+) -> list[float]:
+    scaled = scale_probe_features(features, model["means"], model["scales"])
+    return softmax(
+        [
+            sum(weight * value for weight, value in zip(label_weights, scaled))
+            for label_weights in model["weights"]
+        ]
+    )
+
+
+def multiclass_model_summary(model: dict[str, Any]) -> dict[str, Any]:
+    weights = [
+        abs(weight)
+        for label_weights in model["weights"]
+        for weight in label_weights
+    ]
+    return {
+        "label_count": len(model["labels"]),
+        "feature_count": len(model["weights"][0]) if model["weights"] else 0,
+        "max_abs_weight": max(weights) if weights else 0.0,
+    }
+
+
+def scale_probe_features(
+    features: list[float], means: list[float], scales: list[float]
+) -> list[float]:
+    return [
+        features[0],
+        *[
+            (features[index] - means[index]) / scales[index]
+            for index in range(1, len(features))
+        ],
+    ]
+
+
+def softmax(logits: list[float]) -> list[float]:
+    if not logits:
+        return []
+    max_logit = max(logits)
+    exponentials = [
+        math.exp(max(-40.0, min(40.0, logit - max_logit)))
+        for logit in logits
+    ]
+    total = sum(exponentials)
+    if total == 0.0:
+        return [1.0 / len(logits) for _logit in logits]
+    return [value / total for value in exponentials]
 
 
 def _nonempty_output_string(outputs: dict[str, Any], field: str) -> str | None:
@@ -4041,6 +4589,53 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the exact projection report JSON.",
     )
 
+    exact_projection_baseline_parser = subcommands.add_parser(
+        "exact-projection-baseline-report",
+        help="Score deterministic and learned baselines for exact projection targets.",
+    )
+    exact_projection_baseline_parser.add_argument("jsonl_path", type=Path)
+    exact_projection_baseline_parser.add_argument(
+        "--target-projection",
+        action="append",
+        choices=tuple(
+            definition["projection_id"]
+            for definition in EXACT_SIGNATURE_TARGET_PROJECTIONS
+        ),
+        help=(
+            "Projection id to score. Repeat for multiple projections. "
+            "Defaults to compact Wave 53 targets."
+        ),
+    )
+    exact_projection_baseline_parser.add_argument(
+        "--split-key-mode",
+        choices=("position", "symmetry"),
+        default="position",
+        help="Position key policy used for split assignment.",
+    )
+    exact_projection_baseline_parser.add_argument(
+        "--epochs",
+        type=int,
+        default=1000,
+        help="Training epochs for multiclass logistic probes.",
+    )
+    exact_projection_baseline_parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=0.05,
+        help="Learning rate for multiclass logistic probes.",
+    )
+    exact_projection_baseline_parser.add_argument(
+        "--l2",
+        type=float,
+        default=0.001,
+        help="L2 regularization for multiclass logistic probes.",
+    )
+    exact_projection_baseline_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the exact projection baseline report JSON.",
+    )
+
     heuristic_signature_promotion_parser = subcommands.add_parser(
         "heuristic-signature-promotion-report",
         help="Audit heuristic signature rows for promotion readiness and blockers.",
@@ -4299,6 +4894,24 @@ def cli_main(argv: list[str] | None = None) -> int:
         report = evaluate_exact_target_projection_report(
             args.jsonl_path,
             split_key_mode=args.split_key_mode,
+        )
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        return 0
+
+    if args.command == "exact-projection-baseline-report":
+        report = evaluate_exact_projection_baseline_report(
+            args.jsonl_path,
+            target_projections=args.target_projection,
+            split_key_mode=args.split_key_mode,
+            epochs=args.epochs,
+            learning_rate=args.learning_rate,
+            l2=args.l2,
         )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)

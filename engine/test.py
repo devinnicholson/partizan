@@ -12,6 +12,7 @@ from ml_model import (
     evaluate_geometry_probe_report,
     evaluate_family_holdout_report,
     evaluate_family_holdout_report_with_mode,
+    evaluate_exact_projection_baseline_report,
     evaluate_frontier_target_report,
     evaluate_heuristic_signature_promotion_report,
     evaluate_heuristic_target_projection_report,
@@ -814,6 +815,83 @@ def run_heuristic_target_projection_report_smoke():
     }
 
 
+def run_exact_projection_baseline_report_smoke():
+    rows = [
+        _exact_projection_fixture_row_for_split(
+            "exact-projection-train-a",
+            "train",
+            start_index=11000,
+            topology="topology-a",
+            left_digest="left-a",
+            right_digest="right-a",
+            left_material=1,
+            right_material=-1,
+        ),
+        _exact_projection_fixture_row_for_split(
+            "exact-projection-train-b",
+            "train",
+            start_index=12000,
+            topology="topology-b",
+            left_digest="left-b",
+            right_digest="right-b",
+            left_material=2,
+            right_material=0,
+        ),
+        _exact_projection_fixture_row_for_split(
+            "exact-projection-dev",
+            "dev",
+            start_index=13000,
+            topology="topology-a",
+            left_digest="left-a",
+            right_digest="right-a",
+            left_material=1,
+            right_material=-1,
+        ),
+        _exact_projection_fixture_row_for_split(
+            "exact-projection-test",
+            "test",
+            start_index=14000,
+            topology="topology-c",
+            left_digest="left-c",
+            right_digest="right-c",
+            left_material=3,
+            right_material=-1,
+        ),
+    ]
+    with TemporaryDirectory() as temp_dir:
+        shard_path = Path(temp_dir) / "exact-projection-baseline-smoke.jsonl"
+        shard_path.write_text(
+            "\n".join(json.dumps(row, sort_keys=True) for row in rows) + "\n",
+            encoding="utf-8",
+        )
+        report = evaluate_exact_projection_baseline_report(
+            shard_path,
+            epochs=10,
+        )
+
+    assert report["report_id"] == "exact_projection_baseline_report_v0"
+    assert report["target_projection_count"] == 2
+    projections = {
+        projection["projection_id"]: projection
+        for projection in report["target_projections"]
+    }
+    topology = projections["component_topology_family"]
+    assert topology["target_label_count"] == 3
+    assert topology["train_majority_prediction"] == "topology-a"
+    assert topology["unseen_labels_by_split"]["test"] == ["topology-c"]
+    assert [predictor["predictor_id"] for predictor in topology["predictors"]] == [
+        "train_majority",
+        "fen_material_feature_majority",
+        "signature_metadata_feature_majority",
+        "fen_material_multiclass_logistic_probe",
+        "signature_metadata_multiclass_logistic_probe",
+    ]
+
+    net_material = projections["net_material_balance"]
+    assert net_material["target_counts"] == {"net:0": 2, "net:2": 2}
+    assert net_material["predictors"][0]["split_metrics"]["train"]["support"] == 2
+
+
 def run_heuristic_signature_promotion_report_smoke():
     specs = [
         ("heuristic-promotion-train", "train", 8000, "topology-a", "left-a", "right-a", 1, -1),
@@ -975,6 +1053,69 @@ def _heuristic_fixture_row_for_split(
                 },
             }
     raise AssertionError(f"could not find heuristic FEN for split {target_split!r}")
+
+
+def _exact_projection_fixture_row_for_split(
+    row_id: str,
+    target_split: str,
+    start_index: int = 0,
+    topology: str = "topology-a",
+    left_digest: str = "left-digest-a",
+    right_digest: str = "right-digest-a",
+    left_material: int = 1,
+    right_material: int = -1,
+    left_moves: str = "white:1,black:0",
+    right_moves: str = "white:0,black:1",
+) -> dict[str, object]:
+    for index in range(start_index, start_index + 1000):
+        fen = f"8/8/8/8/8/8/K7/7k w - - 0 {index + 1}"
+        split_key = f"unprovenanced_exact|fen:{fen}"
+        if split_for_key(split_key) == target_split:
+            return {
+                "schema_version": "partizan.dataset_label.v0",
+                "row_id": row_id,
+                "domain": "formal_domain:bitmesh_composed_board_material:v0",
+                "position": {"encoding": "fen", "text": fen},
+                "label_kind": "exact",
+                "exact": {
+                    "value": {
+                        "component_local_move_imbalance": "0",
+                        "component_recursive_total_nodes": "47",
+                        "component_signature_rule": (
+                            "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0"
+                        ),
+                        "component_topology_family": topology,
+                        "component_value_classes": "0=game_tree,1=game_tree",
+                        "left_component_signature": (
+                            f"value:{left_digest};material:{left_material};"
+                            f"moves:{left_moves}"
+                        ),
+                        "left_component_value_digest": left_digest,
+                        "left_profile_index": "0",
+                        "right_component_signature": (
+                            f"value:{right_digest};material:{right_material};"
+                            f"moves:{right_moves}"
+                        ),
+                        "right_component_value_digest": right_digest,
+                        "right_profile_index": "1",
+                        "result_signature_key": _heuristic_signature_target(
+                            topology,
+                            left_digest,
+                            right_digest,
+                            left_material,
+                            right_material,
+                            left_moves=left_moves,
+                            right_moves=right_moves,
+                        ),
+                        "signature_target_rule": (
+                            "depth2_material_mobility_signature_exact_metadata_v0"
+                        ),
+                        "total_recursive_nodes": "47",
+                        "value_class": "game_tree",
+                    }
+                },
+            }
+    raise AssertionError(f"could not find exact FEN for split {target_split!r}")
 
 
 def _composition_fixture_certificate(
@@ -1676,6 +1817,7 @@ def main():
     run_signature_profile_contract_report_smoke()
     run_heuristic_target_report_smoke()
     run_heuristic_target_projection_report_smoke()
+    run_exact_projection_baseline_report_smoke()
     run_heuristic_signature_promotion_report_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()

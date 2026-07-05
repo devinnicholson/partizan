@@ -532,6 +532,17 @@ labels, and train/dev/test majority floors 0.1458/0.4/0.1429. Future learned
 model reports must name the exact projection target, report its deterministic
 floor, and preserve the unseen-label counts.
 
+Wave 54 adds compact exact-projection baselines:
+`python3 engine/ml_model.py exact-projection-baseline-report docs/signature_target_mixed_hook_exact_wave_52.jsonl --output docs/signature_target_mixed_hook_projection_baseline_wave_54_report.json`.
+The report compares train-majority, FEN/material majority, signature-metadata
+majority, FEN/material multiclass logistic, and signature-metadata multiclass
+logistic probes. `component_topology_family` remains a no-go for model claims:
+no predictor beats the 0.2857 test majority floor. `net_material_balance`
+reaches 0.5714 test accuracy under material/signature controls, so it is a
+control target rather than decomposition-benefit evidence. Future reports must
+preserve this distinction and should scale exact support or add stronger
+ablations before claiming learned structure.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -553,6 +564,8 @@ that target into a small leakage-clean exact metadata shard. Wave 48 measures
 the exact support collapse and Wave 49 shows that the current component-value
 capacity ceiling is 14 rows. Wave 50 shows the tested rank-4/5 ladder source
 does not raise that ceiling. Wave 51 breaks the ceiling with mixed-color hooks,
-Wave 52 materializes and audits the rpf20 mixed-hook exact shard, and Wave 53
-selects compact exact projections, so the active gate is deterministic and
-learned model baselines on those exact projection targets.
+Wave 52 materializes and audits the rpf20 mixed-hook exact shard, Wave 53
+selects compact exact projections, and Wave 54 shows the first compact
+baselines are a topology no-go plus a material-control result. The active gate
+is exact-support expansion and ablation design before any learned structure
+claim.
