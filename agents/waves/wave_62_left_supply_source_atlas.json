@@ -1,0 +1,102 @@
+{
+  "wave_id": "wave_62_left_supply_source_atlas",
+  "objective": "Measure whether genuinely new left-side component-value source families can clear the rpf50 capacity gate for mixed-hook exact support.",
+  "non_negotiables": [
+    "This is a capacity-only diagnostic and must not be treated as selected exact support.",
+    "The report must compare every source against the 150-row rpf50 target.",
+    "Any capacity-clearing source must still require selector, materialization, replay, leakage, and baseline gates before promotion.",
+    "Docs must distinguish new component-value supply from pattern-limit tuning."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w62_astralbase_left_supply_atlas"
+      ]
+    },
+    {
+      "parallel": [
+        "w62_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w62_astralbase_left_supply_atlas",
+      "agent": "topology_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs",
+        "../partizan/docs/signature_target_mixed_hook_left_supply_atlas_wave_62_rpf50_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add and run a capacity-only left-supply atlas that pairs candidate left-side pattern families with the expanded mixed-hook right side.",
+      "outputs": [
+        "left-supply atlas CLI command",
+        "rpf50 left-supply atlas report"
+      ],
+      "commands": [
+        "cargo fmt",
+        "cargo test --quiet left_supply_atlas_identifies_rpf50_capacity_candidates -- --exact",
+        "cargo test --quiet",
+        "cargo run --quiet -- --generated-depth-two-value-unique-signature-left-supply-atlas --rows-per-family 50 > ../partizan/docs/signature_target_mixed_hook_left_supply_atlas_wave_62_rpf50_report.json",
+        "shasum -a 256 ../partizan/docs/signature_target_mixed_hook_left_supply_atlas_wave_62_rpf50_report.json"
+      ],
+      "acceptance": [
+        "The report is capacity-only for every source.",
+        "The bounded expanded baseline remains at capacity 125.",
+        "At least one genuinely new left-supply combination clears the 150-row rpf50 capacity target.",
+        "The report records left and right unique component-value counts for every source."
+      ]
+    },
+    {
+      "id": "w62_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_62_left_supply_source_atlas.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "docs/signature_target_mixed_hook_left_supply_atlas_wave_62_rpf50_report.json"
+      ],
+      "depends_on": [
+        "w62_astralbase_left_supply_atlas"
+      ],
+      "prompt": "Record Wave 62 as a left-supply capacity breakthrough while keeping selected-support and model claims closed.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "jq empty agents/waves/wave_62_left_supply_source_atlas.json docs/signature_target_mixed_hook_left_supply_atlas_wave_62_rpf50_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_62_left_supply_source_atlas.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that unbounded expanded-plus-outer left supply reaches capacity 150 with 155 left unique values.",
+        "Docs state that the unbounded all-left supply reaches capacity 150 with 167 left unique values.",
+        "Docs state that the report does not evaluate current selection.",
+        "Docs route next work to selector/materialization/replay/leakage gates for the capacity-clearing source."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_62_left_supply_source_atlas.json",
+      "success_signal": "The Wave 62 plan is internally consistent."
+    },
+    {
+      "id": "left_supply_report_validates",
+      "command": "jq empty docs/signature_target_mixed_hook_left_supply_atlas_wave_62_rpf50_report.json",
+      "success_signal": "The Wave 62 left-supply atlas is valid JSON."
+    }
+  ]
+}

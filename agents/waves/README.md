@@ -19,9 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_61_topology_ablation_hyperparameter_sweep.json` is the current execution
-target. It tests whether the topology feature-ablation no-go is stable under
-small deterministic logistic-probe hyperparameter sweeps:
+`wave_62_left_supply_source_atlas.json` is the current execution target. It
+tests whether genuinely new left-side component-value supply can clear the
+rpf50 capacity gate before selector/materialization work:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -51,6 +51,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> interior mixed-hook source no-go
                              -> pattern-limit capacity atlas
                              -> topology ablation hyperparameter sweep
+                             -> left-supply capacity atlas
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

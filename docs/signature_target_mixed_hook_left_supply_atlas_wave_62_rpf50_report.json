@@ -1,0 +1,284 @@
+{
+  "rows_per_family_target": 50,
+  "sources": [
+    {
+      "source": "bounded_expanded_left_vs_expanded_right_v0",
+      "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+      "rows_per_family_target": 50,
+      "current_selection_evaluated": false,
+      "left_signature_profile_count": 231,
+      "right_signature_profile_count": 371,
+      "left_unique_component_value_digest_count": 125,
+      "right_unique_component_value_digest_count": 226,
+      "shared_component_value_digest_count": 18,
+      "combined_unique_component_value_digest_count": 333,
+      "component_value_capacity_upper_bound": 125,
+      "target_row_count": 150,
+      "candidate_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 85690,
+        "dfile_two_component_depth2_local_move_v0": 85690,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 85690
+      },
+      "distinct_candidate_value_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 28232,
+        "dfile_two_component_depth2_local_move_v0": 28232,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 28232
+      },
+      "current_selected_row_count": 0,
+      "current_selected_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 0,
+        "dfile_two_component_depth2_local_move_v0": 0,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 0
+      },
+      "current_rejection_counts": {}
+    },
+    {
+      "source": "unbounded_expanded_plus_interior_left_vs_expanded_right_v0",
+      "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+      "rows_per_family_target": 50,
+      "current_selection_evaluated": false,
+      "left_signature_profile_count": 236,
+      "right_signature_profile_count": 371,
+      "left_unique_component_value_digest_count": 129,
+      "right_unique_component_value_digest_count": 226,
+      "shared_component_value_digest_count": 18,
+      "combined_unique_component_value_digest_count": 337,
+      "component_value_capacity_upper_bound": 129,
+      "target_row_count": 150,
+      "candidate_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 87544,
+        "dfile_two_component_depth2_local_move_v0": 87544,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 87544
+      },
+      "distinct_candidate_value_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 29136,
+        "dfile_two_component_depth2_local_move_v0": 29136,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 29136
+      },
+      "current_selected_row_count": 0,
+      "current_selected_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 0,
+        "dfile_two_component_depth2_local_move_v0": 0,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 0
+      },
+      "current_rejection_counts": {}
+    },
+    {
+      "source": "near_wall_left_supply_vs_expanded_right_v0",
+      "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+      "rows_per_family_target": 50,
+      "current_selection_evaluated": false,
+      "left_signature_profile_count": 43,
+      "right_signature_profile_count": 371,
+      "left_unique_component_value_digest_count": 31,
+      "right_unique_component_value_digest_count": 226,
+      "shared_component_value_digest_count": 18,
+      "combined_unique_component_value_digest_count": 239,
+      "component_value_capacity_upper_bound": 31,
+      "target_row_count": 150,
+      "candidate_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 15942,
+        "dfile_two_component_depth2_local_move_v0": 15942,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 15942
+      },
+      "distinct_candidate_value_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 6988,
+        "dfile_two_component_depth2_local_move_v0": 6988,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 6988
+      },
+      "current_selected_row_count": 0,
+      "current_selected_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 0,
+        "dfile_two_component_depth2_local_move_v0": 0,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 0
+      },
+      "current_rejection_counts": {}
+    },
+    {
+      "source": "outer_left_supply_vs_expanded_right_v0",
+      "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+      "rows_per_family_target": 50,
+      "current_selection_evaluated": false,
+      "left_signature_profile_count": 106,
+      "right_signature_profile_count": 371,
+      "left_unique_component_value_digest_count": 66,
+      "right_unique_component_value_digest_count": 226,
+      "shared_component_value_digest_count": 16,
+      "combined_unique_component_value_digest_count": 276,
+      "component_value_capacity_upper_bound": 66,
+      "target_row_count": 150,
+      "candidate_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 39310,
+        "dfile_two_component_depth2_local_move_v0": 39310,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 39310
+      },
+      "distinct_candidate_value_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 14900,
+        "dfile_two_component_depth2_local_move_v0": 14900,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 14900
+      },
+      "current_selected_row_count": 0,
+      "current_selected_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 0,
+        "dfile_two_component_depth2_local_move_v0": 0,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 0
+      },
+      "current_rejection_counts": {}
+    },
+    {
+      "source": "diagonal_left_supply_vs_expanded_right_v0",
+      "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+      "rows_per_family_target": 50,
+      "current_selection_evaluated": false,
+      "left_signature_profile_count": 60,
+      "right_signature_profile_count": 371,
+      "left_unique_component_value_digest_count": 39,
+      "right_unique_component_value_digest_count": 226,
+      "shared_component_value_digest_count": 8,
+      "combined_unique_component_value_digest_count": 257,
+      "component_value_capacity_upper_bound": 39,
+      "target_row_count": 150,
+      "candidate_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 22252,
+        "dfile_two_component_depth2_local_move_v0": 22252,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 22252
+      },
+      "distinct_candidate_value_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 8806,
+        "dfile_two_component_depth2_local_move_v0": 8806,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 8806
+      },
+      "current_selected_row_count": 0,
+      "current_selected_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 0,
+        "dfile_two_component_depth2_local_move_v0": 0,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 0
+      },
+      "current_rejection_counts": {}
+    },
+    {
+      "source": "unbounded_expanded_plus_near_wall_left_vs_expanded_right_v0",
+      "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+      "rows_per_family_target": 50,
+      "current_selection_evaluated": false,
+      "left_signature_profile_count": 256,
+      "right_signature_profile_count": 371,
+      "left_unique_component_value_digest_count": 140,
+      "right_unique_component_value_digest_count": 226,
+      "shared_component_value_digest_count": 25,
+      "combined_unique_component_value_digest_count": 341,
+      "component_value_capacity_upper_bound": 140,
+      "target_row_count": 150,
+      "candidate_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 94959,
+        "dfile_two_component_depth2_local_move_v0": 94959,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 94959
+      },
+      "distinct_candidate_value_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 31615,
+        "dfile_two_component_depth2_local_move_v0": 31615,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 31615
+      },
+      "current_selected_row_count": 0,
+      "current_selected_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 0,
+        "dfile_two_component_depth2_local_move_v0": 0,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 0
+      },
+      "current_rejection_counts": {}
+    },
+    {
+      "source": "unbounded_expanded_plus_outer_left_vs_expanded_right_v0",
+      "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+      "rows_per_family_target": 50,
+      "current_selection_evaluated": false,
+      "left_signature_profile_count": 279,
+      "right_signature_profile_count": 371,
+      "left_unique_component_value_digest_count": 155,
+      "right_unique_component_value_digest_count": 226,
+      "shared_component_value_digest_count": 21,
+      "combined_unique_component_value_digest_count": 360,
+      "component_value_capacity_upper_bound": 150,
+      "target_row_count": 150,
+      "candidate_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 103489,
+        "dfile_two_component_depth2_local_move_v0": 103489,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 103489
+      },
+      "distinct_candidate_value_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 35009,
+        "dfile_two_component_depth2_local_move_v0": 35009,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 35009
+      },
+      "current_selected_row_count": 0,
+      "current_selected_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 0,
+        "dfile_two_component_depth2_local_move_v0": 0,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 0
+      },
+      "current_rejection_counts": {}
+    },
+    {
+      "source": "unbounded_expanded_plus_diagonal_left_vs_expanded_right_v0",
+      "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+      "rows_per_family_target": 50,
+      "current_selection_evaluated": false,
+      "left_signature_profile_count": 246,
+      "right_signature_profile_count": 371,
+      "left_unique_component_value_digest_count": 135,
+      "right_unique_component_value_digest_count": 226,
+      "shared_component_value_digest_count": 18,
+      "combined_unique_component_value_digest_count": 343,
+      "component_value_capacity_upper_bound": 135,
+      "target_row_count": 150,
+      "candidate_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 91253,
+        "dfile_two_component_depth2_local_move_v0": 91253,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 91253
+      },
+      "distinct_candidate_value_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 30492,
+        "dfile_two_component_depth2_local_move_v0": 30492,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 30492
+      },
+      "current_selected_row_count": 0,
+      "current_selected_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 0,
+        "dfile_two_component_depth2_local_move_v0": 0,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 0
+      },
+      "current_rejection_counts": {}
+    },
+    {
+      "source": "unbounded_all_left_supply_vs_expanded_right_v0",
+      "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+      "rows_per_family_target": 50,
+      "current_selection_evaluated": false,
+      "left_signature_profile_count": 297,
+      "right_signature_profile_count": 371,
+      "left_unique_component_value_digest_count": 167,
+      "right_unique_component_value_digest_count": 226,
+      "shared_component_value_digest_count": 26,
+      "combined_unique_component_value_digest_count": 367,
+      "component_value_capacity_upper_bound": 150,
+      "target_row_count": 150,
+      "candidate_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 110166,
+        "dfile_two_component_depth2_local_move_v0": 110166,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 110166
+      },
+      "distinct_candidate_value_pair_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 37716,
+        "dfile_two_component_depth2_local_move_v0": 37716,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 37716
+      },
+      "current_selected_row_count": 0,
+      "current_selected_counts_by_topology_family": {
+        "dfile_two_component_depth2_asymmetric_fan_v0": 0,
+        "dfile_two_component_depth2_local_move_v0": 0,
+        "dfile_two_component_depth2_pawn_phalanx_v0": 0
+      },
+      "current_rejection_counts": {}
+    }
+  ]
+}

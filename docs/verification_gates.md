@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 61 topology ablation sweep gates, with Wave 3 negative controls
+Status: Wave 62 left-supply capacity gates, with Wave 3 negative controls
 and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
@@ -613,6 +613,18 @@ claim-eligible only if the same trial beats train-majority on both dev and
 test. The current report has `claim_candidate_count=0`; therefore simple
 logistic-probe tuning cannot unlock a topology claim.
 
+Wave 62 adds a capacity-only left-supply atlas:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-left-supply-atlas --rows-per-family 50`.
+The report pairs candidate left-side source families with the expanded
+mixed-hook right side and keeps `current_selection_evaluated=false` for every
+source. Bounded expanded capacity remains 125, unbounded expanded+interior
+capacity remains 129, but `unbounded_expanded_plus_outer_left_vs_expanded_right_v0`
+reaches capacity 150 with 155 left and 226 right unique component-value
+digests. `unbounded_all_left_supply_vs_expanded_right_v0` also reaches capacity
+150 with 167 left unique digests. These are capacity-clearing diagnostics, not
+selected rows; promotion still requires selector, materialization, replay,
+leakage, and baseline gates.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -644,6 +656,8 @@ that no-go to every current topology feature group. Wave 59's interior source
 does not solve rpf50 and exposes pattern-limit truncation as an additional
 source-ordering risk. Wave 60 shows pattern-limit removal raises capacity only
 to 129, still below rpf50. Wave 61 shows logistic-probe hyperparameter tuning
-has zero matched dev/test topology candidates. The active gate is genuinely new
-component-value supply that clears rpf50, or a materially different model class
-that improves both dev and test before any learned structure claim.
+has zero matched dev/test topology candidates. Wave 62 clears the rpf50
+capacity gate with left-supply variants, but only in capacity-only reports. The
+active gate is selected, materialized, replayed, leakage-clean exact rows from
+a capacity-clearing source, or a materially different model class that improves
+both dev and test before any learned structure claim.
