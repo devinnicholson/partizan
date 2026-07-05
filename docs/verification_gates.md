@@ -1,7 +1,7 @@
 # Verification Gates
 
-Status: Wave 22 expanded composition replay and leakage-audit gates, with Wave
-3 negative controls retained.
+Status: Wave 44 rpf20 signature diagnostic audit gates, with Wave 3 negative
+controls and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
 training shard. It intentionally mixes rows that the current schema validator
@@ -389,6 +389,27 @@ materialize the shard, run Partizan schema validation, split/leakage reporting,
 target floors, and projection inventories before any model experiment can use
 it.
 
+Wave 44 materializes that rpf20 diagnostic shard:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --signature-target-diagnostic-shard --rows-per-family 20`.
+The artifact `docs/signature_target_diagnostic_wave_44_rpf20.jsonl` has 60
+schema-valid heuristic rows, balanced 20/20/20 across the three generated
+topology families. The split report has train/dev/test counts 46/11/3 and zero
+duplicate position, duplicate row-id, duplicate symmetry-position, position-key
+cross-split, or symmetry-position-key cross-split violations. All rows must
+remain `target_status=diagnostic_only` and `supervision_eligible=false`; exact
+training loaders and exact-label model reports must exclude them.
+
+Wave 44 also reruns deterministic target support gates. The full
+`result_signature_key` target has 60 labels and scores 0.0217 train accuracy
+and 0.0 dev/test accuracy under the train-majority floor because all dev/test
+labels are unseen relative to train. The projection inventory keeps 9 candidate
+projections visible: `component_topology_family` has zero dev/test unseen
+labels but is only a 3-label topology target, while value-digest, material,
+mobility, and joined projections remain sparse. Any future diagnostic-model
+experiment over this shard must report the Wave 44 floor and projection
+inventory on the same split, and any exact-value claim must first add
+replay-compatible value-rule semantics.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -403,6 +424,7 @@ and Wave 40 adds a deterministic heuristic floor while keeping promotion
 closed. Wave 41 shows that simple projection choice does not solve informative
 target support, and Wave 42 shows naive higher-support scaling hits a bounded
 candidate-pair cap before reaching rpf20. Wave 43 shows rpf20 support is
-reachable with a full-pair scan. Promotion remains closed until the support is
-materialized, split-audited, and eventually converted into a replayed exact
-value target with explicit split and learned-baseline rules.
+reachable with a full-pair scan. Wave 44 materializes and audits the rpf20
+heuristic shard, so promotion now remains closed until the diagnostic signature
+target is converted into a replayed exact value target with explicit split and
+learned-baseline rules.

@@ -1,0 +1,132 @@
+{
+  "wave_id": "wave_44_rpf20_signature_diagnostic_shard",
+  "objective": "Materialize and audit the rows_per_family=20 signature diagnostic shard after Wave 43 proved full-pair support reachability.",
+  "non_negotiables": [
+    "The shard remains heuristic diagnostic data, not exact supervision.",
+    "Every row must keep target_status=diagnostic_only and supervision_eligible=false.",
+    "Schema validation, leakage validation, deterministic floors, and projection inventory must all be recorded before any model experiment uses the shard.",
+    "The result must not be described as replay-compatible exact value evidence."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w44_astralbase_materialize_rpf20_signature_shard"
+      ]
+    },
+    {
+      "parallel": [
+        "w44_partizan_validate_split_and_floors"
+      ]
+    },
+    {
+      "parallel": [
+        "w44_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w44_astralbase_materialize_rpf20_signature_shard",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Use the existing signature-target diagnostic shard generator at rows_per_family=20 and record the byte hash before Partizan ingestion.",
+      "outputs": [
+        "/tmp/astralbase-w44-signature-target-diagnostic-rpf20.jsonl"
+      ],
+      "commands": [
+        "cargo run --quiet -- --signature-target-diagnostic-shard --rows-per-family 20 > /tmp/astralbase-w44-signature-target-diagnostic-rpf20.jsonl",
+        "wc -l /tmp/astralbase-w44-signature-target-diagnostic-rpf20.jsonl",
+        "shasum -a 256 /tmp/astralbase-w44-signature-target-diagnostic-rpf20.jsonl"
+      ],
+      "acceptance": [
+        "The generated JSONL has 60 rows.",
+        "Rows are balanced 20/20/20 across local-move, asymmetric-fan, and pawn-phalanx topology families.",
+        "The artifact hash is recorded before copying into Partizan."
+      ]
+    },
+    {
+      "id": "w44_partizan_validate_split_and_floors",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/signature_target_diagnostic_wave_44_rpf20.jsonl",
+        "docs/signature_target_diagnostic_wave_44_rpf20_split_report.json",
+        "docs/signature_target_diagnostic_wave_44_rpf20_baseline_report.json",
+        "docs/signature_target_projection_wave_44_rpf20_report.json"
+      ],
+      "depends_on": [
+        "w44_astralbase_materialize_rpf20_signature_shard"
+      ],
+      "prompt": "Validate the rpf20 diagnostic shard with the Partizan schema, run leakage reporting, run the full-signature majority floor, and rerun projection inventory.",
+      "outputs": [
+        "Schema-valid rpf20 diagnostic JSONL",
+        "Split/leakage report",
+        "Full result-signature target floor",
+        "Projection inventory report"
+      ],
+      "commands": [
+        "cp /tmp/astralbase-w44-signature-target-diagnostic-rpf20.jsonl docs/signature_target_diagnostic_wave_44_rpf20.jsonl",
+        "python3 agents/label_schema.py validate docs/signature_target_diagnostic_wave_44_rpf20.jsonl",
+        "python3 engine/ml_model.py split-report docs/signature_target_diagnostic_wave_44_rpf20.jsonl --output docs/signature_target_diagnostic_wave_44_rpf20_split_report.json",
+        "python3 engine/ml_model.py validate-report docs/signature_target_diagnostic_wave_44_rpf20_split_report.json --fail-on-leakage",
+        "python3 engine/ml_model.py heuristic-target-report docs/signature_target_diagnostic_wave_44_rpf20.jsonl --target-field result_signature_key --heuristic-method signature_profile_target_diagnostic --output docs/signature_target_diagnostic_wave_44_rpf20_baseline_report.json",
+        "python3 engine/ml_model.py heuristic-target-projection-report docs/signature_target_diagnostic_wave_44_rpf20.jsonl --heuristic-method signature_profile_target_diagnostic --output docs/signature_target_projection_wave_44_rpf20_report.json"
+      ],
+      "acceptance": [
+        "Partizan schema validation accepts all 60 rows.",
+        "Split/leakage report has train/dev/test counts 46/11/3 and zero duplicate or cross-split leakage violations.",
+        "The full result-signature target floor reports 60 unique labels and unseen dev/test target labels.",
+        "Projection inventory reports all 9 candidate projections and does not hide unseen-label counts."
+      ]
+    },
+    {
+      "id": "w44_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_44_rpf20_signature_diagnostic_shard.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w44_partizan_validate_split_and_floors"
+      ],
+      "prompt": "Record Wave 44 as a larger audited diagnostic shard and keep promotion blocked until replay-compatible exact target semantics exist.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_44_rpf20_signature_diagnostic_shard.json",
+        "jq empty docs/signature_target_diagnostic_wave_44_rpf20_split_report.json docs/signature_target_diagnostic_wave_44_rpf20_baseline_report.json docs/signature_target_projection_wave_44_rpf20_report.json"
+      ],
+      "acceptance": [
+        "Docs state that Wave 44 proves larger diagnostic materialization and audit, not exact supervision.",
+        "Claims C2 and C5 point next to replay-compatible exact value-rule semantics and model baselines.",
+        "Wave validation passes."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_44_rpf20_signature_diagnostic_shard.json",
+      "success_signal": "The Wave 44 plan is internally consistent."
+    },
+    {
+      "id": "rpf20_diagnostic_reports_validate",
+      "command": "python3 agents/label_schema.py validate docs/signature_target_diagnostic_wave_44_rpf20.jsonl && python3 engine/ml_model.py validate-report docs/signature_target_diagnostic_wave_44_rpf20_split_report.json --fail-on-leakage",
+      "success_signal": "The rpf20 diagnostic shard is schema-valid and leakage-clean under current Partizan gates."
+    }
+  ]
+}
