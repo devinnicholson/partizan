@@ -1,0 +1,666 @@
+{
+  "sources": [
+    {
+      "source": "corner_baseline_v0",
+      "white": {
+        "pattern_count": 526,
+        "wall_safe_pattern_count": 129,
+        "accepted_profile_count": 14,
+        "rejection_counts": {
+          "component_recursive_node_budget": 6,
+          "duplicate_value_digest": 109,
+          "wall_safety": 397
+        },
+        "profiles": [
+          {
+            "profile_index": 0,
+            "active_pieces": "a1N,a2P,b2P",
+            "value_class": "game_tree",
+            "value_digest": "d9efe6ea0eb7c325",
+            "recursive_nodes": 39
+          },
+          {
+            "profile_index": 1,
+            "active_pieces": "a1N,a2P",
+            "value_class": "game_tree",
+            "value_digest": "bb06b4d7aadc8eac",
+            "recursive_nodes": 22
+          },
+          {
+            "profile_index": 2,
+            "active_pieces": "a1N,a2P,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "b1231ce80334616e",
+            "recursive_nodes": 53
+          },
+          {
+            "profile_index": 3,
+            "active_pieces": "a1N,b1B,c2P",
+            "value_class": "game_tree",
+            "value_digest": "60ebee880a925aa7",
+            "recursive_nodes": 28
+          },
+          {
+            "profile_index": 4,
+            "active_pieces": "a1N,b1B,a2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "d872e10a5dd78aa0",
+            "recursive_nodes": 36
+          },
+          {
+            "profile_index": 5,
+            "active_pieces": "a1N,b1B,a2P,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "2b525ca581b1d3e9",
+            "recursive_nodes": 57
+          },
+          {
+            "profile_index": 6,
+            "active_pieces": "a1R,b1B,a2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "999c2d34dcc0a10b",
+            "recursive_nodes": 24
+          },
+          {
+            "profile_index": 7,
+            "active_pieces": "a1Q,b1B,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "0a9e056b8ad2ef1f",
+            "recursive_nodes": 187
+          },
+          {
+            "profile_index": 8,
+            "active_pieces": "a1Q,b1B,a2P,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "986f5c6b25e8d086",
+            "recursive_nodes": 48
+          },
+          {
+            "profile_index": 9,
+            "active_pieces": "a1R,b1B,a2P,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "dd20db8dbb70dbf2",
+            "recursive_nodes": 44
+          },
+          {
+            "profile_index": 10,
+            "active_pieces": "a1R,b1R,a2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "a56b7865290bf909",
+            "recursive_nodes": 169
+          },
+          {
+            "profile_index": 11,
+            "active_pieces": "a1Q,b1R,a2P,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "33612fded7c41844",
+            "recursive_nodes": 62
+          },
+          {
+            "profile_index": 12,
+            "active_pieces": "a1B,b1Q,b2P",
+            "value_class": "game_tree",
+            "value_digest": "ff2112cc9065eec0",
+            "recursive_nodes": 54
+          },
+          {
+            "profile_index": 13,
+            "active_pieces": "a1Q,b1Q,b2P",
+            "value_class": "game_tree",
+            "value_digest": "7f770cf2a36c12fa",
+            "recursive_nodes": 217
+          }
+        ]
+      },
+      "black": {
+        "pattern_count": 527,
+        "wall_safe_pattern_count": 365,
+        "accepted_profile_count": 13,
+        "rejection_counts": {
+          "component_recursive_node_budget": 91,
+          "duplicate_value_digest": 261,
+          "wall_safety": 162
+        },
+        "profiles": [
+          {
+            "profile_index": 0,
+            "active_pieces": "h7p,h8n",
+            "value_class": "game_tree",
+            "value_digest": "44a7109f9920cb51",
+            "recursive_nodes": 25
+          },
+          {
+            "profile_index": 1,
+            "active_pieces": "g7p,h7p,h8n",
+            "value_class": "game_tree",
+            "value_digest": "9be343ff64350998",
+            "recursive_nodes": 42
+          },
+          {
+            "profile_index": 2,
+            "active_pieces": "f7p,g7p,h7p,h8n",
+            "value_class": "game_tree",
+            "value_digest": "ae554422032926b3",
+            "recursive_nodes": 55
+          },
+          {
+            "profile_index": 3,
+            "active_pieces": "f7p,g8b,h8n",
+            "value_class": "game_tree",
+            "value_digest": "05631564af32123a",
+            "recursive_nodes": 33
+          },
+          {
+            "profile_index": 4,
+            "active_pieces": "f7p,h7p,g8b,h8n",
+            "value_class": "game_tree",
+            "value_digest": "88306de687f0fded",
+            "recursive_nodes": 40
+          },
+          {
+            "profile_index": 5,
+            "active_pieces": "f7p,g7p,h7p,g8b,h8n",
+            "value_class": "game_tree",
+            "value_digest": "e0a1d2f9e449e554",
+            "recursive_nodes": 61
+          },
+          {
+            "profile_index": 6,
+            "active_pieces": "f7p,h7p,g8b,h8r",
+            "value_class": "game_tree",
+            "value_digest": "829478f700df97e8",
+            "recursive_nodes": 26
+          },
+          {
+            "profile_index": 7,
+            "active_pieces": "f7p,g7p,g8b,h8q",
+            "value_class": "game_tree",
+            "value_digest": "b11a21f1ea92fd1c",
+            "recursive_nodes": 207
+          },
+          {
+            "profile_index": 8,
+            "active_pieces": "f7p,g7p,h7p,g8b,h8q",
+            "value_class": "game_tree",
+            "value_digest": "c66b7e75b4d9d195",
+            "recursive_nodes": 52
+          },
+          {
+            "profile_index": 9,
+            "active_pieces": "g7p,h7p,h8q",
+            "value_class": "game_tree",
+            "value_digest": "c7c440b1b2c7cd21",
+            "recursive_nodes": 82
+          },
+          {
+            "profile_index": 10,
+            "active_pieces": "g7p,h7p,g8r,h8q",
+            "value_class": "game_tree",
+            "value_digest": "71287af854999b1e",
+            "recursive_nodes": 68
+          },
+          {
+            "profile_index": 11,
+            "active_pieces": "f7n,f8q",
+            "value_class": "game_tree",
+            "value_digest": "14f3ec156db6e78a",
+            "recursive_nodes": 172
+          },
+          {
+            "profile_index": 12,
+            "active_pieces": "f7p,g7n,f8q",
+            "value_class": "game_tree",
+            "value_digest": "180b3b4f81e9a743",
+            "recursive_nodes": 134
+          }
+        ]
+      }
+    },
+    {
+      "source": "edge_minor_ladder_v0",
+      "white": {
+        "pattern_count": 514,
+        "wall_safe_pattern_count": 222,
+        "accepted_profile_count": 14,
+        "rejection_counts": {
+          "component_recursive_node_budget": 6,
+          "duplicate_value_digest": 202,
+          "wall_safety": 292
+        },
+        "profiles": [
+          {
+            "profile_index": 0,
+            "active_pieces": "a1N,a3P",
+            "value_class": "game_tree",
+            "value_digest": "bb06b4d7aadc8eac",
+            "recursive_nodes": 15
+          },
+          {
+            "profile_index": 1,
+            "active_pieces": "a1R,b1B,a3P,b3P",
+            "value_class": "game_tree",
+            "value_digest": "999c2d34dcc0a10b",
+            "recursive_nodes": 34
+          },
+          {
+            "profile_index": 2,
+            "active_pieces": "a1B,b2N",
+            "value_class": "game_tree",
+            "value_digest": "b1231ce80334616e",
+            "recursive_nodes": 15
+          },
+          {
+            "profile_index": 3,
+            "active_pieces": "a1N,b1Q",
+            "value_class": "game_tree",
+            "value_digest": "a56b7865290bf909",
+            "recursive_nodes": 174
+          },
+          {
+            "profile_index": 4,
+            "active_pieces": "a1N,b1R",
+            "value_class": "game_tree",
+            "value_digest": "d872e10a5dd78aa0",
+            "recursive_nodes": 116
+          },
+          {
+            "profile_index": 5,
+            "active_pieces": "a2P,a3N",
+            "value_class": "game_tree",
+            "value_digest": "6b0b891213fc7453",
+            "recursive_nodes": 18
+          },
+          {
+            "profile_index": 6,
+            "active_pieces": "a1B,b1B,b2N",
+            "value_class": "game_tree",
+            "value_digest": "2b525ca581b1d3e9",
+            "recursive_nodes": 31
+          },
+          {
+            "profile_index": 7,
+            "active_pieces": "a1B,b1B,b2P",
+            "value_class": "game_tree",
+            "value_digest": "60ebee880a925aa7",
+            "recursive_nodes": 25
+          },
+          {
+            "profile_index": 8,
+            "active_pieces": "a1B,b1Q,b2N",
+            "value_class": "game_tree",
+            "value_digest": "986f5c6b25e8d086",
+            "recursive_nodes": 71
+          },
+          {
+            "profile_index": 9,
+            "active_pieces": "a1B,b1Q,b2P",
+            "value_class": "game_tree",
+            "value_digest": "ff2112cc9065eec0",
+            "recursive_nodes": 54
+          },
+          {
+            "profile_index": 10,
+            "active_pieces": "a1B,b1R,b2N",
+            "value_class": "game_tree",
+            "value_digest": "dd20db8dbb70dbf2",
+            "recursive_nodes": 42
+          },
+          {
+            "profile_index": 11,
+            "active_pieces": "a1B,a2P,b2P",
+            "value_class": "game_tree",
+            "value_digest": "d9efe6ea0eb7c325",
+            "recursive_nodes": 21
+          },
+          {
+            "profile_index": 12,
+            "active_pieces": "a1Q,b1Q,b2P",
+            "value_class": "game_tree",
+            "value_digest": "7f770cf2a36c12fa",
+            "recursive_nodes": 217
+          },
+          {
+            "profile_index": 13,
+            "active_pieces": "a1Q,b1R,b2N",
+            "value_class": "game_tree",
+            "value_digest": "33612fded7c41844",
+            "recursive_nodes": 175
+          }
+        ]
+      },
+      "black": {
+        "pattern_count": 514,
+        "wall_safe_pattern_count": 325,
+        "accepted_profile_count": 13,
+        "rejection_counts": {
+          "component_recursive_node_budget": 20,
+          "duplicate_value_digest": 292,
+          "wall_safety": 189
+        },
+        "profiles": [
+          {
+            "profile_index": 0,
+            "active_pieces": "h6p,h8n",
+            "value_class": "game_tree",
+            "value_digest": "44a7109f9920cb51",
+            "recursive_nodes": 18
+          },
+          {
+            "profile_index": 1,
+            "active_pieces": "g6p,h7p,g8n,h8q",
+            "value_class": "game_tree",
+            "value_digest": "b11a21f1ea92fd1c",
+            "recursive_nodes": 125
+          },
+          {
+            "profile_index": 2,
+            "active_pieces": "g6n,h6n",
+            "value_class": "game_tree",
+            "value_digest": "ae554422032926b3",
+            "recursive_nodes": 100
+          },
+          {
+            "profile_index": 3,
+            "active_pieces": "g6n,g7p",
+            "value_class": "game_tree",
+            "value_digest": "9041c3a2d07ac24e",
+            "recursive_nodes": 29
+          },
+          {
+            "profile_index": 4,
+            "active_pieces": "g6n,g8r",
+            "value_class": "game_tree",
+            "value_digest": "88306de687f0fded",
+            "recursive_nodes": 145
+          },
+          {
+            "profile_index": 5,
+            "active_pieces": "g6p,h8q",
+            "value_class": "game_tree",
+            "value_digest": "829478f700df97e8",
+            "recursive_nodes": 206
+          },
+          {
+            "profile_index": 6,
+            "active_pieces": "h6n,h8q",
+            "value_class": "game_tree",
+            "value_digest": "14f3ec156db6e78a",
+            "recursive_nodes": 197
+          },
+          {
+            "profile_index": 7,
+            "active_pieces": "g6n,h6n,g7b",
+            "value_class": "game_tree",
+            "value_digest": "e0a1d2f9e449e554",
+            "recursive_nodes": 198
+          },
+          {
+            "profile_index": 8,
+            "active_pieces": "g6p,h6n,g7b",
+            "value_class": "game_tree",
+            "value_digest": "05631564af32123a",
+            "recursive_nodes": 98
+          },
+          {
+            "profile_index": 9,
+            "active_pieces": "g6p,h6p,g7b",
+            "value_class": "game_tree",
+            "value_digest": "9be343ff64350998",
+            "recursive_nodes": 45
+          },
+          {
+            "profile_index": 10,
+            "active_pieces": "g6n,g7b,g8r",
+            "value_class": "game_tree",
+            "value_digest": "c7c440b1b2c7cd21",
+            "recursive_nodes": 204
+          },
+          {
+            "profile_index": 11,
+            "active_pieces": "g6p,h6n,h8q",
+            "value_class": "game_tree",
+            "value_digest": "180b3b4f81e9a743",
+            "recursive_nodes": 203
+          },
+          {
+            "profile_index": 12,
+            "active_pieces": "h6n,g7b,h8q",
+            "value_class": "game_tree",
+            "value_digest": "c66b7e75b4d9d195",
+            "recursive_nodes": 187
+          }
+        ]
+      }
+    },
+    {
+      "source": "corner_plus_edge_minor_ladder_v0",
+      "white": {
+        "pattern_count": 901,
+        "wall_safe_pattern_count": 262,
+        "accepted_profile_count": 15,
+        "rejection_counts": {
+          "component_recursive_node_budget": 8,
+          "duplicate_value_digest": 239,
+          "wall_safety": 639
+        },
+        "profiles": [
+          {
+            "profile_index": 0,
+            "active_pieces": "a1N,a2P,b2P",
+            "value_class": "game_tree",
+            "value_digest": "d9efe6ea0eb7c325",
+            "recursive_nodes": 39
+          },
+          {
+            "profile_index": 1,
+            "active_pieces": "a1N,a2P",
+            "value_class": "game_tree",
+            "value_digest": "bb06b4d7aadc8eac",
+            "recursive_nodes": 22
+          },
+          {
+            "profile_index": 2,
+            "active_pieces": "a1N,a2P,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "b1231ce80334616e",
+            "recursive_nodes": 53
+          },
+          {
+            "profile_index": 3,
+            "active_pieces": "a1N,b1B,c2P",
+            "value_class": "game_tree",
+            "value_digest": "60ebee880a925aa7",
+            "recursive_nodes": 28
+          },
+          {
+            "profile_index": 4,
+            "active_pieces": "a1N,b1B,a2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "d872e10a5dd78aa0",
+            "recursive_nodes": 36
+          },
+          {
+            "profile_index": 5,
+            "active_pieces": "a1N,b1B,a2P,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "2b525ca581b1d3e9",
+            "recursive_nodes": 57
+          },
+          {
+            "profile_index": 6,
+            "active_pieces": "a1R,b1B,a2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "999c2d34dcc0a10b",
+            "recursive_nodes": 24
+          },
+          {
+            "profile_index": 7,
+            "active_pieces": "a1Q,b1B,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "0a9e056b8ad2ef1f",
+            "recursive_nodes": 187
+          },
+          {
+            "profile_index": 8,
+            "active_pieces": "a1Q,b1B,a2P,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "986f5c6b25e8d086",
+            "recursive_nodes": 48
+          },
+          {
+            "profile_index": 9,
+            "active_pieces": "a1R,b1B,a2P,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "dd20db8dbb70dbf2",
+            "recursive_nodes": 44
+          },
+          {
+            "profile_index": 10,
+            "active_pieces": "a1R,b1R,a2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "a56b7865290bf909",
+            "recursive_nodes": 169
+          },
+          {
+            "profile_index": 11,
+            "active_pieces": "a1Q,b1R,a2P,b2P,c2P",
+            "value_class": "game_tree",
+            "value_digest": "33612fded7c41844",
+            "recursive_nodes": 62
+          },
+          {
+            "profile_index": 12,
+            "active_pieces": "a1B,b1Q,b2P",
+            "value_class": "game_tree",
+            "value_digest": "ff2112cc9065eec0",
+            "recursive_nodes": 54
+          },
+          {
+            "profile_index": 13,
+            "active_pieces": "a1Q,b1Q,b2P",
+            "value_class": "game_tree",
+            "value_digest": "7f770cf2a36c12fa",
+            "recursive_nodes": 217
+          },
+          {
+            "profile_index": 14,
+            "active_pieces": "a2P,a3N",
+            "value_class": "game_tree",
+            "value_digest": "6b0b891213fc7453",
+            "recursive_nodes": 18
+          }
+        ]
+      },
+      "black": {
+        "pattern_count": 934,
+        "wall_safe_pattern_count": 623,
+        "accepted_profile_count": 14,
+        "rejection_counts": {
+          "component_recursive_node_budget": 106,
+          "duplicate_value_digest": 503,
+          "wall_safety": 311
+        },
+        "profiles": [
+          {
+            "profile_index": 0,
+            "active_pieces": "h7p,h8n",
+            "value_class": "game_tree",
+            "value_digest": "44a7109f9920cb51",
+            "recursive_nodes": 25
+          },
+          {
+            "profile_index": 1,
+            "active_pieces": "g7p,h7p,h8n",
+            "value_class": "game_tree",
+            "value_digest": "9be343ff64350998",
+            "recursive_nodes": 42
+          },
+          {
+            "profile_index": 2,
+            "active_pieces": "f7p,g7p,h7p,h8n",
+            "value_class": "game_tree",
+            "value_digest": "ae554422032926b3",
+            "recursive_nodes": 55
+          },
+          {
+            "profile_index": 3,
+            "active_pieces": "f7p,g8b,h8n",
+            "value_class": "game_tree",
+            "value_digest": "05631564af32123a",
+            "recursive_nodes": 33
+          },
+          {
+            "profile_index": 4,
+            "active_pieces": "f7p,h7p,g8b,h8n",
+            "value_class": "game_tree",
+            "value_digest": "88306de687f0fded",
+            "recursive_nodes": 40
+          },
+          {
+            "profile_index": 5,
+            "active_pieces": "f7p,g7p,h7p,g8b,h8n",
+            "value_class": "game_tree",
+            "value_digest": "e0a1d2f9e449e554",
+            "recursive_nodes": 61
+          },
+          {
+            "profile_index": 6,
+            "active_pieces": "f7p,h7p,g8b,h8r",
+            "value_class": "game_tree",
+            "value_digest": "829478f700df97e8",
+            "recursive_nodes": 26
+          },
+          {
+            "profile_index": 7,
+            "active_pieces": "f7p,g7p,g8b,h8q",
+            "value_class": "game_tree",
+            "value_digest": "b11a21f1ea92fd1c",
+            "recursive_nodes": 207
+          },
+          {
+            "profile_index": 8,
+            "active_pieces": "f7p,g7p,h7p,g8b,h8q",
+            "value_class": "game_tree",
+            "value_digest": "c66b7e75b4d9d195",
+            "recursive_nodes": 52
+          },
+          {
+            "profile_index": 9,
+            "active_pieces": "g7p,h7p,h8q",
+            "value_class": "game_tree",
+            "value_digest": "c7c440b1b2c7cd21",
+            "recursive_nodes": 82
+          },
+          {
+            "profile_index": 10,
+            "active_pieces": "g7p,h7p,g8r,h8q",
+            "value_class": "game_tree",
+            "value_digest": "71287af854999b1e",
+            "recursive_nodes": 68
+          },
+          {
+            "profile_index": 11,
+            "active_pieces": "f7n,f8q",
+            "value_class": "game_tree",
+            "value_digest": "14f3ec156db6e78a",
+            "recursive_nodes": 172
+          },
+          {
+            "profile_index": 12,
+            "active_pieces": "f7p,g7n,f8q",
+            "value_class": "game_tree",
+            "value_digest": "180b3b4f81e9a743",
+            "recursive_nodes": 134
+          },
+          {
+            "profile_index": 13,
+            "active_pieces": "g6n,g7p",
+            "value_class": "game_tree",
+            "value_digest": "9041c3a2d07ac24e",
+            "recursive_nodes": 29
+          }
+        ]
+      }
+    }
+  ]
+}

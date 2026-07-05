@@ -294,6 +294,16 @@ clean-scale strategy. Future attempts that use deeper component values must
 state a versioned value rule, a new budget, or a split/grouping rule before
 claiming useful generated support.
 
+Wave 35 adds edge/minor ladder source diagnostics:
+`cargo run --quiet -- --generated-depth-two-profile-source-inventory` and
+`cargo run --quiet -- --generated-depth-two-combined-source-profile-search --rows-per-family 10`.
+The edge source alone still accepts only 14 white and 13 black profiles. The
+corner-plus-edge union reaches 15 white and 14 black profiles but still selects
+only 7 leakage-clean rows, with 616 component-value reuse rejections before
+materialization and 7 materialization failures. Future supply work should not
+repeat edge-ladder or simple square-shift variants unless it demonstrates lower
+component-value reuse pressure or materially higher selected clean support.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded

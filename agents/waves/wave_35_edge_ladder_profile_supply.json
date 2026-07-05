@@ -1,0 +1,154 @@
+{
+  "wave_id": "wave_35_edge_ladder_profile_supply",
+  "objective": "Test whether a low-node edge/minor ladder profile source creates enough fresh depth-two component-value diversity to increase leakage-clean generated composition support.",
+  "non_negotiables": [
+    "Do not promote a new clean composition shard from a source diagnostic unless selected clean support increases materially.",
+    "Do not relax Wave 27 no-reuse leakage gates for positions, decomposition digests, composition digests, decomposition-qualified component identities, component value digests, component value identities, component value pairs, or result value digests.",
+    "Wave 18 default SHA remains ae01fe8256a1c7a699e5f6f0358d499d6c1f4850148c9251e1c494bb059d3aa8.",
+    "Wave 22 expanded SHA remains 9d1b2754b880e64498b5deec12ac14c5b4be320446ed1319a67252599bd5dcc7.",
+    "Wave 27 clean SHA remains 7e1085cb0a212d7f3e620885c11bf709f8ce2bfa28204c664bbc0aa02875ef9c.",
+    "A learned decomposition-benefit claim remains blocked until a larger leakage-clean split beats deterministic floors and matched no-decomposition controls on the same split."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w35_astralbase_edge_ladder_source_diagnostic"
+      ]
+    },
+    {
+      "parallel": [
+        "w36_partizan_edge_ladder_no_go_evidence"
+      ]
+    },
+    {
+      "parallel": [
+        "w37_next_diversity_strategy_gate"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w35_astralbase_edge_ladder_source_diagnostic",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add report-only diagnostics for an edge/minor ladder component profile source and a combined corner-plus-edge source profile search. Preserve all existing shard commands and prove Wave 18, Wave 22, and Wave 27 hashes and replay reports are stable.",
+      "outputs": [
+        "Named profile-source inventory command",
+        "Combined-source clean profile-search command",
+        "Regression tests pinning profile counts, rejection counts, and selected clean rows"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo run --quiet -- --generated-depth-two-profile-source-inventory > /tmp/astralbase-profile-source-inventory.json",
+        "cargo run --quiet -- --generated-depth-two-combined-source-profile-search --rows-per-family 10 > /tmp/astralbase-combined-source-profile-search.json",
+        "shasum -a 256 /tmp/astralbase-profile-source-inventory.json /tmp/astralbase-combined-source-profile-search.json",
+        "cargo run --quiet -- --non-fixture-composed-domain-shard > /tmp/astralbase-w18-traceable-composition.jsonl",
+        "cargo run --quiet -- --expanded-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --leakage-clean-non-fixture-composed-domain-shard --rows-per-family 10 > /tmp/astralbase-w27-clean-composition.jsonl",
+        "shasum -a 256 /tmp/astralbase-w18-traceable-composition.jsonl /tmp/astralbase-w22-expanded-composition.jsonl /tmp/astralbase-w27-clean-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w18-traceable-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w22-expanded-composition.jsonl",
+        "cargo run --quiet -- --replay-non-fixture-composed-domain-shard /tmp/astralbase-w27-clean-composition.jsonl"
+      ],
+      "acceptance": [
+        "The source inventory reports baseline, edge ladder, and combined source counts.",
+        "The combined source reports 15 left profiles and 14 right profiles but still only 7 selected clean rows.",
+        "The result is documented as a no-go, not a promoted shard.",
+        "Pinned Wave 18, Wave 22, and Wave 27 hashes and replay reports remain stable."
+      ]
+    },
+    {
+      "id": "w36_partizan_edge_ladder_no_go_evidence",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_profile_source_inventory_wave_35_report.json",
+        "docs/non_fixture_composition_combined_source_profile_search_wave_35_report.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/wave_35_edge_ladder_profile_supply.json"
+      ],
+      "depends_on": [
+        "w35_astralbase_edge_ladder_source_diagnostic"
+      ],
+      "prompt": "Record Wave 35 as an explicit no-go: the edge/minor ladder source gives a 15/14 profile union but does not increase selected leakage-clean rows beyond 7. Update the matrix, claims, and gates without activating model readiness.",
+      "outputs": [
+        "Wave 35 source inventory JSON report",
+        "Wave 35 combined-source profile-search JSON report",
+        "Experiment matrix and claim-ledger updates"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-profile-source-inventory > docs/non_fixture_composition_profile_source_inventory_wave_35_report.json",
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-combined-source-profile-search --rows-per-family 10 > docs/non_fixture_composition_combined_source_profile_search_wave_35_report.json",
+        "jq empty docs/non_fixture_composition_profile_source_inventory_wave_35_report.json docs/non_fixture_composition_combined_source_profile_search_wave_35_report.json",
+        "shasum -a 256 docs/non_fixture_composition_profile_source_inventory_wave_35_report.json docs/non_fixture_composition_combined_source_profile_search_wave_35_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_35_edge_ladder_profile_supply.json",
+        "python3 engine/test.py",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Docs state that the combined source remains at 7 selected rows.",
+        "Docs identify component-value reuse before materialization as the active blocker.",
+        "Docs state that edge/minor ladder variants should not be repeated as the next scale strategy.",
+        "No learned or scale claim is activated from the diagnostic."
+      ]
+    },
+    {
+      "id": "w37_next_diversity_strategy_gate",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "docs/research_claims.md",
+        "docs/experiment_matrix.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w36_partizan_edge_ladder_no_go_evidence"
+      ],
+      "prompt": "Constrain the next supply attempt after Wave 35. The next wave must target genuinely new component-value diversity, not simple rank shifts, deeper local-move search, or edge-ladder square moves that reproduce the 15/14 profile and 7 selected-row ceiling.",
+      "outputs": [
+        "Next-wave design constraint in the claim ledger",
+        "Verification-gate language preventing repeated edge-ladder no-gos",
+        "Owner handoff to topology_engineer and retrograde_engineer"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_35_edge_ladder_profile_supply.json",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "The next-wave recommendation rules out edge/minor ladder variants as the scale strategy.",
+        "The blocker remains fresh component-value diversity under no-reuse gates.",
+        "The claim ledger still blocks learned decomposition-benefit evidence until clean support increases materially."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_35_edge_ladder_profile_supply.json",
+      "success_signal": "The Wave 35 plan is internally consistent."
+    },
+    {
+      "id": "combined_source_search_gate",
+      "command": "cd ../astralbase && cargo run --quiet -- --generated-depth-two-combined-source-profile-search --rows-per-family 10 > /tmp/astralbase-combined-source-profile-search.json",
+      "success_signal": "The combined-source report exposes selected support and rejection reasons."
+    },
+    {
+      "id": "partizan_report_gate",
+      "command": "jq empty docs/non_fixture_composition_profile_source_inventory_wave_35_report.json docs/non_fixture_composition_combined_source_profile_search_wave_35_report.json",
+      "success_signal": "The committed Wave 35 reports are valid JSON."
+    }
+  ]
+}

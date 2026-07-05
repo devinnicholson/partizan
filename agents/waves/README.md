@@ -19,16 +19,16 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_34_depth_three_profile_inventory.json` is the current execution target.
-It tests whether increasing generated component local-move depth from 2 to 3
-creates fresh component-value profile supply, and records the result as a
-bounded no-go if the recursive-node budget collapses support:
+`wave_35_edge_ladder_profile_supply.json` is the current execution target. It
+tests whether a low-node edge/minor ladder profile source creates fresh
+component-value supply, and records the result as a no-go if the combined
+source still cannot increase selected leakage-clean rows:
 
 ```text
-depth-two profile bottleneck -> depth-three inventory command
+depth-two profile bottleneck -> edge-ladder source inventory
+                             -> combined-source clean search
                              -> support/rejection report
-                             -> shard stability checks
-                             -> next generator design constraint
+                             -> next diversity strategy constraint
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
