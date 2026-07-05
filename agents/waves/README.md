@@ -19,10 +19,10 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_50_value_unique_signature_source_sweep.json` is the current execution
-target. It sweeps current and candidate component-source families after the
-Wave 49 14-row component-value capacity ceiling. This is a capacity-only
-diagnostic, not a new promoted shard:
+`wave_51_mixed_hook_value_source_breakthrough.json` is the current execution
+target. It records the mixed-color hook component-source breakthrough after
+Wave 49/50 established the old 14-row component-value capacity ceiling. This
+is support evidence and source-design evidence, not a promoted shard:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -40,6 +40,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> value-unique exact support bottleneck report
                              -> component-value capacity upper bound
                              -> component-source capacity sweep
+                             -> mixed-hook value source breakthrough
                              -> new component-value diversity + learned baselines
 ```
 

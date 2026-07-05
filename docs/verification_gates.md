@@ -493,6 +493,19 @@ this branch as scale progress unless a later report exceeds capacity 14,
 increases value-unique selected exact rows, or explicitly changes the value or
 split rule.
 
+Wave 51 adds the mixed-hook source breakthrough:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-source-atlas --rows-per-family 20`
+and
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-mixed-hook-upper-bound --rows-per-family 20`.
+The atlas is capacity-only; its mixed-hook entries show capacity 60 while
+same-color C/F bridge and wide-shelf variants remain capped at 14 or less. The
+full mixed-hook selector report has `current_selection_evaluated=true`, capacity
+60, and `current_selected_row_count=60` with 20 rows in each topology family.
+This report breaks the support bottleneck, but it still is not a promoted
+shard. Future model or dataset claims must first materialize the mixed-hook
+exact rows, validate schema, replay in Astralbase, run split/leakage reports,
+and report deterministic floors.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -513,6 +526,6 @@ gate. Wave 46 adds field-by-field Astralbase replay preflight. Wave 47 converts
 that target into a small leakage-clean exact metadata shard. Wave 48 measures
 the exact support collapse and Wave 49 shows that the current component-value
 capacity ceiling is 14 rows. Wave 50 shows the tested rank-4/5 ladder source
-does not raise that ceiling, so the active gate is a different component-value
-source family or documented value/split rule plus deterministic and learned
-baselines on a scaled exact split.
+does not raise that ceiling. Wave 51 breaks the ceiling with mixed-color hooks,
+so the active gate is materializing and auditing the rpf20 mixed-hook exact
+shard before deterministic and learned baselines on a scaled exact split.

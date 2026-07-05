@@ -1,0 +1,157 @@
+{
+  "wave_id": "wave_51_mixed_hook_value_source_breakthrough",
+  "objective": "Find and verify a component-source family that breaks the Wave 49/50 value-unique capacity ceiling and reaches rpf20 exact-support selection.",
+  "non_negotiables": [
+    "Capacity-only atlas entries must remain separate from current-selection reports.",
+    "The mixed-hook source counts as progress only if it raises component_value_capacity_upper_bound beyond 14 and the selector reaches selected_row_count=60.",
+    "The ordered all-atlas truncation probe must not be treated as a failed mixed-hook source; it documents pattern-limit ordering risk.",
+    "This wave is still a support report, not a promoted exact shard. The next wave must materialize, schema-validate, replay, split, and baseline the mixed-hook exact shard before model claims."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w51_astralbase_mixed_hook_atlas"
+      ]
+    },
+    {
+      "parallel": [
+        "w51_partizan_record_atlas",
+        "w51_partizan_record_selector"
+      ]
+    },
+    {
+      "parallel": [
+        "w51_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w51_astralbase_mixed_hook_atlas",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs"
+      ],
+      "depends_on": [],
+      "prompt": "Add a source-atlas report and mixed-hook upper-bound report that compare same-color geometry extensions with mixed-color opposing-pawn/minor hooks.",
+      "outputs": [
+        "--generated-depth-two-value-unique-signature-source-atlas [--rows-per-family N]",
+        "--generated-depth-two-value-unique-signature-mixed-hook-upper-bound [--rows-per-family N]",
+        "Regression tests for the mixed-hook capacity escape and small selector smoke"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "cargo test value_unique_signature_source_atlas_identifies_mixed_hook_escape",
+        "cargo test mixed_hook_upper_bound_selects_value_unique_rows",
+        "cargo clippy --all-targets --all-features -- -D warnings",
+        "cargo test"
+      ],
+      "acceptance": [
+        "The atlas reports mixed_color_hook_v0 capacity 60 with 113 left and 204 right unique component values.",
+        "The atlas reports corner_plus_edge_plus_mixed_color_hook_v0 capacity 60 with 115 left and 208 right unique component values.",
+        "The rpf20 mixed-hook upper-bound report selects 60 rows, balanced 20/20/20 by topology family.",
+        "The report keeps ordered_all_atlas_truncation_probe_v0 separate from the mixed-hook source."
+      ]
+    },
+    {
+      "id": "w51_partizan_record_atlas",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_value_unique_signature_source_atlas_wave_51_report.json"
+      ],
+      "depends_on": [
+        "w51_astralbase_mixed_hook_atlas"
+      ],
+      "prompt": "Run the Wave 51 capacity atlas and record the hash.",
+      "outputs": [
+        "Wave 51 source-atlas report"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-source-atlas --rows-per-family 20 > docs/non_fixture_composition_value_unique_signature_source_atlas_wave_51_report.json",
+        "jq empty docs/non_fixture_composition_value_unique_signature_source_atlas_wave_51_report.json",
+        "shasum -a 256 docs/non_fixture_composition_value_unique_signature_source_atlas_wave_51_report.json"
+      ],
+      "acceptance": [
+        "The report hash is recorded.",
+        "The mixed-hook entries have component_value_capacity_upper_bound=60.",
+        "The ordered all-atlas truncation probe is documented as a pattern-limit ordering risk."
+      ]
+    },
+    {
+      "id": "w51_partizan_record_selector",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_value_unique_signature_mixed_hook_wave_51_report.json"
+      ],
+      "depends_on": [
+        "w51_astralbase_mixed_hook_atlas"
+      ],
+      "prompt": "Run the full rpf20 mixed-hook upper-bound report and record the hash.",
+      "outputs": [
+        "Wave 51 mixed-hook selector report"
+      ],
+      "commands": [
+        "cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-mixed-hook-upper-bound --rows-per-family 20 > docs/non_fixture_composition_value_unique_signature_mixed_hook_wave_51_report.json",
+        "jq empty docs/non_fixture_composition_value_unique_signature_mixed_hook_wave_51_report.json",
+        "shasum -a 256 docs/non_fixture_composition_value_unique_signature_mixed_hook_wave_51_report.json"
+      ],
+      "acceptance": [
+        "component_value_capacity_upper_bound is 60.",
+        "current_selected_row_count is 60.",
+        "current_selected_counts_by_topology_family is 20/20/20.",
+        "The report keeps this as support evidence, not a promoted exact shard."
+      ]
+    },
+    {
+      "id": "w51_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_51_mixed_hook_value_source_breakthrough.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w51_partizan_record_atlas",
+        "w51_partizan_record_selector"
+      ],
+      "prompt": "Record Wave 51 as the first source-family breakthrough for value-unique rpf20 support and route the next wave toward materialized exact-shard audits.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_51_mixed_hook_value_source_breakthrough.json",
+        "jq empty docs/non_fixture_composition_value_unique_signature_source_atlas_wave_51_report.json",
+        "jq empty docs/non_fixture_composition_value_unique_signature_mixed_hook_wave_51_report.json"
+      ],
+      "acceptance": [
+        "Docs state that mixed-color hooks break the current component-value support ceiling.",
+        "Docs do not present the selector report as a promoted shard or model result.",
+        "Docs route Wave 52 to materialize, replay, split, and baseline the mixed-hook exact shard."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_51_mixed_hook_value_source_breakthrough.json",
+      "success_signal": "The Wave 51 plan is internally consistent."
+    },
+    {
+      "id": "mixed_hook_reaches_rpf20_support",
+      "command": "jq '.component_value_capacity_upper_bound == 60 and .current_selected_row_count == 60 and (.current_selected_counts_by_topology_family | [.[]] | all(. == 20))' docs/non_fixture_composition_value_unique_signature_mixed_hook_wave_51_report.json",
+      "success_signal": "The mixed-hook source reaches balanced rpf20 value-unique support."
+    }
+  ]
+}
