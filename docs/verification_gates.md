@@ -327,6 +327,16 @@ Future use must define a versioned value rule, replay-compatible provenance,
 split semantics, deterministic floors, and model baselines before any
 signature-derived target can enter supervision or evaluation claims.
 
+Wave 38 adds an executable contract gate:
+`python3 engine/ml_model.py signature-profile-contract-report docs/non_fixture_composition_signature_profile_search_wave_37_report.json --rows-per-family-target 10 --fail-on-support-gate`.
+The gate validates that Wave 37 has 30 selected diagnostic rows, 10 per
+generated topology family, zero duplicate component signatures, and zero
+duplicate result signature keys. It also records `promotion_gate.passed=false`
+with four blockers: no versioned exact value rule, no replay-compatible
+provenance, no split/leakage semantics, and no deterministic/model baselines.
+Any future signature-derived target must clear those blockers before it is
+eligible for exact supervision or OOD model evaluation.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -335,6 +345,7 @@ useful clean support: Wave 27 avoids generated component/decomposition identity
 reuse and passes leakage validation, but it currently supports only 7 generated
 exact rows. Wave 31 identifies the immediate clean-support bottleneck as
 component-value reuse pressure, not report validation. Wave 37 shows a richer
-material/mobility signature can recover 30 diagnostic rows, but the gate remains
-closed until that signature becomes a replayed value target with explicit split
-and baseline rules.
+material/mobility signature can recover 30 diagnostic rows, and Wave 38 makes
+that support machine-checkable while keeping promotion closed until the
+signature becomes a replayed value target with explicit split and baseline
+rules.

@@ -1,0 +1,57 @@
+{
+  "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
+  "contract": {
+    "contract_id": "depth2_material_mobility_signature_target_contract_v0",
+    "diagnostic_only": true,
+    "supervision_eligible": false,
+    "target_field": "result_signature_key",
+    "target_semantics": "depth-two component value digest plus material balance plus local move counts; diagnostic support only"
+  },
+  "contract_status": "support_gate_passed_promotion_blocked",
+  "promotion_gate": {
+    "blockers": [
+      "versioned exact value rule is not defined",
+      "replay-compatible provenance is not defined",
+      "split and leakage semantics for the signature target are not defined",
+      "deterministic floors and learned-model baselines are not implemented"
+    ],
+    "passed": false
+  },
+  "rejection_counts": {
+    "component_signature_reuse_before_materialization": 4806,
+    "decomposition_digest_reuse": 21,
+    "materialization_failure": 1
+  },
+  "report_id": "signature_profile_target_contract_report_v0",
+  "reuse_checks": {
+    "duplicate_component_signatures": 0,
+    "duplicate_result_signature_keys": 0
+  },
+  "source": "corner_plus_edge_minor_ladder_v0",
+  "source_report_path": "docs/non_fixture_composition_signature_profile_search_wave_37_report.json",
+  "source_report_sha256": "968aa1f7341a55e92f95dc54b4d81df3653c412bdf2bc18840175128da2ace9e",
+  "support_gate": {
+    "candidate_pair_counts_by_topology_family": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 8280,
+      "dfile_two_component_depth2_local_move_v0": 8280,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 8280
+    },
+    "candidate_topology_counts": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 10,
+      "dfile_two_component_depth2_local_move_v0": 10,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 10
+    },
+    "left_signature_profile_count": 90,
+    "passed": true,
+    "right_signature_profile_count": 92,
+    "rows_per_family_target": 10,
+    "selected_counts_by_topology_family": {
+      "dfile_two_component_depth2_asymmetric_fan_v0": 10,
+      "dfile_two_component_depth2_local_move_v0": 10,
+      "dfile_two_component_depth2_pawn_phalanx_v0": 10
+    },
+    "selected_row_count": 30,
+    "topology_family_count": 3,
+    "validation_errors": []
+  }
+}

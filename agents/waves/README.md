@@ -19,16 +19,16 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_37_signature_profile_support.json` is the current execution target. It
-tests whether a versioned component signature that combines depth-two value
-digest, material balance, and local move counts can recover 10-per-topology
-generated support after the duplicate-cluster diagnostic exposed hidden
-material/mobility diversity:
+`wave_38_signature_target_contract.json` is the current execution target. It
+turns the Wave 37 signature-profile support diagnostic into an explicit target
+contract gate: support may pass, but promotion stays blocked until replay,
+split, and baseline semantics exist:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
                              -> versioned signature diagnostic
-                             -> value-rule/replay/split decision gate
+                             -> support gate + promotion blockers
+                             -> replayed value-rule/split/baseline work
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

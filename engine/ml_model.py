@@ -54,6 +54,32 @@ FIXTURE_COMPONENT_SUM_RULE = "component_index_integer_sum_fixture_v0"
 MISSING_COMPOSITION_VALUE_RULE = "__missing__"
 MISSING_COMPONENT_TOPOLOGY_FAMILY = "__missing__"
 MISSING_COMPOSITION_SPEC_SOURCE = "__missing__"
+SIGNATURE_PROFILE_CONTRACT_ID = "depth2_material_mobility_signature_target_contract_v0"
+SIGNATURE_PROFILE_REQUIRED_FIELDS = (
+    "source",
+    "component_signature_rule",
+    "rows_per_family_target",
+    "left_signature_profile_count",
+    "right_signature_profile_count",
+    "candidate_pair_counts_by_topology_family",
+    "selected_counts_by_topology_family",
+    "selected_row_count",
+    "rejection_counts",
+    "candidates",
+)
+SIGNATURE_PROFILE_CANDIDATE_REQUIRED_FIELDS = (
+    "row_number",
+    "topology_family",
+    "left_component_signature",
+    "right_component_signature",
+    "result_signature_key",
+)
+SIGNATURE_PROFILE_PROMOTION_BLOCKERS = (
+    "versioned exact value rule is not defined",
+    "replay-compatible provenance is not defined",
+    "split and leakage semantics for the signature target are not defined",
+    "deterministic floors and learned-model baselines are not implemented",
+)
 
 
 def _require_torch() -> None:
@@ -1375,6 +1401,219 @@ def evaluate_frontier_target_report(
     if holdout_family:
         report["holdout_family"] = holdout_family
     return report
+
+
+def evaluate_signature_profile_contract_report(
+    report_json_path: str | Path,
+    rows_per_family_target: int = 10,
+) -> dict[str, Any]:
+    """Validate a signature-profile search report as a diagnostic target contract."""
+
+    path = Path(report_json_path)
+    source_report = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(source_report, dict):
+        raise ValueError("signature profile report must be a JSON object")
+
+    validation_errors = signature_profile_report_validation_errors(
+        source_report,
+        rows_per_family_target=rows_per_family_target,
+    )
+    selected_counts = _string_int_dict(
+        source_report.get("selected_counts_by_topology_family")
+    )
+    candidate_pair_counts = _string_int_dict(
+        source_report.get("candidate_pair_counts_by_topology_family")
+    )
+    candidates = source_report.get("candidates")
+    if not isinstance(candidates, list):
+        candidates = []
+    component_signatures = [
+        str(candidate[signature_field])
+        for candidate in candidates
+        if isinstance(candidate, dict)
+        for signature_field in ("left_component_signature", "right_component_signature")
+        if isinstance(candidate.get(signature_field), str)
+    ]
+    result_signature_keys = [
+        str(candidate["result_signature_key"])
+        for candidate in candidates
+        if isinstance(candidate, dict)
+        and isinstance(candidate.get("result_signature_key"), str)
+    ]
+    candidate_topology_counts = dict(
+        sorted(
+            Counter(
+                str(candidate.get("topology_family"))
+                for candidate in candidates
+                if isinstance(candidate, dict)
+                and isinstance(candidate.get("topology_family"), str)
+            ).items()
+        )
+    )
+
+    support_gate_passed = not validation_errors
+    selected_row_count = source_report.get("selected_row_count")
+    return {
+        "report_id": "signature_profile_target_contract_report_v0",
+        "source_report_path": str(path),
+        "source_report_sha256": _sha256_file(path),
+        "source": source_report.get("source"),
+        "component_signature_rule": source_report.get("component_signature_rule"),
+        "contract": {
+            "contract_id": SIGNATURE_PROFILE_CONTRACT_ID,
+            "diagnostic_only": True,
+            "supervision_eligible": False,
+            "target_field": "result_signature_key",
+            "target_semantics": (
+                "depth-two component value digest plus material balance plus "
+                "local move counts; diagnostic support only"
+            ),
+        },
+        "support_gate": {
+            "passed": support_gate_passed,
+            "rows_per_family_target": rows_per_family_target,
+            "topology_family_count": len(selected_counts),
+            "selected_row_count": selected_row_count,
+            "selected_counts_by_topology_family": selected_counts,
+            "candidate_pair_counts_by_topology_family": candidate_pair_counts,
+            "candidate_topology_counts": candidate_topology_counts,
+            "left_signature_profile_count": source_report.get(
+                "left_signature_profile_count"
+            ),
+            "right_signature_profile_count": source_report.get(
+                "right_signature_profile_count"
+            ),
+            "validation_errors": validation_errors,
+        },
+        "reuse_checks": {
+            "duplicate_component_signatures": duplicate_total(
+                Counter(component_signatures)
+            ),
+            "duplicate_result_signature_keys": duplicate_total(
+                Counter(result_signature_keys)
+            ),
+        },
+        "rejection_counts": _string_int_dict(source_report.get("rejection_counts")),
+        "promotion_gate": {
+            "passed": False,
+            "blockers": list(SIGNATURE_PROFILE_PROMOTION_BLOCKERS),
+        },
+        "contract_status": (
+            "support_gate_passed_promotion_blocked"
+            if support_gate_passed
+            else "support_gate_failed"
+        ),
+    }
+
+
+def signature_profile_report_validation_errors(
+    report: dict[str, Any],
+    rows_per_family_target: int,
+) -> list[str]:
+    errors: list[str] = []
+    for field in SIGNATURE_PROFILE_REQUIRED_FIELDS:
+        if field not in report:
+            errors.append(f"missing required field {field}")
+
+    if rows_per_family_target < 1:
+        errors.append("rows_per_family_target must be >= 1")
+
+    rule = report.get("component_signature_rule")
+    if not isinstance(rule, str) or not rule:
+        errors.append("component_signature_rule must be a non-empty string")
+    elif not rule.endswith("_v0"):
+        errors.append("component_signature_rule must be versioned with _v0")
+
+    report_target = report.get("rows_per_family_target")
+    if report_target != rows_per_family_target:
+        errors.append(
+            "rows_per_family_target mismatch: "
+            f"report={report_target!r} expected={rows_per_family_target!r}"
+        )
+
+    selected_counts = _string_int_dict(report.get("selected_counts_by_topology_family"))
+    candidate_pair_counts = _string_int_dict(
+        report.get("candidate_pair_counts_by_topology_family")
+    )
+    selected_row_count = report.get("selected_row_count")
+    if not isinstance(selected_row_count, int):
+        errors.append("selected_row_count must be an integer")
+    elif selected_row_count != sum(selected_counts.values()):
+        errors.append(
+            "selected_row_count must equal sum(selected_counts_by_topology_family)"
+        )
+
+    if not selected_counts:
+        errors.append("selected_counts_by_topology_family must be non-empty")
+    for family, count in selected_counts.items():
+        if count < rows_per_family_target:
+            errors.append(
+                f"topology family {family} has selected count {count}, "
+                f"below target {rows_per_family_target}"
+            )
+        if candidate_pair_counts.get(family, 0) < count:
+            errors.append(
+                f"topology family {family} has fewer candidate pairs than selections"
+            )
+
+    for count_field in ("left_signature_profile_count", "right_signature_profile_count"):
+        count = report.get(count_field)
+        if not isinstance(count, int) or count <= 0:
+            errors.append(f"{count_field} must be a positive integer")
+
+    candidates = report.get("candidates")
+    if not isinstance(candidates, list):
+        errors.append("candidates must be a list")
+        candidates = []
+    if isinstance(selected_row_count, int) and len(candidates) != selected_row_count:
+        errors.append("candidate count must equal selected_row_count")
+
+    component_signatures: list[str] = []
+    result_signature_keys: list[str] = []
+    for index, candidate in enumerate(candidates):
+        if not isinstance(candidate, dict):
+            errors.append(f"candidate {index} must be an object")
+            continue
+        for field in SIGNATURE_PROFILE_CANDIDATE_REQUIRED_FIELDS:
+            value = candidate.get(field)
+            if value is None or value == "":
+                errors.append(f"candidate {index} missing required field {field}")
+        left_signature = candidate.get("left_component_signature")
+        right_signature = candidate.get("right_component_signature")
+        result_signature = candidate.get("result_signature_key")
+        if isinstance(left_signature, str):
+            component_signatures.append(left_signature)
+        if isinstance(right_signature, str):
+            component_signatures.append(right_signature)
+        if isinstance(result_signature, str):
+            result_signature_keys.append(result_signature)
+
+    duplicate_component_signatures = duplicate_total(Counter(component_signatures))
+    if duplicate_component_signatures:
+        errors.append(
+            "selected candidates must not reuse component signatures: "
+            f"duplicates={duplicate_component_signatures}"
+        )
+    duplicate_result_signatures = duplicate_total(Counter(result_signature_keys))
+    if duplicate_result_signatures:
+        errors.append(
+            "selected candidates must not reuse result signature keys: "
+            f"duplicates={duplicate_result_signatures}"
+        )
+
+    return errors
+
+
+def _string_int_dict(value: Any) -> dict[str, int]:
+    if not isinstance(value, dict):
+        return {}
+    result: dict[str, int] = {}
+    for key, count in value.items():
+        if isinstance(count, bool):
+            continue
+        if isinstance(count, int):
+            result[str(key)] = count
+    return dict(sorted(result.items()))
 
 
 def frontier_target_examples(
@@ -2957,6 +3196,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the frontier target report JSON.",
     )
 
+    signature_contract_parser = subcommands.add_parser(
+        "signature-profile-contract-report",
+        help="Validate a signature-profile search report as a diagnostic target contract.",
+    )
+    signature_contract_parser.add_argument("report_json_path", type=Path)
+    signature_contract_parser.add_argument(
+        "--rows-per-family-target",
+        type=int,
+        default=10,
+        help="Minimum selected diagnostic rows required per topology family.",
+    )
+    signature_contract_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write the contract report JSON.",
+    )
+    signature_contract_parser.add_argument(
+        "--fail-on-support-gate",
+        action="store_true",
+        help="Exit nonzero when the signature support gate does not pass.",
+    )
+
     validate_report_parser = subcommands.add_parser(
         "validate-report",
         help="Validate a saved JSON report and optionally enforce leakage gates.",
@@ -3126,6 +3387,28 @@ def cli_main(argv: list[str] | None = None) -> int:
                 encoding="utf-8",
             )
         print_json_report(report)
+        return 0
+
+    if args.command == "signature-profile-contract-report":
+        try:
+            report = evaluate_signature_profile_contract_report(
+                args.report_json_path,
+                rows_per_family_target=args.rows_per_family_target,
+            )
+        except (FileNotFoundError, json.JSONDecodeError, ValueError) as error:
+            print(str(error), file=sys.stderr)
+            return 1
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print_json_report(report)
+        if args.fail_on_support_gate and not report["support_gate"]["passed"]:
+            for error in report["support_gate"]["validation_errors"]:
+                print(f"signature support violation: {error}", file=sys.stderr)
+            return 1
         return 0
 
     if args.command == "validate-report":

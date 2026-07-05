@@ -1,0 +1,102 @@
+{
+  "wave_id": "wave_38_signature_target_contract",
+  "objective": "Convert the Wave 37 signature-profile support diagnostic into an explicit target-contract gate that can pass support while blocking supervision promotion until replay, split, and baseline requirements exist.",
+  "non_negotiables": [
+    "The signature target contract report must keep diagnostic support separate from supervision eligibility.",
+    "The promotion gate must remain closed until a versioned exact value rule, replay-compatible provenance, split semantics, and deterministic/model baselines exist.",
+    "The contract report must consume the Wave 37 report rather than reinterpreting selected rows by hand.",
+    "Do not change existing composition shard bytes or model claims in this wave."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w38_partizan_signature_contract_tooling"
+      ]
+    },
+    {
+      "parallel": [
+        "w38_partizan_signature_contract_evidence"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w38_partizan_signature_contract_tooling",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "engine/ml_model.py",
+        "engine/test.py"
+      ],
+      "depends_on": [],
+      "prompt": "Add a Partizan report command that reads a generated signature-profile search report, validates target support and no-reuse checks, and emits a contract report whose support gate can pass while the promotion gate remains blocked.",
+      "outputs": [
+        "signature-profile-contract-report CLI command",
+        "Smoke test covering passing support and duplicate-signature failure",
+        "Machine-readable promotion blockers"
+      ],
+      "commands": [
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "The command reports support_gate.passed=true on the Wave 37 report.",
+        "The command reports promotion_gate.passed=false with explicit blockers.",
+        "The smoke test fails a duplicate component-signature selection."
+      ]
+    },
+    {
+      "id": "w38_partizan_signature_contract_evidence",
+      "agent": "paper_critic",
+      "repo": ".",
+      "write_scope": [
+        "docs/non_fixture_composition_signature_target_contract_wave_38_report.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/README.md",
+        "agents/waves/wave_38_signature_target_contract.json"
+      ],
+      "depends_on": [
+        "w38_partizan_signature_contract_tooling"
+      ],
+      "prompt": "Run the signature target contract command on the Wave 37 report and update the evidence ledger. Emphasize that support passed but promotion remains blocked until replay-compatible provenance, split semantics, deterministic floors, and learned baselines are implemented.",
+      "outputs": [
+        "Wave 38 signature target contract report",
+        "Experiment matrix row with report hash",
+        "Claim and verification-gate updates that preserve the promotion blocker"
+      ],
+      "commands": [
+        "python3 engine/ml_model.py signature-profile-contract-report docs/non_fixture_composition_signature_profile_search_wave_37_report.json --rows-per-family-target 10 --fail-on-support-gate --output docs/non_fixture_composition_signature_target_contract_wave_38_report.json",
+        "jq empty docs/non_fixture_composition_signature_target_contract_wave_38_report.json",
+        "shasum -a 256 docs/non_fixture_composition_signature_target_contract_wave_38_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_38_signature_target_contract.json",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Report records support_gate.passed=true with 30 selected rows and 10 rows per topology family.",
+        "Report records promotion_gate.passed=false with the four missing prerequisites.",
+        "Docs state that the contract is not supervision eligibility."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_38_signature_target_contract.json",
+      "success_signal": "The Wave 38 plan is internally consistent."
+    },
+    {
+      "id": "signature_contract_report_gate",
+      "command": "python3 engine/ml_model.py signature-profile-contract-report docs/non_fixture_composition_signature_profile_search_wave_37_report.json --rows-per-family-target 10 --fail-on-support-gate --output docs/non_fixture_composition_signature_target_contract_wave_38_report.json",
+      "success_signal": "The signature support gate passes and the promotion blocker remains explicit."
+    },
+    {
+      "id": "partizan_smoke_gate",
+      "command": "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py && python3 engine/test.py && git diff --check",
+      "success_signal": "Partizan tooling remains healthy."
+    }
+  ]
+}

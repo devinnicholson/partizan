@@ -17,6 +17,7 @@ from ml_model import (
     evaluate_split_baseline_report,
     evaluate_split_report,
     evaluate_split_report_with_mode,
+    evaluate_signature_profile_contract_report,
     exact_certificate_digest,
     fen_d4_symmetry_key,
     fixture_component_integer_sum,
@@ -571,6 +572,104 @@ def run_composition_component_sum_parser_scope_smoke():
     )
     assert fixture_component_integer_sum("9=Up,13=Down") is None
     assert fixture_component_integer_sum("9=GameTree(L[Star,Up];R[Down]),13=Down") is None
+
+
+def run_signature_profile_contract_report_smoke():
+    families = [
+        "dfile_two_component_depth2_local_move_v0",
+        "dfile_two_component_depth2_asymmetric_fan_v0",
+        "dfile_two_component_depth2_pawn_phalanx_v0",
+    ]
+    candidates = []
+    for family in families:
+        for offset in range(2):
+            index = len(candidates)
+            left_signature = (
+                f"value:left-{index};material:{index + 1};"
+                f"moves:white:{offset + 1},black:0"
+            )
+            right_signature = (
+                f"value:right-{index};material:-{index + 1};"
+                f"moves:white:0,black:{offset + 1}"
+            )
+            candidates.append(
+                {
+                    "row_number": index + 1,
+                    "topology_family": family,
+                    "left_component_signature": left_signature,
+                    "right_component_signature": right_signature,
+                    "result_signature_key": (
+                        f"{family};left:{left_signature};right:{right_signature}"
+                    ),
+                }
+            )
+
+    signature_report = {
+        "source": "fixture_signature_source_v0",
+        "component_signature_rule": (
+            "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0"
+        ),
+        "rows_per_family_target": 2,
+        "left_signature_profile_count": 6,
+        "right_signature_profile_count": 6,
+        "candidate_pair_counts_by_topology_family": {
+            family: 12 for family in families
+        },
+        "selected_counts_by_topology_family": {family: 2 for family in families},
+        "selected_row_count": 6,
+        "rejection_counts": {
+            "component_signature_reuse_before_materialization": 3,
+        },
+        "candidates": candidates,
+    }
+
+    with TemporaryDirectory() as temp_dir:
+        report_path = Path(temp_dir) / "signature-profile-report.json"
+        report_path.write_text(
+            json.dumps(signature_report, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        contract_report = evaluate_signature_profile_contract_report(
+            report_path,
+            rows_per_family_target=2,
+        )
+
+        duplicate_report = json.loads(json.dumps(signature_report))
+        duplicate_report["candidates"][1]["left_component_signature"] = (
+            duplicate_report["candidates"][0]["left_component_signature"]
+        )
+        duplicate_report_path = Path(temp_dir) / "signature-profile-duplicate.json"
+        duplicate_report_path.write_text(
+            json.dumps(duplicate_report, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        duplicate_contract_report = evaluate_signature_profile_contract_report(
+            duplicate_report_path,
+            rows_per_family_target=2,
+        )
+
+    assert contract_report["report_id"] == "signature_profile_target_contract_report_v0"
+    assert contract_report["support_gate"]["passed"] is True
+    assert contract_report["support_gate"]["selected_row_count"] == 6
+    assert contract_report["support_gate"]["selected_counts_by_topology_family"] == {
+        family: 2 for family in families
+    }
+    assert contract_report["reuse_checks"] == {
+        "duplicate_component_signatures": 0,
+        "duplicate_result_signature_keys": 0,
+    }
+    assert contract_report["contract"]["supervision_eligible"] is False
+    assert contract_report["promotion_gate"]["passed"] is False
+    assert contract_report["contract_status"] == (
+        "support_gate_passed_promotion_blocked"
+    )
+
+    assert duplicate_contract_report["support_gate"]["passed"] is False
+    assert duplicate_contract_report["reuse_checks"]["duplicate_component_signatures"] == 1
+    assert any(
+        "reuse component signatures" in error
+        for error in duplicate_contract_report["support_gate"]["validation_errors"]
+    )
 
 
 def _composition_fixture_certificate(
@@ -1269,6 +1368,7 @@ def main():
     run_composition_baseline_component_sum_rule_scope_smoke()
     run_composition_topology_benchmark_report_smoke()
     run_composition_component_sum_parser_scope_smoke()
+    run_signature_profile_contract_report_smoke()
     run_baseline_smoke()
     run_frontier_baseline_smoke()
     run_family_frontier_baseline_smoke()
