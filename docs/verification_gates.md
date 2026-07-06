@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 65 dynamic pairing preflight gates, with Wave 3 negative controls
+Status: Wave 66 all-left dynamic pairing preflight gates, with Wave 3 negative controls
 and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
@@ -654,6 +654,15 @@ rpf50 target before materialization, so it cannot be treated as exact support.
 Future work must add enough value supply or make materialization-aware dynamic
 selection close the remaining gap and then replay/leakage-audit the rows.
 
+Wave 66 adds an all-left dynamic unseen-value/signature pairing preflight:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-all-left-supply-dynamic-pairing-preflight --rows-per-family 50`.
+The report runs before materialization, replay, and leakage gates. It selects
+145 candidate pairs with topology counts 48/49/48, improving over Wave 65's
+137 pairs while remaining 5 rows short of the 150-row rpf50 target before
+materialization. It cannot be treated as exact support. Future work must close
+the last five preflight rows or move to materialization-aware dynamic selection,
+then replay/leakage-audit any materialized rows.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -691,8 +700,9 @@ Wave 63 shows the first bounded selector over that source still selects only
 12 rows under a 2,500-pair per-family budget. Wave 64 shows static
 value-digest-spread ordering worsens the bounded result to 4 rows. Wave 65
 dynamic preflight reaches 137 candidate pairs but remains 13 short of rpf50
-before materialization. The active gate is additional value supply or
-materialization-aware dynamic selection that yields selected, materialized,
-replayed, leakage-clean exact rows from a capacity-clearing source, or a
-materially different model class that improves both dev and test before any
-learned structure claim.
+before materialization. Wave 66 all-left dynamic preflight reaches 145
+candidate pairs but remains 5 short of rpf50 before materialization. The active
+gate is closing the last five preflight rows or materialization-aware dynamic
+selection that yields selected, materialized, replayed, leakage-clean exact rows
+from a capacity-clearing source, or a materially different model class that
+improves both dev and test before any learned structure claim.

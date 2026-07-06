@@ -19,9 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_65_dynamic_pairing_preflight.json` is the current execution target. It
-tests whether dynamic unseen-value/signature pairing can turn Wave 62 capacity
-into rpf50 pre-materialization candidate support:
+`wave_66_all_left_dynamic_pairing_preflight.json` is the current execution
+target. It tests whether the Wave 62 all-left capacity-clearing source improves
+dynamic unseen-value/signature pre-materialization support beyond Wave 65:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -55,6 +55,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> left-supply bounded selector diagnostic
                              -> static value-spread selector no-go
                              -> dynamic pairing preflight
+                             -> all-left dynamic pairing preflight
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
