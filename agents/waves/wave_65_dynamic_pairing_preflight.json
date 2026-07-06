@@ -1,0 +1,102 @@
+{
+  "wave_id": "wave_65_dynamic_pairing_preflight",
+  "objective": "Test whether dynamic unseen-value/signature pairing can turn the Wave 62 capacity-clearing source into rpf50 pre-materialization candidate support.",
+  "non_negotiables": [
+    "This is a pre-materialization diagnostic and must not be treated as selected exact support.",
+    "Rows must still require materialization, replay, leakage, and baseline gates before promotion.",
+    "The report must compare against Wave 63 and Wave 64 bounded selector results.",
+    "A partial unlock must record the remaining support gap explicitly."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w65_astralbase_dynamic_pairing_preflight"
+      ]
+    },
+    {
+      "parallel": [
+        "w65_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w65_astralbase_dynamic_pairing_preflight",
+      "agent": "topology_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs",
+        "../partizan/docs/signature_target_mixed_hook_left_supply_dynamic_pairing_preflight_wave_65_rpf50_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add and run a dynamic unseen-value/signature pairing preflight for the Wave 62 left-supply source.",
+      "outputs": [
+        "dynamic pairing preflight CLI command",
+        "rpf50 dynamic preflight report"
+      ],
+      "commands": [
+        "cargo fmt",
+        "cargo test --quiet left_supply_dynamic_pairing_preflight_nearly_reaches_rpf50 -- --exact",
+        "cargo test --quiet",
+        "cargo run --quiet -- --generated-depth-two-value-unique-signature-left-supply-dynamic-pairing-preflight --rows-per-family 50 > ../partizan/docs/signature_target_mixed_hook_left_supply_dynamic_pairing_preflight_wave_65_rpf50_report.json",
+        "shasum -a 256 ../partizan/docs/signature_target_mixed_hook_left_supply_dynamic_pairing_preflight_wave_65_rpf50_report.json"
+      ],
+      "acceptance": [
+        "The report records pre-materialization selected pairs and topology counts.",
+        "The report records rejection counts before materialization.",
+        "Docs state that the report is not selected exact support.",
+        "Docs state the remaining gap to the 150-row rpf50 target."
+      ]
+    },
+    {
+      "id": "w65_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_65_dynamic_pairing_preflight.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "docs/signature_target_mixed_hook_left_supply_dynamic_pairing_preflight_wave_65_rpf50_report.json"
+      ],
+      "depends_on": [
+        "w65_astralbase_dynamic_pairing_preflight"
+      ],
+      "prompt": "Record Wave 65 as a dynamic-pairing partial unlock that remains short of rpf50 and pre-materialization only.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "jq empty agents/waves/wave_65_dynamic_pairing_preflight.json docs/signature_target_mixed_hook_left_supply_dynamic_pairing_preflight_wave_65_rpf50_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_65_dynamic_pairing_preflight.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that dynamic preflight reaches 137 pairs.",
+        "Docs state that rpf50 still needs 150 rows and remains 13 rows short before materialization.",
+        "Docs compare against Wave 63's 12 rows and Wave 64's 4 rows.",
+        "Docs route next work toward additional value supply or materialization-aware dynamic selection."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_65_dynamic_pairing_preflight.json",
+      "success_signal": "The Wave 65 plan is internally consistent."
+    },
+    {
+      "id": "dynamic_pairing_report_validates",
+      "command": "jq empty docs/signature_target_mixed_hook_left_supply_dynamic_pairing_preflight_wave_65_rpf50_report.json",
+      "success_signal": "The Wave 65 dynamic pairing preflight report is valid JSON."
+    }
+  ]
+}

@@ -19,9 +19,9 @@ one assignment before sending it to an agent.
 
 ## Current Wave
 
-`wave_64_value_spread_selector_no_go.json` is the current execution target. It
-tests whether a static value-digest-spread candidate order improves the Wave 63
-bounded selector bottleneck:
+`wave_65_dynamic_pairing_preflight.json` is the current execution target. It
+tests whether dynamic unseen-value/signature pairing can turn Wave 62 capacity
+into rpf50 pre-materialization candidate support:
 
 ```text
 depth-two profile bottleneck -> duplicate-cluster report
@@ -54,6 +54,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> left-supply capacity atlas
                              -> left-supply bounded selector diagnostic
                              -> static value-spread selector no-go
+                             -> dynamic pairing preflight
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate

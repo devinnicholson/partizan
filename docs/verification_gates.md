@@ -1,6 +1,6 @@
 # Verification Gates
 
-Status: Wave 64 static value-spread selector gates, with Wave 3 negative controls
+Status: Wave 65 dynamic pairing preflight gates, with Wave 3 negative controls
 and Wave 22/27 composition replay and leakage gates retained.
 
 The fixture at `agents/fixtures/wave_03_negative_controls.jsonl` is not a
@@ -645,6 +645,15 @@ limit in every topology. Static digest-spread ordering is therefore not the
 selector fix; future work needs dynamic unseen-value/signature pairing or
 materialization-aware search.
 
+Wave 65 adds a dynamic unseen-value/signature pairing preflight:
+`cargo run --quiet --manifest-path /Users/devinnicholson/astralbase/Cargo.toml -- --generated-depth-two-value-unique-signature-left-supply-dynamic-pairing-preflight --rows-per-family 50`.
+The report runs before materialization, replay, and leakage gates. It selects
+137 candidate pairs with topology counts 46/46/45, improving sharply over Wave
+63's 12 rows and Wave 64's 4 rows. It is still 13 rows short of the 150-row
+rpf50 target before materialization, so it cannot be treated as exact support.
+Future work must add enough value supply or make materialization-aware dynamic
+selection close the remaining gap and then replay/leakage-audit the rows.
+
 Wave 21 established syntactic target support for `--rows-per-family 10` at
 Astralbase commit `ca6e9baa96cd6ae2ab34d302c1b95546542dc9ba` while keeping the
 existing Wave 18 shard byte-identical. Wave 22 then added an explicit expanded
@@ -680,8 +689,10 @@ has zero matched dev/test topology candidates. Wave 62 clears the rpf50
 capacity gate with left-supply variants, but only in capacity-only reports.
 Wave 63 shows the first bounded selector over that source still selects only
 12 rows under a 2,500-pair per-family budget. Wave 64 shows static
-value-digest-spread ordering worsens the bounded result to 4 rows. The active
-gate is dynamic unseen-value/signature pairing or materialization-aware search
-that yields selected, materialized, replayed, leakage-clean exact rows from a
-capacity-clearing source, or a materially different model class that improves
-both dev and test before any learned structure claim.
+value-digest-spread ordering worsens the bounded result to 4 rows. Wave 65
+dynamic preflight reaches 137 candidate pairs but remains 13 short of rpf50
+before materialization. The active gate is additional value supply or
+materialization-aware dynamic selection that yields selected, materialized,
+replayed, leakage-clean exact rows from a capacity-clearing source, or a
+materially different model class that improves both dev and test before any
+learned structure claim.
