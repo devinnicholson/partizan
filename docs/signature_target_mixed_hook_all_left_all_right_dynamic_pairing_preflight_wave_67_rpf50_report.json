@@ -1,14 +1,14 @@
 {
-  "source": "unbounded_all_left_supply_vs_expanded_right_dynamic_pairing_preflight_v0",
+  "source": "unbounded_all_left_supply_vs_all_right_supply_dynamic_pairing_preflight_v0",
   "component_signature_rule": "depth2_value_digest_plus_material_balance_plus_local_move_counts_v0",
   "rows_per_family_target": 50,
   "target_row_count": 150,
   "left_signature_profile_count": 297,
-  "right_signature_profile_count": 371,
+  "right_signature_profile_count": 545,
   "candidate_pair_counts_by_topology_family": {
-    "dfile_two_component_depth2_asymmetric_fan_v0": 110166,
-    "dfile_two_component_depth2_local_move_v0": 110166,
-    "dfile_two_component_depth2_pawn_phalanx_v0": 110166
+    "dfile_two_component_depth2_asymmetric_fan_v0": 161832,
+    "dfile_two_component_depth2_local_move_v0": 161832,
+    "dfile_two_component_depth2_pawn_phalanx_v0": 161832
   },
   "selected_row_count": 145,
   "selected_gap_count": 5,
@@ -28,25 +28,25 @@
     "dfile_two_component_depth2_pawn_phalanx_v0": false
   },
   "rejection_counts": {
-    "component_signature_reuse_before_materialization": 4895818,
-    "component_value_digest_reuse_before_materialization": 3971365,
-    "same_component_value_digest": 19495
+    "component_signature_reuse_before_materialization": 5048806,
+    "component_value_digest_reuse_before_materialization": 4208448,
+    "same_component_value_digest": 20558
   },
   "rejection_counts_by_topology_family": {
     "dfile_two_component_depth2_asymmetric_fan_v0": {
-      "component_signature_reuse_before_materialization": 1633170,
-      "component_value_digest_reuse_before_materialization": 1324571,
-      "same_component_value_digest": 6509
+      "component_signature_reuse_before_materialization": 1691985,
+      "component_value_digest_reuse_before_materialization": 1410101,
+      "same_component_value_digest": 6891
     },
     "dfile_two_component_depth2_local_move_v0": {
-      "component_signature_reuse_before_materialization": 1605268,
-      "component_value_digest_reuse_before_materialization": 1311090,
-      "same_component_value_digest": 6406
+      "component_signature_reuse_before_materialization": 1639955,
+      "component_value_digest_reuse_before_materialization": 1375048,
+      "same_component_value_digest": 6697
     },
     "dfile_two_component_depth2_pawn_phalanx_v0": {
-      "component_signature_reuse_before_materialization": 1657380,
-      "component_value_digest_reuse_before_materialization": 1335704,
-      "same_component_value_digest": 6580
+      "component_signature_reuse_before_materialization": 1716866,
+      "component_value_digest_reuse_before_materialization": 1423299,
+      "same_component_value_digest": 6970
     }
   },
   "candidates": [

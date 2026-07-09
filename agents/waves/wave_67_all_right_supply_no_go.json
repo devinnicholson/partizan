@@ -1,0 +1,100 @@
+{
+  "wave_id": "wave_67_all_right_supply_no_go",
+  "objective": "Test whether expanding the right-side source supply closes the Wave 66 five-row dynamic-pairing preflight gap.",
+  "non_negotiables": [
+    "This is a pre-materialization diagnostic and must not be treated as selected exact support.",
+    "Rows must still require materialization, replay, leakage, and baseline gates before promotion.",
+    "The report must compare against Wave 66's 145 selected pairs and 5-row gap.",
+    "A no-go result must record that increasing right-side signature supply did not increase selected support."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w67_astralbase_all_right_supply_no_go"
+      ]
+    },
+    {
+      "parallel": [
+        "w67_partizan_record_claim_gates"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w67_astralbase_all_right_supply_no_go",
+      "agent": "topology_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/dataset_label.rs",
+        "src/main.rs",
+        "tests/domain_gate_generator.rs",
+        "../partizan/docs/signature_target_mixed_hook_all_left_all_right_dynamic_pairing_preflight_wave_67_rpf50_report.json"
+      ],
+      "depends_on": [],
+      "prompt": "Add and run an all-left/all-right dynamic unseen-value/signature pairing preflight.",
+      "outputs": [
+        "all-left/all-right dynamic pairing preflight CLI command",
+        "rpf50 all-left/all-right no-go report"
+      ],
+      "commands": [
+        "cargo fmt",
+        "cargo test --quiet dynamic_pairing_preflight",
+        "cargo run --quiet -- --generated-depth-two-value-unique-signature-all-left-all-right-dynamic-pairing-preflight --rows-per-family 50 > ../partizan/docs/signature_target_mixed_hook_all_left_all_right_dynamic_pairing_preflight_wave_67_rpf50_report.json",
+        "shasum -a 256 ../partizan/docs/signature_target_mixed_hook_all_left_all_right_dynamic_pairing_preflight_wave_67_rpf50_report.json"
+      ],
+      "acceptance": [
+        "The report records right-side signature profile expansion from Wave 66's 371 to 545.",
+        "The report records that selected support remains 145 pairs with topology counts 48/49/48.",
+        "The report records the remaining 2/1/2 topology-family gaps.",
+        "Docs state that right-side source supply alone does not close rpf50."
+      ]
+    },
+    {
+      "id": "w67_partizan_record_claim_gates",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/README.md",
+        "agents/waves/wave_67_all_right_supply_no_go.json",
+        "docs/experiment_matrix.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "docs/signature_target_mixed_hook_all_left_all_right_dynamic_pairing_preflight_wave_67_rpf50_report.json"
+      ],
+      "depends_on": [
+        "w67_astralbase_all_right_supply_no_go"
+      ],
+      "prompt": "Record Wave 67 as a right-side source-supply no-go that leaves selected support at Wave 66's 145 pairs.",
+      "outputs": [
+        "Wave plan",
+        "Experiment matrix update",
+        "Research claim update",
+        "Verification gate update"
+      ],
+      "commands": [
+        "jq empty agents/waves/wave_67_all_right_supply_no_go.json docs/signature_target_mixed_hook_all_left_all_right_dynamic_pairing_preflight_wave_67_rpf50_report.json",
+        "python3 agents/network.py validate",
+        "python3 agents/network.py validate-wave agents/waves/wave_67_all_right_supply_no_go.json",
+        "python3 -m py_compile engine/ml_model.py engine/test.py agents/network.py agents/label_schema.py",
+        "python3 engine/test.py"
+      ],
+      "acceptance": [
+        "Docs state that all-right source expansion raises right signatures to 545.",
+        "Docs state that selected support remains 145 pairs and the rpf50 gap remains 5 rows.",
+        "Docs state that the active next step is materialization-aware pairing/search or a different model class, not more right-side source supply alone."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_67_all_right_supply_no_go.json",
+      "success_signal": "The Wave 67 plan is internally consistent."
+    },
+    {
+      "id": "all_right_supply_report_validates",
+      "command": "jq empty docs/signature_target_mixed_hook_all_left_all_right_dynamic_pairing_preflight_wave_67_rpf50_report.json",
+      "success_signal": "The Wave 67 all-right supply no-go report is valid JSON."
+    }
+  ]
+}

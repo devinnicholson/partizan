@@ -56,6 +56,7 @@ depth-two profile bottleneck -> duplicate-cluster report
                              -> static value-spread selector no-go
                              -> dynamic pairing preflight
                              -> all-left dynamic pairing preflight
+                             -> all-right source-supply no-go
 ```
 
 The older `wave_17_composition_certificates.json` remains the certificate
