@@ -15,8 +15,9 @@ resolved by this branch and must remain visible in any handoff or release note:
 4. **Immutable public refs:** CI pins three candidate commits. Those exact
    commits must be available on the public upstream repositories before CI can
    run successfully.
-5. **Cross-platform evidence:** the workflow covers Linux, macOS, and Windows,
-   but only the local macOS arm64 run is evidenced here.
+5. **Cross-platform and MSRV evidence:** the workflow covers Linux, macOS,
+   Windows, and Rust 1.85, but only macOS arm64 with Rust 1.92 and Python 3.14
+   was executed locally in this branch.
 6. **Wave 47 immutable provenance:** its 13 rows still record
    `code_commit=workspace`. Their bytes and report linkage are frozen, but
    source regeneration equivalence is not claimed.
