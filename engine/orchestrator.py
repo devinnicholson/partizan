@@ -11,37 +11,38 @@ import shlex
 import subprocess
 import sys
 
-try:
-    import modal
-except ModuleNotFoundError:
-    modal = None
-
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_ASTRALBASE_DIR = ROOT.parent / "astralbase"
-DEFAULT_SHARD_PATH = Path("/tmp/partizan-wave-03.jsonl")
-DEFAULT_FRONTIER_SHARD_PATH = Path("/tmp/partizan-frontier-wave-06.jsonl")
-DEFAULT_FAMILY_FRONTIER_SHARD_PATH = Path("/tmp/partizan-family-frontier-wave-07.jsonl")
+GENERATED_ARTIFACT_DIR = ROOT / "artifacts" / "generated"
+DEFAULT_SHARD_PATH = GENERATED_ARTIFACT_DIR / "partizan-wave-03.jsonl"
+DEFAULT_FRONTIER_SHARD_PATH = GENERATED_ARTIFACT_DIR / "partizan-frontier-wave-06.jsonl"
+DEFAULT_FAMILY_FRONTIER_SHARD_PATH = (
+    GENERATED_ARTIFACT_DIR / "partizan-family-frontier-wave-07.jsonl"
+)
 DEFAULT_EXPANDED_FAMILY_FRONTIER_SHARD_PATH = Path(
-    "/tmp/partizan-expanded-family-frontier-wave-12.jsonl"
+    GENERATED_ARTIFACT_DIR / "partizan-expanded-family-frontier-wave-12.jsonl"
 )
 DEFAULT_COMPOSITION_HARD_TARGET_SHARD_PATH = Path(
-    "/tmp/partizan-composition-hard-target-wave-17.jsonl"
+    GENERATED_ARTIFACT_DIR / "partizan-composition-hard-target-wave-17.jsonl"
 )
-DEFAULT_MANIFEST_PATH = ROOT / "docs" / "dataset_v0_manifest.md"
-DEFAULT_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "frontier_wave_06_manifest.md"
-DEFAULT_FAMILY_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "family_frontier_wave_07_manifest.md"
+DEFAULT_MANIFEST_PATH = GENERATED_ARTIFACT_DIR / "partizan-wave-03.manifest.md"
+DEFAULT_FRONTIER_MANIFEST_PATH = GENERATED_ARTIFACT_DIR / "partizan-frontier-wave-06.manifest.md"
+DEFAULT_FAMILY_FRONTIER_MANIFEST_PATH = (
+    GENERATED_ARTIFACT_DIR / "partizan-family-frontier-wave-07.manifest.md"
+)
 DEFAULT_EXPANDED_FAMILY_FRONTIER_MANIFEST_PATH = (
-    ROOT / "docs" / "expanded_family_frontier_wave_12_manifest.md"
+    GENERATED_ARTIFACT_DIR / "partizan-expanded-family-frontier-wave-12.manifest.md"
 )
 DEFAULT_COMPOSITION_HARD_TARGET_MANIFEST_PATH = (
-    ROOT / "docs" / "composition_hard_target_wave_17_manifest.md"
+    GENERATED_ARTIFACT_DIR / "partizan-composition-hard-target-wave-17.manifest.md"
 )
 LABEL_SCHEMA_PATH = ROOT / "agents" / "label_schema.py"
 SCHEMA_VERSION = "partizan.dataset_label.v0"
 ASTRALBASE_SHARD_COMMAND = (
     "cargo",
     "run",
+    "--locked",
+    "--offline",
     "--quiet",
     "--",
     "--sample-label-shard",
@@ -49,6 +50,8 @@ ASTRALBASE_SHARD_COMMAND = (
 ASTRALBASE_FRONTIER_SHARD_BASE_COMMAND = (
     "cargo",
     "run",
+    "--locked",
+    "--offline",
     "--quiet",
     "--",
     "--frontier-label-shard",
@@ -56,6 +59,8 @@ ASTRALBASE_FRONTIER_SHARD_BASE_COMMAND = (
 ASTRALBASE_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
     "cargo",
     "run",
+    "--locked",
+    "--offline",
     "--quiet",
     "--",
     "--family-frontier-label-shard",
@@ -63,6 +68,8 @@ ASTRALBASE_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
 ASTRALBASE_EXPANDED_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
     "cargo",
     "run",
+    "--locked",
+    "--offline",
     "--quiet",
     "--",
     "--expanded-family-frontier-label-shard",
@@ -70,6 +77,8 @@ ASTRALBASE_EXPANDED_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
 ASTRALBASE_COMPOSITION_HARD_TARGET_SHARD_BASE_COMMAND = (
     "cargo",
     "run",
+    "--locked",
+    "--offline",
     "--quiet",
     "--",
     "--composition-hard-target-shard",
@@ -81,115 +90,6 @@ DEFAULT_COMPOSITION_HARD_TARGET_LIMIT = 21
 
 class ShardRunnerError(RuntimeError):
     """Raised when the local dataset shard runner cannot complete."""
-
-
-if modal is not None:
-    app = modal.App("partizan-cgt-evaluator")
-
-    # Define the container environment. We need Rust, Cargo, and Maturin to
-    # compile our PyO3 engine in the cloud.
-    partizan_image = (
-        modal.Image.debian_slim(python_version="3.11")
-        .apt_install("curl", "libssl-dev", "pkg-config")
-        .run_commands(
-            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
-            "sh -s -- -y"
-        )
-        .env({"PATH": "/root/.cargo/bin:$PATH"})
-        .pip_install("maturin")
-        # To satisfy the Cargo.toml relative path dependencies (../../), mount
-        # the libraries so ../../ resolves to /root.
-        .add_local_dir(".", remote_path="/root/partizan/engine", copy=True)
-        .add_local_dir("../../thermograph", remote_path="/root/thermograph", copy=True)
-        .add_local_dir("../../bitmesh", remote_path="/root/bitmesh", copy=True)
-        .add_local_dir("../../astralbase", remote_path="/root/astralbase", copy=True)
-        .run_commands(
-            "rm -rf /root/partizan/engine/.venv && "
-            "cd /root/partizan/engine && "
-            "maturin build --release && "
-            "pip install target/wheels/partizan*.whl"
-        )
-    )
-else:
-    app = None
-    partizan_image = None
-
-
-if app is not None:
-
-    @app.function(image=partizan_image)
-    def evaluate_fens_batch(fens: list[str]):
-        """
-        This function runs in the cloud on thousands of parallel containers.
-        It takes a batch of FENs and processes them through our Rust engine.
-        """
-        import sys
-
-        sys.path.append("/root/partizan/engine")
-        import partizan
-
-        results = []
-        for fen in fens:
-            try:
-                data = partizan.evaluate_position(fen)
-                results.append(
-                    {
-                        "fen": fen,
-                        "components": data["components"],
-                        "temperature": data["temperature"],
-                        "mean_value": data["mean_value"],
-                        "expanded_nodes": data["expanded_nodes"],
-                    }
-                )
-            except Exception as e:
-                results.append(
-                    {
-                        "fen": fen,
-                        "error": str(e),
-                    }
-                )
-
-        return results
-
-
-def _run_modal_demo() -> None:
-    print("🚀 Booting up the Partizan Modal Orchestrator...")
-    
-    # In a real scenario, we generate billions of FENs.
-    # Here we simulate a large batch to demonstrate the cloud pipeline.
-    dummy_fens = [
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 
-        "rnbqkbnr/pp3ppp/4p3/2ppP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 4", 
-        "4k3/p1pppp1p/1p4p1/8/8/1P4P1/P1PPPP1P/4K3 w - - 0 1" 
-    ] * 1000 # 3,000 FENs
-    
-    batch_size = 100
-    batches = [dummy_fens[i:i + batch_size] for i in range(0, len(dummy_fens), batch_size)]
-    
-    print(f"📦 Distributing {len(dummy_fens)} positions across {len(batches)} Modal containers...")
-    
-    evaluated_positions = []
-    
-    for result_batch in evaluate_fens_batch.map(batches):
-        evaluated_positions.extend(result_batch)
-        
-    failures = sum(1 for pos in evaluated_positions if "error" in pos)
-    successes = len(evaluated_positions) - failures
-    print(f"✅ Processing complete! Evaluated {successes} positions; {failures} failed.")
-    
-    dataset_path = "cgt_dataset.jsonl"
-    with open(dataset_path, "w") as f:
-        for pos in evaluated_positions:
-            f.write(json.dumps(pos) + "\n")
-            
-    print(f"💾 Saved raw dataset to {dataset_path} for PartizanNet training!")
-
-
-if app is not None:
-
-    @app.local_entrypoint()
-    def main():
-        _run_modal_demo()
 
 
 def _resolve_from_root(path: Path) -> Path:
@@ -505,6 +405,8 @@ def _run_astralbase_jsonl_shard(
         "python3",
         "engine/orchestrator.py",
         command_name,
+        "--astralbase-dir",
+        _display_path(astralbase_dir),
     ]
     if getattr(args, "limit", None) is not None and args.limit != DEFAULT_FRONTIER_LIMIT:
         runner_command.extend(["--limit", str(args.limit)])
@@ -650,8 +552,8 @@ def build_parser() -> argparse.ArgumentParser:
     shard_parser.add_argument(
         "--astralbase-dir",
         type=Path,
-        default=DEFAULT_ASTRALBASE_DIR,
-        help="Path to the astralbase repository.",
+        required=True,
+        help="Explicit path to an Astralbase 0.1.0 source checkout.",
     )
     shard_parser.add_argument(
         "--output",
@@ -678,8 +580,8 @@ def build_parser() -> argparse.ArgumentParser:
     frontier_parser.add_argument(
         "--astralbase-dir",
         type=Path,
-        default=DEFAULT_ASTRALBASE_DIR,
-        help="Path to the astralbase repository.",
+        required=True,
+        help="Explicit path to an Astralbase 0.1.0 source checkout.",
     )
     frontier_parser.add_argument(
         "--limit",
@@ -712,8 +614,8 @@ def build_parser() -> argparse.ArgumentParser:
     family_parser.add_argument(
         "--astralbase-dir",
         type=Path,
-        default=DEFAULT_ASTRALBASE_DIR,
-        help="Path to the astralbase repository.",
+        required=True,
+        help="Explicit path to an Astralbase 0.1.0 source checkout.",
     )
     family_parser.add_argument(
         "--limit-per-family",
@@ -746,8 +648,8 @@ def build_parser() -> argparse.ArgumentParser:
     expanded_family_parser.add_argument(
         "--astralbase-dir",
         type=Path,
-        default=DEFAULT_ASTRALBASE_DIR,
-        help="Path to the astralbase repository.",
+        required=True,
+        help="Explicit path to an Astralbase 0.1.0 source checkout.",
     )
     expanded_family_parser.add_argument(
         "--limit-per-family",
@@ -780,8 +682,8 @@ def build_parser() -> argparse.ArgumentParser:
     composition_parser.add_argument(
         "--astralbase-dir",
         type=Path,
-        default=DEFAULT_ASTRALBASE_DIR,
-        help="Path to the astralbase repository.",
+        required=True,
+        help="Explicit path to an Astralbase 0.1.0 source checkout.",
     )
     composition_parser.add_argument(
         "--limit",

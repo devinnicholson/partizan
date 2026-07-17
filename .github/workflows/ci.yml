@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout frozen Bitmesh candidate
+        uses: actions/checkout@v4
+        with:
+          repository: devinnicholson/bitmesh
+          ref: 28aee03bf1acb299fc82d5119f37893264e070e4
+          path: _upstreams/bitmesh
+      - name: Checkout frozen Thermograph candidate
+        uses: actions/checkout@v4
+        with:
+          repository: devinnicholson/thermograph
+          ref: 57df043a5940f4ea3bf29fcb7920f369e035030c
+          path: _upstreams/thermograph
+      - name: Checkout frozen Astralbase candidate
+        uses: actions/checkout@v4
+        with:
+          repository: devinnicholson/astralbase
+          ref: 7ad71b542733cb61507df4bf5fba241bcc35ef79
+          path: _upstreams/astralbase
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - uses: dtolnay/rust-toolchain@1.85.0
+        with:
+          components: clippy,rustfmt
+      - name: Configure external release-candidate patches
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          root = Path.cwd()
+          cargo_home = Path(os.environ.get("CARGO_HOME", Path.home() / ".cargo"))
+          cargo_home.mkdir(parents=True, exist_ok=True)
+          paths = {
+              name: (root / "_upstreams" / name).resolve().as_posix()
+              for name in ("bitmesh", "thermograph", "astralbase")
+          }
+          config = "[patch.\"crates-io\"]\n" + "".join(
+              f'{name} = {{ path = "{path}" }}\n' for name, path in paths.items()
+          )
+          (cargo_home / "config.toml").write_text(config, encoding="utf-8")
+      - name: Rust format
+        run: cargo fmt --manifest-path engine/Cargo.toml --all -- --check
+      - name: Rust tests
+        run: cargo test --manifest-path engine/Cargo.toml --locked --all-targets
+      - name: Strict Clippy
+        run: cargo clippy --manifest-path engine/Cargo.toml --locked --all-targets --all-features -- -D warnings
+      - name: Strict Rustdoc
+        env:
+          RUSTDOCFLAGS: -D warnings -D missing-docs
+        run: cargo doc --manifest-path engine/Cargo.toml --locked --no-deps
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "maturin>=1.8,<2"
+          python -m pip install --no-build-isolation --no-deps .
+      - name: Python and artifact checks
+        run: |
+          python -m unittest discover -s tests -v
+          python engine/test.py
+          python agents/label_schema.py self-test
+          python agents/label_schema.py validate agents/fixtures/label_rows.valid.jsonl docs/signature_target_exact_wave_47.jsonl docs/signature_target_mixed_hook_exact_wave_52.jsonl docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl
+          python scripts/validate_waves.py
+          python scripts/verify_release.py

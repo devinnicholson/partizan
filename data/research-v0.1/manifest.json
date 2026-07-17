@@ -1,0 +1,69 @@
+{
+  "manifest_version": "partizan.research_manifest.v0.1",
+  "title": "Partizan v0.1 representative research artifacts",
+  "release_status": "frozen_validation_fixture_not_general_chess_benchmark",
+  "schema_version": "partizan.dataset_label.v0",
+  "random_seed": 0,
+  "generator_config": {
+    "command": "python3 engine/orchestrator.py sample-label-shard --astralbase-dir /absolute/path/to/astralbase",
+    "source_commit": "7ad71b542733cb61507df4bf5fba241bcc35ef79",
+    "determinism": "the runner compares two generator invocations byte for byte",
+    "observed_macos_arm64_wall_time_seconds": 4.9,
+    "historical_wave_47_limitation": "Wave 47 rows predate immutable upstream provenance and record code_commit=workspace. Their bytes are frozen, but regeneration equivalence must be re-audited before publication."
+  },
+  "resource_envelope": {
+    "verification_cpu_cores": 1,
+    "verification_memory_mib": 512,
+    "verification_wall_time_seconds_budget": 30,
+    "regeneration_cpu_cores": 1,
+    "regeneration_memory_mib": 2048,
+    "regeneration_wall_time_seconds_budget": 900
+  },
+  "artifacts": [
+    {
+      "role": "reproducible_vertical_slice",
+      "path": "data/research-v0.1/vertical-slice.jsonl",
+      "media_type": "application/x-ndjson",
+      "sha256": "a72dc3d8fdc334b81da5d492971433d8d0269b0f31cbafed51c9048047b259ef",
+      "rows": 5
+    },
+    {
+      "role": "historical_exact_metadata_slice",
+      "path": "docs/signature_target_exact_wave_47.jsonl",
+      "media_type": "application/x-ndjson",
+      "sha256": "ca2efe473ef4d4622ecf3b7000740fcf0f8dad2473a41661bb902555bced9c82",
+      "rows": 13
+    },
+    {
+      "role": "historical_replay_report",
+      "path": "docs/signature_target_exact_wave_47_replay_report.json",
+      "media_type": "application/json",
+      "sha256": "40460aa10e6d859c5f85d188f990660e752343fca255f7712e297e0add53dd6c"
+    },
+    {
+      "role": "historical_split_report",
+      "path": "docs/signature_target_exact_wave_47_split_report.json",
+      "media_type": "application/json",
+      "sha256": "cdcfd0206301cba4490c39ff611bafcb111dc13c8b2f5f0bfdcf2fd520abef1e"
+    },
+    {
+      "role": "historical_baseline_report",
+      "path": "docs/signature_target_exact_wave_47_result_signature_report.json",
+      "media_type": "application/json",
+      "sha256": "f83663c912353c410e5ddc1ba36f0e904144e6cdb7864ab50f7fd686dead5b6b"
+    }
+  ],
+  "verification_commands": [
+    "python3 agents/label_schema.py validate data/research-v0.1/vertical-slice.jsonl",
+    "python3 agents/label_schema.py validate docs/signature_target_exact_wave_47.jsonl",
+    "python3 engine/ml_model.py validate-report docs/signature_target_exact_wave_47_split_report.json --fail-on-leakage",
+    "python3 scripts/verify_release.py"
+  ],
+  "claim_ids": {
+    "P01": "locally_verified",
+    "P02": "locally_verified_for_frozen_rows_and_corruption_controls",
+    "P03": "vertical_slice_byte_reproduction_verified_but_published_metrics_remain_partial",
+    "P04": "negative_or_null_not_release_claim",
+    "P05": "unvalidated_not_release_claim"
+  }
+}

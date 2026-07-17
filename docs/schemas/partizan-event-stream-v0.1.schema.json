@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/devinnicholson/partizan/blob/main/docs/schemas/partizan-event-stream-v0.1.schema.json",
+  "title": "Partizan event stream v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generator",
+    "position",
+    "domain",
+    "claim_boundaries",
+    "events",
+    "fugue_adapter"
+  ],
+  "properties": {
+    "schema_version": { "const": "partizan.event_stream.v0.1" },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "serialization"],
+      "properties": {
+        "name": { "const": "partizan-cgt" },
+        "version": { "const": "0.1.0" },
+        "serialization": { "const": "utf8-json-sort-keys-compact-newline-v1" }
+      }
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["encoding", "text", "sha256"],
+      "properties": {
+        "encoding": { "const": "fen" },
+        "text": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "domain": { "const": "formal_domain:first_constrained_chess:v0" },
+    "claim_boundaries": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim_id", "status", "statement"],
+        "properties": {
+          "claim_id": { "enum": ["P01", "P02", "P03", "P04", "P05"] },
+          "status": { "type": "string", "minLength": 1 },
+          "statement": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sequence", "event_id", "event_kind", "status", "payload"],
+        "properties": {
+          "sequence": { "type": "integer", "minimum": 0, "maximum": 1 },
+          "event_id": { "type": "string", "pattern": "^evt-00[01]$" },
+          "event_kind": {
+            "enum": ["locked_pawn_screen", "conservative_structural_partition"]
+          },
+          "status": { "enum": ["observed", "not_observed"] },
+          "payload": { "type": "object" }
+        }
+      }
+    },
+    "fugue_adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_schema", "status"],
+      "properties": {
+        "target_schema": { "const": "partizan_fugue.event_log.v1" },
+        "status": { "const": "versioned_input_requires_fugue_adapter" }
+      }
+    }
+  }
+}
