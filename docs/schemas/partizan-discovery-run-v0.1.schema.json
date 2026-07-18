@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan discovery run v0.1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "run_id", "target_id", "pool_id", "policy", "budget", "calls", "summary"],
+  "properties": {
+    "schema_version": {"const": "partizan.discovery_run.v0.1"},
+    "run_id": {"type": "string", "pattern": "^run-sha256:[0-9a-f]{64}$"},
+    "target_id": {"type": "string"}, "pool_id": {"type": "string"},
+    "policy": {"type": "object", "additionalProperties": false, "required": ["policy_id", "version", "random_seed", "checkpoint_sha256", "candidate_order_sha256"], "properties": {"policy_id": {"const": "input_order_v0"}, "version": {"type": "string"}, "random_seed": {"type": "integer"}, "checkpoint_sha256": {"type": "null"}, "candidate_order_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}},
+    "budget": {"type": "object", "additionalProperties": false, "required": ["max_verifier_calls", "calls_made"], "properties": {"max_verifier_calls": {"type": "integer", "minimum": 1}, "calls_made": {"type": "integer", "minimum": 0}}},
+    "calls": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["call_index", "proposal_id", "candidate_key", "score_float_hex", "result_id"], "properties": {"call_index": {"type": "integer", "minimum": 0}, "proposal_id": {"type": "string"}, "candidate_key": {"type": "string"}, "score_float_hex": {"type": "null"}, "result_id": {"type": "string"}}}},
+    "summary": {"type": "object", "additionalProperties": false, "required": ["calls_made", "unique_candidates_verified", "outcome_counts", "unique_certified_targets", "first_target_call_index", "budget_exhausted"], "properties": {"calls_made": {"type": "integer"}, "unique_candidates_verified": {"type": "integer"}, "outcome_counts": {"type": "object", "additionalProperties": {"type": "integer"}}, "unique_certified_targets": {"type": "integer"}, "first_target_call_index": {"type": ["integer", "null"]}, "budget_exhausted": {"type": "boolean"}}}
+  }
+}

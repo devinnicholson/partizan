@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan discovery target v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "target_id", "domain", "target", "position_constraints", "search_limits", "ranker_view", "provenance"],
+  "properties": {
+    "schema_version": {"const": "partizan.discovery_target.v0.1"},
+    "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"},
+    "domain": {"type": "string", "minLength": 1},
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "identity_contract", "identity_sha256", "value_rule", "value_class", "equality_scope"],
+      "properties": {
+        "kind": {"const": "bounded_structural_game_form"},
+        "identity_contract": {"const": "thermograph_structural_tree_v1"},
+        "identity_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "value_rule": {"const": "component_depth2_local_move_game_v0"},
+        "value_class": {"type": "string", "minLength": 1},
+        "equality_scope": {"const": "structural_tree_identity_only_not_arbitrary_cgt_equivalence"}
+      }
+    },
+    "position_constraints": {
+      "type": "object", "additionalProperties": false,
+      "required": ["encoding", "legality_contract", "castling_rights", "en_passant"],
+      "properties": {
+        "encoding": {"const": "fen"},
+        "legality_contract": {"const": "board_syntax_only"},
+        "castling_rights": {"const": "none"},
+        "en_passant": {"const": "none"}
+      }
+    },
+    "search_limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_pool_size", "max_verifier_calls", "max_recursive_nodes_per_candidate"],
+      "properties": {
+        "max_pool_size": {"type": "integer", "minimum": 1},
+        "max_verifier_calls": {"type": "integer", "minimum": 1},
+        "max_recursive_nodes_per_candidate": {"type": "integer", "minimum": 1}
+      }
+    },
+    "ranker_view": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "identity_contract", "identity_sha256", "value_rule", "value_class"],
+      "properties": {
+        "kind": {"const": "bounded_structural_game_form"},
+        "identity_contract": {"const": "thermograph_structural_tree_v1"},
+        "identity_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "value_rule": {"const": "component_depth2_local_move_game_v0"},
+        "value_class": {"type": "string", "minLength": 1}
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_artifact", "source_row_id", "source_commit"],
+      "properties": {
+        "source_artifact": {"type": "string", "minLength": 1},
+        "source_row_id": {"type": "string", "minLength": 1},
+        "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    }
+  }
+}

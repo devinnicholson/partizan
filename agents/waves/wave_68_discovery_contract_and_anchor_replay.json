@@ -1,0 +1,237 @@
+{
+  "wave_id": "wave_68_discovery_contract_and_anchor_replay",
+  "objective": "Freeze strict proposal/proof contracts and replay one bounded structural game-form target while recording the Stiller/Elkies orthodox-chess boundary as unsupported.",
+  "non_negotiables": [
+    "Candidate proposals must be frozen and hashed before any verifier call.",
+    "A future ranker may receive only target.ranker_view, proposal.position, and proposal.proposal_features.",
+    "The executable fallback target is a bounded structural game form, not an exact CGT value modulo arbitrary equivalence.",
+    "The bounded fallback uses board-syntax-only legality and must not be promoted as an orthodox-chess position.",
+    "The Stiller/Elkies positions are legal historical anchors but remain unsupported exact targets under the current solver domain.",
+    "Target-aware discovery authority is partizan.verifier_result.v0.1; legacy partizan.dataset_label.v0 rows are not silently inferred or bound.",
+    "All new evidence records immutable forty-character commits; code_commit=workspace is forbidden.",
+    "Wave 68 makes no learned-search, agency, temperature, aesthetic-performance, or nontrivial orthodox-chess CGT claim."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w68_partizan_discovery_contracts",
+        "w68_elkies_anchor_scope"
+      ]
+    },
+    {
+      "parallel": [
+        "w68_astralbase_target_verifier_adapter"
+      ]
+    },
+    {
+      "parallel": [
+        "w68_partizan_discovery_orchestration"
+      ]
+    },
+    {
+      "parallel": [
+        "w68_anchor_replay_and_claim_audit"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w68_partizan_discovery_contracts",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "python/partizan/discovery.py",
+        "python/partizan/discovery_cli.py",
+        "python/partizan/__init__.py",
+        "pyproject.toml",
+        "docs/schemas/partizan-discovery-target-v0.1.schema.json",
+        "docs/schemas/partizan-candidate-proposal-v0.1.schema.json",
+        "docs/schemas/partizan-verifier-result-v0.1.schema.json",
+        "docs/schemas/partizan-candidate-pool-manifest-v0.1.schema.json",
+        "docs/schemas/partizan-discovery-run-v0.1.schema.json",
+        "tests/test_discovery_contracts.py",
+        "tests/fixtures/discovery"
+      ],
+      "depends_on": [],
+      "prompt": "Implement five strict v0.1 discovery contracts, typed identities, canonical bytes, cross-object validation, and proposal-only ranker-input extraction. Use bounded_structural_game_form and board_syntax_only for the fallback target.",
+      "outputs": [
+        "Five public JSON Schemas",
+        "Runtime builders and validators",
+        "partizan-discovery CLI",
+        "Four-outcome golden bundle",
+        "Verifier-leak negative control"
+      ],
+      "commands": [
+        "python3 -m unittest tests.test_discovery_contracts -v",
+        "python3 -m py_compile python/partizan/discovery.py python/partizan/discovery_cli.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "All five schemas reject additional properties.",
+        "The valid bundle has one certified target, one certified other form, one rejection, and one error.",
+        "The verifier-leak proposal fails validation.",
+        "Ranker-input bytes contain no verifier, label, certificate, result, rejection, expanded-node, or ordinal fields.",
+        "Raw JSON floats, dirty commits, and code_commit=workspace fail.",
+        "Contract names do not imply arbitrary CGT equivalence or orthodox-chess legality."
+      ]
+    },
+    {
+      "id": "w68_elkies_anchor_scope",
+      "agent": "theory_steward",
+      "repo": ".",
+      "write_scope": [
+        "docs/discovery_wave_68_elkies_scope_report.md"
+      ],
+      "depends_on": [],
+      "prompt": "Record the Stiller kernel and initial Elkies composition, reproduce their current domain rejection, and distinguish the legal historical anchor from the bounded board-form fallback.",
+      "outputs": [
+        "Stiller/Elkies scope report",
+        "Supported and unsupported obligation table",
+        "Bounded fallback target"
+      ],
+      "commands": [
+        "CARGO_TARGET_DIR=/tmp/partizan-wave68-bitmesh-target cargo run --locked --offline --quiet --manifest-path ../bitmesh/Cargo.toml --example certify_fen -- '8/q7/5q2/8/8/8/6QQ/k6K w - - 0 1'",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "The report distinguishes historical inspiration from replayed evidence.",
+        "The report states that the historical FENs parse legally but fail the current exact-domain gate.",
+        "The fallback is named bounded_structural_game_form with board_syntax_only legality.",
+        "No unsupported solver capability is inferred."
+      ]
+    },
+    {
+      "id": "w68_astralbase_target_verifier_adapter",
+      "agent": "retrograde_engineer",
+      "repo": "../astralbase",
+      "write_scope": [
+        "src/discovery.rs",
+        "src/lib.rs",
+        "src/main.rs",
+        "tests/discovery_contract.rs",
+        "tests/fixtures/discovery"
+      ],
+      "depends_on": [
+        "w68_partizan_discovery_contracts",
+        "w68_elkies_anchor_scope"
+      ],
+      "prompt": "Expose a deterministic batch target verifier by refactoring the current bounded-board replay path. Distinguish verified_match, verified_nonmatch, rejected, and internal_error, bind the declared rule and node budget, and compare Thermograph domain-separated SHA-256 structural identities.",
+      "outputs": [
+        "--verify-target-candidates JSONL command",
+        "Target-aware verifier API",
+        "Wave 55 row 090 match golden",
+        "Nonmatch, rejection, corruption, and node-budget controls"
+      ],
+      "commands": [
+        "cargo fmt --all -- --check",
+        "CARGO_TARGET_DIR=/tmp/partizan-wave68-astralbase-target cargo --config 'patch.\"crates-io\".bitmesh.path=\"../bitmesh\"' --config 'patch.\"crates-io\".thermograph.path=\"../thermograph\"' test --locked --offline discovery_contract",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "Wave 55 row 090 matches the SHA-256 structural target under the declared bounded rule.",
+        "A wrong target is verified_nonmatch rather than a verifier error.",
+        "The Stiller kernel remains a structured rejection under the current domain.",
+        "Unsupported rules, stale evidence, and exhausted node budgets fail deterministically.",
+        "Legacy 64-bit digests are not accepted as target identities.",
+        "Output order is deterministic."
+      ]
+    },
+    {
+      "id": "w68_partizan_discovery_orchestration",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "engine/orchestrator.py",
+        "tests/test_discovery_orchestrator.py"
+      ],
+      "depends_on": [
+        "w68_astralbase_target_verifier_adapter"
+      ],
+      "prompt": "Add candidate-pool, verification, and replay-run orchestration. Freeze and hash the complete pool before verification, compare proposal generation twice, capture all source commits, and emit a validated input-order replay bundle.",
+      "outputs": [
+        "discovery-freeze-pool command",
+        "discovery-verify-pool command",
+        "discovery-replay-run command",
+        "Determinism and phase-separation tests"
+      ],
+      "commands": [
+        "python3 -m unittest tests.test_discovery_orchestrator -v",
+        "python3 -m py_compile engine/orchestrator.py",
+        "python3 engine/orchestrator.py --help",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "A byte mismatch prevents pool publication.",
+        "The candidate pool is complete, validated, and hashed before verification begins.",
+        "The manifest binds target, proposals, generator configuration, seed, and four immutable commits.",
+        "The replay log stays within budget and all summary fields recompute from calls and results."
+      ]
+    },
+    {
+      "id": "w68_anchor_replay_and_claim_audit",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "docs/discovery_targets/wave_68_bounded_structural_game_form_v0.1.json",
+        "docs/discovery_wave_68_candidate_proposals.jsonl",
+        "docs/discovery_wave_68_candidate_pool_manifest.json",
+        "docs/discovery_wave_68_verifier_results.jsonl",
+        "docs/discovery_wave_68_replay_run.json",
+        "docs/research_claims.md",
+        "docs/verification_gates.md",
+        "agents/waves/README.md",
+        "agents/waves/wave_68_discovery_contract_and_anchor_replay.json"
+      ],
+      "depends_on": [
+        "w68_partizan_discovery_orchestration"
+      ],
+      "prompt": "Generate and audit the four-candidate Wave 68 bundle. Verify proposal-only ranker inputs and preserve the explicit block on learned-search and nontrivial orthodox-chess CGT claims.",
+      "outputs": [
+        "Checked-in bounded target and four-candidate discovery bundle",
+        "Replayed bounded structural identity",
+        "Ranker-boundary audit",
+        "Claim and gate updates"
+      ],
+      "commands": [
+        "partizan-discovery validate-bundle --target docs/discovery_targets/wave_68_bounded_structural_game_form_v0.1.json --proposals docs/discovery_wave_68_candidate_proposals.jsonl --pool docs/discovery_wave_68_candidate_pool_manifest.json --results docs/discovery_wave_68_verifier_results.jsonl --run docs/discovery_wave_68_replay_run.json",
+        "python3 scripts/validate_waves.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "The proposal artifact contains four unique candidates and is byte-identical across two generations.",
+        "Exactly four verifier results and four budgeted calls are recorded.",
+        "At least one candidate matches the bounded target and at least one is rejected.",
+        "All new evidence records immutable Partizan, Astralbase, Bitmesh, and Thermograph commits.",
+        "The ranker-input audit contains no verifier-derived fields.",
+        "Claims identify the target as a bounded board-form identity and keep model-guided orthodox-chess discovery unproven."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_68_discovery_contract_and_anchor_replay.json",
+      "success_signal": "The Wave 68 graph, roles, and dependency order validate."
+    },
+    {
+      "id": "contract_bundle_validates",
+      "command": "python3 -m unittest tests.test_discovery_contracts tests.test_discovery_orchestrator -v",
+      "success_signal": "Typed identities, canonical bytes, cross-object invariants, and ranker isolation pass."
+    },
+    {
+      "id": "anchor_replay_validates",
+      "command": "partizan-discovery validate-bundle --target docs/discovery_targets/wave_68_bounded_structural_game_form_v0.1.json --proposals docs/discovery_wave_68_candidate_proposals.jsonl --pool docs/discovery_wave_68_candidate_pool_manifest.json --results docs/discovery_wave_68_verifier_results.jsonl --run docs/discovery_wave_68_replay_run.json",
+      "success_signal": "The bounded target replays inside a complete four-candidate discovery bundle."
+    },
+    {
+      "id": "claim_boundary_holds",
+      "command": "rg -n 'bounded_structural_game_form|board_syntax_only|unsupported' docs/discovery_wave_68_elkies_scope_report.md docs/research_claims.md docs/verification_gates.md",
+      "success_signal": "The evidence and claim documents preserve the board-form and orthodox-chess boundary."
+    },
+    {
+      "id": "repository_quality",
+      "command": "python3 -m unittest discover -s tests -v && python3 engine/test.py && python3 scripts/validate_waves.py && git diff --check",
+      "success_signal": "Existing Partizan behavior remains healthy."
+    }
+  ]
+}

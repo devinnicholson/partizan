@@ -25,6 +25,7 @@ Issues = "https://github.com/devinnicholson/partizan/issues"
 
 [project.scripts]
 partizan-events = "partizan.cli:main"
+partizan-discovery = "partizan.discovery_cli:main"
 
 [tool.maturin]
 manifest-path = "engine/Cargo.toml"
