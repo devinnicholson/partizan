@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan Wave 69 Stage A pre-verification suite v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "suite_id",
+    "stage",
+    "phase",
+    "registry_ref",
+    "preregistration_ref",
+    "implementation",
+    "source_repositories",
+    "seed_contract",
+    "target_count",
+    "proposal_count_per_target",
+    "targets",
+    "freeze_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "partizan.wave69_stage_suite.v0.1"},
+    "suite_id": {"type": "string", "pattern": "^suite-sha256:[0-9a-f]{64}$"},
+    "stage": {"const": "stage_a"},
+    "phase": {"const": "pre_verification_freeze"},
+    "registry_ref": {"$ref": "#/$defs/registry_ref"},
+    "preregistration_ref": {"$ref": "#/$defs/preregistration_ref"},
+    "implementation": {"$ref": "#/$defs/implementation"},
+    "source_repositories": {"$ref": "#/$defs/repositories"},
+    "seed_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "domain_hex", "stage", "target_id_encoding"],
+      "properties": {
+        "algorithm": {"const": "sha256_first_u64_big_endian_v1"},
+        "domain_hex": {"const": "70617274697a616e2f7736392f706f6f6c2f763100"},
+        "stage": {"const": "stage_a"},
+        "target_id_encoding": {"const": "utf8"}
+      }
+    },
+    "target_count": {"const": 6},
+    "proposal_count_per_target": {"const": 1024},
+    "targets": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/target_bundle"}
+    },
+    "freeze_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verifier_calls",
+        "results_artifacts_present",
+        "policy_orders_frozen_before_verification",
+        "wave70_material_present"
+      ],
+      "properties": {
+        "verifier_calls": {"const": 0},
+        "results_artifacts_present": {"const": false},
+        "policy_orders_frozen_before_verification": {"const": true},
+        "wave70_material_present": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "registry_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "registry_id", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "registry_id": {"type": "string", "pattern": "^registry-sha256:[0-9a-f]{64}$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "preregistration_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "preregistration_id", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "preregistration_id": {"type": "string", "pattern": "^prereg-sha256:[0-9a-f]{64}$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["implementation_id", "partizan_commit", "components"],
+      "properties": {
+        "implementation_id": {"type": "string", "pattern": "^implementation-sha256:[0-9a-f]{64}$"},
+        "partizan_commit": {"$ref": "#/$defs/commit"},
+        "components": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "sha256"],
+            "properties": {
+              "path": {"$ref": "#/$defs/path"},
+              "sha256": {"$ref": "#/$defs/sha256"}
+            }
+          }
+        }
+      }
+    },
+    "repositories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["astralbase", "bitmesh", "partizan", "thermograph"],
+      "properties": {
+        "astralbase": {"$ref": "#/$defs/commit"},
+        "bitmesh": {"$ref": "#/$defs/commit"},
+        "partizan": {"$ref": "#/$defs/commit"},
+        "thermograph": {"$ref": "#/$defs/commit"}
+      }
+    },
+    "target_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "target_id"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "schema_version": {"const": "partizan.discovery_target.v0.1"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"}
+      }
+    },
+    "proposals_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "row_count"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "schema_version": {"const": "partizan.candidate_proposal.v0.1"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "row_count": {"const": 1024}
+      }
+    },
+    "receipt_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "receipt_id"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "schema_version": {"const": "partizan.candidate_generation_receipt.v0.1"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "receipt_id": {"type": "string", "pattern": "^receipt-sha256:[0-9a-f]{64}$"}
+      }
+    },
+    "pool_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "pool_id"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "schema_version": {"const": "partizan.candidate_pool_manifest.v0.2"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "pool_id": {"type": "string", "pattern": "^pool-sha256:[0-9a-f]{64}$"}
+      }
+    },
+    "policy_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "policy_orders_id"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "schema_version": {"const": "partizan.policy_orders.v0.1"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "policy_orders_id": {"type": "string", "pattern": "^policy-orders-sha256:[0-9a-f]{64}$"}
+      }
+    },
+    "target_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_id",
+        "family",
+        "bin_index",
+        "seed",
+        "target_ref",
+        "proposals_ref",
+        "generation_receipt_ref",
+        "pool_manifest_ref",
+        "policy_orders_ref"
+      ],
+      "properties": {
+        "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"},
+        "family": {"type": "string", "minLength": 1},
+        "bin_index": {"enum": [0, 3]},
+        "seed": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+        "target_ref": {"$ref": "#/$defs/target_ref"},
+        "proposals_ref": {"$ref": "#/$defs/proposals_ref"},
+        "generation_receipt_ref": {"$ref": "#/$defs/receipt_ref"},
+        "pool_manifest_ref": {"$ref": "#/$defs/pool_ref"},
+        "policy_orders_ref": {"$ref": "#/$defs/policy_ref"}
+      }
+    }
+  }
+}

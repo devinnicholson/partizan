@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan Wave 69 source-bound baseline suite input v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "suite_input_id", "stage", "pre_verification_suite_ref", "bundle_count", "bundles"],
+  "properties": {
+    "schema_version": {"const": "partizan.baseline_suite_input.v0.1"},
+    "suite_input_id": {"type": "string", "pattern": "^baseline-suite-input-sha256:[0-9a-f]{64}$"},
+    "stage": {"enum": ["stage_a", "stage_b"]},
+    "pre_verification_suite_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "schema_version", "suite_id", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "schema_version": {"const": "partizan.wave69_stage_suite.v0.1"},
+        "suite_id": {"type": "string", "pattern": "^suite-sha256:[0-9a-f]{64}$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "bundle_count": {"const": 6},
+    "bundles": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target_id", "pool_id", "target_ref", "pool_manifest_ref", "proposals_ref", "policy_orders_ref", "verifier_results_ref", "baseline_report_ref"],
+        "properties": {
+          "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"},
+          "pool_id": {"type": "string", "pattern": "^pool-sha256:[0-9a-f]{64}$"},
+          "target_ref": {"$ref": "#/$defs/targetRef"},
+          "pool_manifest_ref": {"$ref": "#/$defs/poolRef"},
+          "proposals_ref": {"$ref": "#/$defs/proposalsRef"},
+          "policy_orders_ref": {"$ref": "#/$defs/ordersRef"},
+          "verifier_results_ref": {"$ref": "#/$defs/resultsRef"},
+          "baseline_report_ref": {"$ref": "#/$defs/reportRef"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!\\./)(?!.*//)(?!.*(?:^|/)\\.(?:/|$))(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)(?!.*\\/$).+$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "targetRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "schema_version", "target_id", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"}, "schema_version": {"const": "partizan.discovery_target.v0.1"},
+        "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"}, "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "poolRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "schema_version", "pool_id", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"}, "schema_version": {"const": "partizan.candidate_pool_manifest.v0.2"},
+        "pool_id": {"type": "string", "pattern": "^pool-sha256:[0-9a-f]{64}$"}, "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "proposalsRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "row_count"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"}, "schema_version": {"const": "partizan.candidate_proposal.v0.1"},
+        "sha256": {"$ref": "#/$defs/sha256"}, "row_count": {"enum": [1024, 4096]}
+      }
+    },
+    "ordersRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "schema_version", "policy_orders_id", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"}, "schema_version": {"const": "partizan.policy_orders.v0.1"},
+        "policy_orders_id": {"type": "string", "pattern": "^policy-orders-sha256:[0-9a-f]{64}$"}, "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "resultsRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "row_count"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"}, "schema_version": {"const": "partizan.verifier_result.v0.1"},
+        "sha256": {"$ref": "#/$defs/sha256"}, "row_count": {"enum": [1024, 4096]}
+      }
+    },
+    "reportRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "schema_version", "report_id", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"}, "schema_version": {"const": "partizan.baseline_report.v0.1"},
+        "report_id": {"type": "string", "pattern": "^baseline-report-sha256:[0-9a-f]{64}$"}, "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

@@ -15,6 +15,7 @@ from .discovery import (
     validate_candidate_proposal,
     validate_discovery_bundle,
     validate_discovery_run,
+    validate_generation_receipt,
     validate_target_spec,
     validate_verifier_result,
 )
@@ -49,6 +50,12 @@ def build_parser() -> argparse.ArgumentParser:
     pool.add_argument("--target", type=Path, required=True)
     pool.add_argument("--proposals", type=Path, required=True)
     pool.add_argument("pool", type=Path)
+    pool.add_argument("--repository-root", type=Path, default=Path.cwd())
+
+    receipt = commands.add_parser("validate-generation-receipt")
+    receipt.add_argument("--target", type=Path, required=True)
+    receipt.add_argument("--proposals", type=Path, required=True)
+    receipt.add_argument("receipt", type=Path)
 
     run = commands.add_parser("validate-run")
     run.add_argument("--target", type=Path, required=True)
@@ -63,6 +70,7 @@ def build_parser() -> argparse.ArgumentParser:
     bundle.add_argument("--results", type=Path, required=True)
     bundle.add_argument("--pool", type=Path, required=True)
     bundle.add_argument("--run", type=Path, required=True)
+    bundle.add_argument("--repository-root", type=Path, default=Path.cwd())
 
     ranker = commands.add_parser("ranker-inputs")
     ranker.add_argument("--target", type=Path, required=True)
@@ -88,12 +96,23 @@ def main(argv: list[str] | None = None) -> int:
                 )
             return _report(errors)
 
+        if args.command == "validate-generation-receipt":
+            receipt = load_json(args.receipt)
+            return _report(
+                validate_target_spec(target)
+                + validate_generation_receipt(receipt, target, proposals)
+            )
+
         if args.command == "validate-pool":
             pool = load_json(args.pool)
             return _report(
                 validate_target_spec(target)
                 + validate_candidate_pool_manifest(
-                    pool, target, proposals, args.proposals
+                    pool,
+                    target,
+                    proposals,
+                    args.proposals,
+                    repository_root=args.repository_root,
                 )
             )
 
@@ -133,6 +152,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.results,
                     args.pool,
                     args.run,
+                    repository_root=args.repository_root,
                 )
             )
 

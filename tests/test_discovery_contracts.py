@@ -326,6 +326,8 @@ class DiscoveryContractTests(unittest.TestCase):
             "partizan-candidate-proposal-v0.1.schema.json",
             "partizan-verifier-result-v0.1.schema.json",
             "partizan-candidate-pool-manifest-v0.1.schema.json",
+            "partizan-candidate-pool-manifest-v0.2.schema.json",
+            "partizan-candidate-generation-receipt-v0.1.schema.json",
             "partizan-discovery-run-v0.1.schema.json",
         )
         for name in schema_names:

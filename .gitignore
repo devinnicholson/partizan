@@ -3,6 +3,7 @@ cgt_dataset.jsonl
 .venv/
 __pycache__/
 artifacts/generated/
+data/discovery/wave_69/stage_a/
 *.egg-info/
 .pytest_cache/
 _upstreams/

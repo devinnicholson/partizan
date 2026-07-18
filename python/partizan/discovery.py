@@ -20,8 +20,10 @@ TARGET_SCHEMA_VERSION = "partizan.discovery_target.v0.1"
 PROPOSAL_SCHEMA_VERSION = "partizan.candidate_proposal.v0.1"
 RESULT_SCHEMA_VERSION = "partizan.verifier_result.v0.1"
 POOL_SCHEMA_VERSION = "partizan.candidate_pool_manifest.v0.1"
+POOL_SCHEMA_VERSION_V2 = "partizan.candidate_pool_manifest.v0.2"
 RUN_SCHEMA_VERSION = "partizan.discovery_run.v0.1"
 RANKER_INPUT_SCHEMA_VERSION = "partizan.ranker_input.v0.1"
+GENERATION_RECEIPT_SCHEMA_VERSION = "partizan.candidate_generation_receipt.v0.1"
 
 SERIALIZATION = "utf8-json-sort-keys-compact-newline-v1"
 TARGET_KIND = "bounded_structural_game_form"
@@ -29,6 +31,7 @@ IDENTITY_CONTRACT = "thermograph_structural_tree_v1"
 IDENTITY_SCOPE = "structural_tree_identity_only_not_arbitrary_cgt_equivalence"
 LEGALITY_CONTRACT = "board_syntax_only"
 VALUE_RULE = "component_depth2_local_move_game_v0"
+PARTIZAN_POOL_GENERATOR_NAME = "partizan_candidate_pool_generator"
 
 _HEX40_RE = re.compile(r"^[0-9a-f]{40}$")
 _HEX64_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -197,6 +200,133 @@ def candidate_key_for(domain: str, position: dict[str, Any]) -> str:
     )
 
 
+def fen_state_without_move_clocks(fen: str) -> str:
+    fields = fen.split()
+    if len(fields) != 6:
+        raise ValueError("FEN state identity requires exactly six fields")
+    return " ".join(fields[:4])
+
+
+def reflect_fen_state_files(fen: str) -> str:
+    fields = fen_state_without_move_clocks(fen).split()
+    reflected_ranks: list[str] = []
+    for encoded_rank in fields[0].split("/"):
+        expanded: list[str] = []
+        for token in encoded_rank:
+            if token.isdigit():
+                expanded.extend("." for _ in range(int(token)))
+            else:
+                expanded.append(token)
+        if len(expanded) != 8:
+            raise ValueError("FEN rank must expand to eight files")
+        reflected: list[str] = []
+        empty = 0
+        for token in reversed(expanded):
+            if token == ".":
+                empty += 1
+                continue
+            if empty:
+                reflected.append(str(empty))
+                empty = 0
+            reflected.append(token)
+        if empty:
+            reflected.append(str(empty))
+        reflected_ranks.append("".join(reflected))
+    if len(reflected_ranks) != 8:
+        raise ValueError("FEN board must contain eight ranks")
+    fields[0] = "/".join(reflected_ranks)
+    return " ".join(fields)
+
+
+def fen_file_reflection_orbit_sha256(fen: str) -> str:
+    """Hash a clock-free FEN state modulo file reflection."""
+
+    state = fen_state_without_move_clocks(fen)
+    reflected = reflect_fen_state_files(fen)
+    return sha256_hex(min(state, reflected).encode("utf-8"))
+
+
+def partizan_pool_features_for_fen(fen: str) -> dict[str, Any]:
+    """Return exactly the seven preregistered Wave 69 proposal features."""
+
+    fields = fen_state_without_move_clocks(fen).split()
+    ranks = fields[0].split("/")
+    if len(ranks) != 8:
+        raise ValueError("FEN board must contain eight ranks")
+    pieces: list[tuple[str, str]] = []
+    squares: dict[str, str] = {}
+    for rank_number, encoded_rank in zip(range(8, 0, -1), ranks):
+        file_index = 0
+        for token in encoded_rank:
+            if token.isdigit():
+                file_index += int(token)
+                continue
+            if file_index >= 8:
+                raise ValueError("FEN rank expands beyond eight files")
+            square = f"{'abcdefgh'[file_index]}{rank_number}"
+            pieces.append((square, token))
+            squares[square] = token
+            file_index += 1
+        if file_index != 8:
+            raise ValueError("FEN rank must expand to eight files")
+
+    locked_backbone = {
+        f"d{rank}": "P" if rank % 2 == 1 else "p"
+        for rank in range(1, 9)
+    }
+    piece_tokens = [piece for _, piece in pieces]
+    occupied_files = {square[0] for square, _ in pieces}
+    return {
+        "schema_version": "partizan.proposal_features.v0.1",
+        "derivation_stage": "pre_verification",
+        "categorical": {},
+        "integer": {
+            "black_piece_count": sum(piece.islower() for piece in piece_tokens),
+            "non_pawn_piece_count": sum(
+                piece.upper() != "P" for piece in piece_tokens
+            ),
+            "occupied_file_count": len(occupied_files),
+            "pawn_count": sum(piece.upper() == "P" for piece in piece_tokens),
+            "piece_count": len(piece_tokens),
+            "white_piece_count": sum(piece.isupper() for piece in piece_tokens),
+        },
+        "boolean": {
+            "has_locked_d_file_backbone": all(
+                squares.get(square) == piece
+                for square, piece in locked_backbone.items()
+            )
+        },
+    }
+
+
+def candidate_state_key_for(domain: str, position: dict[str, Any]) -> str:
+    """Identify a FEN state while excluding the two move-clock fields.
+
+    Wave 69 generation uses this identity so halfmove/fullmove bookkeeping
+    cannot create nominally distinct candidates from the same board state.
+    The earlier Astralbase fixture generator retains ``candidate_key_for`` for
+    backward-compatible Wave 68 evidence replay.
+    """
+
+    text = position.get("text")
+    try:
+        state_text = (
+            fen_state_without_move_clocks(text) if isinstance(text, str) else text
+        )
+    except ValueError:
+        state_text = text
+    return _identity(
+        "candidate",
+        {
+            "domain": domain,
+            "position_state": {
+                "encoding": position.get("encoding"),
+                "text_without_move_clocks": state_text,
+            },
+        },
+    )
+
+
 def astralbase_request_for(
     target_spec: dict[str, Any], proposal: dict[str, Any]
 ) -> dict[str, Any]:
@@ -357,6 +487,13 @@ def candidate_pool_id_for(value: dict[str, Any]) -> str:
     )
 
 
+def generation_receipt_id_for(value: dict[str, Any]) -> str:
+    return _identity(
+        "receipt",
+        {key: item for key, item in value.items() if key != "receipt_id"},
+    )
+
+
 def discovery_run_id_for(value: dict[str, Any]) -> str:
     return _identity(
         "run",
@@ -417,8 +554,17 @@ def _relative_path(value: Any, path: str, errors: list[str]) -> None:
         errors.append(f"{path}: must be a non-empty repository-relative path")
         return
     parsed = PurePosixPath(value)
-    if parsed.is_absolute() or ".." in parsed.parts or "\\" in value:
-        errors.append(f"{path}: must be a repository-relative POSIX path without '..'")
+    if (
+        parsed.is_absolute()
+        or ".." in parsed.parts
+        or "\\" in value
+        or parsed.as_posix() != value
+        or not parsed.parts
+    ):
+        errors.append(
+            f"{path}: must be a normalized repository-relative POSIX path "
+            "without '.' or '..'"
+        )
 
 
 def validate_target_spec(value: Any) -> list[str]:
@@ -576,8 +722,32 @@ def validate_candidate_proposal(value: Any, target_spec: dict[str, Any]) -> list
             if position.get("sha256") != expected:
                 errors.append("proposal.position.sha256: does not match position text")
         _hex(position.get("symmetry_sha256"), 64, "proposal.position.symmetry_sha256", errors)
-        if row.get("candidate_key") != candidate_key_for(str(row.get("domain")), position):
+        generator_value = row.get("generator")
+        generator_name = (
+            generator_value.get("name")
+            if isinstance(generator_value, dict)
+            else None
+        )
+        candidate_key_builder = (
+            candidate_state_key_for
+            if generator_name == PARTIZAN_POOL_GENERATOR_NAME
+            else candidate_key_for
+        )
+        if row.get("candidate_key") != candidate_key_builder(
+            str(row.get("domain")), position
+        ):
             errors.append("proposal.candidate_key: does not match domain and position")
+        if generator_name == PARTIZAN_POOL_GENERATOR_NAME and isinstance(fen, str):
+            try:
+                expected_orbit = fen_file_reflection_orbit_sha256(fen)
+            except ValueError as error:
+                errors.append(f"proposal.position.text: {error}")
+            else:
+                if position.get("symmetry_sha256") != expected_orbit:
+                    errors.append(
+                        "proposal.position.symmetry_sha256: does not match the "
+                        "clock-free file-reflection orbit"
+                    )
 
     generator = _exact_keys(
         row.get("generator"),
@@ -625,6 +795,24 @@ def validate_candidate_proposal(value: Any, target_spec: dict[str, Any]) -> list
                         f"proposal.proposal_features.{key}.{feature_name}: invalid value type"
                     )
         errors.extend(_feature_key_errors(features))
+        generator_value = row.get("generator")
+        generator_name = (
+            generator_value.get("name")
+            if isinstance(generator_value, dict)
+            else None
+        )
+        fen = position.get("text") if isinstance(position, dict) else None
+        if generator_name == PARTIZAN_POOL_GENERATOR_NAME and isinstance(fen, str):
+            try:
+                expected_features = partizan_pool_features_for_fen(fen)
+            except ValueError as error:
+                errors.append(f"proposal.proposal_features: cannot derive: {error}")
+            else:
+                if features != expected_features:
+                    errors.append(
+                        "proposal.proposal_features: must equal the seven "
+                        "preregistered Partizan feature definitions"
+                    )
 
     if isinstance(row.get("proposal_id"), str) and row.get("proposal_id") != proposal_id_for(row):
         errors.append("proposal.proposal_id: does not match canonical proposal identity")
@@ -1030,18 +1218,285 @@ def validate_verifier_result(
     return errors
 
 
+def validate_generation_receipt(
+    value: Any,
+    target_spec: dict[str, Any],
+    proposals: list[dict[str, Any]],
+) -> list[str]:
+    errors = _validate_json_value(value)
+    row = _exact_keys(
+        value,
+        {
+            "schema_version",
+            "receipt_id",
+            "target_id",
+            "domain",
+            "generator",
+            "candidate_artifact",
+            "executions",
+        },
+        "generation_receipt",
+        errors,
+    )
+    if row is None:
+        return errors
+    if row.get("schema_version") != GENERATION_RECEIPT_SCHEMA_VERSION:
+        errors.append(
+            "generation_receipt.schema_version: must be "
+            f"{GENERATION_RECEIPT_SCHEMA_VERSION}"
+        )
+    receipt_id = row.get("receipt_id")
+    if not isinstance(receipt_id, str) or not re.fullmatch(
+        r"receipt-sha256:[0-9a-f]{64}", receipt_id
+    ):
+        errors.append(
+            "generation_receipt.receipt_id: must be a typed SHA-256 identifier"
+        )
+    if row.get("target_id") != target_spec.get("target_id"):
+        errors.append("generation_receipt.target_id: does not match target")
+    if row.get("domain") != target_spec.get("domain"):
+        errors.append("generation_receipt.domain: does not match target")
+
+    generator = _exact_keys(
+        row.get("generator"),
+        {"name", "version", "code_commit", "config_sha256", "random_seed"},
+        "generation_receipt.generator",
+        errors,
+    )
+    if generator is not None:
+        if generator.get("name") != PARTIZAN_POOL_GENERATOR_NAME:
+            errors.append(
+                "generation_receipt.generator.name: unsupported generator identity"
+            )
+        _nonempty_string(
+            generator.get("version"), "generation_receipt.generator.version", errors
+        )
+        _commit(
+            generator.get("code_commit"),
+            "generation_receipt.generator.code_commit",
+            errors,
+        )
+        _hex(
+            generator.get("config_sha256"),
+            64,
+            "generation_receipt.generator.config_sha256",
+            errors,
+        )
+        seed = generator.get("random_seed")
+        if not isinstance(seed, int) or isinstance(seed, bool) or seed < 0:
+            errors.append(
+                "generation_receipt.generator.random_seed: must be a "
+                "non-negative integer"
+            )
+        if proposals:
+            first_generator = proposals[0].get("generator")
+            if isinstance(first_generator, dict):
+                expected_generator = {
+                    key: first_generator.get(key)
+                    for key in (
+                        "name",
+                        "version",
+                        "code_commit",
+                        "config_sha256",
+                        "random_seed",
+                    )
+                }
+                if generator != expected_generator:
+                    errors.append(
+                        "generation_receipt.generator: does not match proposals"
+                    )
+
+    artifact = _exact_keys(
+        row.get("candidate_artifact"),
+        {"schema_version", "row_count", "sha256"},
+        "generation_receipt.candidate_artifact",
+        errors,
+    )
+    expected_artifact_sha = sha256_hex(canonical_jsonl_bytes(proposals))
+    if artifact is not None:
+        if artifact.get("schema_version") != PROPOSAL_SCHEMA_VERSION:
+            errors.append(
+                "generation_receipt.candidate_artifact.schema_version: invalid"
+            )
+        if artifact.get("row_count") != len(proposals):
+            errors.append(
+                "generation_receipt.candidate_artifact.row_count: does not "
+                "match proposals"
+            )
+        if artifact.get("sha256") != expected_artifact_sha:
+            errors.append(
+                "generation_receipt.candidate_artifact.sha256: does not match proposals"
+            )
+
+    executions = _exact_keys(
+        row.get("executions"),
+        {"mode", "run_count", "raw_artifact_sha256", "byte_identical"},
+        "generation_receipt.executions",
+        errors,
+    )
+    if executions is not None:
+        if executions.get("mode") != "separate_python_processes_v1":
+            errors.append(
+                "generation_receipt.executions.mode: must attest separate processes"
+            )
+        if executions.get("run_count") != 2:
+            errors.append("generation_receipt.executions.run_count: must be 2")
+        hashes = executions.get("raw_artifact_sha256")
+        if not isinstance(hashes, list) or len(hashes) != 2:
+            errors.append(
+                "generation_receipt.executions.raw_artifact_sha256: must contain "
+                "two hashes"
+            )
+        else:
+            for index, digest in enumerate(hashes):
+                _hex(
+                    digest,
+                    64,
+                    "generation_receipt.executions.raw_artifact_sha256"
+                    f"[{index}]",
+                    errors,
+                )
+            if hashes != [expected_artifact_sha, expected_artifact_sha]:
+                errors.append(
+                    "generation_receipt.executions.raw_artifact_sha256: both "
+                    "runs must equal the candidate artifact"
+                )
+        if executions.get("byte_identical") is not True:
+            errors.append(
+                "generation_receipt.executions.byte_identical: must be true"
+            )
+
+    if isinstance(receipt_id, str) and receipt_id != generation_receipt_id_for(row):
+        errors.append(
+            "generation_receipt.receipt_id: does not match canonical receipt identity"
+        )
+    return errors
+
+
+def _validate_generation_receipt_reference(
+    value: Any,
+    target_spec: dict[str, Any],
+    proposals: list[dict[str, Any]],
+    repository_root: Path | None,
+    errors: list[str],
+) -> dict[str, Any] | None:
+    reference = _exact_keys(
+        value,
+        {"path", "schema_version", "receipt_id", "sha256"},
+        "pool.determinism.generation_receipt_ref",
+        errors,
+    )
+    if reference is None:
+        return None
+    path_value = reference.get("path")
+    _relative_path(
+        path_value,
+        "pool.determinism.generation_receipt_ref.path",
+        errors,
+    )
+    if reference.get("schema_version") != GENERATION_RECEIPT_SCHEMA_VERSION:
+        errors.append(
+            "pool.determinism.generation_receipt_ref.schema_version: invalid"
+        )
+    receipt_id = reference.get("receipt_id")
+    if not isinstance(receipt_id, str) or not re.fullmatch(
+        r"receipt-sha256:[0-9a-f]{64}", receipt_id
+    ):
+        errors.append(
+            "pool.determinism.generation_receipt_ref.receipt_id: invalid "
+            "typed identity"
+        )
+    _hex(
+        reference.get("sha256"),
+        64,
+        "pool.determinism.generation_receipt_ref.sha256",
+        errors,
+    )
+    if repository_root is None:
+        errors.append(
+            "pool.determinism.generation_receipt_ref: repository_root is "
+            "required to validate the receipt"
+        )
+        return None
+    if not isinstance(path_value, str):
+        return None
+
+    try:
+        root = repository_root.resolve(strict=True)
+        receipt_path = (root / Path(*PurePosixPath(path_value).parts)).resolve(
+            strict=True
+        )
+        receipt_path.relative_to(root)
+    except (OSError, ValueError) as error:
+        errors.append(
+            "pool.determinism.generation_receipt_ref.path: cannot resolve "
+            f"inside repository_root: {error}"
+        )
+        return None
+    try:
+        receipt_bytes = receipt_path.read_bytes()
+        decoded = receipt_bytes.decode("utf-8")
+        receipt = json.loads(decoded)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        errors.append(
+            "pool.determinism.generation_receipt_ref.path: cannot load "
+            f"receipt: {error}"
+        )
+        return None
+    if not isinstance(receipt, dict):
+        errors.append(
+            "pool.determinism.generation_receipt_ref.path: receipt must be an object"
+        )
+        return None
+    try:
+        canonical_receipt = canonical_json_bytes(receipt)
+    except ValueError as error:
+        errors.append(
+            "pool.determinism.generation_receipt_ref.path: receipt is not "
+            f"canonicalizable: {error}"
+        )
+        return None
+    if receipt_bytes != canonical_receipt:
+        errors.append(
+            "pool.determinism.generation_receipt_ref.path: receipt bytes are "
+            "not canonical"
+        )
+    if reference.get("sha256") != sha256_hex(receipt_bytes):
+        errors.append(
+            "pool.determinism.generation_receipt_ref.sha256: does not match "
+            "receipt bytes"
+        )
+    if reference.get("receipt_id") != receipt.get("receipt_id"):
+        errors.append(
+            "pool.determinism.generation_receipt_ref.receipt_id: does not "
+            "match receipt"
+        )
+    if reference.get("schema_version") != receipt.get("schema_version"):
+        errors.append(
+            "pool.determinism.generation_receipt_ref.schema_version: does not "
+            "match receipt"
+        )
+    errors.extend(validate_generation_receipt(receipt, target_spec, proposals))
+    return receipt
+
+
 def validate_candidate_pool_manifest(
     value: Any,
     target_spec: dict[str, Any],
     proposals: list[dict[str, Any]],
     proposals_path: Path | None = None,
+    repository_root: Path | None = None,
 ) -> list[str]:
     errors = _validate_json_value(value)
     row = _exact_keys(value, _POOL_KEYS, "pool", errors)
     if row is None:
         return errors
-    if row.get("schema_version") != POOL_SCHEMA_VERSION:
-        errors.append(f"pool.schema_version: must be {POOL_SCHEMA_VERSION}")
+    schema_version = row.get("schema_version")
+    if schema_version not in {POOL_SCHEMA_VERSION, POOL_SCHEMA_VERSION_V2}:
+        errors.append(
+            "pool.schema_version: must be "
+            f"{POOL_SCHEMA_VERSION} or {POOL_SCHEMA_VERSION_V2}"
+        )
     _typed_id(row.get("pool_id"), "pool", "pool.pool_id", errors)
     target_ref = _exact_keys(
         row.get("target_ref"), {"target_id", "sha256"}, "pool.target_ref", errors
@@ -1091,23 +1546,85 @@ def validate_candidate_pool_manifest(
     if repos is not None:
         for name, commit in repos.items():
             _commit(commit, f"pool.source_repositories.{name}", errors)
+    partizan_generation = (
+        generator is not None
+        and generator.get("name") == PARTIZAN_POOL_GENERATOR_NAME
+    )
+    if schema_version == POOL_SCHEMA_VERSION and partizan_generation:
+        errors.append(
+            "pool.schema_version: Partizan-generated pools require "
+            f"{POOL_SCHEMA_VERSION_V2}"
+        )
+    if schema_version == POOL_SCHEMA_VERSION_V2 and not partizan_generation:
+        errors.append(
+            "pool.generator.name: v0.2 is reserved for the exact Partizan "
+            "candidate-pool generator"
+        )
+    determinism_keys = {
+        "operation",
+        "run_count",
+        "byte_identical",
+        "artifact_sha256",
+    }
+    if schema_version == POOL_SCHEMA_VERSION_V2:
+        determinism_keys.update(
+            {
+                "raw_artifact_sha256",
+                "generation_receipt_ref",
+            }
+        )
     determinism = _exact_keys(
         row.get("determinism"),
-        {"operation", "run_count", "byte_identical", "artifact_sha256"},
+        determinism_keys,
         "pool.determinism",
         errors,
     )
     if determinism is not None:
-        if determinism.get("operation") != "canonicalization":
+        expected_operation = (
+            "separate_process_generation"
+            if schema_version == POOL_SCHEMA_VERSION_V2
+            else "canonicalization"
+        )
+        if determinism.get("operation") != expected_operation:
             errors.append(
-                "pool.determinism.operation: freeze may attest only canonicalization"
+                f"pool.determinism.operation: must be {expected_operation}"
             )
-        if determinism.get("run_count") != 2 or determinism.get("byte_identical") is not True:
+        if (
+            determinism.get("run_count") != 2
+            or determinism.get("byte_identical") is not True
+        ):
             errors.append(
-                "pool.determinism: requires two byte-identical canonicalizations"
+                "pool.determinism: requires two byte-identical executions"
             )
-        if artifact is not None and determinism.get("artifact_sha256") != artifact.get("sha256"):
-            errors.append("pool.determinism.artifact_sha256: does not match proposal artifact")
+        if (
+            artifact is not None
+            and determinism.get("artifact_sha256") != artifact.get("sha256")
+        ):
+            errors.append(
+                "pool.determinism.artifact_sha256: does not match proposal artifact"
+            )
+        if schema_version == POOL_SCHEMA_VERSION_V2:
+            raw_hashes = determinism.get("raw_artifact_sha256")
+            expected_sha = artifact.get("sha256") if artifact is not None else None
+            if raw_hashes != [expected_sha, expected_sha]:
+                errors.append(
+                    "pool.determinism.raw_artifact_sha256: must bind both raw "
+                    "generator executions"
+                )
+            receipt = _validate_generation_receipt_reference(
+                determinism.get("generation_receipt_ref"),
+                target_spec,
+                proposals,
+                repository_root,
+                errors,
+            )
+            if receipt is not None and repos is not None:
+                receipt_commit = receipt.get("generator", {}).get("code_commit")
+                if receipt_commit != repos.get("partizan"):
+                    errors.append(
+                        "pool.determinism.generation_receipt_ref: generator "
+                        "commit does not match source_repositories.partizan"
+                    )
     boundary = _exact_keys(
         row.get("ranker_boundary"),
         {"contract_id", "generation_phase", "allowed_target_paths", "allowed_proposal_paths", "audit_passed"},
@@ -1132,6 +1649,54 @@ def validate_candidate_pool_manifest(
         counts = Counter(str(proposal.get(field)) for proposal in proposals)
         if any(count != 1 for count in counts.values()):
             errors.append(f"pool: duplicate {field} values are forbidden")
+    if schema_version == POOL_SCHEMA_VERSION_V2 and generator is not None:
+        expected_generator = {
+            key: generator.get(key)
+            for key in ("name", "version", "config_sha256", "random_seed")
+        }
+        for index, proposal in enumerate(proposals):
+            proposal_generator = proposal.get("generator")
+            if not isinstance(proposal_generator, dict):
+                continue
+            observed_generator = {
+                key: proposal_generator.get(key)
+                for key in ("name", "version", "config_sha256", "random_seed")
+            }
+            if observed_generator != expected_generator:
+                errors.append(
+                    f"pool.proposals[{index}].generator: does not match pool generator"
+                )
+            if repos is not None and proposal_generator.get("code_commit") != repos.get(
+                "partizan"
+            ):
+                errors.append(
+                    f"pool.proposals[{index}].generator.code_commit: does not "
+                    "match source_repositories.partizan"
+                )
+    partizan_orbits: list[str] = []
+    for index, proposal in enumerate(proposals):
+        generator = proposal.get("generator")
+        if not isinstance(generator, dict) or generator.get("name") != PARTIZAN_POOL_GENERATOR_NAME:
+            continue
+        position = proposal.get("position")
+        if not isinstance(position, dict) or not isinstance(position.get("text"), str):
+            continue
+        try:
+            expected_orbit = fen_file_reflection_orbit_sha256(position["text"])
+        except ValueError as error:
+            errors.append(f"pool.proposals[{index}].position.text: {error}")
+            continue
+        if position.get("symmetry_sha256") != expected_orbit:
+            errors.append(
+                f"pool.proposals[{index}].position.symmetry_sha256: does not "
+                "match the clock-free file-reflection orbit"
+            )
+        partizan_orbits.append(expected_orbit)
+    orbit_counts = Counter(partizan_orbits)
+    if any(count != 1 for count in orbit_counts.values()):
+        errors.append(
+            "pool: duplicate clock-free file-reflection orbit values are forbidden"
+        )
     if isinstance(row.get("pool_id"), str) and row.get("pool_id") != candidate_pool_id_for(row):
         errors.append("pool.pool_id: does not match canonical pool identity")
     return errors
@@ -1312,6 +1877,7 @@ def validate_discovery_bundle(
     results_path: Path,
     pool_path: Path,
     run_path: Path,
+    repository_root: Path | None = None,
 ) -> list[str]:
     """Validate all five contracts and their cross-artifact references."""
 
@@ -1339,7 +1905,13 @@ def validate_discovery_bundle(
     if len(results) != len(proposals):
         errors.append("bundle: proposal and result counts must match")
     errors.extend(
-        validate_candidate_pool_manifest(pool, target, proposals, proposals_path)
+        validate_candidate_pool_manifest(
+            pool,
+            target,
+            proposals,
+            proposals_path,
+            repository_root=repository_root,
+        )
     )
     errors.extend(validate_discovery_run(run, target, pool, proposals, results))
     return errors

@@ -93,6 +93,66 @@ DEFAULT_ASTRALBASE_DIR = Path("/Users/devinnicholson/astralbase")
 DEFAULT_BITMESH_DIR = Path("/Users/devinnicholson/bitmesh")
 DEFAULT_THERMOGRAPH_DIR = Path("/Users/devinnicholson/thermograph")
 DISCOVERY_VALUE_RULE = "component_depth2_local_move_game_v0"
+DISCOVERY_POOL_GENERATOR_NAME = "partizan_candidate_pool_generator"
+DISCOVERY_POOL_GENERATOR_VERSION = "0.1.0"
+DISCOVERY_POOL_GENERATOR_FAMILY = "dfile_two_component_seeded_grammar_v1"
+DISCOVERY_POOL_GENERATOR_CONFIG_VERSION = "partizan.candidate_generator.v0.1"
+DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW = 20
+
+_DISCOVERY_BARRIER = {
+    "d1": "P",
+    "d2": "p",
+    "d3": "P",
+    "d4": "p",
+    "d5": "P",
+    "d6": "p",
+    "d7": "P",
+    "d8": "p",
+}
+_DISCOVERY_LEFT_SQUARES = tuple(
+    f"{file_name}{rank}" for rank in range(1, 4) for file_name in "abc"
+)
+_DISCOVERY_RIGHT_SQUARES = tuple(
+    f"{file_name}{rank}" for rank in range(5, 9) for file_name in "fgh"
+)
+_DISCOVERY_WHITE_PIECES = ("P", "N", "B", "R", "Q")
+_DISCOVERY_BLACK_PIECES = ("p", "n", "b", "r", "q")
+_DISCOVERY_PIECES = _DISCOVERY_WHITE_PIECES + _DISCOVERY_BLACK_PIECES
+class _Sha256CounterRng:
+    """Small version-stable PRNG for reproducible candidate generation."""
+
+    def __init__(self, seed: int) -> None:
+        self.seed = seed
+        self.counter = 0
+
+    def _next_int(self) -> int:
+        payload = discovery_contract.canonical_json_bytes(
+            {
+                "contract": "sha256_counter_prng_v1",
+                "counter": self.counter,
+                "random_seed": self.seed,
+            }
+        )
+        self.counter += 1
+        return int.from_bytes(hashlib.sha256(payload).digest(), "big")
+
+    def randbelow(self, upper: int) -> int:
+        if upper <= 0:
+            raise ValueError("upper must be positive")
+        return self._next_int() % upper
+
+    def randint(self, lower: int, upper: int) -> int:
+        return lower + self.randbelow(upper - lower + 1)
+
+    def choice(self, values: tuple[str, ...]) -> str:
+        return values[self.randbelow(len(values))]
+
+    def sample(self, values: tuple[str, ...], count: int) -> list[str]:
+        available = list(values)
+        selected: list[str] = []
+        for _ in range(count):
+            selected.append(available.pop(self.randbelow(len(available))))
+        return selected
 
 
 def _load_discovery_contract_module():
@@ -243,6 +303,7 @@ def _load_frozen_discovery_pool(
     target_path: Path,
     proposals_path: Path,
     manifest_path: Path,
+    repository_root: Path = ROOT,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
     try:
         target = discovery_contract.load_json(target_path)
@@ -261,10 +322,238 @@ def _load_frozen_discovery_pool(
     _raise_contract_errors(
         "candidate pool manifest",
         discovery_contract.validate_candidate_pool_manifest(
-            manifest, target, proposals, proposals_path
+            manifest,
+            target,
+            proposals,
+            proposals_path,
+            repository_root=repository_root,
         ),
     )
     return target, proposals, manifest
+
+
+def _fen_board_from_squares(squares: dict[str, str]) -> str:
+    ranks: list[str] = []
+    for rank in range(8, 0, -1):
+        empty = 0
+        encoded: list[str] = []
+        for file_name in "abcdefgh":
+            piece = squares.get(f"{file_name}{rank}")
+            if piece is None:
+                empty += 1
+                continue
+            if empty:
+                encoded.append(str(empty))
+                empty = 0
+            encoded.append(piece)
+        if empty:
+            encoded.append(str(empty))
+        ranks.append("".join(encoded))
+    return "/".join(ranks)
+
+
+def _discovery_generator_config(
+    *, pool_size: int, random_seed: int
+) -> dict[str, Any]:
+    return {
+        "schema_version": DISCOVERY_POOL_GENERATOR_CONFIG_VERSION,
+        "name": DISCOVERY_POOL_GENERATOR_NAME,
+        "version": DISCOVERY_POOL_GENERATOR_VERSION,
+        "family": DISCOVERY_POOL_GENERATOR_FAMILY,
+        "pool_size": pool_size,
+        "random_seed": random_seed,
+        "prng": "sha256_counter_prng_v1",
+        "maximum_attempts_per_required_row": (
+            DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW
+        ),
+        "grammar": {
+            "barrier": "alternating_locked_dfile_pawns_v1",
+            "left_region": "files_a_to_c_ranks_1_to_3_mixed_material",
+            "right_region": "files_f_to_h_ranks_5_to_8_mixed_material",
+            "active_piece_count_per_region": {"minimum": 1, "maximum": 4},
+            "piece_alphabet": "P,N,B,R,Q|p,n,b,r,q",
+            "castling_rights": "none",
+            "en_passant": "none",
+        },
+        "deduplication": [
+            "candidate_key",
+            "fen_horizontal_reflection_v0",
+        ],
+    }
+
+
+def generate_discovery_candidate_pool_v1(
+    *,
+    target: dict[str, Any],
+    pool_size: int,
+    random_seed: int,
+    generator_code_commit: str,
+) -> list[dict[str, Any]]:
+    """Generate a deterministic proposal pool from a target-blind board grammar.
+
+    Target content never controls the board grammar or its random stream.  The
+    target contributes only its domain and typed identifier so each proposal is
+    bound to the experiment it belongs to.  No verifier is invoked here.
+    """
+
+    _raise_contract_errors(
+        "target", discovery_contract.validate_target_spec(target)
+    )
+    if (
+        not isinstance(pool_size, int)
+        or isinstance(pool_size, bool)
+        or pool_size <= 0
+    ):
+        raise ShardRunnerError("pool_size must be a positive integer")
+    maximum = target["search_limits"]["max_pool_size"]
+    if pool_size > maximum:
+        raise ShardRunnerError(
+            f"pool_size={pool_size} exceeds target max_pool_size={maximum}"
+        )
+    if (
+        not isinstance(random_seed, int)
+        or isinstance(random_seed, bool)
+        or random_seed < 0
+    ):
+        raise ShardRunnerError("random_seed must be a non-negative integer")
+    if (
+        len(generator_code_commit) != 40
+        or any(char not in "0123456789abcdef" for char in generator_code_commit)
+    ):
+        raise ShardRunnerError(
+            "generator_code_commit must be a full lowercase Git commit"
+        )
+
+    config = _discovery_generator_config(
+        pool_size=pool_size, random_seed=random_seed
+    )
+    config_sha = discovery_contract.sha256_hex(
+        discovery_contract.canonical_json_bytes(config)
+    )
+    rng = _Sha256CounterRng(random_seed)
+    proposals: list[dict[str, Any]] = []
+    candidate_keys: set[str] = set()
+    symmetry_keys: set[str] = set()
+    attempts = 0
+    maximum_attempts = pool_size * DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW
+
+    while len(proposals) < pool_size and attempts < maximum_attempts:
+        attempts += 1
+        left_count = rng.randint(1, 4)
+        right_count = rng.randint(1, 4)
+        left_squares = rng.sample(_DISCOVERY_LEFT_SQUARES, left_count)
+        right_squares = rng.sample(_DISCOVERY_RIGHT_SQUARES, right_count)
+        left_pieces = [rng.choice(_DISCOVERY_PIECES) for _ in left_squares]
+        right_pieces = [rng.choice(_DISCOVERY_PIECES) for _ in right_squares]
+        squares = dict(_DISCOVERY_BARRIER)
+        squares.update(zip(left_squares, left_pieces))
+        squares.update(zip(right_squares, right_pieces))
+        side_to_move = "w" if rng.randbelow(2) == 0 else "b"
+        fen = f"{_fen_board_from_squares(squares)} {side_to_move} - - 0 1"
+        position = {
+            "encoding": "fen",
+            "text": fen,
+            "sha256": discovery_contract.sha256_hex(fen.encode("utf-8")),
+            "symmetry_sha256": discovery_contract.fen_file_reflection_orbit_sha256(
+                fen
+            ),
+        }
+        candidate_key = discovery_contract.candidate_state_key_for(
+            target["domain"], position
+        )
+        if (
+            candidate_key in candidate_keys
+            or position["symmetry_sha256"] in symmetry_keys
+        ):
+            continue
+
+        ordinal = len(proposals)
+        proposal: dict[str, Any] = {
+            "schema_version": discovery_contract.PROPOSAL_SCHEMA_VERSION,
+            "proposal_id": "proposal-sha256:" + "0" * 64,
+            "target_id": target["target_id"],
+            "domain": target["domain"],
+            "candidate_key": candidate_key,
+            "ordinal": ordinal,
+            "position": position,
+            "generator": {
+                "name": DISCOVERY_POOL_GENERATOR_NAME,
+                "version": DISCOVERY_POOL_GENERATOR_VERSION,
+                "code_commit": generator_code_commit,
+                "family": DISCOVERY_POOL_GENERATOR_FAMILY,
+                "operator": "seeded_rejection_sampling_without_replacement_v1",
+                "config_sha256": config_sha,
+                "random_seed": random_seed,
+            },
+            "proposal_features": discovery_contract.partizan_pool_features_for_fen(
+                fen
+            ),
+        }
+        proposal["proposal_id"] = discovery_contract.proposal_id_for(proposal)
+        _raise_contract_errors(
+            f"proposal[{ordinal}]",
+            discovery_contract.validate_candidate_proposal(proposal, target),
+        )
+        proposals.append(proposal)
+        candidate_keys.add(candidate_key)
+        symmetry_keys.add(position["symmetry_sha256"])
+
+    if len(proposals) != pool_size:
+        raise ShardRunnerError(
+            "candidate grammar exhausted before reaching the requested pool size "
+            f"({len(proposals)}/{pool_size})"
+        )
+    return proposals
+
+
+def build_discovery_generation_receipt_v1(
+    *,
+    target: dict[str, Any],
+    proposals: list[dict[str, Any]],
+    raw_artifact_sha256: list[str],
+) -> dict[str, Any]:
+    if not proposals:
+        raise ShardRunnerError("generation receipt requires at least one proposal")
+    if len(raw_artifact_sha256) != 2:
+        raise ShardRunnerError(
+            "generation receipt requires exactly two raw artifact hashes"
+        )
+    generator = proposals[0]["generator"]
+    receipt: dict[str, Any] = {
+        "schema_version": discovery_contract.GENERATION_RECEIPT_SCHEMA_VERSION,
+        "receipt_id": "receipt-sha256:" + "0" * 64,
+        "target_id": target["target_id"],
+        "domain": target["domain"],
+        "generator": {
+            key: generator[key]
+            for key in (
+                "name",
+                "version",
+                "code_commit",
+                "config_sha256",
+                "random_seed",
+            )
+        },
+        "candidate_artifact": {
+            "schema_version": discovery_contract.PROPOSAL_SCHEMA_VERSION,
+            "row_count": len(proposals),
+            "sha256": raw_artifact_sha256[0],
+        },
+        "executions": {
+            "mode": "separate_python_processes_v1",
+            "run_count": len(raw_artifact_sha256),
+            "raw_artifact_sha256": list(raw_artifact_sha256),
+            "byte_identical": len(set(raw_artifact_sha256)) == 1,
+        },
+    }
+    receipt["receipt_id"] = discovery_contract.generation_receipt_id_for(receipt)
+    _raise_contract_errors(
+        "generation receipt",
+        discovery_contract.validate_generation_receipt(
+            receipt, target, proposals
+        ),
+    )
+    return receipt
 
 
 def freeze_discovery_pool(
@@ -275,6 +564,8 @@ def freeze_discovery_pool(
     manifest_output_path: Path,
     source_repositories: dict[str, str],
     candidate_artifact_path: str | None = None,
+    generation_receipt_path: Path | None = None,
+    repository_root: Path = ROOT,
 ) -> dict[str, Any]:
     """Freeze an existing proposal JSONL; this does not generate candidates."""
 
@@ -312,16 +603,103 @@ def freeze_discovery_pool(
             raise ShardRunnerError(
                 f"proposal[{index}] does not share the frozen pool generator configuration"
             )
-    if first_generator["code_commit"] != source_repositories.get("astralbase"):
+    generator_name = first_generator["name"]
+    if generator_name == DISCOVERY_POOL_GENERATOR_NAME:
+        generator_repository = "partizan"
+    elif generator_name == "astralbase_discovery_fixture_generator":
+        generator_repository = "astralbase"
+    else:
         raise ShardRunnerError(
-            "proposal generator code_commit does not match frozen Astralbase commit"
+            f"unsupported proposal generator identity: {generator_name}"
         )
-
+    expected_generator_commit = source_repositories.get(generator_repository)
+    for index, proposal in enumerate(proposals):
+        if proposal["generator"]["code_commit"] != expected_generator_commit:
+            raise ShardRunnerError(
+                f"proposal[{index}] generator code_commit does not match frozen "
+                f"{generator_repository.capitalize()} commit"
+            )
+    if generator_repository == "partizan":
+        symmetry_counts: Counter[str] = Counter()
+        for index, proposal in enumerate(proposals):
+            position = proposal["position"]
+            expected_symmetry = (
+                discovery_contract.fen_file_reflection_orbit_sha256(
+                    position["text"]
+                )
+            )
+            if position["symmetry_sha256"] != expected_symmetry:
+                raise ShardRunnerError(
+                    f"proposal[{index}] symmetry_sha256 does not match the "
+                    "Partizan file-reflection contract"
+                )
+            symmetry_counts[expected_symmetry] += 1
+        if any(count != 1 for count in symmetry_counts.values()):
+            raise ShardRunnerError(
+                "Partizan proposal pool contains a file-reflection symmetry duplicate"
+            )
     artifact_contract_path = candidate_artifact_path or _candidate_artifact_contract_path(
         proposals_output_path
     )
+    determinism: dict[str, Any]
+    if generator_repository == "partizan":
+        if generation_receipt_path is None:
+            raise ShardRunnerError(
+                "Partizan-generated pools require a generation receipt"
+            )
+        try:
+            root = repository_root.resolve(strict=True)
+            receipt_path = generation_receipt_path.resolve(strict=True)
+            receipt_relative_path = receipt_path.relative_to(root).as_posix()
+            receipt_bytes = receipt_path.read_bytes()
+            generation_receipt = json.loads(receipt_bytes.decode("utf-8"))
+        except (OSError, ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ShardRunnerError(
+                "generation receipt must be a readable file inside the "
+                f"repository root: {error}"
+            ) from error
+        if not isinstance(generation_receipt, dict):
+            raise ShardRunnerError("generation receipt must contain a JSON object")
+        canonical_receipt_bytes = discovery_contract.canonical_json_bytes(
+            generation_receipt
+        )
+        if receipt_bytes != canonical_receipt_bytes:
+            raise ShardRunnerError("generation receipt bytes must be canonical")
+        _raise_contract_errors(
+            "generation receipt",
+            discovery_contract.validate_generation_receipt(
+                generation_receipt, target, proposals
+            ),
+        )
+        determinism = {
+            "operation": "separate_process_generation",
+            "run_count": 2,
+            "byte_identical": True,
+            "artifact_sha256": artifact_sha,
+            "raw_artifact_sha256": list(
+                generation_receipt["executions"]["raw_artifact_sha256"]
+            ),
+            "generation_receipt_ref": {
+                "path": receipt_relative_path,
+                "schema_version": generation_receipt["schema_version"],
+                "receipt_id": generation_receipt["receipt_id"],
+                "sha256": discovery_contract.sha256_hex(receipt_bytes),
+            },
+        }
+    else:
+        determinism = {
+            "operation": "canonicalization",
+            "run_count": 2,
+            "byte_identical": True,
+            "artifact_sha256": artifact_sha,
+        }
+
     manifest: dict[str, Any] = {
-        "schema_version": discovery_contract.POOL_SCHEMA_VERSION,
+        "schema_version": (
+            discovery_contract.POOL_SCHEMA_VERSION_V2
+            if generator_repository == "partizan"
+            else discovery_contract.POOL_SCHEMA_VERSION
+        ),
         "pool_id": "pool-sha256:" + "0" * 64,
         "target_ref": {
             "target_id": target["target_id"],
@@ -337,12 +715,7 @@ def freeze_discovery_pool(
         },
         "generator": generator,
         "source_repositories": dict(source_repositories),
-        "determinism": {
-            "operation": "canonicalization",
-            "run_count": 2,
-            "byte_identical": True,
-            "artifact_sha256": artifact_sha,
-        },
+        "determinism": determinism,
         "ranker_boundary": {
             "contract_id": "proposal_only_ranker_input_v0.1",
             "generation_phase": "offline_before_any_verifier_call",
@@ -356,7 +729,11 @@ def freeze_discovery_pool(
     # Validate in memory before either output becomes authoritative.
     _write_bytes(proposals_output_path, canonical_first)
     errors = discovery_contract.validate_candidate_pool_manifest(
-        manifest, target, proposals, proposals_output_path
+        manifest,
+        target,
+        proposals,
+        proposals_output_path,
+        repository_root=repository_root,
     )
     if errors:
         proposals_output_path.unlink(missing_ok=True)
@@ -562,9 +939,13 @@ def verify_discovery_pool(
     bitmesh_dir: Path = DEFAULT_BITMESH_DIR,
     thermograph_dir: Path = DEFAULT_THERMOGRAPH_DIR,
     current_repositories: dict[str, str] | None = None,
+    repository_root: Path = ROOT,
 ) -> list[dict[str, Any]]:
     target, proposals, manifest = _load_frozen_discovery_pool(
-        target_path, proposals_path, manifest_path
+        target_path,
+        proposals_path,
+        manifest_path,
+        repository_root=repository_root,
     )
     astralbase_dir = astralbase_dir.resolve()
     bitmesh_dir = bitmesh_dir.resolve()
@@ -734,6 +1115,120 @@ def replay_discovery_run(
     return run
 
 
+def run_discovery_generate_pool_v1_internal(args: argparse.Namespace) -> int:
+    target_path = _resolve_from_root(args.target)
+    try:
+        target = discovery_contract.load_json(target_path)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        raise ShardRunnerError(f"could not load discovery target: {error}") from error
+    proposals = generate_discovery_candidate_pool_v1(
+        target=target,
+        pool_size=args.pool_size,
+        random_seed=args.random_seed,
+        generator_code_commit=args.generator_code_commit,
+    )
+    _write_bytes(
+        _resolve_from_root(args.output),
+        discovery_contract.canonical_jsonl_bytes(proposals),
+    )
+    return 0
+
+
+def _run_discovery_generator_process(
+    *,
+    target_path: Path,
+    output_path: Path,
+    pool_size: int,
+    random_seed: int,
+    generator_code_commit: str,
+) -> None:
+    command = (
+        sys.executable,
+        str(ROOT / "engine/orchestrator.py"),
+        "discovery-generate-pool-v1-internal",
+        "--target",
+        str(target_path),
+        "--output",
+        str(output_path),
+        "--pool-size",
+        str(pool_size),
+        "--random-seed",
+        str(random_seed),
+        "--generator-code-commit",
+        generator_code_commit,
+    )
+    result = subprocess.run(
+        command,
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        if result.stderr:
+            sys.stderr.write(result.stderr.decode("utf-8", errors="replace"))
+        raise ShardRunnerError(
+            "separate-process candidate generation failed with exit code "
+            f"{result.returncode}"
+        )
+
+
+def run_discovery_generate_pool_v1(args: argparse.Namespace) -> int:
+    target_path = _resolve_from_root(args.target).resolve()
+    try:
+        target = discovery_contract.load_json(target_path)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        raise ShardRunnerError(f"could not load discovery target: {error}") from error
+    partizan_commit = _immutable_repo_commit(ROOT, "partizan")
+    with tempfile.TemporaryDirectory(prefix="partizan-generation-") as temp_dir:
+        temp = Path(temp_dir)
+        run_paths = [temp / "run-0.jsonl", temp / "run-1.jsonl"]
+        for run_path in run_paths:
+            _run_discovery_generator_process(
+                target_path=target_path,
+                output_path=run_path,
+                pool_size=args.pool_size,
+                random_seed=args.random_seed,
+                generator_code_commit=partizan_commit,
+            )
+        raw_runs = [run_path.read_bytes() for run_path in run_paths]
+    first_bytes, second_bytes = raw_runs
+    if first_bytes != second_bytes:
+        raise ShardRunnerError(
+            "candidate generation was not byte-identical across two separate processes"
+        )
+    try:
+        proposals = [
+            json.loads(line)
+            for line in first_bytes.decode("utf-8").splitlines()
+            if line
+        ]
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ShardRunnerError(
+            f"generated candidate artifact was not valid JSONL: {error}"
+        ) from error
+    raw_hashes = [
+        discovery_contract.sha256_hex(payload) for payload in raw_runs
+    ]
+    receipt = build_discovery_generation_receipt_v1(
+        target=target,
+        proposals=proposals,
+        raw_artifact_sha256=raw_hashes,
+    )
+    output = _resolve_from_root(args.output)
+    _write_bytes(output, first_bytes)
+    _write_bytes(
+        _resolve_from_root(args.receipt),
+        discovery_contract.canonical_json_bytes(receipt),
+    )
+    print(
+        "discovery-generate-pool-v1: ok "
+        f"(rows={len(proposals)}, seed={args.random_seed}, "
+        f"sha256={discovery_contract.sha256_hex(first_bytes)})"
+    )
+    return 0
+
+
 def run_discovery_freeze_pool(args: argparse.Namespace) -> int:
     repositories = _current_discovery_repositories(
         astralbase_dir=args.astralbase_dir.resolve(),
@@ -748,6 +1243,11 @@ def run_discovery_freeze_pool(args: argparse.Namespace) -> int:
         manifest_output_path=_resolve_from_root(args.manifest),
         source_repositories=repositories,
         candidate_artifact_path=args.candidate_artifact_path,
+        generation_receipt_path=(
+            _resolve_from_root(args.generation_receipt)
+            if args.generation_receipt is not None
+            else None
+        ),
     )
     print(
         "discovery-freeze-pool: ok "
@@ -1350,6 +1850,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run the astralbase generator once instead of comparing two runs.",
     )
 
+    generate_parser = subcommands.add_parser(
+        "discovery-generate-pool-v1",
+        help=(
+            "Generate a deterministic, target-blind proposal JSONL from the "
+            "Wave 69 board grammar; this command never calls a verifier."
+        ),
+    )
+    generate_parser.add_argument("--target", type=Path, required=True)
+    generate_parser.add_argument("--output", type=Path, required=True)
+    generate_parser.add_argument("--receipt", type=Path, required=True)
+    generate_parser.add_argument("--pool-size", type=int, required=True)
+    generate_parser.add_argument("--random-seed", type=int, required=True)
+
+    generate_internal_parser = subcommands.add_parser(
+        "discovery-generate-pool-v1-internal",
+        help=argparse.SUPPRESS,
+    )
+    generate_internal_parser.add_argument("--target", type=Path, required=True)
+    generate_internal_parser.add_argument("--output", type=Path, required=True)
+    generate_internal_parser.add_argument("--pool-size", type=int, required=True)
+    generate_internal_parser.add_argument("--random-seed", type=int, required=True)
+    generate_internal_parser.add_argument(
+        "--generator-code-commit", required=True
+    )
+
     freeze_parser = subcommands.add_parser(
         "discovery-freeze-pool",
         help=(
@@ -1370,6 +1895,14 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Repository-relative artifact path recorded in the manifest; inferred "
             "from --output when that file is inside Partizan."
+        ),
+    )
+    freeze_parser.add_argument(
+        "--generation-receipt",
+        type=Path,
+        help=(
+            "Receipt from discovery-generate-pool-v1; required for Partizan "
+            "generator artifacts."
         ),
     )
     freeze_parser.add_argument(
@@ -1415,6 +1948,10 @@ def cli_main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.command == "discovery-generate-pool-v1-internal":
+            return run_discovery_generate_pool_v1_internal(args)
+        if args.command == "discovery-generate-pool-v1":
+            return run_discovery_generate_pool_v1(args)
         if args.command == "discovery-freeze-pool":
             return run_discovery_freeze_pool(args)
         if args.command == "discovery-verify-pool":

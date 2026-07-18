@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan candidate generation receipt v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "receipt_id", "target_id", "domain", "generator", "candidate_artifact", "executions"],
+  "properties": {
+    "schema_version": {"const": "partizan.candidate_generation_receipt.v0.1"},
+    "receipt_id": {"type": "string", "pattern": "^receipt-sha256:[0-9a-f]{64}$"},
+    "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"},
+    "domain": {"type": "string", "minLength": 1},
+    "generator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "code_commit", "config_sha256", "random_seed"],
+      "properties": {
+        "name": {"const": "partizan_candidate_pool_generator"},
+        "version": {"type": "string", "minLength": 1},
+        "code_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "random_seed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "candidate_artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "row_count", "sha256"],
+      "properties": {
+        "schema_version": {"const": "partizan.candidate_proposal.v0.1"},
+        "row_count": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "executions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "run_count", "raw_artifact_sha256", "byte_identical"],
+      "properties": {
+        "mode": {"const": "separate_python_processes_v1"},
+        "run_count": {"const": 2},
+        "raw_artifact_sha256": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+        "byte_identical": {"const": true}
+      }
+    }
+  }
+}
