@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan d-file two-component constructive catalog v0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "catalog_id", "construction_contract", "generator", "board_contract", "strata", "stratum_schedule", "deduplication", "source_boundary"],
+  "properties": {
+    "schema_version": {"const": "partizan.dfile_two_component_constructive_catalog.v0.2"},
+    "catalog_id": {"type": "string", "pattern": "^catalog-sha256:[0-9a-f]{64}$"},
+    "construction_contract": {"const": "partizan.dfile_two_component_constructive_grammar.v0.2"},
+    "generator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "family", "operator"],
+      "properties": {
+        "name": {"const": "partizan_candidate_pool_generator"},
+        "version": {"const": "0.2.0"},
+        "family": {"const": "dfile_two_component_constructive_grammar_v2"},
+        "operator": {"const": "seeded_constructive_component_composition_v2"}
+      }
+    },
+    "board_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["barrier", "side_to_move", "castling_rights", "en_passant", "forbidden_active_files", "active_piece_count_per_component"],
+      "properties": {
+        "barrier": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"$ref": "#/$defs/piece"}},
+        "side_to_move": {"const": "w"},
+        "castling_rights": {"const": "none"},
+        "en_passant": {"const": "none"},
+        "forbidden_active_files": {"const": ["e"]},
+        "active_piece_count_per_component": {
+          "type": "object", "additionalProperties": false,
+          "required": ["minimum", "maximum"],
+          "properties": {"minimum": {"const": 1}, "maximum": {"const": 5}}
+        }
+      }
+    },
+    "strata": {
+      "type": "object", "additionalProperties": false,
+      "required": ["outer_leaper", "pawn_phalanx", "ray_cage", "mixed_color_hook"],
+      "properties": {
+        "outer_leaper": {"$ref": "#/$defs/two_sided_description"},
+        "pawn_phalanx": {"$ref": "#/$defs/two_sided_description"},
+        "ray_cage": {
+          "type": "object", "additionalProperties": false,
+          "required": ["left_bases", "right_bases", "extra_atoms"],
+          "properties": {
+            "left_bases": {"$ref": "#/$defs/piece_sets"},
+            "right_bases": {"$ref": "#/$defs/piece_sets"},
+            "extra_atoms": {"type": "string", "minLength": 1}
+          }
+        },
+        "mixed_color_hook": {
+          "type": "object", "additionalProperties": false,
+          "required": ["left_base", "right_base", "extra_atoms"],
+          "properties": {
+            "left_base": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/piece"}},
+            "right_base": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/piece"}},
+            "extra_atoms": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "stratum_schedule": {"const": "accepted_ordinal_modulo_four_v1"},
+    "deduplication": {"const": ["target_free_board_id", "fen_horizontal_reflection_v0"]},
+    "source_boundary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["astralbase_commit", "source_file", "published_source_families"],
+      "properties": {
+        "astralbase_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "source_file": {"type": "string", "minLength": 1},
+        "published_source_families": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  },
+  "$defs": {
+    "piece": {"type": "array", "minItems": 2, "maxItems": 2, "prefixItems": [{"type": "string", "pattern": "^[a-h][1-8]$"}, {"type": "string", "pattern": "^[PNBRQKpnbrqk]$"}], "items": false},
+    "piece_sets": {"type": "array", "minItems": 1, "items": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/piece"}}},
+    "two_sided_description": {"type": "object", "additionalProperties": false, "required": ["left", "right"], "properties": {"left": {"type": "string", "minLength": 1}, "right": {"type": "string", "minLength": 1}}}
+  }
+}

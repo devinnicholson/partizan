@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-wave69r-supply-determinism-receipt-v0.1.schema.json",
+  "title": "Wave 69-R target-free supply determinism receipt v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "receipt_id", "shard_id", "shard_index", "seed_contract", "generator", "construction", "board_stream_artifact", "executions", "source_repositories", "forbidden_calls"],
+  "properties": {
+    "schema_version": {"const": "partizan.wave69r_supply_determinism_receipt.v0.1"},
+    "receipt_id": {"type": "string", "pattern": "^receipt-sha256:[0-9a-f]{64}$"},
+    "shard_id": {"type": "string", "pattern": "^wave69r-supply-shard-[0-3]$"},
+    "shard_index": {"type": "integer", "minimum": 0, "maximum": 3},
+    "seed_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "domain", "index_encoding", "random_seed"],
+      "properties": {
+        "algorithm": {"const": "sha256_first_u64_big_endian_v1"},
+        "domain": {"const": "partizan/w69r/supply/v1"},
+        "index_encoding": {"const": "unpadded_ascii_decimal"},
+        "random_seed": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615}
+      }
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "family", "operator", "code_commit", "config", "config_sha256"],
+      "properties": {
+        "name": {"const": "partizan_candidate_pool_generator"},
+        "version": {"const": "0.2.0"},
+        "family": {"const": "dfile_two_component_constructive_grammar_v2"},
+        "operator": {"const": "seeded_constructive_component_composition_v2"},
+        "code_commit": {"$ref": "#/$defs/hex40"},
+        "config": {"$ref": "#/$defs/generatorConfig"},
+        "config_sha256": {"$ref": "#/$defs/hex64"}
+      }
+    },
+    "construction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "catalog_ref", "certificate_artifact"],
+      "properties": {
+        "contract": {"const": "partizan.dfile_two_component_constructive_grammar.v0.2"},
+        "catalog_ref": {"$ref": "#/$defs/catalogRef"},
+        "certificate_artifact": {"$ref": "#/$defs/certificateArtifact"}
+      }
+    },
+    "board_stream_artifact": {"$ref": "#/$defs/boardArtifact"},
+    "executions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "run_count", "raw_artifact_sha256", "byte_identical"],
+      "properties": {
+        "mode": {"const": "separate_python_processes_v1"},
+        "run_count": {"const": 2},
+        "raw_artifact_sha256": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [{"$ref": "#/$defs/hex64"}, {"$ref": "#/$defs/hex64"}],
+          "items": false
+        },
+        "byte_identical": {"const": true}
+      }
+    },
+    "source_repositories": {"$ref": "#/$defs/sourceRepositories"},
+    "forbidden_calls": {"const": ["bitmesh", "astralbase", "thermograph", "gate_s_checker"]}
+  },
+  "$defs": {
+    "hex40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "hex64": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sourceRepositories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["partizan", "astralbase", "bitmesh", "thermograph"],
+      "properties": {
+        "partizan": {"$ref": "#/$defs/hex40"},
+        "astralbase": {"const": "1434fca1fc04d97798ec1b820c56f52f8014ccc7"},
+        "bitmesh": {"const": "ade3417a007b9c8392d8a153abc4b3ed23edf0aa"},
+        "thermograph": {"const": "1d9b6b01c3921aca8c2a8fb13972fee8a4de5041"}
+      }
+    },
+    "catalogRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "catalog_id", "sha256"],
+      "properties": {
+        "path": {"const": "docs/discovery_wave_69r_construction_catalog.v0.2.json"},
+        "schema_version": {"const": "partizan.dfile_two_component_constructive_catalog.v0.2"},
+        "catalog_id": {"type": "string", "pattern": "^catalog-sha256:[0-9a-f]{64}$"},
+        "sha256": {"$ref": "#/$defs/hex64"}
+      }
+    },
+    "boardArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "row_count"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^data/discovery/wave_69r/structural_supply/inputs/shard-[0-3]/board-stream\\.jsonl$"},
+        "schema_version": {"const": "partizan.candidate_board_stream.v0.1"},
+        "sha256": {"$ref": "#/$defs/hex64"},
+        "row_count": {"const": 1024}
+      }
+    },
+    "certificateArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "row_count"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^data/discovery/wave_69r/structural_supply/inputs/shard-[0-3]/construction-certificates\\.jsonl$"},
+        "schema_version": {"const": "partizan.structural_construction_certificate.v0.1"},
+        "sha256": {"$ref": "#/$defs/hex64"},
+        "row_count": {"const": 1024}
+      }
+    },
+    "generatorConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "name", "version", "family", "pool_size", "random_seed", "prng", "prng_domain", "prng_seed_derivation", "maximum_attempts_per_required_row", "construction_catalog", "grammar", "deduplication", "runtime_oracles"],
+      "properties": {
+        "schema_version": {"const": "partizan.candidate_generator.v0.2"},
+        "name": {"const": "partizan_candidate_pool_generator"},
+        "version": {"const": "0.2.0"},
+        "family": {"const": "dfile_two_component_constructive_grammar_v2"},
+        "pool_size": {"const": 1024},
+        "random_seed": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+        "prng": {"const": "sha256_counter_prng_v1"},
+        "prng_domain": {"const": "partizan/w69r/constructive-board-stream/v2"},
+        "prng_seed_derivation": {"const": "sha256_canonical_json_domain_seed_v1"},
+        "maximum_attempts_per_required_row": {"const": 20},
+        "construction_catalog": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "catalog_id", "path"],
+          "properties": {
+            "schema_version": {"const": "partizan.dfile_two_component_constructive_catalog.v0.2"},
+            "catalog_id": {"type": "string", "pattern": "^catalog-sha256:[0-9a-f]{64}$"},
+            "path": {"const": "docs/discovery_wave_69r_construction_catalog.v0.2.json"}
+          }
+        },
+        "grammar": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["barrier", "component_count", "active_piece_count_per_region", "strata", "stratum_schedule", "component_grammar", "construction_proof", "forbidden_active_files", "castling_rights", "en_passant", "side_to_move"],
+          "properties": {
+            "barrier": {"const": "alternating_frozen_dfile_pawns_v2"},
+            "component_count": {"const": 2},
+            "active_piece_count_per_region": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["minimum", "maximum"],
+              "properties": {"minimum": {"const": 1}, "maximum": {"const": 5}}
+            },
+            "strata": {"const": ["outer_leaper", "pawn_phalanx", "ray_cage", "mixed_color_hook"]},
+            "stratum_schedule": {"const": "accepted_ordinal_modulo_four_v1"},
+            "component_grammar": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["outer_leaper", "pawn_phalanx", "ray_cage", "mixed_color_hook"],
+              "properties": {
+                "outer_leaper": {"const": "outer_file_knights_plus_optional_nonterminal_pawn_v1"},
+                "pawn_phalanx": {"const": "two_file_nonterminal_pawn_atoms_v1"},
+                "ray_cage": {"const": "static_indivisible_published_source_cages_v1"},
+                "mixed_color_hook": {"const": "static_published_mixed_color_hooks_v1"}
+              }
+            },
+            "construction_proof": {"const": "static_safe_atoms_and_indivisible_published_source_cages_v1"},
+            "forbidden_active_files": {"const": ["e"]},
+            "castling_rights": {"const": "none"},
+            "en_passant": {"const": "none"},
+            "side_to_move": {"const": "white_fixed_to_prevent_semantic_duplicates"}
+          }
+        },
+        "deduplication": {"const": ["target_free_board_id", "fen_horizontal_reflection_v0"]},
+        "runtime_oracles": {"const": []}
+      }
+    }
+  }
+}

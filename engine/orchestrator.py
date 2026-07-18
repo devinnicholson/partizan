@@ -98,6 +98,26 @@ DISCOVERY_POOL_GENERATOR_VERSION = "0.1.0"
 DISCOVERY_POOL_GENERATOR_FAMILY = "dfile_two_component_seeded_grammar_v1"
 DISCOVERY_POOL_GENERATOR_CONFIG_VERSION = "partizan.candidate_generator.v0.1"
 DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW = 20
+DISCOVERY_POOL_GENERATOR_VERSION_V2 = "0.2.0"
+DISCOVERY_POOL_GENERATOR_FAMILY_V2 = (
+    "dfile_two_component_constructive_grammar_v2"
+)
+DISCOVERY_POOL_GENERATOR_CONFIG_VERSION_V2 = "partizan.candidate_generator.v0.2"
+DISCOVERY_POOL_GENERATOR_CONSTRUCTION_CONTRACT_V2 = (
+    "partizan.dfile_two_component_constructive_grammar.v0.2"
+)
+DISCOVERY_POOL_GENERATOR_CATALOG_SCHEMA_V2 = (
+    "partizan.dfile_two_component_constructive_catalog.v0.2"
+)
+DISCOVERY_POOL_GENERATOR_CATALOG_ID_V2 = (
+    "catalog-sha256:6fb7ee4e6aa5aceb5ac55b8781cac3998c48ec2d0beb0a4aea047ab8a54cc4fd"
+)
+DISCOVERY_POOL_GENERATOR_CATALOG_PATH_V2 = (
+    "docs/discovery_wave_69r_construction_catalog.v0.2.json"
+)
+DISCOVERY_POOL_GENERATOR_PRNG_DOMAIN_V2 = (
+    "partizan/w69r/constructive-board-stream/v2"
+)
 
 _DISCOVERY_BARRIER = {
     "d1": "P",
@@ -118,6 +138,42 @@ _DISCOVERY_RIGHT_SQUARES = tuple(
 _DISCOVERY_WHITE_PIECES = ("P", "N", "B", "R", "Q")
 _DISCOVERY_BLACK_PIECES = ("p", "n", "b", "r", "q")
 _DISCOVERY_PIECES = _DISCOVERY_WHITE_PIECES + _DISCOVERY_BLACK_PIECES
+
+_DISCOVERY_V2_LEFT_KNIGHT_SQUARES = tuple(f"a{rank}" for rank in range(1, 9))
+_DISCOVERY_V2_RIGHT_KNIGHT_SQUARES = tuple(f"h{rank}" for rank in range(1, 9))
+_DISCOVERY_V2_LEFT_PAWNS = tuple(
+    [(f"b{rank}", "P") for rank in range(1, 8)]
+    + [(f"b{rank}", "p") for rank in range(2, 9)]
+)
+_DISCOVERY_V2_RIGHT_PAWNS = tuple(
+    [(f"g{rank}", "P") for rank in range(1, 8)]
+    + [(f"g{rank}", "p") for rank in range(2, 9)]
+)
+_DISCOVERY_V2_STRATA = (
+    "outer_leaper",
+    "pawn_phalanx",
+    "ray_cage",
+    "mixed_color_hook",
+)
+
+_DISCOVERY_V2_LEFT_RAY_CAGES = (
+    (("a1", "R"),),
+    (("a1", "B"), ("b2", "P")),
+    (("a1", "Q"), ("b2", "P")),
+)
+_DISCOVERY_V2_RIGHT_RAY_CAGES = (
+    (("h8", "r"),),
+    (("h8", "b"), ("g7", "p")),
+    (("h8", "q"), ("g7", "p")),
+)
+_DISCOVERY_V2_LEFT_MIXED_HOOKS = (
+    (("a1", "N"), ("a2", "P"), ("b3", "p")),
+)
+_DISCOVERY_V2_RIGHT_MIXED_HOOKS = (
+    (("h8", "n"), ("h7", "p"), ("g6", "P")),
+)
+
+
 class _Sha256CounterRng:
     """Small version-stable PRNG for reproducible candidate generation."""
 
@@ -504,6 +560,487 @@ def generate_discovery_candidate_pool_v1(
             f"({len(proposals)}/{pool_size})"
         )
     return proposals
+
+
+def _discovery_generator_config_v2(
+    *, pool_size: int, random_seed: int
+) -> dict[str, Any]:
+    return {
+        "schema_version": DISCOVERY_POOL_GENERATOR_CONFIG_VERSION_V2,
+        "name": DISCOVERY_POOL_GENERATOR_NAME,
+        "version": DISCOVERY_POOL_GENERATOR_VERSION_V2,
+        "family": DISCOVERY_POOL_GENERATOR_FAMILY_V2,
+        "pool_size": pool_size,
+        "random_seed": random_seed,
+        "prng": "sha256_counter_prng_v1",
+        "prng_domain": DISCOVERY_POOL_GENERATOR_PRNG_DOMAIN_V2,
+        "prng_seed_derivation": "sha256_canonical_json_domain_seed_v1",
+        "maximum_attempts_per_required_row": (
+            DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW
+        ),
+        "construction_catalog": {
+            "schema_version": DISCOVERY_POOL_GENERATOR_CATALOG_SCHEMA_V2,
+            "catalog_id": DISCOVERY_POOL_GENERATOR_CATALOG_ID_V2,
+            "path": DISCOVERY_POOL_GENERATOR_CATALOG_PATH_V2,
+        },
+        "grammar": {
+            "barrier": "alternating_frozen_dfile_pawns_v2",
+            "component_count": 2,
+            "active_piece_count_per_region": {"minimum": 1, "maximum": 5},
+            "strata": list(_DISCOVERY_V2_STRATA),
+            "stratum_schedule": "accepted_ordinal_modulo_four_v1",
+            "component_grammar": {
+                "outer_leaper": "outer_file_knights_plus_optional_nonterminal_pawn_v1",
+                "pawn_phalanx": "two_file_nonterminal_pawn_atoms_v1",
+                "ray_cage": "static_indivisible_published_source_cages_v1",
+                "mixed_color_hook": "static_published_mixed_color_hooks_v1",
+            },
+            "construction_proof": (
+                "static_safe_atoms_and_indivisible_published_source_cages_v1"
+            ),
+            "forbidden_active_files": ["e"],
+            "castling_rights": "none",
+            "en_passant": "none",
+            "side_to_move": "white_fixed_to_prevent_semantic_duplicates",
+        },
+        "deduplication": [
+            "target_free_board_id",
+            "fen_horizontal_reflection_v0",
+        ],
+        "runtime_oracles": [],
+    }
+
+
+def _construct_discovery_v2_region(
+    rng: _Sha256CounterRng,
+    *,
+    knight_squares: tuple[str, ...],
+    pawn_options: tuple[tuple[str, str], ...],
+) -> dict[str, str]:
+    piece_count = rng.randint(1, 5)
+    include_pawn = rng.randbelow(2) == 1
+    knight_count = piece_count - int(include_pawn)
+    squares = rng.sample(knight_squares, knight_count)
+    pieces = {square: rng.choice(("N", "n")) for square in squares}
+    if include_pawn:
+        pawn_square, pawn = rng.choice(pawn_options)
+        pieces[pawn_square] = pawn
+    return pieces
+
+
+def _construct_discovery_v2_phalanx(
+    rng: _Sha256CounterRng, *, files: tuple[str, str]
+) -> dict[str, str]:
+    pieces: dict[str, str] = {}
+    for file_name in files:
+        options = tuple(
+            [(f"{file_name}{rank}", "P") for rank in range(1, 8)]
+            + [(f"{file_name}{rank}", "p") for rank in range(2, 9)]
+        )
+        square, piece = rng.choice(options)
+        pieces[square] = piece
+    return pieces
+
+
+def _construct_discovery_v2_catalog_component(
+    rng: _Sha256CounterRng,
+    *,
+    catalog: tuple[tuple[tuple[str, str], ...], ...],
+    extra_squares: tuple[str, ...],
+    maximum_extra_count: int,
+) -> dict[str, str]:
+    pieces = dict(rng.choice(catalog))
+    available = tuple(square for square in extra_squares if square not in pieces)
+    extra_count = rng.randint(
+        0, min(maximum_extra_count, 5 - len(pieces), len(available))
+    )
+    for square in rng.sample(available, extra_count):
+        pieces[square] = rng.choice(("N", "n"))
+    return pieces
+
+
+def _construct_discovery_v2_component(
+    rng: _Sha256CounterRng, *, stratum: str, side: str
+) -> dict[str, str]:
+    if side not in {"left", "right"}:
+        raise AssertionError("v2 component side must be left or right")
+    if stratum == "outer_leaper":
+        return _construct_discovery_v2_region(
+            rng,
+            knight_squares=(
+                _DISCOVERY_V2_LEFT_KNIGHT_SQUARES
+                if side == "left"
+                else _DISCOVERY_V2_RIGHT_KNIGHT_SQUARES
+            ),
+            pawn_options=(
+                _DISCOVERY_V2_LEFT_PAWNS
+                if side == "left"
+                else _DISCOVERY_V2_RIGHT_PAWNS
+            ),
+        )
+    if stratum == "pawn_phalanx":
+        return _construct_discovery_v2_phalanx(
+            rng, files=("a", "b") if side == "left" else ("g", "h")
+        )
+    if stratum == "ray_cage":
+        return _construct_discovery_v2_catalog_component(
+            rng,
+            catalog=(
+                _DISCOVERY_V2_LEFT_RAY_CAGES
+                if side == "left"
+                else _DISCOVERY_V2_RIGHT_RAY_CAGES
+            ),
+            extra_squares=tuple(
+                f"{'a' if side == 'left' else 'h'}{rank}"
+                for rank in range(1, 9)
+            ),
+            maximum_extra_count=3,
+        )
+    if stratum == "mixed_color_hook":
+        return _construct_discovery_v2_catalog_component(
+            rng,
+            catalog=(
+                _DISCOVERY_V2_LEFT_MIXED_HOOKS
+                if side == "left"
+                else _DISCOVERY_V2_RIGHT_MIXED_HOOKS
+            ),
+            extra_squares=(
+                tuple(f"a{rank}" for rank in range(4, 9))
+                if side == "left"
+                else tuple(f"h{rank}" for rank in range(1, 6))
+            ),
+            maximum_extra_count=2,
+        )
+    raise AssertionError(f"unsupported v2 stratum: {stratum}")
+
+
+def _constructive_v2_invariant_errors(
+    squares: dict[str, str], *, stratum: str
+) -> list[str]:
+    """Check the syntactic theorem used by v2; this never calls an oracle."""
+
+    errors: list[str] = []
+    if any(squares.get(square) != piece for square, piece in _DISCOVERY_BARRIER.items()):
+        errors.append("BarrierPawnNotFrozen")
+    active = {
+        square: piece
+        for square, piece in squares.items()
+        if square not in _DISCOVERY_BARRIER
+    }
+    left = {square: piece for square, piece in active.items() if square[0] in "abc"}
+    right = {square: piece for square, piece in active.items() if square[0] in "efgh"}
+    if not left or not right:
+        errors.append("RequiresStrictDecomposition")
+    if any(square[0] == "e" for square in active):
+        errors.append("BarrierPieceCanBeCaptured")
+
+    def region_is_constructive(
+        region: dict[str, str],
+        *,
+        knight_file: str,
+        pawn_file: str,
+    ) -> bool:
+        pawns = 0
+        for square, piece in region.items():
+            if square[0] == knight_file and piece in {"N", "n"}:
+                continue
+            rank = int(square[1])
+            if square[0] != pawn_file or piece not in {"P", "p"}:
+                return False
+            if piece == "P" and rank == 8:
+                return False
+            if piece == "p" and rank == 1:
+                return False
+            pawns += 1
+        return pawns <= 1 and 1 <= len(region) <= 5
+
+    def phalanx_is_constructive(
+        region: dict[str, str], *, files: tuple[str, str]
+    ) -> bool:
+        if len(region) != 2 or {square[0] for square in region} != set(files):
+            return False
+        return all(
+            piece in {"P", "p"}
+            and not (piece == "P" and square[1] == "8")
+            and not (piece == "p" and square[1] == "1")
+            for square, piece in region.items()
+        )
+
+    def catalog_is_constructive(
+        region: dict[str, str],
+        *,
+        catalog: tuple[tuple[tuple[str, str], ...], ...],
+        extra_squares: tuple[str, ...],
+        maximum_extra_count: int,
+    ) -> bool:
+        for encoded_base in catalog:
+            base = dict(encoded_base)
+            if not all(region.get(square) == piece for square, piece in base.items()):
+                continue
+            extras = {
+                square: piece
+                for square, piece in region.items()
+                if square not in base
+            }
+            if not extras:
+                return True
+            if len(extras) <= maximum_extra_count and all(
+                square in extra_squares and piece in {"N", "n"}
+                for square, piece in extras.items()
+            ):
+                return True
+        return False
+
+    if stratum == "outer_leaper":
+        left_ok = region_is_constructive(left, knight_file="a", pawn_file="b")
+        right_ok = region_is_constructive(right, knight_file="h", pawn_file="g")
+    elif stratum == "pawn_phalanx":
+        left_ok = phalanx_is_constructive(left, files=("a", "b"))
+        right_ok = phalanx_is_constructive(right, files=("g", "h"))
+    elif stratum == "ray_cage":
+        left_ok = catalog_is_constructive(
+            left,
+            catalog=_DISCOVERY_V2_LEFT_RAY_CAGES,
+            extra_squares=tuple(f"a{rank}" for rank in range(1, 9)),
+            maximum_extra_count=3,
+        )
+        right_ok = catalog_is_constructive(
+            right,
+            catalog=_DISCOVERY_V2_RIGHT_RAY_CAGES,
+            extra_squares=tuple(f"h{rank}" for rank in range(1, 9)),
+            maximum_extra_count=3,
+        )
+    elif stratum == "mixed_color_hook":
+        left_ok = catalog_is_constructive(
+            left,
+            catalog=_DISCOVERY_V2_LEFT_MIXED_HOOKS,
+            extra_squares=tuple(f"a{rank}" for rank in range(4, 9)),
+            maximum_extra_count=2,
+        )
+        right_ok = catalog_is_constructive(
+            right,
+            catalog=_DISCOVERY_V2_RIGHT_MIXED_HOOKS,
+            extra_squares=tuple(f"h{rank}" for rank in range(1, 6)),
+            maximum_extra_count=2,
+        )
+    else:
+        left_ok = right_ok = False
+    if left and not left_ok:
+        errors.append("PieceCanEnterOtherComponent")
+    if right and not right_ok:
+        errors.append("PieceCanEnterOtherComponent")
+    return sorted(set(errors))
+
+
+def _constructive_v2_template_id(
+    *, stratum: str, side: str, pieces: dict[str, str]
+) -> str:
+    payload = {
+        "construction_contract": DISCOVERY_POOL_GENERATOR_CONSTRUCTION_CONTRACT_V2,
+        "stratum": stratum,
+        "side": side,
+        "pieces": [[square, pieces[square]] for square in sorted(pieces)],
+    }
+    return "template-sha256:" + discovery_contract.sha256_hex(
+        discovery_contract.canonical_json_bytes(payload)
+    )
+
+
+def generate_discovery_board_states_v2(
+    *,
+    pool_size: int,
+    random_seed: int,
+    generator_code_commit: str,
+) -> list[dict[str, Any]]:
+    """Generate target-free boards from a conservative construction theorem.
+
+    The function has no target argument.  It does not import, invoke, or filter
+    through Bitmesh, Astralbase, Thermograph, or any target identity.
+    """
+
+    if (
+        not isinstance(pool_size, int)
+        or isinstance(pool_size, bool)
+        or pool_size <= 0
+        or pool_size > 4096
+    ):
+        raise ShardRunnerError("pool_size must be an integer from 1 through 4096")
+    if (
+        not isinstance(random_seed, int)
+        or isinstance(random_seed, bool)
+        or random_seed < 0
+    ):
+        raise ShardRunnerError("random_seed must be a non-negative integer")
+    if (
+        len(generator_code_commit) != 40
+        or any(char not in "0123456789abcdef" for char in generator_code_commit)
+    ):
+        raise ShardRunnerError(
+            "generator_code_commit must be a full lowercase Git commit"
+        )
+
+    config = _discovery_generator_config_v2(
+        pool_size=pool_size, random_seed=random_seed
+    )
+    config_sha = discovery_contract.sha256_hex(
+        discovery_contract.canonical_json_bytes(config)
+    )
+    derived_seed = int.from_bytes(
+        hashlib.sha256(
+            discovery_contract.canonical_json_bytes(
+                {
+                    "contract": "sha256_canonical_json_domain_seed_v1",
+                    "domain": DISCOVERY_POOL_GENERATOR_PRNG_DOMAIN_V2,
+                    "random_seed": random_seed,
+                }
+            )
+        ).digest(),
+        "big",
+    )
+    rng = _Sha256CounterRng(derived_seed)
+    rows: list[dict[str, Any]] = []
+    board_ids: set[str] = set()
+    symmetry_keys: set[str] = set()
+    attempts = 0
+    maximum_attempts = pool_size * DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW
+
+    while len(rows) < pool_size and attempts < maximum_attempts:
+        attempts += 1
+        stratum = _DISCOVERY_V2_STRATA[len(rows) % len(_DISCOVERY_V2_STRATA)]
+        left = _construct_discovery_v2_component(
+            rng, stratum=stratum, side="left"
+        )
+        right = _construct_discovery_v2_component(
+            rng, stratum=stratum, side="right"
+        )
+        squares = dict(_DISCOVERY_BARRIER)
+        squares.update(left)
+        squares.update(right)
+        invariant_errors = _constructive_v2_invariant_errors(
+            squares, stratum=stratum
+        )
+        if invariant_errors:
+            raise ShardRunnerError(
+                "v2 construction theorem postcondition failed: "
+                + ", ".join(invariant_errors)
+            )
+        fen = f"{_fen_board_from_squares(squares)} w - - 0 1"
+        position = {
+            "encoding": "fen",
+            "text": fen,
+            "sha256": discovery_contract.sha256_hex(fen.encode("utf-8")),
+            "symmetry_sha256": discovery_contract.fen_file_reflection_orbit_sha256(
+                fen
+            ),
+        }
+        board_id = discovery_contract.board_id_for(position)
+        if board_id in board_ids or position["symmetry_sha256"] in symmetry_keys:
+            continue
+        row = {
+            "schema_version": discovery_contract.BOARD_STREAM_SCHEMA_VERSION,
+            "board_id": board_id,
+            "ordinal": len(rows),
+            "position": position,
+            "generator": {
+                "name": DISCOVERY_POOL_GENERATOR_NAME,
+                "version": DISCOVERY_POOL_GENERATOR_VERSION_V2,
+                "code_commit": generator_code_commit,
+                "family": DISCOVERY_POOL_GENERATOR_FAMILY_V2,
+                "operator": "seeded_constructive_component_composition_v2",
+                "config_sha256": config_sha,
+                "random_seed": random_seed,
+            },
+            "construction": {
+                "contract": DISCOVERY_POOL_GENERATOR_CONSTRUCTION_CONTRACT_V2,
+                "stratum": stratum,
+                "left_active_piece_count": len(left),
+                "right_active_piece_count": len(right),
+                "left_template_id": _constructive_v2_template_id(
+                    stratum=stratum, side="left", pieces=left
+                ),
+                "right_template_id": _constructive_v2_template_id(
+                    stratum=stratum, side="right", pieces=right
+                ),
+                "runtime_oracle_used": False,
+            },
+            "proposal_features": discovery_contract.partizan_pool_features_for_fen(
+                fen
+            ),
+        }
+        _raise_contract_errors(
+            f"board_stream[{len(rows)}]",
+            discovery_contract.validate_candidate_board_stream_row(row),
+        )
+        rows.append(row)
+        board_ids.add(board_id)
+        symmetry_keys.add(position["symmetry_sha256"])
+
+    if len(rows) != pool_size:
+        raise ShardRunnerError(
+            "candidate grammar exhausted before reaching the requested pool size "
+            f"({len(rows)}/{pool_size}; attempts={attempts}/{maximum_attempts})"
+        )
+    return rows
+
+
+def bind_discovery_board_states_v2(
+    *, target: dict[str, Any], board_rows: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Bind a target-free v2 board stream to proposal v0.1 contracts."""
+
+    _raise_contract_errors("target", discovery_contract.validate_target_spec(target))
+    if len(board_rows) > target["search_limits"]["max_pool_size"]:
+        raise ShardRunnerError("board stream exceeds target max_pool_size")
+    proposals: list[dict[str, Any]] = []
+    for ordinal, board_row in enumerate(board_rows):
+        _raise_contract_errors(
+            f"board_stream[{ordinal}]",
+            discovery_contract.validate_candidate_board_stream_row(board_row),
+        )
+        if board_row["ordinal"] != ordinal:
+            raise ShardRunnerError("board stream ordinals must be contiguous")
+        position = dict(board_row["position"])
+        proposal: dict[str, Any] = {
+            "schema_version": discovery_contract.PROPOSAL_SCHEMA_VERSION,
+            "proposal_id": "proposal-sha256:" + "0" * 64,
+            "target_id": target["target_id"],
+            "domain": target["domain"],
+            "candidate_key": discovery_contract.candidate_state_key_for(
+                target["domain"], position
+            ),
+            "ordinal": ordinal,
+            "position": position,
+            "generator": dict(board_row["generator"]),
+            "proposal_features": board_row["proposal_features"],
+        }
+        proposal["proposal_id"] = discovery_contract.proposal_id_for(proposal)
+        _raise_contract_errors(
+            f"proposal[{ordinal}]",
+            discovery_contract.validate_candidate_proposal(proposal, target),
+        )
+        proposals.append(proposal)
+    return proposals
+
+
+def generate_discovery_candidate_pool_v2(
+    *,
+    target: dict[str, Any],
+    pool_size: int,
+    random_seed: int,
+    generator_code_commit: str,
+) -> list[dict[str, Any]]:
+    _raise_contract_errors("target", discovery_contract.validate_target_spec(target))
+    if pool_size > target["search_limits"]["max_pool_size"]:
+        raise ShardRunnerError(
+            f"pool_size={pool_size} exceeds target max_pool_size="
+            f"{target['search_limits']['max_pool_size']}"
+        )
+    board_rows = generate_discovery_board_states_v2(
+        pool_size=pool_size,
+        random_seed=random_seed,
+        generator_code_commit=generator_code_commit,
+    )
+    return bind_discovery_board_states_v2(target=target, board_rows=board_rows)
 
 
 def build_discovery_generation_receipt_v1(
@@ -1229,6 +1766,105 @@ def run_discovery_generate_pool_v1(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_discovery_generate_board_stream_v2_internal(args: argparse.Namespace) -> int:
+    rows = generate_discovery_board_states_v2(
+        pool_size=args.pool_size,
+        random_seed=args.random_seed,
+        generator_code_commit=args.generator_code_commit,
+    )
+    _write_bytes(
+        _resolve_from_root(args.output),
+        discovery_contract.canonical_jsonl_bytes(rows),
+    )
+    return 0
+
+
+def _run_discovery_board_stream_process_v2(
+    *,
+    output_path: Path,
+    pool_size: int,
+    random_seed: int,
+    generator_code_commit: str,
+) -> None:
+    result = subprocess.run(
+        (
+            sys.executable,
+            str(ROOT / "engine/orchestrator.py"),
+            "discovery-generate-board-stream-v2-internal",
+            "--output",
+            str(output_path),
+            "--pool-size",
+            str(pool_size),
+            "--random-seed",
+            str(random_seed),
+            "--generator-code-commit",
+            generator_code_commit,
+        ),
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        if result.stderr:
+            sys.stderr.write(result.stderr.decode("utf-8", errors="replace"))
+        raise ShardRunnerError(
+            "separate-process v2 board generation failed with exit code "
+            f"{result.returncode}"
+        )
+
+
+def run_discovery_generate_board_stream_v2(args: argparse.Namespace) -> int:
+    partizan_commit = _immutable_repo_commit(ROOT, "partizan")
+    with tempfile.TemporaryDirectory(prefix="partizan-board-stream-v2-") as temp_dir:
+        run_paths = [Path(temp_dir) / "run-0.jsonl", Path(temp_dir) / "run-1.jsonl"]
+        for run_path in run_paths:
+            _run_discovery_board_stream_process_v2(
+                output_path=run_path,
+                pool_size=args.pool_size,
+                random_seed=args.random_seed,
+                generator_code_commit=partizan_commit,
+            )
+        raw_runs = [path.read_bytes() for path in run_paths]
+    if raw_runs[0] != raw_runs[1]:
+        raise ShardRunnerError(
+            "v2 board generation was not byte-identical across separate processes"
+        )
+    rows = [json.loads(line) for line in raw_runs[0].decode("utf-8").splitlines()]
+    for index, row in enumerate(rows):
+        _raise_contract_errors(
+            f"board_stream[{index}]",
+            discovery_contract.validate_candidate_board_stream_row(row),
+        )
+    artifact_sha = discovery_contract.sha256_hex(raw_runs[0])
+    determinism = {
+        "schema_version": "partizan.candidate_board_stream_generation.v0.1",
+        "artifact_sha256": artifact_sha,
+        "row_count": len(rows),
+        "generator": {
+            key: rows[0]["generator"][key]
+            for key in ("name", "version", "code_commit", "config_sha256", "random_seed")
+        },
+        "executions": {
+            "mode": "separate_python_processes_v1",
+            "run_count": 2,
+            "raw_artifact_sha256": [artifact_sha, artifact_sha],
+            "byte_identical": True,
+        },
+        "target_fields_consumed": [],
+    }
+    _write_bytes(_resolve_from_root(args.output), raw_runs[0])
+    _write_bytes(
+        _resolve_from_root(args.determinism_report),
+        discovery_contract.canonical_json_bytes(determinism),
+    )
+    print(
+        "discovery-generate-board-stream-v2: ok "
+        f"(rows={len(rows)}, seed={args.random_seed}, sha256={artifact_sha})"
+    )
+    return 0
+
+
 def run_discovery_freeze_pool(args: argparse.Namespace) -> int:
     repositories = _current_discovery_repositories(
         astralbase_dir=args.astralbase_dir.resolve(),
@@ -1875,6 +2511,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--generator-code-commit", required=True
     )
 
+    board_v2_parser = subcommands.add_parser(
+        "discovery-generate-board-stream-v2",
+        help="Generate a target-free, two-process Wave 69-R board stream.",
+    )
+    board_v2_parser.add_argument("--output", type=Path, required=True)
+    board_v2_parser.add_argument(
+        "--determinism-report", type=Path, required=True
+    )
+    board_v2_parser.add_argument("--pool-size", type=int, required=True)
+    board_v2_parser.add_argument("--random-seed", type=int, required=True)
+
+    board_v2_internal_parser = subcommands.add_parser(
+        "discovery-generate-board-stream-v2-internal", help=argparse.SUPPRESS
+    )
+    board_v2_internal_parser.add_argument("--output", type=Path, required=True)
+    board_v2_internal_parser.add_argument("--pool-size", type=int, required=True)
+    board_v2_internal_parser.add_argument("--random-seed", type=int, required=True)
+    board_v2_internal_parser.add_argument("--generator-code-commit", required=True)
+
     freeze_parser = subcommands.add_parser(
         "discovery-freeze-pool",
         help=(
@@ -1952,6 +2607,10 @@ def cli_main(argv: list[str] | None = None) -> int:
             return run_discovery_generate_pool_v1_internal(args)
         if args.command == "discovery-generate-pool-v1":
             return run_discovery_generate_pool_v1(args)
+        if args.command == "discovery-generate-board-stream-v2-internal":
+            return run_discovery_generate_board_stream_v2_internal(args)
+        if args.command == "discovery-generate-board-stream-v2":
+            return run_discovery_generate_board_stream_v2(args)
         if args.command == "discovery-freeze-pool":
             return run_discovery_freeze_pool(args)
         if args.command == "discovery-verify-pool":

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-wave69r-supply-shard-manifest-v0.1.schema.json",
+  "title": "Wave 69-R supply shard manifest v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_id", "shard_id", "shard_index", "row_count", "board_stream_ref", "construction_certificate_ref", "generation_report_ref"],
+  "properties": {
+    "schema_version": {"const": "partizan.wave69r_supply_shard_manifest.v0.1"},
+    "manifest_id": {"type": "string", "pattern": "^manifest-sha256:[0-9a-f]{64}$"},
+    "shard_id": {"type": "string", "pattern": "^wave69r-supply-shard-[0-3]$"},
+    "shard_index": {"type": "integer", "minimum": 0, "maximum": 3},
+    "row_count": {"const": 1024},
+    "board_stream_ref": {"$ref": "#/$defs/boardArtifact"},
+    "construction_certificate_ref": {"$ref": "#/$defs/certificateArtifact"},
+    "generation_report_ref": {"$ref": "#/$defs/reportArtifact"}
+  },
+  "$defs": {
+    "hex64": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "boardArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "row_count"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^data/discovery/wave_69r/structural_supply/inputs/shard-[0-3]/board-stream\\.jsonl$"},
+        "schema_version": {"const": "partizan.candidate_board_stream.v0.1"},
+        "sha256": {"$ref": "#/$defs/hex64"},
+        "row_count": {"const": 1024}
+      }
+    },
+    "certificateArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "row_count"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^data/discovery/wave_69r/structural_supply/inputs/shard-[0-3]/construction-certificates\\.jsonl$"},
+        "schema_version": {"const": "partizan.structural_construction_certificate.v0.1"},
+        "sha256": {"$ref": "#/$defs/hex64"},
+        "row_count": {"const": 1024}
+      }
+    },
+    "reportArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^data/discovery/wave_69r/structural_supply/inputs/shard-[0-3]/generation-report\\.json$"},
+        "schema_version": {"const": "partizan.wave69r_supply_determinism_receipt.v0.1"},
+        "sha256": {"$ref": "#/$defs/hex64"}
+      }
+    }
+  }
+}

@@ -17,13 +17,30 @@ from typing import Any, Iterable
 
 
 TARGET_SCHEMA_VERSION = "partizan.discovery_target.v0.1"
+BOARD_STREAM_SCHEMA_VERSION = "partizan.candidate_board_stream.v0.1"
 PROPOSAL_SCHEMA_VERSION = "partizan.candidate_proposal.v0.1"
 RESULT_SCHEMA_VERSION = "partizan.verifier_result.v0.1"
 POOL_SCHEMA_VERSION = "partizan.candidate_pool_manifest.v0.1"
 POOL_SCHEMA_VERSION_V2 = "partizan.candidate_pool_manifest.v0.2"
+POOL_SCHEMA_VERSION_V3 = "partizan.candidate_pool_manifest.v0.3"
 RUN_SCHEMA_VERSION = "partizan.discovery_run.v0.1"
 RANKER_INPUT_SCHEMA_VERSION = "partizan.ranker_input.v0.1"
 GENERATION_RECEIPT_SCHEMA_VERSION = "partizan.candidate_generation_receipt.v0.1"
+GENERATION_RECEIPT_SCHEMA_VERSION_V2 = (
+    "partizan.candidate_generation_receipt.v0.2"
+)
+CONSTRUCTION_CATALOG_SCHEMA_VERSION = (
+    "partizan.dfile_two_component_constructive_catalog.v0.2"
+)
+CONSTRUCTION_CERTIFICATE_SCHEMA_VERSION = (
+    "partizan.structural_construction_certificate.v0.1"
+)
+CONSTRUCTION_CONTRACT_V2 = (
+    "partizan.dfile_two_component_constructive_grammar.v0.2"
+)
+BOARD_TO_PROPOSAL_PROJECTION_CONTRACT_V1 = (
+    "partizan.target_free_board_to_candidate_proposal.v0.1"
+)
 
 SERIALIZATION = "utf8-json-sort-keys-compact-newline-v1"
 TARGET_KIND = "bounded_structural_game_form"
@@ -75,6 +92,38 @@ _PROPOSAL_KEYS = {
     "generator",
     "proposal_features",
 }
+_BOARD_STREAM_KEYS = {
+    "schema_version",
+    "board_id",
+    "ordinal",
+    "position",
+    "generator",
+    "construction",
+    "proposal_features",
+}
+_CONSTRUCTION_CERTIFICATE_KEYS = {
+    "schema_version",
+    "certificate_id",
+    "board_id",
+    "ordinal",
+    "catalog_id",
+    "construction_contract",
+    "stratum",
+    "left",
+    "right",
+    "runtime_oracle_used",
+}
+BOARD_TO_PROPOSAL_MAPPING_V1 = {
+    "/schema_version": "constant:partizan.candidate_proposal.v0.1",
+    "/proposal_id": "canonical_identity:proposal_without_proposal_id",
+    "/target_id": "target:/target_id",
+    "/domain": "target:/domain",
+    "/candidate_key": "canonical_identity:target_domain_plus_board_position",
+    "/ordinal": "board:/ordinal",
+    "/position": "board:/position",
+    "/generator": "board:/generator",
+    "/proposal_features": "board:/proposal_features",
+}
 _RESULT_KEYS = {
     "schema_version",
     "result_id",
@@ -98,6 +147,7 @@ _POOL_KEYS = {
     "determinism",
     "ranker_boundary",
 }
+_POOL_V3_KEYS = _POOL_KEYS | {"construction_lineage"}
 _RUN_KEYS = {
     "schema_version",
     "run_id",
@@ -196,6 +246,27 @@ def candidate_key_for(domain: str, position: dict[str, Any]) -> str:
                 "encoding": position.get("encoding"),
                 "text": position.get("text"),
             },
+        },
+    )
+
+
+def board_id_for(position: dict[str, Any]) -> str:
+    """Return a target- and domain-free identity for a clock-free FEN state."""
+
+    text = position.get("text")
+    try:
+        state_text = (
+            fen_state_without_move_clocks(text) if isinstance(text, str) else text
+        )
+    except ValueError:
+        state_text = text
+    return _identity(
+        "board",
+        {
+            "position_state": {
+                "encoding": position.get("encoding"),
+                "text_without_move_clocks": state_text,
+            }
         },
     )
 
@@ -494,6 +565,22 @@ def generation_receipt_id_for(value: dict[str, Any]) -> str:
     )
 
 
+def construction_catalog_id_for(value: dict[str, Any]) -> str:
+    payload = dict(value)
+    payload["catalog_id"] = "catalog-sha256:" + "0" * 64
+    return _identity(
+        "catalog",
+        payload,
+    )
+
+
+def construction_certificate_id_for(value: dict[str, Any]) -> str:
+    return _identity(
+        "certificate",
+        {key: item for key, item in value.items() if key != "certificate_id"},
+    )
+
+
 def discovery_run_id_for(value: dict[str, Any]) -> str:
     return _identity(
         "run",
@@ -688,6 +775,699 @@ def _feature_key_errors(value: Any, path: str = "proposal.proposal_features") ->
     return errors
 
 
+def validate_candidate_board_stream_row(value: Any) -> list[str]:
+    """Validate one target-free board-stream row used by structural audits."""
+
+    errors = _validate_json_value(value)
+    row = _exact_keys(value, _BOARD_STREAM_KEYS, "board_stream", errors)
+    if row is None:
+        return errors
+    if row.get("schema_version") != BOARD_STREAM_SCHEMA_VERSION:
+        errors.append(
+            f"board_stream.schema_version: must be {BOARD_STREAM_SCHEMA_VERSION}"
+        )
+    board_id = row.get("board_id")
+    if not isinstance(board_id, str) or not re.fullmatch(
+        r"board-sha256:[0-9a-f]{64}", board_id
+    ):
+        errors.append(
+            "board_stream.board_id: must be a typed SHA-256 identifier"
+        )
+    ordinal = row.get("ordinal")
+    if not isinstance(ordinal, int) or isinstance(ordinal, bool) or ordinal < 0:
+        errors.append("board_stream.ordinal: must be a non-negative integer")
+
+    position = _exact_keys(
+        row.get("position"),
+        {"encoding", "text", "sha256", "symmetry_sha256"},
+        "board_stream.position",
+        errors,
+    )
+    fen: str | None = None
+    if position is not None:
+        if position.get("encoding") != "fen":
+            errors.append("board_stream.position.encoding: must be 'fen'")
+        fen_value = position.get("text")
+        if not isinstance(fen_value, str) or len(fen_value.split()) != 6:
+            errors.append(
+                "board_stream.position.text: must be a six-field FEN string"
+            )
+        else:
+            fen = fen_value
+            if fen.split()[1:] != ["w", "-", "-", "0", "1"]:
+                errors.append(
+                    "board_stream.position.text: trailing FEN fields must be "
+                    "exactly 'w - - 0 1'"
+                )
+            if position.get("sha256") != sha256_hex(fen.encode("utf-8")):
+                errors.append(
+                    "board_stream.position.sha256: does not match position text"
+                )
+            try:
+                expected_orbit = fen_file_reflection_orbit_sha256(fen)
+            except ValueError as error:
+                errors.append(f"board_stream.position.text: {error}")
+            else:
+                if position.get("symmetry_sha256") != expected_orbit:
+                    errors.append(
+                        "board_stream.position.symmetry_sha256: does not match "
+                        "the clock-free file-reflection orbit"
+                    )
+        _hex(
+            position.get("symmetry_sha256"),
+            64,
+            "board_stream.position.symmetry_sha256",
+            errors,
+        )
+        if row.get("board_id") != board_id_for(position):
+            errors.append(
+                "board_stream.board_id: does not match clock-free position"
+            )
+
+    generator = _exact_keys(
+        row.get("generator"),
+        {
+            "name",
+            "version",
+            "code_commit",
+            "family",
+            "operator",
+            "config_sha256",
+            "random_seed",
+        },
+        "board_stream.generator",
+        errors,
+    )
+    if generator is not None:
+        for key in ("name", "version", "family", "operator"):
+            _nonempty_string(
+                generator.get(key), f"board_stream.generator.{key}", errors
+            )
+        if generator.get("name") != PARTIZAN_POOL_GENERATOR_NAME:
+            errors.append("board_stream.generator.name: unsupported generator")
+        _commit(
+            generator.get("code_commit"),
+            "board_stream.generator.code_commit",
+            errors,
+        )
+        _hex(
+            generator.get("config_sha256"),
+            64,
+            "board_stream.generator.config_sha256",
+            errors,
+        )
+        seed = generator.get("random_seed")
+        if not isinstance(seed, int) or isinstance(seed, bool) or seed < 0:
+            errors.append(
+                "board_stream.generator.random_seed: must be a non-negative integer"
+            )
+
+    construction = _exact_keys(
+        row.get("construction"),
+        {
+            "contract",
+            "stratum",
+            "left_active_piece_count",
+            "right_active_piece_count",
+            "left_template_id",
+            "right_template_id",
+            "runtime_oracle_used",
+        },
+        "board_stream.construction",
+        errors,
+    )
+    if construction is not None:
+        if construction.get("contract") != (
+            "partizan.dfile_two_component_constructive_grammar.v0.2"
+        ):
+            errors.append("board_stream.construction.contract: invalid")
+        if construction.get("stratum") not in {
+            "outer_leaper",
+            "pawn_phalanx",
+            "ray_cage",
+            "mixed_color_hook",
+        }:
+            errors.append("board_stream.construction.stratum: invalid")
+        for key in ("left_active_piece_count", "right_active_piece_count"):
+            count = construction.get(key)
+            if not isinstance(count, int) or isinstance(count, bool) or not 1 <= count <= 5:
+                errors.append(
+                    f"board_stream.construction.{key}: must be an integer from 1 through 5"
+                )
+        for key in ("left_template_id", "right_template_id"):
+            value = construction.get(key)
+            if not isinstance(value, str) or not re.fullmatch(
+                r"template-sha256:[0-9a-f]{64}", value
+            ):
+                errors.append(
+                    f"board_stream.construction.{key}: must be a typed SHA-256 identifier"
+                )
+        if construction.get("runtime_oracle_used") is not False:
+            errors.append(
+                "board_stream.construction.runtime_oracle_used: must be false"
+            )
+
+    features = _exact_keys(
+        row.get("proposal_features"),
+        {"schema_version", "derivation_stage", "categorical", "integer", "boolean"},
+        "board_stream.proposal_features",
+        errors,
+    )
+    if features is not None and fen is not None:
+        try:
+            expected_features = partizan_pool_features_for_fen(fen)
+        except ValueError as error:
+            errors.append(f"board_stream.proposal_features: cannot derive: {error}")
+        else:
+            if features != expected_features:
+                errors.append(
+                    "board_stream.proposal_features: must equal the seven "
+                    "pre-verification feature definitions"
+                )
+        errors.extend(
+            _feature_key_errors(features, "board_stream.proposal_features")
+        )
+    return errors
+
+
+def validate_construction_catalog(value: Any) -> list[str]:
+    """Validate the immutable target-free construction catalog contract."""
+
+    errors = _validate_json_value(value)
+    row = _exact_keys(
+        value,
+        {
+            "schema_version",
+            "catalog_id",
+            "construction_contract",
+            "generator",
+            "board_contract",
+            "strata",
+            "stratum_schedule",
+            "deduplication",
+            "source_boundary",
+        },
+        "construction_catalog",
+        errors,
+    )
+    if row is None:
+        return errors
+    if row.get("schema_version") != CONSTRUCTION_CATALOG_SCHEMA_VERSION:
+        errors.append(
+            "construction_catalog.schema_version: must be "
+            f"{CONSTRUCTION_CATALOG_SCHEMA_VERSION}"
+        )
+    catalog_id = row.get("catalog_id")
+    if not isinstance(catalog_id, str) or not re.fullmatch(
+        r"catalog-sha256:[0-9a-f]{64}", catalog_id
+    ):
+        errors.append(
+            "construction_catalog.catalog_id: must be a typed SHA-256 identifier"
+        )
+    if row.get("construction_contract") != CONSTRUCTION_CONTRACT_V2:
+        errors.append("construction_catalog.construction_contract: invalid")
+    generator = _exact_keys(
+        row.get("generator"),
+        {"name", "version", "family", "operator"},
+        "construction_catalog.generator",
+        errors,
+    )
+    if generator is not None:
+        if generator.get("name") != PARTIZAN_POOL_GENERATOR_NAME:
+            errors.append("construction_catalog.generator.name: invalid")
+        expected_generator = {
+            "name": PARTIZAN_POOL_GENERATOR_NAME,
+            "version": "0.2.0",
+            "family": "dfile_two_component_constructive_grammar_v2",
+            "operator": "seeded_constructive_component_composition_v2",
+        }
+        if generator != expected_generator:
+            errors.append("construction_catalog.generator: invalid v0.2 identity")
+    board = _exact_keys(
+        row.get("board_contract"),
+        {
+            "barrier",
+            "side_to_move",
+            "castling_rights",
+            "en_passant",
+            "forbidden_active_files",
+            "active_piece_count_per_component",
+        },
+        "construction_catalog.board_contract",
+        errors,
+    )
+    if board is not None:
+        expected_barrier = [
+            [f"d{rank}", "P" if rank % 2 else "p"] for rank in range(1, 9)
+        ]
+        if board.get("barrier") != expected_barrier:
+            errors.append("construction_catalog.board_contract.barrier: invalid")
+        if board.get("side_to_move") != "w":
+            errors.append("construction_catalog.board_contract.side_to_move: invalid")
+        if board.get("castling_rights") != "none":
+            errors.append("construction_catalog.board_contract.castling_rights: invalid")
+        if board.get("en_passant") != "none":
+            errors.append("construction_catalog.board_contract.en_passant: invalid")
+        if board.get("forbidden_active_files") != ["e"]:
+            errors.append(
+                "construction_catalog.board_contract.forbidden_active_files: invalid"
+            )
+        counts = _exact_keys(
+            board.get("active_piece_count_per_component"),
+            {"minimum", "maximum"},
+            "construction_catalog.board_contract.active_piece_count_per_component",
+            errors,
+        )
+        if counts is not None and counts != {"minimum": 1, "maximum": 5}:
+            errors.append(
+                "construction_catalog.board_contract."
+                "active_piece_count_per_component: invalid"
+            )
+    strata = _exact_keys(
+        row.get("strata"),
+        {"outer_leaper", "pawn_phalanx", "ray_cage", "mixed_color_hook"},
+        "construction_catalog.strata",
+        errors,
+    )
+    if strata is not None:
+        for name in ("outer_leaper", "pawn_phalanx"):
+            item = _exact_keys(
+                strata.get(name),
+                {"left", "right"},
+                f"construction_catalog.strata.{name}",
+                errors,
+            )
+            if item is not None:
+                for side in ("left", "right"):
+                    _nonempty_string(
+                        item.get(side),
+                        f"construction_catalog.strata.{name}.{side}",
+                        errors,
+                    )
+        ray_cage = _exact_keys(
+            strata.get("ray_cage"),
+            {"left_bases", "right_bases", "extra_atoms"},
+            "construction_catalog.strata.ray_cage",
+            errors,
+        )
+        if ray_cage is not None:
+            for side in ("left_bases", "right_bases"):
+                bases = ray_cage.get(side)
+                if not isinstance(bases, list) or not bases:
+                    errors.append(
+                        f"construction_catalog.strata.ray_cage.{side}: "
+                        "must be a non-empty array"
+                    )
+                    continue
+                for base_index, base in enumerate(bases):
+                    if not isinstance(base, list) or not base:
+                        errors.append(
+                            "construction_catalog.strata.ray_cage."
+                            f"{side}[{base_index}]: must be a non-empty piece array"
+                        )
+                        continue
+                    for piece_index, piece in enumerate(base):
+                        if (
+                            not isinstance(piece, list)
+                            or len(piece) != 2
+                            or not isinstance(piece[0], str)
+                            or not re.fullmatch(r"[a-h][1-8]", piece[0])
+                            or not isinstance(piece[1], str)
+                            or not re.fullmatch(r"[PNBRQKpnbrqk]", piece[1])
+                        ):
+                            errors.append(
+                                "construction_catalog.strata.ray_cage."
+                                f"{side}[{base_index}][{piece_index}]: invalid piece"
+                            )
+            _nonempty_string(
+                ray_cage.get("extra_atoms"),
+                "construction_catalog.strata.ray_cage.extra_atoms",
+                errors,
+            )
+        mixed = _exact_keys(
+            strata.get("mixed_color_hook"),
+            {"left_base", "right_base", "extra_atoms"},
+            "construction_catalog.strata.mixed_color_hook",
+            errors,
+        )
+        if mixed is not None:
+            for side in ("left_base", "right_base"):
+                base = mixed.get(side)
+                if not isinstance(base, list) or not base:
+                    errors.append(
+                        "construction_catalog.strata.mixed_color_hook."
+                        f"{side}: must be a non-empty piece array"
+                    )
+                    continue
+                for piece_index, piece in enumerate(base):
+                    if (
+                        not isinstance(piece, list)
+                        or len(piece) != 2
+                        or not isinstance(piece[0], str)
+                        or not re.fullmatch(r"[a-h][1-8]", piece[0])
+                        or not isinstance(piece[1], str)
+                        or not re.fullmatch(r"[PNBRQKpnbrqk]", piece[1])
+                    ):
+                        errors.append(
+                            "construction_catalog.strata.mixed_color_hook."
+                            f"{side}[{piece_index}]: invalid piece"
+                        )
+            _nonempty_string(
+                mixed.get("extra_atoms"),
+                "construction_catalog.strata.mixed_color_hook.extra_atoms",
+                errors,
+            )
+    if row.get("stratum_schedule") != "accepted_ordinal_modulo_four_v1":
+        errors.append("construction_catalog.stratum_schedule: invalid")
+    if row.get("deduplication") != [
+        "target_free_board_id",
+        "fen_horizontal_reflection_v0",
+    ]:
+        errors.append("construction_catalog.deduplication: invalid")
+    source = _exact_keys(
+        row.get("source_boundary"),
+        {"astralbase_commit", "source_file", "published_source_families"},
+        "construction_catalog.source_boundary",
+        errors,
+    )
+    if source is not None:
+        _commit(
+            source.get("astralbase_commit"),
+            "construction_catalog.source_boundary.astralbase_commit",
+            errors,
+        )
+        _relative_path(
+            source.get("source_file"),
+            "construction_catalog.source_boundary.source_file",
+            errors,
+        )
+        families = source.get("published_source_families")
+        if not isinstance(families, list) or not families or not all(
+            isinstance(item, str) and item for item in families
+        ):
+            errors.append(
+                "construction_catalog.source_boundary.published_source_families: "
+                "must be a non-empty string array"
+            )
+    if isinstance(catalog_id, str) and catalog_id != construction_catalog_id_for(row):
+        errors.append(
+            "construction_catalog.catalog_id: does not match canonical identity"
+        )
+    return errors
+
+
+def _board_squares_from_fen(fen: str) -> dict[str, str]:
+    fields = fen.split()
+    if len(fields) != 6:
+        raise ValueError("FEN must contain six fields")
+    ranks = fields[0].split("/")
+    if len(ranks) != 8:
+        raise ValueError("FEN board must contain eight ranks")
+    squares: dict[str, str] = {}
+    for rank, encoded in zip(range(8, 0, -1), ranks):
+        file_index = 0
+        for token in encoded:
+            if token.isdigit():
+                file_index += int(token)
+                continue
+            if token not in "PNBRQKpnbrqk" or file_index >= 8:
+                raise ValueError("FEN board contains an invalid piece placement")
+            squares[f"{'abcdefgh'[file_index]}{rank}"] = token
+            file_index += 1
+        if file_index != 8:
+            raise ValueError("FEN rank does not expand to eight files")
+    return squares
+
+
+def _constructive_template_id(
+    *, stratum: str, side: str, pieces: dict[str, str]
+) -> str:
+    payload = {
+        "construction_contract": CONSTRUCTION_CONTRACT_V2,
+        "stratum": stratum,
+        "side": side,
+        "pieces": [[square, pieces[square]] for square in sorted(pieces)],
+    }
+    return "template-sha256:" + sha256_hex(canonical_json_bytes(payload))
+
+
+def _constructive_v2_witness(
+    board_row: dict[str, Any], catalog: dict[str, Any]
+) -> tuple[dict[str, str], dict[str, str]]:
+    """Reconstruct and check the static grammar without trusting row claims."""
+
+    catalog_errors = validate_construction_catalog(catalog)
+    if catalog_errors:
+        raise ValueError("invalid construction catalog: " + "; ".join(catalog_errors))
+    fen = board_row.get("position", {}).get("text")
+    if not isinstance(fen, str):
+        raise ValueError("board row has no FEN text")
+    squares = _board_squares_from_fen(fen)
+    barrier = dict(catalog["board_contract"]["barrier"])
+    if any(squares.get(square) != piece for square, piece in barrier.items()):
+        raise ValueError("BarrierPawnNotFrozen")
+    active = {square: piece for square, piece in squares.items() if square not in barrier}
+    if any(square[0] in {"c", "e"} for square in active):
+        raise ValueError("BarrierPieceCanBeCaptured")
+    left = {square: piece for square, piece in active.items() if square[0] in "ab"}
+    right = {square: piece for square, piece in active.items() if square[0] in "fgh"}
+    if len(left) + len(right) != len(active):
+        raise ValueError("PieceCanEnterOtherComponent")
+    if not 1 <= len(left) <= 5 or not 1 <= len(right) <= 5:
+        raise ValueError("RequiresStrictDecomposition")
+    construction = board_row.get("construction")
+    if not isinstance(construction, dict):
+        raise ValueError("board row has no construction witness")
+    stratum = construction.get("stratum")
+
+    def outer_ok(region: dict[str, str], knight_file: str, pawn_file: str) -> bool:
+        pawns = 0
+        for square, piece in region.items():
+            if square[0] == knight_file and piece in {"N", "n"}:
+                continue
+            rank = int(square[1])
+            if square[0] != pawn_file or piece not in {"P", "p"}:
+                return False
+            if (piece == "P" and rank == 8) or (piece == "p" and rank == 1):
+                return False
+            pawns += 1
+        return pawns <= 1
+
+    def phalanx_ok(region: dict[str, str], files: set[str]) -> bool:
+        return (
+            len(region) == 2
+            and {square[0] for square in region} == files
+            and all(
+                piece in {"P", "p"}
+                and not (piece == "P" and square[1] == "8")
+                and not (piece == "p" and square[1] == "1")
+                for square, piece in region.items()
+            )
+        )
+
+    def catalog_base_ok(
+        region: dict[str, str],
+        bases: list[list[list[str]]],
+        extra_squares: set[str],
+        maximum_extra_count: int,
+    ) -> bool:
+        for encoded_base in bases:
+            base = dict(encoded_base)
+            if not all(region.get(square) == piece for square, piece in base.items()):
+                continue
+            extras = {
+                square: piece for square, piece in region.items() if square not in base
+            }
+            if len(extras) <= maximum_extra_count and all(
+                square in extra_squares and piece in {"N", "n"}
+                for square, piece in extras.items()
+            ):
+                return True
+        return False
+
+    if stratum == "outer_leaper":
+        left_ok = outer_ok(left, "a", "b")
+        right_ok = outer_ok(right, "h", "g")
+    elif stratum == "pawn_phalanx":
+        left_ok = phalanx_ok(left, {"a", "b"})
+        right_ok = phalanx_ok(right, {"g", "h"})
+    elif stratum == "ray_cage":
+        ray = catalog["strata"]["ray_cage"]
+        left_ok = catalog_base_ok(
+            left,
+            ray["left_bases"],
+            {f"a{rank}" for rank in range(1, 9)},
+            3,
+        )
+        right_ok = catalog_base_ok(
+            right,
+            ray["right_bases"],
+            {f"h{rank}" for rank in range(1, 9)},
+            3,
+        )
+    elif stratum == "mixed_color_hook":
+        mixed = catalog["strata"]["mixed_color_hook"]
+        left_ok = catalog_base_ok(
+            left,
+            [mixed["left_base"]],
+            {f"a{rank}" for rank in range(4, 9)},
+            2,
+        )
+        right_ok = catalog_base_ok(
+            right,
+            [mixed["right_base"]],
+            {f"h{rank}" for rank in range(1, 6)},
+            2,
+        )
+    else:
+        left_ok = right_ok = False
+    if not left_ok or not right_ok:
+        raise ValueError("PieceCanEnterOtherComponent")
+    if construction.get("contract") != catalog.get("construction_contract"):
+        raise ValueError("construction contract does not match catalog")
+    expected_claims = {
+        "left_active_piece_count": len(left),
+        "right_active_piece_count": len(right),
+        "left_template_id": _constructive_template_id(
+            stratum=str(stratum), side="left", pieces=left
+        ),
+        "right_template_id": _constructive_template_id(
+            stratum=str(stratum), side="right", pieces=right
+        ),
+        "runtime_oracle_used": False,
+    }
+    for key, expected in expected_claims.items():
+        if construction.get(key) != expected:
+            raise ValueError(f"construction.{key} does not match board witness")
+    return left, right
+
+
+def construction_certificate_for_board_row(
+    board_row: dict[str, Any], catalog: dict[str, Any]
+) -> dict[str, Any]:
+    """Project a board's static construction witness into a sidecar row."""
+
+    construction = board_row["construction"]
+    left, right = _constructive_v2_witness(board_row, catalog)
+    certificate: dict[str, Any] = {
+        "schema_version": CONSTRUCTION_CERTIFICATE_SCHEMA_VERSION,
+        "certificate_id": "certificate-sha256:" + "0" * 64,
+        "board_id": board_row["board_id"],
+        "ordinal": board_row["ordinal"],
+        "catalog_id": catalog["catalog_id"],
+        "construction_contract": construction["contract"],
+        "stratum": construction["stratum"],
+        "left": {
+            "active_piece_count": len(left),
+            "template_id": _constructive_template_id(
+                stratum=construction["stratum"], side="left", pieces=left
+            ),
+        },
+        "right": {
+            "active_piece_count": len(right),
+            "template_id": _constructive_template_id(
+                stratum=construction["stratum"], side="right", pieces=right
+            ),
+        },
+        "runtime_oracle_used": construction["runtime_oracle_used"],
+    }
+    certificate["certificate_id"] = construction_certificate_id_for(certificate)
+    return certificate
+
+
+def validate_structural_construction_certificate(
+    value: Any,
+    board_row: dict[str, Any] | None = None,
+    catalog: dict[str, Any] | None = None,
+) -> list[str]:
+    errors = _validate_json_value(value)
+    row = _exact_keys(
+        value,
+        _CONSTRUCTION_CERTIFICATE_KEYS,
+        "construction_certificate",
+        errors,
+    )
+    if row is None:
+        return errors
+    if row.get("schema_version") != CONSTRUCTION_CERTIFICATE_SCHEMA_VERSION:
+        errors.append(
+            "construction_certificate.schema_version: must be "
+            f"{CONSTRUCTION_CERTIFICATE_SCHEMA_VERSION}"
+        )
+    certificate_id = row.get("certificate_id")
+    if not isinstance(certificate_id, str) or not re.fullmatch(
+        r"certificate-sha256:[0-9a-f]{64}", certificate_id
+    ):
+        errors.append(
+            "construction_certificate.certificate_id: invalid typed identity"
+        )
+    if not isinstance(row.get("board_id"), str) or not re.fullmatch(
+        r"board-sha256:[0-9a-f]{64}", row.get("board_id", "")
+    ):
+        errors.append("construction_certificate.board_id: invalid typed identity")
+    ordinal = row.get("ordinal")
+    if not isinstance(ordinal, int) or isinstance(ordinal, bool) or ordinal < 0:
+        errors.append(
+            "construction_certificate.ordinal: must be a non-negative integer"
+        )
+    if not isinstance(row.get("catalog_id"), str) or not re.fullmatch(
+        r"catalog-sha256:[0-9a-f]{64}", row.get("catalog_id", "")
+    ):
+        errors.append("construction_certificate.catalog_id: invalid typed identity")
+    if row.get("construction_contract") != CONSTRUCTION_CONTRACT_V2:
+        errors.append("construction_certificate.construction_contract: invalid")
+    if row.get("stratum") not in {
+        "outer_leaper",
+        "pawn_phalanx",
+        "ray_cage",
+        "mixed_color_hook",
+    }:
+        errors.append("construction_certificate.stratum: invalid")
+    for side in ("left", "right"):
+        component = _exact_keys(
+            row.get(side),
+            {"active_piece_count", "template_id"},
+            f"construction_certificate.{side}",
+            errors,
+        )
+        if component is None:
+            continue
+        count = component.get("active_piece_count")
+        if not isinstance(count, int) or isinstance(count, bool) or not 1 <= count <= 5:
+            errors.append(
+                f"construction_certificate.{side}.active_piece_count: invalid"
+            )
+        template_id = component.get("template_id")
+        if not isinstance(template_id, str) or not re.fullmatch(
+            r"template-sha256:[0-9a-f]{64}", template_id
+        ):
+            errors.append(
+                f"construction_certificate.{side}.template_id: invalid typed identity"
+            )
+    if row.get("runtime_oracle_used") is not False:
+        errors.append("construction_certificate.runtime_oracle_used: must be false")
+    if board_row is not None and catalog is not None:
+        try:
+            expected = construction_certificate_for_board_row(board_row, catalog)
+        except (KeyError, TypeError, ValueError) as error:
+            errors.append(
+                "construction_certificate: cannot derive from bound board/catalog: "
+                f"{error}"
+            )
+        else:
+            if row != expected:
+                errors.append(
+                    "construction_certificate: does not equal the pure board/catalog projection"
+                )
+    if isinstance(certificate_id, str) and (
+        certificate_id != construction_certificate_id_for(row)
+    ):
+        errors.append(
+            "construction_certificate.certificate_id: does not match canonical identity"
+        )
+    return errors
+
+
 def validate_candidate_proposal(value: Any, target_spec: dict[str, Any]) -> list[str]:
     errors = _validate_json_value(value)
     row = _exact_keys(value, _PROPOSAL_KEYS, "proposal", errors)
@@ -817,6 +1597,45 @@ def validate_candidate_proposal(value: Any, target_spec: dict[str, Any]) -> list
     if isinstance(row.get("proposal_id"), str) and row.get("proposal_id") != proposal_id_for(row):
         errors.append("proposal.proposal_id: does not match canonical proposal identity")
     return errors
+
+
+def project_board_stream_to_proposals(
+    target_spec: dict[str, Any], board_rows: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Apply the complete, target-limited v0.1 board-to-proposal projection."""
+
+    target_errors = validate_target_spec(target_spec)
+    if target_errors:
+        raise ValueError("; ".join(target_errors))
+    maximum = target_spec["search_limits"]["max_pool_size"]
+    if len(board_rows) > maximum:
+        raise ValueError("board stream exceeds target max_pool_size")
+    proposals: list[dict[str, Any]] = []
+    for ordinal, board_row in enumerate(board_rows):
+        row_errors = validate_candidate_board_stream_row(board_row)
+        if row_errors:
+            raise ValueError(f"board_stream[{ordinal}]: " + "; ".join(row_errors))
+        if board_row["ordinal"] != ordinal:
+            raise ValueError("board stream ordinals must be contiguous and ordered")
+        proposal: dict[str, Any] = {
+            "schema_version": PROPOSAL_SCHEMA_VERSION,
+            "proposal_id": "proposal-sha256:" + "0" * 64,
+            "target_id": target_spec["target_id"],
+            "domain": target_spec["domain"],
+            "candidate_key": candidate_state_key_for(
+                target_spec["domain"], board_row["position"]
+            ),
+            "ordinal": ordinal,
+            "position": dict(board_row["position"]),
+            "generator": dict(board_row["generator"]),
+            "proposal_features": board_row["proposal_features"],
+        }
+        proposal["proposal_id"] = proposal_id_for(proposal)
+        proposal_errors = validate_candidate_proposal(proposal, target_spec)
+        if proposal_errors:
+            raise ValueError(f"proposal[{ordinal}]: " + "; ".join(proposal_errors))
+        proposals.append(proposal)
+    return proposals
 
 
 def validate_verifier_result(
@@ -1373,6 +2192,668 @@ def validate_generation_receipt(
     return errors
 
 
+def _load_repository_artifact_bytes(
+    relative_path: Any,
+    repository_root: Path | None,
+    path: str,
+    errors: list[str],
+) -> bytes | None:
+    _relative_path(relative_path, path, errors)
+    if repository_root is None:
+        errors.append(f"{path}: repository_root is required")
+        return None
+    if not isinstance(relative_path, str):
+        return None
+    try:
+        root = repository_root.resolve(strict=True)
+        artifact = (root / Path(*PurePosixPath(relative_path).parts)).resolve(
+            strict=True
+        )
+        artifact.relative_to(root)
+        return artifact.read_bytes()
+    except (OSError, ValueError) as error:
+        errors.append(f"{path}: cannot load inside repository_root: {error}")
+        return None
+
+
+def _load_bound_json_artifact(
+    reference: dict[str, Any] | None,
+    repository_root: Path | None,
+    path: str,
+    errors: list[str],
+    *,
+    require_canonical: bool = True,
+) -> dict[str, Any] | None:
+    if reference is None:
+        return None
+    payload = _load_repository_artifact_bytes(
+        reference.get("path"), repository_root, f"{path}.path", errors
+    )
+    if payload is None:
+        return None
+    if reference.get("sha256") != sha256_hex(payload):
+        errors.append(f"{path}.sha256: does not match artifact bytes")
+    try:
+        decoded = json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        errors.append(f"{path}.path: invalid UTF-8 JSON: {error}")
+        return None
+    if not isinstance(decoded, dict):
+        errors.append(f"{path}.path: artifact must contain one JSON object")
+        return None
+    try:
+        canonical = canonical_json_bytes(decoded)
+    except ValueError as error:
+        errors.append(f"{path}.path: cannot canonicalize: {error}")
+        return None
+    if require_canonical and payload != canonical:
+        errors.append(f"{path}.path: artifact bytes are not canonical")
+    return decoded
+
+
+def _load_bound_jsonl_artifact(
+    reference: dict[str, Any] | None,
+    repository_root: Path | None,
+    path: str,
+    errors: list[str],
+) -> list[dict[str, Any]] | None:
+    if reference is None:
+        return None
+    payload = _load_repository_artifact_bytes(
+        reference.get("path"), repository_root, f"{path}.path", errors
+    )
+    if payload is None:
+        return None
+    if reference.get("sha256") != sha256_hex(payload):
+        errors.append(f"{path}.sha256: does not match artifact bytes")
+    try:
+        text = payload.decode("utf-8")
+        lines = text.splitlines()
+        if not lines or any(not line for line in lines):
+            raise ValueError("artifact must be non-empty JSONL without blank rows")
+        values = [json.loads(line) for line in lines]
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+        errors.append(f"{path}.path: invalid UTF-8 JSONL: {error}")
+        return None
+    if not all(isinstance(item, dict) for item in values):
+        errors.append(f"{path}.path: every JSONL row must be an object")
+        return None
+    try:
+        canonical = canonical_jsonl_bytes(values)
+    except ValueError as error:
+        errors.append(f"{path}.path: cannot canonicalize: {error}")
+        return None
+    if payload != canonical:
+        errors.append(f"{path}.path: artifact bytes are not canonical")
+    if reference.get("row_count") != len(values):
+        errors.append(f"{path}.row_count: does not match artifact rows")
+    return values
+
+
+def validate_generation_receipt_v2(
+    value: Any,
+    target_spec: dict[str, Any],
+    proposals: list[dict[str, Any]],
+    repository_root: Path | None,
+) -> list[str]:
+    """Validate Wave 69-R lineage without invoking a target verifier."""
+
+    errors = _validate_json_value(value)
+    errors.extend(
+        f"generation_receipt_v2.target: {error}"
+        for error in validate_target_spec(target_spec)
+    )
+    row = _exact_keys(
+        value,
+        {
+            "schema_version",
+            "receipt_id",
+            "target_ref",
+            "board_stream",
+            "construction_catalog",
+            "construction_certificates",
+            "projection",
+            "generator",
+            "candidate_artifact",
+            "executions",
+            "source_repositories",
+        },
+        "generation_receipt_v2",
+        errors,
+    )
+    if row is None:
+        return errors
+    if row.get("schema_version") != GENERATION_RECEIPT_SCHEMA_VERSION_V2:
+        errors.append(
+            "generation_receipt_v2.schema_version: must be "
+            f"{GENERATION_RECEIPT_SCHEMA_VERSION_V2}"
+        )
+    receipt_id = row.get("receipt_id")
+    if not isinstance(receipt_id, str) or not re.fullmatch(
+        r"receipt-sha256:[0-9a-f]{64}", receipt_id
+    ):
+        errors.append("generation_receipt_v2.receipt_id: invalid typed identity")
+
+    target_ref = _exact_keys(
+        row.get("target_ref"),
+        {"path", "schema_version", "target_id", "sha256"},
+        "generation_receipt_v2.target_ref",
+        errors,
+    )
+    loaded_target = _load_bound_json_artifact(
+        target_ref,
+        repository_root,
+        "generation_receipt_v2.target_ref",
+        errors,
+    )
+    if target_ref is not None:
+        if target_ref.get("schema_version") != TARGET_SCHEMA_VERSION:
+            errors.append("generation_receipt_v2.target_ref.schema_version: invalid")
+        if target_ref.get("target_id") != target_spec.get("target_id"):
+            errors.append("generation_receipt_v2.target_ref.target_id: target mismatch")
+        if target_ref.get("sha256") != sha256_hex(canonical_json_bytes(target_spec)):
+            errors.append("generation_receipt_v2.target_ref.sha256: target mismatch")
+    if loaded_target is not None and loaded_target != target_spec:
+        errors.append("generation_receipt_v2.target_ref.path: target payload mismatch")
+
+    board_ref = _exact_keys(
+        row.get("board_stream"),
+        {"path", "schema_version", "row_count", "sha256"},
+        "generation_receipt_v2.board_stream",
+        errors,
+    )
+    board_rows = _load_bound_jsonl_artifact(
+        board_ref,
+        repository_root,
+        "generation_receipt_v2.board_stream",
+        errors,
+    )
+    if board_ref is not None and board_ref.get("schema_version") != BOARD_STREAM_SCHEMA_VERSION:
+        errors.append("generation_receipt_v2.board_stream.schema_version: invalid")
+    if board_rows is not None:
+        for index, board_row in enumerate(board_rows):
+            errors.extend(
+                f"generation_receipt_v2.board_stream[{index}]: {error}"
+                for error in validate_candidate_board_stream_row(board_row)
+            )
+            if board_row.get("ordinal") != index:
+                errors.append(
+                    f"generation_receipt_v2.board_stream[{index}].ordinal: "
+                    "must be contiguous"
+                )
+
+    catalog_ref = _exact_keys(
+        row.get("construction_catalog"),
+        {
+            "path",
+            "schema_version",
+            "catalog_id",
+            "sha256",
+            "construction_contract",
+        },
+        "generation_receipt_v2.construction_catalog",
+        errors,
+    )
+    catalog = _load_bound_json_artifact(
+        catalog_ref,
+        repository_root,
+        "generation_receipt_v2.construction_catalog",
+        errors,
+        require_canonical=False,
+    )
+    if catalog_ref is not None:
+        if catalog_ref.get("schema_version") != CONSTRUCTION_CATALOG_SCHEMA_VERSION:
+            errors.append(
+                "generation_receipt_v2.construction_catalog.schema_version: invalid"
+            )
+        if catalog_ref.get("construction_contract") != CONSTRUCTION_CONTRACT_V2:
+            errors.append(
+                "generation_receipt_v2.construction_catalog."
+                "construction_contract: invalid"
+            )
+        catalog_id = catalog_ref.get("catalog_id")
+        if not isinstance(catalog_id, str) or not re.fullmatch(
+            r"catalog-sha256:[0-9a-f]{64}", catalog_id
+        ):
+            errors.append(
+                "generation_receipt_v2.construction_catalog.catalog_id: invalid"
+            )
+    if catalog is not None:
+        errors.extend(validate_construction_catalog(catalog))
+        if catalog_ref is not None:
+            for key in ("schema_version", "catalog_id", "construction_contract"):
+                if catalog_ref.get(key) != catalog.get(key):
+                    errors.append(
+                        "generation_receipt_v2.construction_catalog."
+                        f"{key}: does not match catalog"
+                    )
+
+    certificate_ref = _exact_keys(
+        row.get("construction_certificates"),
+        {"path", "schema_version", "row_count", "sha256", "template_ids_sha256"},
+        "generation_receipt_v2.construction_certificates",
+        errors,
+    )
+    certificates = _load_bound_jsonl_artifact(
+        certificate_ref,
+        repository_root,
+        "generation_receipt_v2.construction_certificates",
+        errors,
+    )
+    if certificate_ref is not None:
+        if certificate_ref.get("schema_version") != CONSTRUCTION_CERTIFICATE_SCHEMA_VERSION:
+            errors.append(
+                "generation_receipt_v2.construction_certificates.schema_version: invalid"
+            )
+        _hex(
+            certificate_ref.get("template_ids_sha256"),
+            64,
+            "generation_receipt_v2.construction_certificates.template_ids_sha256",
+            errors,
+        )
+    if certificates is not None:
+        template_ids = [
+            [item.get("left", {}).get("template_id"), item.get("right", {}).get("template_id")]
+            for item in certificates
+        ]
+        if certificate_ref is not None and certificate_ref.get(
+            "template_ids_sha256"
+        ) != sha256_hex(canonical_json_bytes(template_ids)):
+            errors.append(
+                "generation_receipt_v2.construction_certificates."
+                "template_ids_sha256: does not match sidecar"
+            )
+        if board_rows is not None and len(certificates) != len(board_rows):
+            errors.append(
+                "generation_receipt_v2.construction_certificates: row count "
+                "does not match board stream"
+            )
+        for index, certificate in enumerate(certificates):
+            board_row = (
+                board_rows[index]
+                if board_rows is not None and index < len(board_rows)
+                else None
+            )
+            errors.extend(
+                f"generation_receipt_v2.construction_certificates[{index}]: {error}"
+                for error in validate_structural_construction_certificate(
+                    certificate, board_row, catalog
+                )
+            )
+
+    projection = _exact_keys(
+        row.get("projection"),
+        {
+            "contract_id",
+            "implementation_commit",
+            "target_fields_consumed",
+            "mapping",
+        },
+        "generation_receipt_v2.projection",
+        errors,
+    )
+    if projection is not None:
+        if projection.get("contract_id") != BOARD_TO_PROPOSAL_PROJECTION_CONTRACT_V1:
+            errors.append("generation_receipt_v2.projection.contract_id: invalid")
+        _commit(
+            projection.get("implementation_commit"),
+            "generation_receipt_v2.projection.implementation_commit",
+            errors,
+        )
+        if projection.get("target_fields_consumed") != [
+            "/domain",
+            "/search_limits/max_pool_size",
+            "/target_id",
+        ]:
+            errors.append(
+                "generation_receipt_v2.projection.target_fields_consumed: invalid"
+            )
+        if projection.get("mapping") != BOARD_TO_PROPOSAL_MAPPING_V1:
+            errors.append("generation_receipt_v2.projection.mapping: invalid")
+
+    generator = _exact_keys(
+        row.get("generator"),
+        {
+            "name",
+            "version",
+            "code_commit",
+            "family",
+            "operator",
+            "config_sha256",
+            "random_seed",
+        },
+        "generation_receipt_v2.generator",
+        errors,
+    )
+    if generator is not None:
+        if generator.get("name") != PARTIZAN_POOL_GENERATOR_NAME:
+            errors.append("generation_receipt_v2.generator.name: invalid")
+        for key in ("version", "family", "operator"):
+            _nonempty_string(
+                generator.get(key), f"generation_receipt_v2.generator.{key}", errors
+            )
+        _commit(
+            generator.get("code_commit"),
+            "generation_receipt_v2.generator.code_commit",
+            errors,
+        )
+        _hex(
+            generator.get("config_sha256"),
+            64,
+            "generation_receipt_v2.generator.config_sha256",
+            errors,
+        )
+        seed = generator.get("random_seed")
+        if not isinstance(seed, int) or isinstance(seed, bool) or seed < 0:
+            errors.append(
+                "generation_receipt_v2.generator.random_seed: must be non-negative"
+            )
+        for collection_name, collection in (
+            ("board_stream", board_rows),
+            ("candidate_artifact", proposals),
+        ):
+            if collection:
+                for index, item in enumerate(collection):
+                    if item.get("generator") != generator:
+                        errors.append(
+                            f"generation_receipt_v2.{collection_name}[{index}]."
+                            "generator: does not match receipt"
+                        )
+        if catalog is not None:
+            catalog_generator = catalog.get("generator")
+            if isinstance(catalog_generator, dict):
+                expected_catalog_generator = {
+                    key: generator.get(key)
+                    for key in ("name", "version", "family", "operator")
+                }
+                if catalog_generator != expected_catalog_generator:
+                    errors.append(
+                        "generation_receipt_v2.generator: does not match "
+                        "construction catalog identity"
+                    )
+
+    candidate_ref = _exact_keys(
+        row.get("candidate_artifact"),
+        {"path", "schema_version", "row_count", "sha256"},
+        "generation_receipt_v2.candidate_artifact",
+        errors,
+    )
+    loaded_proposals = _load_bound_jsonl_artifact(
+        candidate_ref,
+        repository_root,
+        "generation_receipt_v2.candidate_artifact",
+        errors,
+    )
+    expected_proposal_bytes = canonical_jsonl_bytes(proposals)
+    if candidate_ref is not None:
+        if candidate_ref.get("schema_version") != PROPOSAL_SCHEMA_VERSION:
+            errors.append("generation_receipt_v2.candidate_artifact.schema_version: invalid")
+        if candidate_ref.get("row_count") != len(proposals):
+            errors.append(
+                "generation_receipt_v2.candidate_artifact.row_count: proposal mismatch"
+            )
+        if candidate_ref.get("sha256") != sha256_hex(expected_proposal_bytes):
+            errors.append(
+                "generation_receipt_v2.candidate_artifact.sha256: proposal mismatch"
+            )
+    if loaded_proposals is not None and loaded_proposals != proposals:
+        errors.append(
+            "generation_receipt_v2.candidate_artifact.path: proposal payload mismatch"
+        )
+    if board_rows is not None:
+        try:
+            expected_proposals = project_board_stream_to_proposals(
+                target_spec, board_rows
+            )
+        except ValueError as error:
+            errors.append(
+                "generation_receipt_v2.projection: cannot recompute pure projection: "
+                f"{error}"
+            )
+        else:
+            if proposals != expected_proposals:
+                errors.append(
+                    "generation_receipt_v2.projection: candidate artifact does not "
+                    "equal the pure board-to-proposal projection"
+                )
+
+    executions = _exact_keys(
+        row.get("executions"),
+        {
+            "mode",
+            "run_count",
+            "board_stream_raw_sha256",
+            "construction_certificate_sha256",
+            "projection_artifact_sha256",
+            "byte_identical",
+        },
+        "generation_receipt_v2.executions",
+        errors,
+    )
+    if executions is not None:
+        if executions.get("mode") != "separate_python_processes_v1":
+            errors.append("generation_receipt_v2.executions.mode: invalid")
+        if executions.get("run_count") != 2:
+            errors.append("generation_receipt_v2.executions.run_count: must be 2")
+        expected_hashes = {
+            "board_stream_raw_sha256": board_ref.get("sha256") if board_ref else None,
+            "construction_certificate_sha256": (
+                certificate_ref.get("sha256") if certificate_ref else None
+            ),
+            "projection_artifact_sha256": (
+                candidate_ref.get("sha256") if candidate_ref else None
+            ),
+        }
+        for key, expected in expected_hashes.items():
+            hashes = executions.get(key)
+            if hashes != [expected, expected]:
+                errors.append(
+                    f"generation_receipt_v2.executions.{key}: must contain two "
+                    "identical bound hashes"
+                )
+        if executions.get("byte_identical") is not True:
+            errors.append("generation_receipt_v2.executions.byte_identical: must be true")
+
+    repos = _exact_keys(
+        row.get("source_repositories"),
+        {"astralbase", "bitmesh", "thermograph", "partizan"},
+        "generation_receipt_v2.source_repositories",
+        errors,
+    )
+    if repos is not None:
+        for name, commit in repos.items():
+            _commit(commit, f"generation_receipt_v2.source_repositories.{name}", errors)
+        if generator is not None and repos.get("partizan") != generator.get("code_commit"):
+            errors.append(
+                "generation_receipt_v2.source_repositories.partizan: generator mismatch"
+            )
+        if projection is not None and repos.get("partizan") != projection.get(
+            "implementation_commit"
+        ):
+            errors.append(
+                "generation_receipt_v2.source_repositories.partizan: projection mismatch"
+            )
+        if catalog is not None and repos.get("astralbase") != catalog.get(
+            "source_boundary", {}
+        ).get("astralbase_commit"):
+            errors.append(
+                "generation_receipt_v2.source_repositories.astralbase: catalog mismatch"
+            )
+    if isinstance(receipt_id, str) and receipt_id != generation_receipt_id_for(row):
+        errors.append(
+            "generation_receipt_v2.receipt_id: does not match canonical identity"
+        )
+    return errors
+
+
+def build_generation_receipt_v2(
+    *,
+    target_path: str,
+    target_spec: dict[str, Any],
+    board_stream_path: str,
+    board_rows: list[dict[str, Any]],
+    construction_catalog_path: str,
+    construction_catalog: dict[str, Any],
+    construction_catalog_sha256: str,
+    construction_certificates_path: str,
+    construction_certificates: list[dict[str, Any]],
+    candidate_artifact_path: str,
+    proposals: list[dict[str, Any]],
+    board_stream_process_sha256: list[str],
+    construction_certificate_process_sha256: list[str],
+    projection_process_sha256: list[str],
+    source_repositories: dict[str, str],
+) -> dict[str, Any]:
+    """Build a v0.2 lineage receipt from already-materialized artifacts."""
+
+    if not board_rows or not proposals or not construction_certificates:
+        raise ValueError("Wave 69-R receipt artifacts must be non-empty")
+    if not (
+        len(board_rows) == len(proposals) == len(construction_certificates)
+    ):
+        raise ValueError("Wave 69-R receipt artifact row counts must match")
+    generator = dict(board_rows[0]["generator"])
+    board_bytes = canonical_jsonl_bytes(board_rows)
+    certificate_bytes = canonical_jsonl_bytes(construction_certificates)
+    proposal_bytes = canonical_jsonl_bytes(proposals)
+    expected_process_hashes = (
+        (board_stream_process_sha256, sha256_hex(board_bytes), "board stream"),
+        (
+            construction_certificate_process_sha256,
+            sha256_hex(certificate_bytes),
+            "construction certificates",
+        ),
+        (projection_process_sha256, sha256_hex(proposal_bytes), "projection"),
+    )
+    for hashes, expected, name in expected_process_hashes:
+        if hashes != [expected, expected]:
+            raise ValueError(f"{name} requires two identical process hashes")
+    template_ids = [
+        [item["left"]["template_id"], item["right"]["template_id"]]
+        for item in construction_certificates
+    ]
+    receipt: dict[str, Any] = {
+        "schema_version": GENERATION_RECEIPT_SCHEMA_VERSION_V2,
+        "receipt_id": "receipt-sha256:" + "0" * 64,
+        "target_ref": {
+            "path": target_path,
+            "schema_version": TARGET_SCHEMA_VERSION,
+            "target_id": target_spec["target_id"],
+            "sha256": sha256_hex(canonical_json_bytes(target_spec)),
+        },
+        "board_stream": {
+            "path": board_stream_path,
+            "schema_version": BOARD_STREAM_SCHEMA_VERSION,
+            "row_count": len(board_rows),
+            "sha256": sha256_hex(board_bytes),
+        },
+        "construction_catalog": {
+            "path": construction_catalog_path,
+            "schema_version": construction_catalog["schema_version"],
+            "catalog_id": construction_catalog["catalog_id"],
+            "sha256": construction_catalog_sha256,
+            "construction_contract": construction_catalog[
+                "construction_contract"
+            ],
+        },
+        "construction_certificates": {
+            "path": construction_certificates_path,
+            "schema_version": CONSTRUCTION_CERTIFICATE_SCHEMA_VERSION,
+            "row_count": len(construction_certificates),
+            "sha256": sha256_hex(certificate_bytes),
+            "template_ids_sha256": sha256_hex(canonical_json_bytes(template_ids)),
+        },
+        "projection": {
+            "contract_id": BOARD_TO_PROPOSAL_PROJECTION_CONTRACT_V1,
+            "implementation_commit": source_repositories["partizan"],
+            "target_fields_consumed": [
+                "/domain",
+                "/search_limits/max_pool_size",
+                "/target_id",
+            ],
+            "mapping": dict(BOARD_TO_PROPOSAL_MAPPING_V1),
+        },
+        "generator": generator,
+        "candidate_artifact": {
+            "path": candidate_artifact_path,
+            "schema_version": PROPOSAL_SCHEMA_VERSION,
+            "row_count": len(proposals),
+            "sha256": sha256_hex(proposal_bytes),
+        },
+        "executions": {
+            "mode": "separate_python_processes_v1",
+            "run_count": 2,
+            "board_stream_raw_sha256": list(board_stream_process_sha256),
+            "construction_certificate_sha256": list(
+                construction_certificate_process_sha256
+            ),
+            "projection_artifact_sha256": list(projection_process_sha256),
+            "byte_identical": True,
+        },
+        "source_repositories": dict(source_repositories),
+    }
+    receipt["receipt_id"] = generation_receipt_id_for(receipt)
+    return receipt
+
+
+def build_candidate_pool_manifest_v3(
+    *, generation_receipt: dict[str, Any], generation_receipt_path: str
+) -> dict[str, Any]:
+    """Build the v0.3 pool projection from a validated v0.2 receipt."""
+
+    receipt_bytes = canonical_json_bytes(generation_receipt)
+    target_ref = generation_receipt["target_ref"]
+    manifest: dict[str, Any] = {
+        "schema_version": POOL_SCHEMA_VERSION_V3,
+        "pool_id": "pool-sha256:" + "0" * 64,
+        "target_ref": {
+            key: target_ref[key] for key in ("path", "target_id", "sha256")
+        },
+        "candidate_artifact": dict(generation_receipt["candidate_artifact"]),
+        "generator": dict(generation_receipt["generator"]),
+        "source_repositories": dict(generation_receipt["source_repositories"]),
+        "determinism": {
+            "operation": "target_free_generation_then_pure_projection",
+            "run_count": 2,
+            "byte_identical": True,
+            "artifact_sha256": generation_receipt["candidate_artifact"]["sha256"],
+            "board_stream_raw_sha256": list(
+                generation_receipt["executions"]["board_stream_raw_sha256"]
+            ),
+            "projection_artifact_sha256": list(
+                generation_receipt["executions"]["projection_artifact_sha256"]
+            ),
+            "generation_receipt_ref": {
+                "path": generation_receipt_path,
+                "schema_version": generation_receipt["schema_version"],
+                "receipt_id": generation_receipt["receipt_id"],
+                "sha256": sha256_hex(receipt_bytes),
+            },
+        },
+        "construction_lineage": {
+            "board_stream_ref": dict(generation_receipt["board_stream"]),
+            "construction_catalog_ref": dict(
+                generation_receipt["construction_catalog"]
+            ),
+            "construction_certificates_ref": dict(
+                generation_receipt["construction_certificates"]
+            ),
+            "projection_contract_id": generation_receipt["projection"][
+                "contract_id"
+            ],
+        },
+        "ranker_boundary": {
+            "contract_id": "proposal_only_ranker_input_v0.1",
+            "generation_phase": "offline_before_any_verifier_call",
+            "allowed_target_paths": ["/ranker_view"],
+            "allowed_proposal_paths": ["/position", "/proposal_features"],
+            "audit_passed": True,
+        },
+    }
+    manifest["pool_id"] = candidate_pool_id_for(manifest)
+    return manifest
+
+
 def _validate_generation_receipt_reference(
     value: Any,
     target_spec: dict[str, Any],
@@ -1699,6 +3180,263 @@ def validate_candidate_pool_manifest(
         )
     if isinstance(row.get("pool_id"), str) and row.get("pool_id") != candidate_pool_id_for(row):
         errors.append("pool.pool_id: does not match canonical pool identity")
+    return errors
+
+
+def validate_candidate_pool_manifest_v3(
+    value: Any,
+    target_spec: dict[str, Any],
+    proposals: list[dict[str, Any]],
+    repository_root: Path | None,
+) -> list[str]:
+    """Validate a Wave 69-R pool and all referenced target-free lineage."""
+
+    errors = _validate_json_value(value)
+    row = _exact_keys(value, _POOL_V3_KEYS, "pool_v3", errors)
+    if row is None:
+        return errors
+    if row.get("schema_version") != POOL_SCHEMA_VERSION_V3:
+        errors.append(f"pool_v3.schema_version: must be {POOL_SCHEMA_VERSION_V3}")
+    _typed_id(row.get("pool_id"), "pool", "pool_v3.pool_id", errors)
+
+    target_ref = _exact_keys(
+        row.get("target_ref"),
+        {"path", "target_id", "sha256"},
+        "pool_v3.target_ref",
+        errors,
+    )
+    loaded_target = _load_bound_json_artifact(
+        target_ref, repository_root, "pool_v3.target_ref", errors
+    )
+    if target_ref is not None:
+        if target_ref.get("target_id") != target_spec.get("target_id"):
+            errors.append("pool_v3.target_ref.target_id: target mismatch")
+        if target_ref.get("sha256") != sha256_hex(canonical_json_bytes(target_spec)):
+            errors.append("pool_v3.target_ref.sha256: target mismatch")
+    if loaded_target is not None and loaded_target != target_spec:
+        errors.append("pool_v3.target_ref.path: target payload mismatch")
+
+    candidate_ref = _exact_keys(
+        row.get("candidate_artifact"),
+        {"path", "schema_version", "sha256", "row_count"},
+        "pool_v3.candidate_artifact",
+        errors,
+    )
+    loaded_proposals = _load_bound_jsonl_artifact(
+        candidate_ref, repository_root, "pool_v3.candidate_artifact", errors
+    )
+    candidate_sha = sha256_hex(canonical_jsonl_bytes(proposals))
+    if candidate_ref is not None:
+        if candidate_ref.get("schema_version") != PROPOSAL_SCHEMA_VERSION:
+            errors.append("pool_v3.candidate_artifact.schema_version: invalid")
+        if candidate_ref.get("row_count") != len(proposals):
+            errors.append("pool_v3.candidate_artifact.row_count: proposal mismatch")
+        if candidate_ref.get("sha256") != candidate_sha:
+            errors.append("pool_v3.candidate_artifact.sha256: proposal mismatch")
+    if loaded_proposals is not None and loaded_proposals != proposals:
+        errors.append("pool_v3.candidate_artifact.path: proposal payload mismatch")
+
+    generator = _exact_keys(
+        row.get("generator"),
+        {
+            "name",
+            "version",
+            "code_commit",
+            "family",
+            "operator",
+            "config_sha256",
+            "random_seed",
+        },
+        "pool_v3.generator",
+        errors,
+    )
+    if generator is not None:
+        if generator.get("name") != PARTIZAN_POOL_GENERATOR_NAME:
+            errors.append("pool_v3.generator.name: invalid")
+        _commit(generator.get("code_commit"), "pool_v3.generator.code_commit", errors)
+        _hex(generator.get("config_sha256"), 64, "pool_v3.generator.config_sha256", errors)
+        seed = generator.get("random_seed")
+        if not isinstance(seed, int) or isinstance(seed, bool) or seed < 0:
+            errors.append("pool_v3.generator.random_seed: must be non-negative")
+        for key in ("version", "family", "operator"):
+            _nonempty_string(generator.get(key), f"pool_v3.generator.{key}", errors)
+        for index, proposal in enumerate(proposals):
+            if proposal.get("generator") != generator:
+                errors.append(
+                    f"pool_v3.proposals[{index}].generator: does not match manifest"
+                )
+
+    repos = _exact_keys(
+        row.get("source_repositories"),
+        {"astralbase", "bitmesh", "thermograph", "partizan"},
+        "pool_v3.source_repositories",
+        errors,
+    )
+    if repos is not None:
+        for name, commit in repos.items():
+            _commit(commit, f"pool_v3.source_repositories.{name}", errors)
+        if generator is not None and repos.get("partizan") != generator.get(
+            "code_commit"
+        ):
+            errors.append("pool_v3.source_repositories.partizan: generator mismatch")
+
+    determinism = _exact_keys(
+        row.get("determinism"),
+        {
+            "operation",
+            "run_count",
+            "byte_identical",
+            "artifact_sha256",
+            "board_stream_raw_sha256",
+            "projection_artifact_sha256",
+            "generation_receipt_ref",
+        },
+        "pool_v3.determinism",
+        errors,
+    )
+    receipt: dict[str, Any] | None = None
+    if determinism is not None:
+        if determinism.get("operation") != "target_free_generation_then_pure_projection":
+            errors.append("pool_v3.determinism.operation: invalid")
+        if determinism.get("run_count") != 2:
+            errors.append("pool_v3.determinism.run_count: must be 2")
+        if determinism.get("byte_identical") is not True:
+            errors.append("pool_v3.determinism.byte_identical: must be true")
+        if determinism.get("artifact_sha256") != candidate_sha:
+            errors.append("pool_v3.determinism.artifact_sha256: candidate mismatch")
+        receipt_ref = _exact_keys(
+            determinism.get("generation_receipt_ref"),
+            {"path", "schema_version", "receipt_id", "sha256"},
+            "pool_v3.determinism.generation_receipt_ref",
+            errors,
+        )
+        receipt = _load_bound_json_artifact(
+            receipt_ref,
+            repository_root,
+            "pool_v3.determinism.generation_receipt_ref",
+            errors,
+        )
+        if receipt_ref is not None:
+            if receipt_ref.get("schema_version") != GENERATION_RECEIPT_SCHEMA_VERSION_V2:
+                errors.append(
+                    "pool_v3.determinism.generation_receipt_ref.schema_version: invalid"
+                )
+            receipt_id = receipt_ref.get("receipt_id")
+            if not isinstance(receipt_id, str) or not re.fullmatch(
+                r"receipt-sha256:[0-9a-f]{64}", receipt_id
+            ):
+                errors.append(
+                    "pool_v3.determinism.generation_receipt_ref.receipt_id: invalid"
+                )
+        if receipt is not None:
+            if receipt_ref is not None:
+                if receipt_ref.get("receipt_id") != receipt.get("receipt_id"):
+                    errors.append(
+                        "pool_v3.determinism.generation_receipt_ref.receipt_id: "
+                        "receipt mismatch"
+                    )
+                if receipt_ref.get("schema_version") != receipt.get("schema_version"):
+                    errors.append(
+                        "pool_v3.determinism.generation_receipt_ref.schema_version: "
+                        "receipt mismatch"
+                    )
+            errors.extend(
+                validate_generation_receipt_v2(
+                    receipt, target_spec, proposals, repository_root
+                )
+            )
+            if determinism.get("board_stream_raw_sha256") != receipt.get(
+                "executions", {}
+            ).get("board_stream_raw_sha256"):
+                errors.append(
+                    "pool_v3.determinism.board_stream_raw_sha256: receipt mismatch"
+                )
+            if determinism.get("projection_artifact_sha256") != receipt.get(
+                "executions", {}
+            ).get("projection_artifact_sha256"):
+                errors.append(
+                    "pool_v3.determinism.projection_artifact_sha256: receipt mismatch"
+                )
+
+    lineage = _exact_keys(
+        row.get("construction_lineage"),
+        {
+            "board_stream_ref",
+            "construction_catalog_ref",
+            "construction_certificates_ref",
+            "projection_contract_id",
+        },
+        "pool_v3.construction_lineage",
+        errors,
+    )
+    if lineage is not None:
+        if lineage.get("projection_contract_id") != BOARD_TO_PROPOSAL_PROJECTION_CONTRACT_V1:
+            errors.append("pool_v3.construction_lineage.projection_contract_id: invalid")
+        if receipt is not None:
+            expected_lineage = {
+                "board_stream_ref": receipt.get("board_stream"),
+                "construction_catalog_ref": receipt.get("construction_catalog"),
+                "construction_certificates_ref": receipt.get(
+                    "construction_certificates"
+                ),
+                "projection_contract_id": receipt.get("projection", {}).get(
+                    "contract_id"
+                ),
+            }
+            if lineage != expected_lineage:
+                errors.append(
+                    "pool_v3.construction_lineage: does not match generation receipt"
+                )
+
+    boundary = _exact_keys(
+        row.get("ranker_boundary"),
+        {
+            "contract_id",
+            "generation_phase",
+            "allowed_target_paths",
+            "allowed_proposal_paths",
+            "audit_passed",
+        },
+        "pool_v3.ranker_boundary",
+        errors,
+    )
+    expected_boundary = {
+        "contract_id": "proposal_only_ranker_input_v0.1",
+        "generation_phase": "offline_before_any_verifier_call",
+        "allowed_target_paths": ["/ranker_view"],
+        "allowed_proposal_paths": ["/position", "/proposal_features"],
+        "audit_passed": True,
+    }
+    if boundary is not None and boundary != expected_boundary:
+        errors.append("pool_v3.ranker_boundary: invalid")
+
+    ordinals = [proposal.get("ordinal") for proposal in proposals]
+    if ordinals != list(range(len(proposals))):
+        errors.append("pool_v3: proposal ordinals must be contiguous and ordered")
+    for field in ("proposal_id", "candidate_key"):
+        counts = Counter(str(proposal.get(field)) for proposal in proposals)
+        if any(count != 1 for count in counts.values()):
+            errors.append(f"pool_v3: duplicate {field} values are forbidden")
+    if receipt is not None:
+        if target_ref is not None and target_ref != {
+            key: receipt.get("target_ref", {}).get(key)
+            for key in ("path", "target_id", "sha256")
+        }:
+            errors.append("pool_v3.target_ref: does not match generation receipt")
+        if candidate_ref is not None and candidate_ref != receipt.get(
+            "candidate_artifact"
+        ):
+            errors.append(
+                "pool_v3.candidate_artifact: does not match generation receipt"
+            )
+        if generator is not None and generator != receipt.get("generator"):
+            errors.append("pool_v3.generator: does not match generation receipt")
+        if repos is not None and repos != receipt.get("source_repositories"):
+            errors.append(
+                "pool_v3.source_repositories: does not match generation receipt"
+            )
+    if isinstance(row.get("pool_id"), str) and row.get("pool_id") != candidate_pool_id_for(row):
+        errors.append("pool_v3.pool_id: does not match canonical identity")
     return errors
 
 

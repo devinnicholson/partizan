@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-candidate-board-stream-v0.1.schema.json",
+  "title": "Partizan target-free candidate board stream row v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "board_id", "ordinal", "position", "generator", "construction", "proposal_features"],
+  "properties": {
+    "schema_version": {"const": "partizan.candidate_board_stream.v0.1"},
+    "board_id": {"type": "string", "pattern": "^board-sha256:[0-9a-f]{64}$"},
+    "ordinal": {"type": "integer", "minimum": 0},
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["encoding", "text", "sha256", "symmetry_sha256"],
+      "properties": {
+        "encoding": {"const": "fen"},
+        "text": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "symmetry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "code_commit", "family", "operator", "config_sha256", "random_seed"],
+      "properties": {
+        "name": {"const": "partizan_candidate_pool_generator"},
+        "version": {"const": "0.2.0"},
+        "code_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "family": {"const": "dfile_two_component_constructive_grammar_v2"},
+        "operator": {"const": "seeded_constructive_component_composition_v2"},
+        "config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "random_seed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "construction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "stratum", "left_active_piece_count", "right_active_piece_count", "left_template_id", "right_template_id", "runtime_oracle_used"],
+      "properties": {
+        "contract": {"const": "partizan.dfile_two_component_constructive_grammar.v0.2"},
+        "stratum": {"enum": ["outer_leaper", "pawn_phalanx", "ray_cage", "mixed_color_hook"]},
+        "left_active_piece_count": {"type": "integer", "minimum": 1, "maximum": 5},
+        "right_active_piece_count": {"type": "integer", "minimum": 1, "maximum": 5},
+        "left_template_id": {"type": "string", "pattern": "^template-sha256:[0-9a-f]{64}$"},
+        "right_template_id": {"type": "string", "pattern": "^template-sha256:[0-9a-f]{64}$"},
+        "runtime_oracle_used": {"const": false}
+      }
+    },
+    "proposal_features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "derivation_stage", "categorical", "integer", "boolean"],
+      "properties": {
+        "schema_version": {"const": "partizan.proposal_features.v0.1"},
+        "derivation_stage": {"const": "pre_verification"},
+        "categorical": {"type": "object", "additionalProperties": false, "maxProperties": 0},
+        "integer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["black_piece_count", "non_pawn_piece_count", "occupied_file_count", "pawn_count", "piece_count", "white_piece_count"],
+          "properties": {
+            "black_piece_count": {"type": "integer", "minimum": 0},
+            "non_pawn_piece_count": {"type": "integer", "minimum": 0},
+            "occupied_file_count": {"type": "integer", "minimum": 0, "maximum": 8},
+            "pawn_count": {"type": "integer", "minimum": 0},
+            "piece_count": {"type": "integer", "minimum": 0},
+            "white_piece_count": {"type": "integer", "minimum": 0}
+          }
+        },
+        "boolean": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["has_locked_d_file_backbone"],
+          "properties": {"has_locked_d_file_backbone": {"type": "boolean"}}
+        }
+      }
+    }
+  }
+}

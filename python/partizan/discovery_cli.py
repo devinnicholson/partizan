@@ -12,10 +12,12 @@ from .discovery import (
     load_json,
     load_jsonl,
     validate_candidate_pool_manifest,
+    validate_candidate_pool_manifest_v3,
     validate_candidate_proposal,
     validate_discovery_bundle,
     validate_discovery_run,
     validate_generation_receipt,
+    validate_generation_receipt_v2,
     validate_target_spec,
     validate_verifier_result,
 )
@@ -56,6 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     receipt.add_argument("--target", type=Path, required=True)
     receipt.add_argument("--proposals", type=Path, required=True)
     receipt.add_argument("receipt", type=Path)
+    receipt.add_argument("--repository-root", type=Path, default=Path.cwd())
 
     run = commands.add_parser("validate-run")
     run.add_argument("--target", type=Path, required=True)
@@ -98,6 +101,15 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.command == "validate-generation-receipt":
             receipt = load_json(args.receipt)
+            if receipt.get("schema_version") == (
+                "partizan.candidate_generation_receipt.v0.2"
+            ):
+                return _report(
+                    validate_target_spec(target)
+                    + validate_generation_receipt_v2(
+                        receipt, target, proposals, args.repository_root
+                    )
+                )
             return _report(
                 validate_target_spec(target)
                 + validate_generation_receipt(receipt, target, proposals)
@@ -105,6 +117,15 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.command == "validate-pool":
             pool = load_json(args.pool)
+            if pool.get("schema_version") == (
+                "partizan.candidate_pool_manifest.v0.3"
+            ):
+                return _report(
+                    validate_target_spec(target)
+                    + validate_candidate_pool_manifest_v3(
+                        pool, target, proposals, args.repository_root
+                    )
+                )
             return _report(
                 validate_target_spec(target)
                 + validate_candidate_pool_manifest(
