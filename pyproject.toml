@@ -1,5 +1,5 @@
 [build-system]
-requires = ["maturin>=1.8,<2"]
+requires = ["maturin>=1.9.3,<2"]
 build-backend = "maturin"
 
 [project]
@@ -10,6 +10,8 @@ readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Devin Nicholson" }]
 keywords = ["chess", "combinatorial game theory", "research"]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",

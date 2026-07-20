@@ -5,6 +5,7 @@ edition = "2024"
 rust-version = "1.88"
 authors = ["Devin Nicholson"]
 description = "Python bindings for constrained chess/CGT research experiments"
+license = "GPL-3.0-or-later"
 repository = "https://github.com/devinnicholson/partizan"
 homepage = "https://github.com/devinnicholson/partizan"
 readme = "README.md"

@@ -21,10 +21,14 @@ Semantic Versioning once an owner-approved release is published.
 - Dataset output defaults now use repository-local ignored artifacts rather than
   system temporary paths.
 - The formal domain is consolidated as the versioned v0.1 contract.
+- Licensed the project GPL-3.0-or-later, matching the Shakmaty (GPL-3.0)
+  dependency compiled into the native extension. Raised the minimum Maturin
+  version to 1.9.3 for PEP 639 `license`/`license-files` support.
 
 ### Limitations
 
-- License selection, upstream registry publication, immutable tags, and public
-  release publication remain owner-controlled gates.
+- Upstream registry publication, immutable tags, and public release
+  publication remain owner-controlled gates.
+- Contribution terms (e.g. a CLA/DCO) remain unpublished.
 - Learned benefit, agency, chess temperature, and model-guided discovery remain
   future research questions.

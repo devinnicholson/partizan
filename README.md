@@ -155,7 +155,7 @@ The native extension requires:
 
 - Python 3.10+
 - Rust 1.88+
-- Maturin 1.8+
+- Maturin 1.9.3+
 - [Bitmesh](https://github.com/devinnicholson/bitmesh)
 - [Thermograph](https://github.com/devinnicholson/thermograph)
 - [Astralbase](https://github.com/devinnicholson/astralbase)
@@ -233,10 +233,13 @@ commit and artifact manifest used in your work.
 
 ## License and contributions
 
-The project license remains under review. Written permission is required to
-copy, modify, redistribute, or package this repository. License selection and
-third-party dependency review are tracked in
-[`docs/release_blockers.md`](docs/release_blockers.md).
+Partizan is licensed under the [GNU General Public License v3.0 or later](LICENSE)
+(GPL-3.0-or-later). This choice follows directly from the native engine's
+dependency on [Shakmaty](https://github.com/niklasf/shakmaty) (GPL-3.0): the
+compiled `partizan._native` extension is a combined work, so the whole project
+is distributed under compatible copyleft terms. Remaining release gates
+(upstream registry publication, immutable tags, public release publication)
+are tracked in [`docs/release_blockers.md`](docs/release_blockers.md).
 
 Issues and research discussion are welcome. Code contributions should wait
-until the license and contribution terms are finalized.
+until contribution terms (e.g. a CLA or DCO) are finalized.

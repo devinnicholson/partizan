@@ -19,5 +19,6 @@ Run the commands in the root README. Pull requests must pass format, strict
 Clippy, strict Rustdoc, locked tests, Python tests with zero required skips, all
 Wave validators, and frozen-artifact verification.
 
-Licensing is an unresolved owner gate. Contribution review opens after the
-project owner publishes contribution and licensing terms.
+Partizan is licensed [GPL-3.0-or-later](LICENSE). Contribution review still
+waits on the project owner publishing separate contribution terms (e.g. a
+CLA/DCO).

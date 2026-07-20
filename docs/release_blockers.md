@@ -1,14 +1,21 @@
 # Partizan v0.1 release blockers
 
-The implementation is an alpha release candidate. The following gates are not
-resolved by this branch and must remain visible in any handoff or release note:
+The implementation is an alpha release candidate. Gates 1 and 2 below are now
+resolved; the rest are not resolved by this branch and must remain visible in
+any handoff or release note:
 
-1. **Project license:** the copyright owner has not selected or added a license.
-   Do not publish, redistribute, or solicit contributions as an open-source
-   project until this is resolved.
-2. **Third-party license review:** Maturin's generated SBOM warns that Shakmaty
-   0.27 declares the legacy expression `GPL-3.0+`. The owner must review all
-   dependency obligations and compatibility before choosing Partizan's terms.
+1. **Project license: resolved.** Partizan is licensed
+   [GPL-3.0-or-later](../LICENSE) (see `LICENSE`, `engine/Cargo.toml`,
+   `engine/gate_s_checker/Cargo.toml`, and `pyproject.toml`). Code
+   contributions still wait on separate contribution terms (e.g. a CLA/DCO),
+   which remain unpublished.
+2. **Third-party license review: resolved.** Shakmaty's own repository
+   (confirmed via its GitHub license metadata, not just Maturin's SBOM
+   heuristic) is GPL-3.0. It is a direct, load-bearing dependency of
+   `engine/src/lib.rs` and `engine/gate_s_checker`, compiled into the
+   `partizan._native` extension, so the whole project is licensed
+   GPL-3.0-or-later to stay compatible with that obligation. `bitmesh` and
+   `astralbase` independently depend on Shakmaty too; `thermograph` does not.
 3. **Upstream publication:** Bitmesh, Thermograph, and Astralbase 0.1.0 are not
    yet registry releases. This branch declares their versions but uses external
    release-candidate patches for tests.
