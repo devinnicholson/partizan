@@ -151,7 +151,7 @@ the full installation below.
 The native extension requires:
 
 - Python 3.10+
-- Rust 1.85+
+- Rust 1.88+
 - Maturin 1.8+
 - [Bitmesh](https://github.com/devinnicholson/bitmesh)
 - [Thermograph](https://github.com/devinnicholson/thermograph)

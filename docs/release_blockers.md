@@ -16,7 +16,7 @@ resolved by this branch and must remain visible in any handoff or release note:
    earlier release-candidate commits. Public regeneration requires publishing
    those refs or reviewing and re-freezing the artifact with public inputs.
 5. **Cross-platform and MSRV evidence:** the public workflow covers Linux,
-   macOS, Windows, Rust 1.85, and Python 3.10. Local validation covers macOS
+   macOS, Windows, Rust 1.88, and Python 3.10. Local validation covers macOS
    arm64 with Rust 1.92 and Python 3.14.
 6. **Wave 47 immutable provenance:** its 13 rows still record
    `code_commit=workspace`. Their bytes and report linkage are frozen, but

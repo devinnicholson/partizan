@@ -2,7 +2,7 @@
 name = "partizan"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.88"
 authors = ["Devin Nicholson"]
 description = "Python bindings for constrained chess/CGT research experiments"
 repository = "https://github.com/devinnicholson/partizan"
