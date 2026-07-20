@@ -7,6 +7,14 @@ data/discovery/wave_69/stage_a/
 *.egg-info/
 .pytest_cache/
 _upstreams/
+.DS_Store
+.coverage
+.mypy_cache/
+.ruff_cache/
+.tox/
+build/
+dist/
+htmlcov/
 *.so
 *.dylib
 *.dll

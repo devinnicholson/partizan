@@ -82,6 +82,17 @@ class DiscoveryOrchestratorTests(unittest.TestCase):
         ]
         return discovery.canonical_jsonl_bytes(rows)
 
+    def test_default_upstream_directories_are_repository_siblings(self) -> None:
+        self.assertEqual(
+            orchestrator.DEFAULT_ASTRALBASE_DIR,
+            ROOT.parent / "astralbase",
+        )
+        self.assertEqual(orchestrator.DEFAULT_BITMESH_DIR, ROOT.parent / "bitmesh")
+        self.assertEqual(
+            orchestrator.DEFAULT_THERMOGRAPH_DIR,
+            ROOT.parent / "thermograph",
+        )
+
     def test_freeze_canonicalizes_existing_pool_without_invoking_verifier(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp = Path(temp_dir)

@@ -26,4 +26,5 @@ Semantic Versioning once an owner-approved release is published.
 
 - License selection, upstream registry publication, immutable tags, and public
   release publication remain owner-controlled gates.
-- No learned benefit, agency, chess-temperature, or discovery claim is active.
+- Learned benefit, agency, chess temperature, and model-guided discovery remain
+  future research questions.

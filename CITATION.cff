@@ -10,5 +10,6 @@ repository-code: "https://github.com/devinnicholson/partizan"
 url: "https://github.com/devinnicholson/partizan"
 abstract: >-
   An experimental suite for structural decomposition and combinatorial-game
-  representations in constrained chess positions. The v0.1 scope does not
-  claim learned benefit, agency, chess temperature, or model-guided discovery.
+  representations in constrained chess positions. The v0.1 scope covers exact
+  bounded-domain records and replayable provenance. Learned benefit, agency,
+  chess temperature, and model-guided discovery remain research questions.

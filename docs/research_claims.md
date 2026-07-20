@@ -17,8 +17,8 @@ The release-supported statement is: “an experimental suite for structural
 decomposition and combinatorial-game representations in constrained chess
 positions.”
 
-This table is the paper spine. A claim is not active until it has evidence,
-baselines, and a falsification condition.
+This table is the claim ledger. Evidence, baselines, and a falsification
+condition activate each claim.
 
 The current vertical slice provides concrete evidence only for reproducible
 plumbing: a schema-v0 JSONL shard at `/private/tmp/partizan-wave-03.jsonl`,
