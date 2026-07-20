@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      # actions/checkout v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - name: Checkout frozen Bitmesh candidate
+        # actions/checkout v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: devinnicholson/bitmesh
+          ref: 2e3ceaeae7ac9a03fa912b205467e86f0cd3d658
+          path: _upstreams/bitmesh
+          persist-credentials: false
+      - name: Checkout frozen Thermograph candidate
+        # actions/checkout v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: devinnicholson/thermograph
+          ref: 98748262475e25d0c2360e06b5126555a01dc1c1
+          path: _upstreams/thermograph
+          persist-credentials: false
+      - name: Checkout frozen Astralbase candidate
+        # actions/checkout v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: devinnicholson/astralbase
+          ref: 1e7ce7a2e8ece442e63a20eb7600137b91b25cad
+          path: _upstreams/astralbase
+          persist-credentials: false
+      # actions/setup-python v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      # dtolnay/rust-toolchain v1
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
+        with:
+          toolchain: "1.88"
+          components: clippy,rustfmt
+      - name: Configure external release-candidate patches
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          root = Path.cwd()
+          cargo_home = Path(os.environ.get("CARGO_HOME", Path.home() / ".cargo"))
+          cargo_home.mkdir(parents=True, exist_ok=True)
+          paths = {
+              name: (root / "_upstreams" / name).resolve().as_posix()
+              for name in ("bitmesh", "thermograph", "astralbase")
+          }
+          config = "[patch.\"crates-io\"]\n" + "".join(
+              f'{name} = {{ path = "{path}" }}\n' for name, path in paths.items()
+          )
+          (cargo_home / "config.toml").write_text(config, encoding="utf-8")
+      - name: Rust format
+        run: cargo fmt --manifest-path engine/Cargo.toml --all -- --check
+      - name: Rust tests
+        run: cargo test --manifest-path engine/Cargo.toml --locked --all-targets
+      - name: Strict Clippy
+        run: cargo clippy --manifest-path engine/Cargo.toml --locked --all-targets --all-features -- -D warnings
+      - name: Strict Rustdoc
+        env:
+          RUSTDOCFLAGS: -D warnings -D missing-docs
+        run: cargo doc --manifest-path engine/Cargo.toml --locked --no-deps
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "maturin>=1.8,<2"
+          python -m pip install --no-build-isolation --no-deps .
+      - name: Python and artifact checks
+        run: |
+          python -m unittest discover -s tests -v
+          python engine/test.py
+          python agents/label_schema.py self-test
+          python agents/label_schema.py validate agents/fixtures/label_rows.valid.jsonl docs/signature_target_exact_wave_47.jsonl docs/signature_target_mixed_hook_exact_wave_52.jsonl docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl
+          python scripts/validate_waves.py
+          python scripts/verify_release.py

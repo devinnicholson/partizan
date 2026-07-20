@@ -1,0 +1,46 @@
+{
+  "schema_version": "partizan.dfile_two_component_constructive_catalog.v0.2",
+  "catalog_id": "catalog-sha256:6fb7ee4e6aa5aceb5ac55b8781cac3998c48ec2d0beb0a4aea047ab8a54cc4fd",
+  "construction_contract": "partizan.dfile_two_component_constructive_grammar.v0.2",
+  "generator": {
+    "name": "partizan_candidate_pool_generator",
+    "version": "0.2.0",
+    "family": "dfile_two_component_constructive_grammar_v2",
+    "operator": "seeded_constructive_component_composition_v2"
+  },
+  "board_contract": {
+    "barrier": [["d1", "P"], ["d2", "p"], ["d3", "P"], ["d4", "p"], ["d5", "P"], ["d6", "p"], ["d7", "P"], ["d8", "p"]],
+    "side_to_move": "w",
+    "castling_rights": "none",
+    "en_passant": "none",
+    "forbidden_active_files": ["e"],
+    "active_piece_count_per_component": {"minimum": 1, "maximum": 5}
+  },
+  "strata": {
+    "outer_leaper": {
+      "left": "white_or_black_knights_on_a_file_plus_at_most_one_nonterminal_pawn_on_b_file",
+      "right": "white_or_black_knights_on_h_file_plus_at_most_one_nonterminal_pawn_on_g_file"
+    },
+    "pawn_phalanx": {
+      "left": "one_nonterminal_pawn_on_each_of_a_and_b",
+      "right": "one_nonterminal_pawn_on_each_of_g_and_h"
+    },
+    "ray_cage": {
+      "left_bases": [[["a1", "R"]], [["a1", "B"], ["b2", "P"]], [["a1", "Q"], ["b2", "P"]]],
+      "right_bases": [[["h8", "r"]], [["h8", "b"], ["g7", "p"]], [["h8", "q"], ["g7", "p"]]],
+      "extra_atoms": "zero_to_three_white_or_black_knights_on_unoccupied_outer_file_squares"
+    },
+    "mixed_color_hook": {
+      "left_base": [["a1", "N"], ["a2", "P"], ["b3", "p"]],
+      "right_base": [["h8", "n"], ["h7", "p"], ["g6", "P"]],
+      "extra_atoms": "zero_to_two_outer_file_knights_on_a4_to_a8_or_h1_to_h5"
+    }
+  },
+  "stratum_schedule": "accepted_ordinal_modulo_four_v1",
+  "deduplication": ["target_free_board_id", "fen_horizontal_reflection_v0"],
+  "source_boundary": {
+    "astralbase_commit": "1434fca1fc04d97798ec1b820c56f52f8014ccc7",
+    "source_file": "src/dataset_label.rs",
+    "published_source_families": ["corner_plus_edge_minor_ladder_v0", "mixed_color_hook_v0"]
+  }
+}

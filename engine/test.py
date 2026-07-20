@@ -1,3 +1,4 @@
+import argparse
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -38,11 +39,14 @@ except ModuleNotFoundError:
     partizan = None
 
 
-WAVE_3_SHARD = Path("/private/tmp/partizan-wave-03.jsonl")
-FRONTIER_WAVE_6_SHARD = Path("/private/tmp/partizan-frontier-wave-06.jsonl")
-FAMILY_FRONTIER_WAVE_7_SHARD = Path("/private/tmp/partizan-family-frontier-wave-07.jsonl")
-EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD = Path(
-    "/private/tmp/partizan-expanded-family-frontier-wave-12.jsonl"
+ROOT = Path(__file__).resolve().parents[1]
+WAVE_3_SHARD = ROOT / "agents" / "fixtures" / "label_rows.valid.jsonl"
+FRONTIER_WAVE_6_SHARD = ROOT / "artifacts" / "legacy" / "partizan-frontier-wave-06.jsonl"
+FAMILY_FRONTIER_WAVE_7_SHARD = (
+    ROOT / "artifacts" / "legacy" / "partizan-family-frontier-wave-07.jsonl"
+)
+EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD = (
+    ROOT / "artifacts" / "legacy" / "partizan-expanded-family-frontier-wave-12.jsonl"
 )
 
 
@@ -1387,26 +1391,29 @@ def _composition_rejected_fixture_row_for_train_dev_split(
 
 def run_baseline_smoke():
     if not WAVE_3_SHARD.exists():
-        print(f"Baseline smoke skipped; shard not found: {WAVE_3_SHARD}")
-        return
+        raise FileNotFoundError(f"required fixture not found: {WAVE_3_SHARD}")
 
     metrics = evaluate_label_shard_baseline(WAVE_3_SHARD)
     assert metrics["row_counts"] == {
-        "total": 5,
+        "total": 6,
         "exact": 3,
-        "rejected": 2,
-        "heuristic": 0,
-        "prediction": 0,
+        "rejected": 1,
+        "heuristic": 1,
+        "prediction": 1,
     }
     exact_rejected = metrics["baselines"]["exact_vs_rejected"]
-    assert exact_rejected["support"] == 4
+    assert exact_rejected["support"] == 2
     assert exact_rejected["excluded_position_encodings"] == ["cgt_canonical"]
-    assert exact_rejected["accuracy"] == 1.0
+    assert exact_rejected["accuracy"] == 0.5
     value_class = metrics["baselines"]["exact_value_class"]
     assert value_class["support"] == 3
     assert value_class["status"] == "evaluated"
-    assert value_class["class_counts"] == {"number": 2, "switch": 1}
-    assert value_class["accuracy"] == 2 / 3
+    assert value_class["class_counts"] == {
+        "game_tree": 1,
+        "integer": 1,
+        "switch": 1,
+    }
+    assert value_class["accuracy"] == 0.0
     print(
         "Baseline smoke ok: "
         f"{metrics['dataset_path']} rows={metrics['row_counts']['total']} "
@@ -1416,8 +1423,9 @@ def run_baseline_smoke():
 
 def run_frontier_baseline_smoke():
     if not FRONTIER_WAVE_6_SHARD.exists():
-        print(f"Frontier baseline smoke skipped; shard not found: {FRONTIER_WAVE_6_SHARD}")
-        return
+        raise FileNotFoundError(
+            f"requested optional integration artifact not found: {FRONTIER_WAVE_6_SHARD}"
+        )
 
     metrics = evaluate_label_shard_baseline(FRONTIER_WAVE_6_SHARD)
     assert metrics["row_counts"] == {
@@ -1499,11 +1507,10 @@ def run_frontier_baseline_smoke():
 
 def run_family_frontier_baseline_smoke():
     if not FAMILY_FRONTIER_WAVE_7_SHARD.exists():
-        print(
-            "Family frontier baseline smoke skipped; "
-            f"shard not found: {FAMILY_FRONTIER_WAVE_7_SHARD}"
+        raise FileNotFoundError(
+            "requested optional integration artifact not found: "
+            f"{FAMILY_FRONTIER_WAVE_7_SHARD}"
         )
-        return
 
     metrics = evaluate_label_shard_baseline(FAMILY_FRONTIER_WAVE_7_SHARD)
     assert metrics["row_counts"] == {
@@ -1662,11 +1669,10 @@ def run_family_frontier_baseline_smoke():
 
 def run_expanded_family_frontier_baseline_smoke():
     if not EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD.exists():
-        print(
-            "Expanded family frontier baseline smoke skipped; "
-            f"shard not found: {EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD}"
+        raise FileNotFoundError(
+            "requested optional integration artifact not found: "
+            f"{EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD}"
         )
-        return
 
     metrics = evaluate_label_shard_baseline(EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD)
     assert metrics["row_counts"] == {
@@ -1779,33 +1785,48 @@ def run_expanded_family_frontier_baseline_smoke():
 
 def run_rust_engine_smoke():
     if partizan is None:
-        print("Rust engine smoke skipped; Python extension module 'partizan' is not installed.")
-        return
+        raise RuntimeError(
+            "required Python extension module 'partizan' is not installed; "
+            "install the project before running required tests"
+        )
 
-    # A position with a heavily locked pawn center (French Defense Advance style)
-    fen = "rnbqkbnr/pp3ppp/4p3/2ppP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 4"
-    print(f"Original FEN: {fen}")
-    
-    try:
-        locked_squares = partizan.find_locked_pawns(fen)
-        print(f"Locked pawns found at squares: {locked_squares}")
-        
-        is_decomposable, components = partizan.analyze_subsystems(fen)
-        print(f"Is Decomposable: {is_decomposable}")
-        print(f"Number of Independent Sub-games: {components}")
-        
-        print("\n--- Running comprehensive evaluation ---")
-        results = partizan.evaluate_position(fen)
-        print(f"Bitmesh partitions: {results['components']}")
-        print(f"Thermograph temperature: {results['temperature']}")
-        print(f"Thermograph mean value: {results['mean_value']}")
-        print(f"Astralbase retrograde expansions: {results['expanded_nodes']}")
-        
-    except Exception as e:
-        print(f"Rust engine error: {e}")
+    fen = "7k/5KQ1/8/8/8/8/8/8 b - - 0 1"
+    locked_squares = partizan.find_locked_pawns(fen)
+    is_decomposable, components = partizan.analyze_subsystems(fen)
+    results = partizan.evaluate_position(fen)
+    assert locked_squares == []
+    assert isinstance(is_decomposable, bool)
+    assert isinstance(components, int)
+    assert results["mean_value"] == -1.0
+    assert results["temperature"] == -1.0
+    assert results["expanded_nodes"] == 50
+    print("Rust/Python extension smoke ok (terminal plumbing only; no chess-temperature claim)")
 
 
-def main():
+def main(argv=None):
+    global FRONTIER_WAVE_6_SHARD
+    global FAMILY_FRONTIER_WAVE_7_SHARD
+    global EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD
+
+    parser = argparse.ArgumentParser(description="Run required Partizan Python smokes.")
+    parser.add_argument(
+        "--legacy-artifact-dir",
+        type=Path,
+        help=(
+            "Also run the historical Wave 6/7/12 integration smokes. All three "
+            "large artifacts are required when this option is supplied."
+        ),
+    )
+    args = parser.parse_args(argv)
+    if args.legacy_artifact_dir is not None:
+        FRONTIER_WAVE_6_SHARD = args.legacy_artifact_dir / "partizan-frontier-wave-06.jsonl"
+        FAMILY_FRONTIER_WAVE_7_SHARD = (
+            args.legacy_artifact_dir / "partizan-family-frontier-wave-07.jsonl"
+        )
+        EXPANDED_FAMILY_FRONTIER_WAVE_12_SHARD = (
+            args.legacy_artifact_dir / "partizan-expanded-family-frontier-wave-12.jsonl"
+        )
+
     run_symmetry_key_smoke()
     run_composition_certificate_report_smoke()
     run_composition_holdout_report_smoke()
@@ -1820,9 +1841,10 @@ def main():
     run_exact_projection_baseline_report_smoke()
     run_heuristic_signature_promotion_report_smoke()
     run_baseline_smoke()
-    run_frontier_baseline_smoke()
-    run_family_frontier_baseline_smoke()
-    run_expanded_family_frontier_baseline_smoke()
+    if args.legacy_artifact_dir is not None:
+        run_frontier_baseline_smoke()
+        run_family_frontier_baseline_smoke()
+        run_expanded_family_frontier_baseline_smoke()
     run_rust_engine_smoke()
 
 

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan structural construction certificate v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "certificate_id", "board_id", "ordinal", "catalog_id", "construction_contract", "stratum", "left", "right", "runtime_oracle_used"],
+  "properties": {
+    "schema_version": {"const": "partizan.structural_construction_certificate.v0.1"},
+    "certificate_id": {"type": "string", "pattern": "^certificate-sha256:[0-9a-f]{64}$"},
+    "board_id": {"type": "string", "pattern": "^board-sha256:[0-9a-f]{64}$"},
+    "ordinal": {"type": "integer", "minimum": 0},
+    "catalog_id": {"type": "string", "pattern": "^catalog-sha256:[0-9a-f]{64}$"},
+    "construction_contract": {"const": "partizan.dfile_two_component_constructive_grammar.v0.2"},
+    "stratum": {"enum": ["outer_leaper", "pawn_phalanx", "ray_cage", "mixed_color_hook"]},
+    "left": {"$ref": "#/$defs/component"},
+    "right": {"$ref": "#/$defs/component"},
+    "runtime_oracle_used": {"const": false}
+  },
+  "$defs": {
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active_piece_count", "template_id"],
+      "properties": {
+        "active_piece_count": {"type": "integer", "minimum": 1, "maximum": 5},
+        "template_id": {"type": "string", "pattern": "^template-sha256:[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

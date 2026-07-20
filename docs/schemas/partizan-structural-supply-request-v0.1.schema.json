@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-structural-supply-request-v0.1.schema.json",
+  "title": "Partizan Wave 69-R target-free structural supply request row v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "board_id", "board_fen"],
+  "properties": {
+    "schema_version": {"const": "partizan.wave69r_structural_supply_request.v0.1"},
+    "board_id": {"type": "string", "pattern": "^board-sha256:[0-9a-f]{64}$"},
+    "board_fen": {"type": "string", "pattern": "^([1-8pnbrqkPNBRQK]+/){7}[1-8pnbrqkPNBRQK]+$"}
+  }
+}

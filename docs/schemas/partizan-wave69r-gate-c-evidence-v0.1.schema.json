@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan Wave 69-R Gate C calibration evidence v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evidence_id", "evidence_kind", "analysis_contract", "decision", "temporal_boundary", "source_repositories", "analysis_implementation", "pre_result_suite_ref", "execution", "targets", "baseline_suite_report_ref", "totals", "scope_boundary"],
+  "properties": {
+    "schema_version": {"const": "partizan.wave69r_gate_c_evidence.v0.1"},
+    "evidence_id": {"type": "string", "pattern": "^evidence-sha256:[0-9a-f]{64}$"},
+    "evidence_kind": {"const": "calibration_only_not_paper_evidence"},
+    "analysis_contract": {"const": "partizan.wave69r_gate_c_calibration_analysis.v0.1"},
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "status", "failing_target_ids", "stage_b_automatically_opened"],
+      "properties": {
+        "category": {"enum": ["Integrity", "Construction", "Semantic", "Calibration"]},
+        "status": {"enum": ["GO", "NO-GO"]},
+        "failing_target_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/target_id"}},
+        "stage_b_automatically_opened": {"const": false}
+      }
+    },
+    "temporal_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["implementation_commit", "supply_pre_result_commit", "supply_evidence_commit", "calibration_pre_result_commit"],
+      "properties": {
+        "implementation_commit": {"$ref": "#/$defs/commit"},
+        "supply_pre_result_commit": {"$ref": "#/$defs/commit"},
+        "supply_evidence_commit": {"$ref": "#/$defs/commit"},
+        "calibration_pre_result_commit": {"$ref": "#/$defs/commit"}
+      }
+    },
+    "source_repositories": {"$ref": "#/$defs/repositories"},
+    "analysis_implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["partizan_commit", "components"],
+      "properties": {
+        "partizan_commit": {"$ref": "#/$defs/commit"},
+        "components": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            {"$ref": "#/$defs/analysis_module"},
+            {"$ref": "#/$defs/analysis_wrapper"},
+            {"$ref": "#/$defs/analysis_schema"}
+          ],
+          "items": false
+        }
+      }
+    },
+    "pre_result_suite_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "suite_id", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "schema_version": {"const": "partizan.wave69r_gate_c_suite.v0.1"},
+        "suite_id": {"type": "string", "pattern": "^suite-sha256:[0-9a-f]{64}$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "generic_verifier_process_count", "proposal_count_per_target", "total_proposals", "proposal_verifier_call_count", "generator_order_preserved", "retries", "adaptive_actions", "join_after_all_ledgers_complete"],
+      "properties": {
+        "mode": {"const": "one_generic_astralbase_batch_per_target_v1"},
+        "generic_verifier_process_count": {"const": 6},
+        "proposal_count_per_target": {"const": 1024},
+        "total_proposals": {"const": 6144},
+        "proposal_verifier_call_count": {"const": 6144},
+        "generator_order_preserved": {"const": true},
+        "retries": {"const": 0},
+        "adaptive_actions": {"const": 0},
+        "join_after_all_ledgers_complete": {"const": true}
+      }
+    },
+    "targets": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"$ref": "#/$defs/target_evidence"}},
+    "baseline_suite_report_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "suite_report_id", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "schema_version": {"const": "partizan.baseline_suite_report.v0.1"},
+        "suite_report_id": {"type": "string", "pattern": "^baseline-suite-report-sha256:[0-9a-f]{64}$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_count", "result_count", "certified_matches", "certified_nonmatches", "rejections", "internal_errors", "certified_coverage_numerator", "symmetry_unique_matches"],
+      "properties": {
+        "target_count": {"const": 6},
+        "result_count": {"const": 6144},
+        "certified_matches": {"type": "integer", "minimum": 0, "maximum": 6144},
+        "certified_nonmatches": {"type": "integer", "minimum": 0, "maximum": 6144},
+        "rejections": {"type": "integer", "minimum": 0, "maximum": 6144},
+        "internal_errors": {"type": "integer", "minimum": 0, "maximum": 6144},
+        "certified_coverage_numerator": {"type": "integer", "minimum": 0, "maximum": 6144},
+        "symmetry_unique_matches": {"type": "integer", "minimum": 0, "maximum": 6144}
+      }
+    },
+    "scope_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_b_material_present", "wave70_material_present", "paper_evidence_claim", "automatic_follow_on_execution"],
+      "properties": {
+        "stage_b_material_present": {"const": false},
+        "wave70_material_present": {"const": false},
+        "paper_evidence_claim": {"const": false},
+        "automatic_follow_on_execution": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"},
+    "analysis_module": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"const": "python/partizan/wave69r_gate_c_evidence.py"}, "sha256": {"$ref": "#/$defs/sha256"}}},
+    "analysis_wrapper": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"const": "scripts/run_wave69r_gate_c_evidence.py"}, "sha256": {"$ref": "#/$defs/sha256"}}},
+    "analysis_schema": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"const": "docs/schemas/partizan-wave69r-gate-c-evidence-v0.1.schema.json"}, "sha256": {"$ref": "#/$defs/sha256"}}},
+    "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"},
+    "repositories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["partizan", "astralbase", "bitmesh", "thermograph"],
+      "properties": {
+        "partizan": {"$ref": "#/$defs/commit"},
+        "astralbase": {"const": "1434fca1fc04d97798ec1b820c56f52f8014ccc7"},
+        "bitmesh": {"const": "ade3417a007b9c8392d8a153abc4b3ed23edf0aa"},
+        "thermograph": {"const": "1d9b6b01c3921aca8c2a8fb13972fee8a4de5041"}
+      }
+    },
+    "results_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "row_count"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "schema_version": {"const": "partizan.verifier_result.v0.1"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "row_count": {"const": 1024}
+      }
+    },
+    "report_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "report_id", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "schema_version": {"const": "partizan.baseline_report.v0.1"},
+        "report_id": {"type": "string", "pattern": "^baseline-report-sha256:[0-9a-f]{64}$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["certified_matches", "certified_nonmatches", "rejections", "internal_errors", "certified_coverage_numerator", "certified_coverage_denominator", "symmetry_unique_matches"],
+      "properties": {
+        "certified_matches": {"type": "integer", "minimum": 0, "maximum": 1024},
+        "certified_nonmatches": {"type": "integer", "minimum": 0, "maximum": 1024},
+        "rejections": {"type": "integer", "minimum": 0, "maximum": 1024},
+        "internal_errors": {"type": "integer", "minimum": 0, "maximum": 1024},
+        "certified_coverage_numerator": {"type": "integer", "minimum": 0, "maximum": 1024},
+        "certified_coverage_denominator": {"const": 1024},
+        "symmetry_unique_matches": {"type": "integer", "minimum": 0, "maximum": 1024}
+      }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coverage_at_least_95_percent", "certified_matches_at_least_8", "symmetry_unique_matches_at_least_4", "internal_errors_zero"],
+      "properties": {
+        "coverage_at_least_95_percent": {"type": "boolean"},
+        "certified_matches_at_least_8": {"type": "boolean"},
+        "symmetry_unique_matches_at_least_4": {"type": "boolean"},
+        "internal_errors_zero": {"type": "boolean"}
+      }
+    },
+    "target_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_id", "family", "bin_index", "results_ref", "baseline_report_ref", "counts", "gates", "target_decision"],
+      "properties": {
+        "target_id": {"$ref": "#/$defs/target_id"},
+        "family": {"type": "string", "minLength": 1},
+        "bin_index": {"enum": [0, 3]},
+        "results_ref": {"$ref": "#/$defs/results_ref"},
+        "baseline_report_ref": {"$ref": "#/$defs/report_ref"},
+        "counts": {"$ref": "#/$defs/counts"},
+        "gates": {"$ref": "#/$defs/gates"},
+        "target_decision": {"enum": ["GO", "NO-GO"]}
+      }
+    }
+  }
+}

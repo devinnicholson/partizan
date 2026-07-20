@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan Wave 69 six-target macro baseline report v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "suite_report_id", "suite_input_id", "stage", "target_reports", "primary", "macro_by_budget", "macro_secondary", "full_ledger"],
+  "properties": {
+    "schema_version": {"const": "partizan.baseline_suite_report.v0.1"},
+    "suite_report_id": {"type": "string", "pattern": "^baseline-suite-report-sha256:[0-9a-f]{64}$"},
+    "suite_input_id": {"type": "string", "pattern": "^baseline-suite-input-sha256:[0-9a-f]{64}$"},
+    "stage": {"enum": ["stage_a", "stage_b"]},
+    "target_reports": {
+      "type": "array", "minItems": 6, "maxItems": 6,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["report_id", "sha256", "target_id", "pool_id"],
+        "properties": {
+          "report_id": {"type": "string", "pattern": "^baseline-report-sha256:[0-9a-f]{64}$"},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"},
+          "pool_id": {"type": "string", "pattern": "^pool-sha256:[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "primary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["metric", "heuristic", "random_mean", "heuristic_minus_random_mean", "fixed_1000_permutation_upper_tail_proportion", "target_bootstrap_95_interval"],
+      "properties": {
+        "metric": {"const": "target_macro_symmetry_unique_de_at_256"},
+        "heuristic": {"$ref": "#/$defs/unsignedRatio"},
+        "random_mean": {"$ref": "#/$defs/unsignedRatio"},
+        "heuristic_minus_random_mean": {"$ref": "#/$defs/signedRatio"},
+        "fixed_1000_permutation_upper_tail_proportion": {"$ref": "#/$defs/unsignedRatio"},
+        "target_bootstrap_95_interval": {
+          "type": "object", "additionalProperties": false,
+          "required": ["lower_numerator", "upper_numerator", "denominator", "replicates", "seed", "method"],
+          "properties": {
+            "lower_numerator": {"type": "integer"},
+            "upper_numerator": {"type": "integer"},
+            "denominator": {"type": "integer", "minimum": 1},
+            "replicates": {"const": 10000},
+            "seed": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+            "method": {"const": "six_target_resampling_with_replacement_nearest_rank_v1"}
+          }
+        }
+      }
+    },
+    "macro_by_budget": {
+      "type": "array", "minItems": 3, "maxItems": 3,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["calls_per_target", "heuristic_macro_de", "random_macro_de_numerator_summary", "random_macro_de_denominator"],
+        "properties": {
+          "calls_per_target": {"enum": [64, 256, 1024]},
+          "heuristic_macro_de": {"$ref": "#/$defs/unsignedRatio"},
+          "random_macro_de_numerator_summary": {"$ref": "#/$defs/exactSummary"},
+          "random_macro_de_denominator": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "macro_secondary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["naudc_through_1024", "calls_to_first_success"],
+      "properties": {
+        "naudc_through_1024": {
+          "type": "object", "additionalProperties": false,
+          "required": ["heuristic_macro", "random_macro_numerator_summary", "random_macro_denominator", "method"],
+          "properties": {
+            "heuristic_macro": {"$ref": "#/$defs/unsignedRatio"},
+            "random_macro_numerator_summary": {"$ref": "#/$defs/exactSummary"},
+            "random_macro_denominator": {"const": 6291456},
+            "method": {"const": "right_endpoint_rectangles_calls_1_through_1024_v1"}
+          }
+        },
+        "calls_to_first_success": {
+          "type": "object", "additionalProperties": false,
+          "required": ["heuristic_target_summary", "heuristic_macro_mean", "heuristic_right_censored_targets", "random_macro_numerator_summary", "random_macro_denominator", "random_right_censored_target_count_summary", "censoring_rule"],
+          "properties": {
+            "heuristic_target_summary": {"$ref": "#/$defs/exactSummary"},
+            "heuristic_macro_mean": {"$ref": "#/$defs/unsignedRatio"},
+            "heuristic_right_censored_targets": {"type": "integer", "minimum": 0, "maximum": 6},
+            "random_macro_numerator_summary": {"$ref": "#/$defs/exactSummary"},
+            "random_macro_denominator": {"const": 6},
+            "random_right_censored_target_count_summary": {"$ref": "#/$defs/exactSummary"},
+            "censoring_rule": {"const": "per_target_pool_size_plus_one_v1"}
+          }
+        }
+      }
+    },
+    "full_ledger": {
+      "type": "object", "additionalProperties": false,
+      "required": ["aggregation", "calls", "raw_successes", "symmetry_unique_successes", "outcome_counts", "outcome_rates"],
+      "properties": {
+        "aggregation": {"const": "equal_size_target_macro_equivalent_to_pooled_counts"},
+        "calls": {"type": "integer", "minimum": 6144},
+        "raw_successes": {"type": "integer", "minimum": 0},
+        "symmetry_unique_successes": {"type": "integer", "minimum": 0},
+        "outcome_counts": {"$ref": "#/$defs/outcomeCounts"},
+        "outcome_rates": {"$ref": "#/$defs/outcomeRates"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "unsignedRatio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["numerator", "denominator"],
+      "properties": {"numerator": {"type": "integer", "minimum": 0}, "denominator": {"type": "integer", "minimum": 1}}
+    },
+    "signedRatio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["numerator", "denominator"],
+      "properties": {"numerator": {"type": "integer"}, "denominator": {"type": "integer", "minimum": 1}}
+    },
+    "exactSummary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mean", "median", "percentile_025", "percentile_975", "percentile_method"],
+      "properties": {
+        "mean": {"$ref": "#/$defs/unsignedRatio"},
+        "median": {"$ref": "#/$defs/unsignedRatio"},
+        "percentile_025": {"type": "integer", "minimum": 0},
+        "percentile_975": {"type": "integer", "minimum": 0},
+        "percentile_method": {"const": "nearest_rank_ceiling_v1"}
+      }
+    },
+    "outcomeCounts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["verified_match", "verified_nonmatch", "rejection", "internal_error"],
+      "properties": {
+        "verified_match": {"type": "integer", "minimum": 0},
+        "verified_nonmatch": {"type": "integer", "minimum": 0},
+        "rejection": {"type": "integer", "minimum": 0},
+        "internal_error": {"type": "integer", "minimum": 0}
+      }
+    },
+    "outcomeRates": {
+      "type": "object", "additionalProperties": false,
+      "required": ["verified_match", "verified_nonmatch", "rejection", "internal_error"],
+      "properties": {
+        "verified_match": {"$ref": "#/$defs/unsignedRatio"},
+        "verified_nonmatch": {"$ref": "#/$defs/unsignedRatio"},
+        "rejection": {"$ref": "#/$defs/unsignedRatio"},
+        "internal_error": {"$ref": "#/$defs/unsignedRatio"}
+      }
+    }
+  }
+}

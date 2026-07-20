@@ -1,0 +1,466 @@
+{
+  "wave_id": "wave_69r_proof_carrying_generator_repair",
+  "objective": "Repair structural candidate supply with a target-blind proof-carrying two-component grammar, require an outcome-blind structural-supply GO, and only then rerun calibration on the six immutable Wave 69 Stage A targets without touching Stage B or Wave 70.",
+  "non_negotiables": [
+    "Wave 69 Stage A at evidence commit 6ddd22af4adb7ff8f6f4c361a9132720a47e87b7 remains immutable calibration evidence and its NO-GO is never overwritten, filtered, repaired, or promoted to a paper result.",
+    "Wave 69-R is a new preregistered calibration with a new generator version, family, configuration schema, seed domains, receipts, pools, implementation commit, and evidence commits.",
+    "Only the six targets already assigned to Wave 69 Stage A may be used; there is no target substitution.",
+    "No Stage B or Wave 70 proposal, pool, ordering, verifier result, or tuning artifact may be generated or inspected in Wave 69-R.",
+    "The first empirical gate is a 4,096-board outcome-blind structural-supply audit whose audited code and dependency surface do not implement, invoke, or expose requested-target identity, value class, Thermograph structure, verifier match status, or any learned-ranker label.",
+    "No repaired 1,024-row target calibration pool may be generated until an independently audited structural-supply evidence commit records GO.",
+    "The repaired generator constructs the fixed d1-through-d8 alternating P,p,P,p,P,p,P,p wall, one to five nonwall pieces in each of exactly two conservative components, and no cross-component entry under partizan.dfile_two_component_constructive_grammar.v0.2; it does not post-filter against Astralbase target outcomes.",
+    "Every v0.2 board fixes all non-board FEN metadata to w - - 0 1; metadata variation is forbidden because the evaluator ignores it while candidate and reflection-orbit identity include it.",
+    "Generator identity partizan_candidate_pool_generator version 0.2.0, family dfile_two_component_constructive_grammar_v2, config schema partizan.candidate_generator.v0.2, operator seeded_constructive_component_composition_v2, seed domains, attempt policy, feature contract, and receipt contract are committed at I before any empirical Gate S or Gate C suite input or result byte.",
+    "Wave 69-R uses candidate generation receipt v0.2 and candidate pool manifest v0.3 with explicit binding to construction contract partizan.dfile_two_component_constructive_grammar.v0.2 and constructive catalog partizan.dfile_two_component_constructive_catalog.v0.2 by identity and content digest; receipt v0.1 and pool manifest v0.2 remain legacy-only for immutable Wave 69 replay.",
+    "Pre-I unit and property tests may generate synthetic fixture bytes only under explicitly non-empirical test seed domains; they may not use a locked Wave 69-R supply or calibration seed, any Wave 69 registry target spec, or any evidence path.",
+    "I pins clean Astralbase 1434fca1fc04d97798ec1b820c56f52f8014ccc7, Bitmesh ade3417a007b9c8392d8a153abc4b3ed23edf0aa, and Thermograph 1d9b6b01c3921aca8c2a8fb13972fee8a4de5041; Partizan I must be a direct child of 6ddd22af4adb7ff8f6f4c361a9132720a47e87b7.",
+    "Gate C freshly computes 1,000 random orderings per repaired pool with SplitMix64 and rejection-sampled Fisher-Yates; replicate r uses the first 64 bits of SHA256(partizan/w69r/random/v1 NUL pool_id NUL r), and the fixed heuristic and all budgets remain unchanged.",
+    "Every generated artifact is reproduced in two separate Python processes, is byte-identical, has unique clock-free candidate and file-reflection-orbit identities, and is bound by repository-relative receipts and four clean immutable commits.",
+    "Each repaired target calibration retains the Wave 69 gates: at least 95 percent certified coverage, at least eight exact matches, at least four symmetry-unique exact matches, and zero internal errors, with all 1,024 calls retained.",
+    "If structural coverage passes but exact support fails, Stage B remains closed and the bottleneck is classified as target-conditioned semantic proposal supply; the grammar is not outcome-tuned on the same calibration rows.",
+    "The implementation and both empirical gates use explicit I to P to clean detached-I execution to E temporal provenance; result artifacts never masquerade as implementation inputs.",
+    "Learned ranking and Wave 70 remain NO-GO until a canonical, semantic, leakage-audited target-view contract replaces the opaque identity-digest-only view.",
+    "The claim remains bounded structural-tree identity for chess-derived board forms, not arbitrary CGT equivalence or exact orthodox chess."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w69r_freeze_protocol",
+        "w69r_specify_construction_contract"
+      ]
+    },
+    {
+      "parallel": [
+        "w69r_implement_generator",
+        "w69r_implement_structure_only_audit"
+      ]
+    },
+    {
+      "parallel": [
+        "w69r_red_team_implementation"
+      ]
+    },
+    {
+      "parallel": [
+        "w69r_commit_implementation"
+      ]
+    },
+    {
+      "parallel": [
+        "w69r_freeze_supply_inputs"
+      ]
+    },
+    {
+      "parallel": [
+        "w69r_execute_and_audit_supply"
+      ]
+    },
+    {
+      "parallel": [
+        "w69r_freeze_calibration_inputs"
+      ]
+    },
+    {
+      "parallel": [
+        "w69r_execute_calibration"
+      ]
+    },
+    {
+      "parallel": [
+        "w69r_red_team_and_report"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w69r_freeze_protocol",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/wave_69r_proof_carrying_generator_repair.json",
+        "docs/discovery_wave_69r_preregistration.md"
+      ],
+      "depends_on": [],
+      "prompt": "Freeze the Wave 69-R generator-repair question, exact six-target reuse, structural-supply gate, calibration gates, no-substitution rule, forbidden Stage B and Wave 70 conduct, decision tree, and two result-separation workflows before any implementation output is generated.",
+      "outputs": [
+        "Machine-valid Wave 69-R dispatch plan",
+        "Human-readable generator-repair preregistration"
+      ],
+      "commands": [
+        "python3 agents/network.py validate-wave agents/waves/wave_69r_proof_carrying_generator_repair.json",
+        "python3 scripts/validate_waves.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "The plan validates against the research network.",
+        "The prior Wave 69 Stage A NO-GO and all 6,144 rows remain immutable.",
+        "The document fixes the supply-audit sample, gates, target set, calibration pool size, seed derivations, temporal provenance, and failure transitions.",
+        "All unimplemented or empirical commands are labeled pending implementation rather than claimed as passed."
+      ]
+    },
+    {
+      "id": "w69r_specify_construction_contract",
+      "agent": "theory_steward",
+      "repo": ".",
+      "write_scope": [
+        "docs/discovery_wave_69r_constructive_grammar_spec.md",
+        "docs/discovery_wave_69r_construction_catalog.v0.2.json",
+        "docs/schemas/partizan-dfile-two-component-constructive-catalog-v0.2.schema.json",
+        "docs/schemas/partizan-structural-construction-certificate-v0.1.schema.json"
+      ],
+      "depends_on": [],
+      "prompt": "Specify partizan.dfile_two_component_constructive_grammar.v0.2, canonical catalog partizan.dfile_two_component_constructive_catalog.v0.2, and a machine-checkable certificate for the fixed d-file wall, exactly two strict conservative components with one to five nonwall pieces each, no e-file material, no cross-component move or capture, board-syntax validity, a 36,722-node total depth-2 bound, and sound composition under bitmesh:conservative_legal_independence:v0. Distinguish generator construction claims from independent Bitmesh certification and from target identity.",
+      "outputs": [
+        "Proof obligations and constructive grammar invariants",
+        "Canonical content-addressed constructive catalog and strict schema",
+        "Versioned structural construction-certificate schema",
+        "Adversarial counterexample catalog for every Wave 69 rejection class"
+      ],
+      "commands": [
+        "python3 -m unittest tests.test_discovery_candidate_pool_v2 tests.test_wave69r_supply_freeze",
+        "cargo --config 'patch.\"crates-io\".bitmesh.path=\"../bitmesh\"' test --manifest-path engine/gate_s_checker/Cargo.toml --locked --offline"
+      ],
+      "acceptance": [
+        "Every emitted board carries construction data sufficient to recompute the four theorem obligations without target outcomes.",
+        "The canonical catalog identity and byte digest are independently bound by generator configuration, receipt v0.2, pool manifest v0.3, and every construction certificate.",
+        "The contract does not claim target identity, arbitrary CGT equivalence, or orthodox-chess reachability.",
+        "Independent Bitmesh certification remains authoritative when it disagrees with the generator certificate.",
+        "The contract is fixed at implementation commit I before supply-audit generation."
+      ]
+    },
+    {
+      "id": "w69r_implement_generator",
+      "agent": "discovery_curator",
+      "repo": ".",
+      "write_scope": [
+        "engine/orchestrator.py",
+        "python/partizan/discovery.py",
+        "python/partizan/discovery_cli.py",
+        "docs/schemas/partizan-candidate-board-stream-v0.1.schema.json",
+        "docs/schemas/partizan-candidate-generation-receipt-v0.2.schema.json",
+        "docs/schemas/partizan-candidate-pool-manifest-v0.3.schema.json",
+        "tests/test_discovery_candidate_pool.py",
+        "tests/test_discovery_candidate_pool_v2.py",
+        "tests/test_discovery_wave69r_lineage_contracts.py"
+      ],
+      "depends_on": [
+        "w69r_freeze_protocol",
+        "w69r_specify_construction_contract"
+      ],
+      "prompt": "Implement generator 0.2.0 as a deterministic constructive two-component composer. Given an explicit seed, neither target spec nor outcomes may enter or steer the board stream; production Gate C streams may differ because the protocol seed is derived from an opaque target id. Fix FEN metadata to w - - 0 1, derive only preregistered proposal features, bind the construction contract, catalog, clean code commit, raw certified board stream, and pure proposal projection in receipt v0.2 and pool manifest v0.3, reject duplicate state and reflection orbits, and never call Astralbase or consume target outcomes.",
+      "outputs": [
+        "Deterministic proof-carrying generator 0.2.0",
+        "Receipt and pool contracts that bind generator configuration and construction contract",
+        "Property, replay, duplicate, cap, and forbidden-input tests"
+      ],
+      "commands": [
+        "python3 -m unittest tests.test_discovery_candidate_pool tests.test_discovery_candidate_pool_v2 tests.test_discovery_wave69r_lineage_contracts",
+        "python3 scripts/validate_waves.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "The exact committed identity is partizan_candidate_pool_generator 0.2.0 with family dfile_two_component_constructive_grammar_v2 and config schema partizan.candidate_generator.v0.2.",
+        "Gate S consumes the strict target-free partizan.candidate_board_stream.v0.1 artifact; target binding is a later pure projection used only for Gate C.",
+        "The same seed and configuration produce byte-identical artifacts in separate Python processes.",
+        "Changing target spec or result bytes while holding the explicit seed and non-target generator inputs fixed cannot change the raw board stream; changing the protocol seed may change it.",
+        "Every emitted FEN has exact metadata w - - 0 1, and negative tests reject metadata-only variants rather than counting them as distinct support.",
+        "The grammar satisfies the construction obligations by design and does not use outcome-dependent rejection sampling.",
+        "Receipt validation fails on an altered generator version, configuration digest, seed domain, construction contract, artifact, or repository commit."
+      ]
+    },
+    {
+      "id": "w69r_implement_structure_only_audit",
+      "agent": "exact_value_engineer",
+      "repo": ".",
+      "write_scope": [
+        "engine/gate_s_checker/Cargo.toml",
+        "engine/gate_s_checker/Cargo.lock",
+        "engine/gate_s_checker/src/main.rs",
+        "scripts/wave69r_structural_supply.py",
+        "python/partizan/gate_s.py",
+        "docs/schemas/partizan-structural-supply-request-v0.1.schema.json",
+        "docs/schemas/partizan-structural-supply-result-v0.1.schema.json",
+        "docs/schemas/partizan-structural-supply-evidence-v0.1.schema.json",
+        "docs/schemas/partizan-wave69r-supply-determinism-receipt-v0.1.schema.json",
+        "docs/schemas/partizan-wave69r-supply-shard-manifest-v0.1.schema.json",
+        "docs/schemas/partizan-wave69r-supply-suite-manifest-v0.1.schema.json",
+        "python/partizan/wave69r_supply.py",
+        "scripts/freeze_wave69r_supply.py",
+        "tests/test_wave69r_structural_supply.py",
+        "tests/test_wave69r_supply_freeze.py"
+      ],
+      "depends_on": [
+        "w69r_freeze_protocol",
+        "w69r_specify_construction_contract"
+      ],
+      "prompt": "Implement the partizan.wave69r_structural_supply_audit.v0.1 outcome-blind harness as an isolated dedicated Rust crate plus a narrow Python orchestration wrapper. Parse the board-placement field of each six-field FEN with shakmaty::Board::from_str so kingless formal boards remain valid, and call the pinned Bitmesh conservative legal-independence proof API. Strictly reject target and unknown fields. Each structural predicate is tri-state pass, fail, or not_evaluated because the pinned checker returns the first typed failure; exhaustively map its typed errors. The audited code and dependency surface must not implement or invoke weak analyze_subsystems/find_subsystems observations, standard-Chess position parsing, Astralbase dummy-target substitution, Thermograph, value-class computation, result labeling, proposal ranking, or learned-feature production.",
+      "outputs": [
+        "Structure-only supply freezer and evaluator",
+        "Strict request-row, result-row, and E_s evidence schemas",
+        "Negative tests proving forbidden target/outcome fields cannot enter or leave the interface"
+      ],
+      "commands": [
+        "python3 -m unittest tests.test_wave69r_structural_supply tests.test_wave69r_supply_freeze",
+        "cargo --config 'patch.\"crates-io\".bitmesh.path=\"../bitmesh\"' test --manifest-path engine/gate_s_checker/Cargo.toml --locked --offline",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "The harness reports only board binding, checker provenance, proof or first structural failure, four pass/fail/not_evaluated predicate states, and internal-error state.",
+        "No requested target spec is an input and no structural target identity or value is an output.",
+        "The Python boundary validates the exact six-field envelope and projects only the board field; the binary parses only that board field with Board::from_str, accepts the preregistered kingless formal-board domain, and rejects malformed board encodings.",
+        "Only the pinned Bitmesh conservative proof API is authoritative; analyze_subsystems, find_subsystems, and Astralbase dummy targets are forbidden.",
+        "Independent Bitmesh results, not generator self-certificates, decide the supply gate.",
+        "The full 4,096-row ledger can be replayed deterministically from frozen inputs."
+      ]
+    },
+    {
+      "id": "w69r_red_team_implementation",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "docs/discovery_wave_69r_implementation_audit.md"
+      ],
+      "depends_on": [
+        "w69r_implement_generator",
+        "w69r_implement_structure_only_audit"
+      ],
+      "prompt": "Before implementation commit I, audit constructive soundness, deterministic receipts, target blindness, checker capability separation, seed domains, exact artifact inventory, and the absence of Stage B, Wave 70, or target-result access. Issue implementation GO or stop.",
+      "outputs": [
+        "Independent implementation and leakage audit",
+        "GO or NO-GO for implementation commit I"
+      ],
+      "commands": [
+        "python3 -m unittest tests.test_discovery_candidate_pool_v2 tests.test_discovery_wave69r_lineage_contracts tests.test_wave69r_supply_freeze tests.test_wave69r_structural_supply tests.test_wave69r_gate_c_suite tests.test_wave69r_gate_c_evidence",
+        "cargo --config 'patch.\"crates-io\".bitmesh.path=\"../bitmesh\"' test --manifest-path engine/gate_s_checker/Cargo.toml --locked --offline",
+        "python3 scripts/validate_waves.py && git diff --check"
+      ],
+      "acceptance": [
+        "The new grammar is constructive and outcome-blind.",
+        "The audited structure-only harness does not implement or invoke target-identity or value computation.",
+        "All identifiers, schemas, seeds, gates, and artifact paths agree with the preregistration.",
+        "No empirical artifact is generated during implementation audit; synthetic unit/property fixtures use only non-empirical test seed domains and synthetic target fixtures."
+      ]
+    },
+    {
+      "id": "w69r_commit_implementation",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "docs/discovery_wave_69r_implementation_freeze.md"
+      ],
+      "depends_on": [
+        "w69r_red_team_implementation"
+      ],
+      "prompt": "After implementation red-team GO, require current Partizan HEAD 6ddd22af4adb7ff8f6f4c361a9132720a47e87b7 and record the accepted contract inventory plus exact Astralbase 1434fca1fc04d97798ec1b820c56f52f8014ccc7, Bitmesh ade3417a007b9c8392d8a153abc4b3ed23edf0aa, and Thermograph 1d9b6b01c3921aca8c2a8fb13972fee8a4de5041 boundaries; commit the complete Wave 69-R implementation as immutable direct-child I; then recheck that all four repositories are clean and that committed Partizan bytes exactly match the reviewed protocol, grammar, catalog, schemas, harness, orchestration, and tests. Generate no empirical artifact.",
+      "outputs": [
+        "Implementation-freeze record",
+        "Immutable full Partizan implementation commit I",
+        "Post-commit clean four-repository attestation"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION - verify implementation-red-team GO and exact reviewed-file inventory",
+        "PENDING IMPLEMENTATION - create immutable implementation commit I before empirical Gate S or Gate C suite input or result bytes",
+        "PENDING IMPLEMENTATION - rerun focused tests and require clean Partizan, Astralbase, Bitmesh, and Thermograph repositories at their bound commits"
+      ],
+      "acceptance": [
+        "I contains the preregistration, wave plan, construction contract, generator, target-free board stream, structure-only harness, schemas, orchestration, tests, and implementation-freeze record.",
+        "I contains no Gate S or Gate C generated input, checker output, verifier result, or derived report.",
+        "All four repositories are clean and their full commits are recorded after I is created.",
+        "I is a direct child of 6ddd22af4adb7ff8f6f4c361a9132720a47e87b7 and pins the three exact external commits; any different or dirty execution repository is rejected.",
+        "Any byte drift or test failure stops before supply generation and requires a new implementation review."
+      ]
+    },
+    {
+      "id": "w69r_freeze_supply_inputs",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "data/discovery/wave_69r/structural_supply/inputs",
+        "docs/discovery_wave_69r_structural_supply_freeze.md"
+      ],
+      "depends_on": [
+        "w69r_commit_implementation"
+      ],
+      "prompt": "At clean immutable implementation commit I, generate and freeze four 1,024-board target-free supply shards using the locked supply seed domain. Bind byte-identical double execution, receipts, construction certificates, exact inventory, and four clean repository commits in pre-result commit P_s. Do not run Bitmesh and do not generate target calibration pools.",
+      "outputs": [
+        "Four frozen target-free structural-supply input shards totaling 4,096 unique boards",
+        "Canonical receipts and construction certificates",
+        "Pre-result supply-suite manifest and commit P_s"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION - generate each supply shard twice at detached clean I and require byte equality",
+        "PENDING IMPLEMENTATION - validate 4,096 unique state and reflection-orbit identities and the exact artifact inventory",
+        "PENDING IMPLEMENTATION - commit only the complete supply inputs as P_s before any structure-only checker call"
+      ],
+      "acceptance": [
+        "Seeds are derived from SHA256(partizan/w69r/supply/v1 NUL shard_index_decimal) for shard indices 0 through 3.",
+        "Exactly 4,096 target-free unique boards are frozen before the first checker result.",
+        "P_s binds I, generator/config/receipt/certificate identities, four clean commits, and every input byte.",
+        "No calibration, Stage B, Wave 70, verifier, target identity, target value, or ordering artifact exists."
+      ]
+    },
+    {
+      "id": "w69r_execute_and_audit_supply",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "data/discovery/wave_69r/structural_supply/evidence",
+        "docs/discovery_wave_69r_structural_supply_audit.md",
+        "docs/discovery_wave_69r_structural_supply_audit.v0.1.json"
+      ],
+      "depends_on": [
+        "w69r_freeze_supply_inputs"
+      ],
+      "prompt": "Materialize P_s inputs in a clean detached worktree at I, run the pinned structure-only Bitmesh checker once per board, replay independently, and commit the complete ledger and GO or NO-GO as E_s. GO requires 4,096 of 4,096 independent conservative-decomposition passes and zero errors; any miss ends Wave 69-R before calibration pool generation.",
+      "outputs": [
+        "Complete 4,096-row structure-only ledger",
+        "Independent replay and capability-boundary audit",
+        "Supply evidence commit E_s with GO or NO-GO"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION - run the structure-only checker from clean detached I over the exact P_s suite",
+        "PENDING IMPLEMENTATION - independently replay all rows and recompute predicates, hashes, counts, and provenance",
+        "PENDING IMPLEMENTATION - scan P_s and E_s for forbidden target, Thermograph, result-label, Stage B, and Wave 70 fields"
+      ],
+      "acceptance": [
+        "GO requires 100 percent conservative legal independence, frozen non-capturable barriers, strict two-component decomposition, no cross-component entry, and zero internal errors across 4,096 rows.",
+        "Any generator certificate or Bitmesh disagreement is a NO-GO, with Bitmesh authoritative.",
+        "All failures remain in the ledger; there is no retry, replacement, filtering, or threshold rounding.",
+        "Calibration pools remain absent unless E_s records GO."
+      ]
+    },
+    {
+      "id": "w69r_freeze_calibration_inputs",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "python/partizan/wave69r_gate_c_suite.py",
+        "scripts/freeze_wave69r_gate_c_suite.py",
+        "docs/schemas/partizan-wave69r-gate-c-suite-v0.1.schema.json",
+        "docs/schemas/partizan-wave69r-policy-orders-v0.1.schema.json",
+        "tests/test_wave69r_gate_c_suite.py",
+        "data/discovery/wave_69r/calibration/inputs",
+        "docs/discovery_wave_69r_calibration_freeze.md"
+      ],
+      "depends_on": [
+        "w69r_execute_and_audit_supply"
+      ],
+      "prompt": "Only after E_s GO, use clean detached I to generate six new 1,024-row pools for the exact Wave 69 Stage A targets, preserve the raw certified board-stream and construction-certificate sidecars, bind their pure proposal projections in receipt v0.2 and pool manifest v0.3, freshly compute proposal-bound random and fixed-heuristic order commitments under the unchanged Wave 69 algorithms and locked partizan/w69r/random/v1 seed domain, and commit all pre-verification inputs as P_c. Do not reuse old Wave 69 commitment bytes, call Astralbase, or touch Stage B or Wave 70.",
+      "outputs": [
+        "Six repaired 1,024-row calibration pools for the immutable Stage A target set",
+        "Raw certified board streams, construction-certificate sidecars, pure proposal projections, receipts, manifests, and pre-verification ordering commitments",
+        "Calibration pre-result commit P_c"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION - require E_s GO, generate each calibration pool twice at clean detached I, and compare bytes",
+        "PENDING IMPLEMENTATION - validate all 6,144 proposals, receipts, manifests, order commitments, target ids, and exact inventory",
+        "PENDING IMPLEMENTATION - commit the complete pre-result suite as P_c before any Astralbase call"
+      ],
+      "acceptance": [
+        "The target ids exactly equal the six original Wave 69 Stage A ids and no substitution is possible.",
+        "Seeds use the first 64 bits of SHA256(partizan/w69r/calibration/v1 NUL target_id_utf8).",
+        "All six pools have 1,024 unique candidate and reflection-orbit identities and are bound to I and four clean commits.",
+        "Random and fixed-heuristic order artifacts are freshly computed from each repaired pool under the unchanged algorithms; their bytes and pool bindings are new and no Wave 69 order commitment is reused.",
+        "Random replicate r uses the first 64 bits of SHA256(partizan/w69r/random/v1 NUL pool_id NUL r), SplitMix64, and rejection-sampled Fisher-Yates for exactly 1,000 replicates.",
+        "Receipt v0.2 and manifest v0.3 bind each proposal to its raw certified board row, construction-certificate sidecar, construction contract, and catalog digest without exposing the certificate to the ranker projection.",
+        "P_c contains no verifier result or report and exists before any target outcome is revealed."
+      ]
+    },
+    {
+      "id": "w69r_execute_calibration",
+      "agent": "exact_value_engineer",
+      "repo": ".",
+      "write_scope": [
+        "python/partizan/wave69r_gate_c_evidence.py",
+        "scripts/run_wave69r_gate_c_evidence.py",
+        "docs/schemas/partizan-wave69r-gate-c-evidence-v0.1.schema.json",
+        "tests/test_wave69r_gate_c_evidence.py",
+        "data/discovery/wave_69r/calibration/evidence",
+        "docs/discovery_wave_69r_calibration_report.json"
+      ],
+      "depends_on": [
+        "w69r_freeze_calibration_inputs"
+      ],
+      "prompt": "Materialize the exact P_c inputs in a clean detached worktree at I, run one complete Astralbase verifier pass in generator order, retain every row, join only after completion to the precommitted baseline orders, and produce E_c without adaptive retry or target replacement.",
+      "outputs": [
+        "Six complete 1,024-row verifier ledgers",
+        "Repaired calibration gate and baseline reports",
+        "Calibration evidence commit E_c"
+      ],
+      "commands": [
+        "PENDING EXECUTION - run scripts/run_wave69r_gate_c_evidence.py from clean detached I against exact committed P_c",
+        "PENDING EXECUTION - revalidate complete ledgers and recompute result-bound reports without verifier calls",
+        "PENDING EXECUTION - commit only complete results and reports as direct-child E_c"
+      ],
+      "acceptance": [
+        "There is exactly one schema-valid result per proposal in input order and all 6,144 calls remain in the ledger.",
+        "No target is retried, dropped, or replaced.",
+        "Per-target certified coverage, exact matches, symmetry-unique matches, rejection causes, and internal errors are reported.",
+        "These results remain calibration, not paper evidence."
+      ]
+    },
+    {
+      "id": "w69r_red_team_and_report",
+      "agent": "paper_critic",
+      "repo": ".",
+      "write_scope": [
+        "docs/discovery_wave_69r_calibration_audit.md",
+        "docs/discovery_wave_69r_calibration_audit.v0.1.json",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w69r_execute_calibration"
+      ],
+      "prompt": "Independently audit the complete I, P_s, detached-I, E_s, P_c, detached-I, E_c chain and issue the preregistered decision. Open Stage B planning only if every target passes every calibration gate; if coverage passes but exact support fails, classify target-conditioned semantic proposal supply as the next bottleneck while preserving the semantic target-view NO-GO for learned ranking.",
+      "outputs": [
+        "Independent Wave 69-R calibration audit",
+        "Machine-readable GO or categorized NO-GO",
+        "Bounded research-claim and next-gate updates"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION - independently recompute every hash, receipt, result, gate, symmetry count, and temporal ancestry claim",
+        "PENDING IMPLEMENTATION - verify that Stage B and Wave 70 remain proposal- and outcome-unseen",
+        "PENDING IMPLEMENTATION - audit manuscript-facing claims against calibration-only and bounded-identity limits"
+      ],
+      "acceptance": [
+        "Full GO requires every target to have at least 95 percent certified coverage, eight exact matches, four symmetry-unique exact matches, and zero internal errors.",
+        "Coverage GO with any exact-support miss is a semantic-supply NO-GO: Stage B stays closed and a new preregistration is required.",
+        "Any coverage or integrity miss is a construction or execution NO-GO with all rows retained.",
+        "Learned ranking remains blocked until the independent semantic target-view gate passes, regardless of calibration outcome."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave69r_protocol_validates",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_69r_proof_carrying_generator_repair.json && python3 scripts/validate_waves.py && git diff --check",
+      "success_signal": "The generator-repair protocol validates and freezes the two-gate, six-target, no-holdout-access design."
+    },
+    {
+      "id": "wave69r_implementation_i",
+      "command": "PENDING IMPLEMENTATION - audit and commit the preregistration, constructive grammar, structure-only harness, schemas, and tests before empirical Gate S or Gate C suite bytes",
+      "success_signal": "Immutable I binds the exact generator and checker capabilities, schemas, seed domains, four source commits, and forbidden-access rules."
+    },
+    {
+      "id": "wave69r_structural_supply",
+      "command": "PENDING IMPLEMENTATION - validate P_s, replay the 4,096-row detached-I structure-only ledger, and audit E_s",
+      "success_signal": "All 4,096 boards independently satisfy the four conservative-decomposition obligations with zero errors; only then may calibration inputs be generated."
+    },
+    {
+      "id": "wave69r_repaired_calibration",
+      "command": "PENDING IMPLEMENTATION - validate P_c, replay all 6,144 detached-I Astralbase results, and audit E_c",
+      "success_signal": "All six immutable Stage A targets pass 95 percent coverage, eight exact matches, four symmetry-unique exact matches, and zero errors without substitution."
+    },
+    {
+      "id": "reserved_targets_untouched",
+      "command": "PENDING IMPLEMENTATION - audit the repository and execution logs for any Stage B or Wave 70 proposal, pool, ordering, verifier result, or tuning artifact",
+      "success_signal": "Stage B and Wave 70 remain entirely proposal- and outcome-unseen throughout Wave 69-R."
+    },
+    {
+      "id": "semantic_ranker_view_no_go",
+      "command": "PENDING FUTURE WORK - approve a canonical semantic target representation and negative leakage controls before any learned ranker or Wave 70 pool",
+      "success_signal": "Opaque target ids cannot serve as model signal and learned ranking remains closed until an independently audited semantic target view exists."
+    }
+  ]
+}

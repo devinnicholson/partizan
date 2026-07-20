@@ -1,0 +1,318 @@
+{
+  "wave_id": "wave_69_preregistered_discovery_baselines",
+  "objective": "Create publication-grade random and fixed-heuristic discovery baselines on preregistered bounded structural game-form targets while reserving an untouched Wave 70 learned-ranker holdout.",
+  "non_negotiables": [
+    "This plan remains draft and pending implementation until a future immutable Partizan commit contains the preregistration and accepted registry, generator, and baseline code before Stage A outputs.",
+    "The complete target registry and Stage A, Stage B, and Wave 70 assignments are committed before Stage A proposal generation.",
+    "The candidate source is the 108-row clean reference atlas with SHA-256 58046bbcbb4644018d4bf31907fcd555220d2bb8e2a5f67607beb6f515883dbf, regenerated from Astralbase 1434fca1fc04d97798ec1b820c56f52f8014ccc7, Bitmesh ade3417a007b9c8392d8a153abc4b3ed23edf0aa, and Thermograph 1d9b6b01c3921aca8c2a8fb13972fee8a4de5041, using Partizan base 89c325d52a67bde4d6ac997f4527b7c56a119cf7.",
+    "A temporary atlas path is not evidence; the integrated freeze binds a durable artifact path, the atlas content hash, and the future Partizan commit.",
+    "Every pool and every baseline ordering is frozen and hashed before any verifier result is revealed.",
+    "Random and fixed-heuristic baselines rank the same frozen proposals and join to one complete verifier ledger.",
+    "Stage A is calibration only; Stage B is evidence and retains failed targets and negative outcomes.",
+    "The primary metric is macro DE@256 using symmetry-unique verified matches per verifier call.",
+    "The fixed heuristic uses proposal-only pre-verification fields and is locked before Stage A outcomes.",
+    "Wave 70 targets receive no proposal generation, verification, or tuning during Wave 69.",
+    "Wave 70 is NO-GO until a versioned leakage-audited semantic target representation replaces the opaque-digest-only ranker view.",
+    "The domain remains a bounded chess-derived board form, not arbitrary CGT equivalence or exact orthodox chess.",
+    "No learned-ranker, agency, temperature, aesthetic-performance, or Stiller/Elkies exactness claim is made in Wave 69."
+  ],
+  "dispatch_order": [
+    {
+      "parallel": [
+        "w69_freeze_preregistration"
+      ]
+    },
+    {
+      "parallel": [
+        "w69_build_target_registry",
+        "w69_implement_candidate_generator",
+        "w69_implement_baseline_evaluator"
+      ]
+    },
+    {
+      "parallel": [
+        "w69_materialize_stage_a"
+      ]
+    },
+    {
+      "parallel": [
+        "w69_red_team_stage_a"
+      ]
+    },
+    {
+      "parallel": [
+        "w69_materialize_stage_b"
+      ]
+    },
+    {
+      "parallel": [
+        "w69_audit_and_report"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "w69_freeze_preregistration",
+      "agent": "research_director",
+      "repo": ".",
+      "write_scope": [
+        "agents/waves/wave_69_preregistered_discovery_baselines.json",
+        "docs/discovery_wave_69_preregistration.md"
+      ],
+      "depends_on": [],
+      "prompt": "Freeze the Wave 69 target-selection algorithm, A/B pools, baselines, metrics, failure policy, evidence boundary, and Wave 70 holdout before implementing or running the experiment.",
+      "outputs": [
+        "Machine-valid Wave 69 dispatch plan",
+        "Human-readable preregistration with explicit calibration and evidence boundaries"
+      ],
+      "commands": [
+        "python3 agents/network.py validate-wave agents/waves/wave_69_preregistered_discovery_baselines.json",
+        "python3 scripts/validate_waves.py",
+        "git diff --check"
+      ],
+      "acceptance": [
+        "The plan validates against the research network.",
+        "The preregistration fixes target selection, sample sizes, baselines, primary metric, gates, and holdout conduct.",
+        "The document remains draft until the future integrated implementation commit and does not attribute itself to the 89c325d base.",
+        "Unimplemented commands are labeled pending implementation rather than represented as passing gates."
+      ]
+    },
+    {
+      "id": "w69_build_target_registry",
+      "agent": "theory_steward",
+      "repo": ".",
+      "write_scope": [
+        "scripts/build_wave69_target_registry.py",
+        "tests/test_wave69_target_registry.py",
+        "docs/discovery_wave_69_target_registry.json"
+      ],
+      "depends_on": [
+        "w69_freeze_preregistration"
+      ],
+      "prompt": "Validate the content-addressed 108-row clean atlas boundary, then implement the preregistered replay-based 18-target registry, deterministic six-bin topology selection, and immutable Stage A/B/Wave 70 assignment without inspecting Wave 69 candidate outcomes.",
+      "outputs": [
+        "Replay-derived 18-target registry",
+        "Six targets each for Stage A, Stage B, and Wave 70",
+        "Selection and split determinism tests"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION — test the target registry builder and replay every selected target from four clean immutable commits",
+        "PENDING IMPLEMENTATION — validate the committed registry hash, uniqueness, topology balance, and 6/6/6 split"
+      ],
+      "acceptance": [
+        "The durable source artifact has 108 rows and SHA-256 58046bbcbb4644018d4bf31907fcd555220d2bb8e2a5f67607beb6f515883dbf and binds the declared clean source commits.",
+        "No temporary path or historical workspace provenance is promoted as evidence.",
+        "Rows exposed in Wave 68 are excluded before binning.",
+        "Each split has two targets from each of the three topology families.",
+        "All targets bind the bounded rule and SHA-256 structural identity."
+      ]
+    },
+    {
+      "id": "w69_implement_candidate_generator",
+      "agent": "discovery_curator",
+      "repo": ".",
+      "write_scope": [
+        "python/partizan/discovery_generator.py",
+        "python/partizan/discovery_cli.py",
+        "tests/test_discovery_generator.py"
+      ],
+      "depends_on": [
+        "w69_freeze_preregistration"
+      ],
+      "prompt": "Implement deterministic target-blind candidate generation, the seven preregistered proposal features, the total 20-times-requested-rows attempt cap, and byte-identical pool reproduction without invoking or observing the verifier.",
+      "outputs": [
+        "Deterministic non-verifier candidate generator",
+        "Versioned proposal-feature derivation",
+        "Duplicate and attempt-cap tests"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION — run generator unit, determinism, feature-boundary, and attempt-cap tests",
+        "PENDING IMPLEMENTATION — generate the same fixture pool twice and require byte identity"
+      ],
+      "acceptance": [
+        "Generation has no verifier dependency or verifier-derived feature.",
+        "Seeds follow the preregistered SHA-256 derivation.",
+        "The generator either fills the unique pool within one total cap of 20 times the requested unique rows or reports failure without padding.",
+        "The fixed feature names and definitions do not change after Stage A."
+      ]
+    },
+    {
+      "id": "w69_implement_baseline_evaluator",
+      "agent": "model_lab",
+      "repo": ".",
+      "write_scope": [
+        "python/partizan/discovery_baselines.py",
+        "python/partizan/discovery_cli.py",
+        "tests/test_discovery_baselines.py"
+      ],
+      "depends_on": [
+        "w69_freeze_preregistration"
+      ],
+      "prompt": "Implement the 1,000 seeded random permutations, frozen structural-heuristic ordering, DE metrics, uncertainty summaries, and pre-verification ordering manifests exactly as preregistered.",
+      "outputs": [
+        "Random and fixed-heuristic ordering manifests",
+        "DE@64, DE@256, DE@1024, curve-area, first-success, and outcome-rate evaluator",
+        "Leakage and metric recomputation tests"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION — run baseline ordering, seed, tie-break, metric, and leakage tests",
+        "PENDING IMPLEMENTATION — prove that ordering hashes are independent of verifier-result bytes"
+      ],
+      "acceptance": [
+        "The primary metric is macro symmetry-unique DE@256.",
+        "The heuristic formula and candidate-key tie break match the preregistration.",
+        "All ordering artifacts can be frozen before verification.",
+        "No learned parameters or result-derived fields enter either baseline."
+      ]
+    },
+    {
+      "id": "w69_materialize_stage_a",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "data/discovery/wave_69/stage_a",
+        "docs/discovery_wave_69_stage_a_report.json"
+      ],
+      "depends_on": [
+        "w69_build_target_registry",
+        "w69_implement_candidate_generator",
+        "w69_implement_baseline_evaluator"
+      ],
+      "prompt": "From clean immutable commits, freeze six 1,024-row Stage A pools and all baseline orderings, run one complete Astralbase verifier pass, and report the preregistered integrity and support gates.",
+      "outputs": [
+        "Six frozen Stage A pools and manifests",
+        "Pre-verification random and heuristic orderings",
+        "Complete verifier ledger",
+        "Stage A calibration and support report"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION — generate each Stage A pool twice, freeze all hashes, and audit the proposal-only boundary before verification",
+        "PENDING IMPLEMENTATION — verify every frozen proposal once and validate complete result-ledger replay",
+        "PENDING IMPLEMENTATION — compute the Stage A integrity and per-target support gates"
+      ],
+      "acceptance": [
+        "Each target has exactly 1,024 unique frozen proposals or the stage stops before verification.",
+        "All orderings predate verifier results.",
+        "There is one result per proposal and zero internal errors.",
+        "Stage A is labeled calibration-only and is not used as paper evidence."
+      ]
+    },
+    {
+      "id": "w69_red_team_stage_a",
+      "agent": "verifier_red_team",
+      "repo": ".",
+      "write_scope": [
+        "docs/discovery_wave_69_stage_a_audit.md"
+      ],
+      "depends_on": [
+        "w69_materialize_stage_a"
+      ],
+      "prompt": "Independently recompute Stage A hashes, ordering independence, ledger coverage, metrics, and support thresholds. Issue GO only if all six targets pass without replacement or selective retry.",
+      "outputs": [
+        "Independent Stage A integrity audit",
+        "GO or no-go decision for Stage B"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION — independently replay Stage A and compare every pool, ordering, result, and report hash",
+        "PENDING IMPLEMENTATION — scan ranker inputs and git history for result leakage or post-outcome artifact changes"
+      ],
+      "acceptance": [
+        "All integrity gates are recomputed independently.",
+        "Every target meets 95% verified coverage, eight matches, and four symmetry-unique matches.",
+        "Any failure produces a documented no-go rather than target substitution.",
+        "No Stage B artifact is generated before a GO audit."
+      ]
+    },
+    {
+      "id": "w69_materialize_stage_b",
+      "agent": "dataset_foundry",
+      "repo": ".",
+      "write_scope": [
+        "data/discovery/wave_69/stage_b",
+        "docs/discovery_wave_69_stage_b_report.json"
+      ],
+      "depends_on": [
+        "w69_red_team_stage_a"
+      ],
+      "prompt": "After a documented Stage A GO, freeze six independent 4,096-row Stage B pools and all orderings before one complete verifier pass, then compute every preregistered result without dropping targets or outcomes.",
+      "outputs": [
+        "Six frozen Stage B pools and manifests",
+        "Pre-verification random and heuristic orderings",
+        "Complete Stage B verifier ledger",
+        "Preregistered per-target and macro baseline report"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION — freeze and audit all Stage B pools and orderings before verifier access",
+        "PENDING IMPLEMENTATION — execute one complete non-adaptive verifier pass and replay the ledger",
+        "PENDING IMPLEMENTATION — compute the fixed heuristic-minus-random DE@256 contrast and all locked secondary metrics"
+      ],
+      "acceptance": [
+        "Every Stage B target remains in the report regardless of yield.",
+        "Every call, rejection, nonmatch, duplicate realization, and error remains in the denominator and ledger.",
+        "The primary result is fixed heuristic DE@256 minus random-mean DE@256.",
+        "A support miss is reported as a valid no-go rather than repaired post hoc."
+      ]
+    },
+    {
+      "id": "w69_audit_and_report",
+      "agent": "paper_critic",
+      "repo": ".",
+      "write_scope": [
+        "docs/discovery_wave_69_evidence_audit.md",
+        "docs/discovery_wave_69_results.md",
+        "docs/research_claims.md",
+        "docs/verification_gates.md"
+      ],
+      "depends_on": [
+        "w69_materialize_stage_b"
+      ],
+      "prompt": "Audit the Stage B evidence against the preregistration, report positive or no-go outcomes without target filtering, preserve the bounded-domain claim, and confirm that no Wave 70 pool was generated or inspected.",
+      "outputs": [
+        "Independent Stage B evidence audit",
+        "Wave 69 result narrative and tables",
+        "Updated claims and verification gates",
+        "Wave 70 holdout-preservation statement"
+      ],
+      "commands": [
+        "PENDING IMPLEMENTATION — independently recompute Stage B hashes, ledgers, metrics, randomization tail, and target-bootstrap interval",
+        "PENDING IMPLEMENTATION — verify that all Wave 70 targets remain proposal- and outcome-unseen",
+        "PENDING IMPLEMENTATION — audit every manuscript-facing sentence against the bounded structural-tree evidence boundary"
+      ],
+      "acceptance": [
+        "The report labels Stage A calibration and Stage B evidence.",
+        "The report includes all six targets and all preregistered primary and secondary metrics.",
+        "A positive efficiency claim is blocked unless the Stage B support threshold passes.",
+        "No claim implies arbitrary CGT equivalence, orthodox-chess exactness, or learned discovery.",
+        "The six Wave 70 targets remain untouched for the learned-ranker phase.",
+        "Wave 70 remains NO-GO until verifier-red-team approval of a semantic, canonical, leakage-audited ranker-view contract."
+      ]
+    }
+  ],
+  "integration_gates": [
+    {
+      "id": "wave_plan_and_preregistration_validate",
+      "command": "python3 agents/network.py validate && python3 agents/network.py validate-wave agents/waves/wave_69_preregistered_discovery_baselines.json && python3 scripts/validate_waves.py && git diff --check",
+      "success_signal": "The current Wave 69 plan and frozen preregistration are internally consistent."
+    },
+    {
+      "id": "target_registry_replay",
+      "command": "PENDING IMPLEMENTATION — build and validate the immutable 18-target registry before any Wave 69 candidate generation",
+      "success_signal": "Six Stage A, six Stage B, and six Wave 70 targets replay and satisfy the preregistered deterministic split."
+    },
+    {
+      "id": "stage_a_support",
+      "command": "PENDING IMPLEMENTATION — validate Stage A frozen pools, pre-verification orderings, complete ledger, and support report",
+      "success_signal": "All six Stage A targets pass integrity, 95% verified coverage, eight matches, and four symmetry-unique matches."
+    },
+    {
+      "id": "stage_b_evidence",
+      "command": "PENDING IMPLEMENTATION — validate and independently recompute the complete Stage B evidence bundle",
+      "success_signal": "The preregistered Stage B baseline contrast and secondary metrics recompute for all six targets without leakage or filtering."
+    },
+    {
+      "id": "wave70_holdout_preserved",
+      "command": "PENDING IMPLEMENTATION — audit that no Wave 70 proposal pool, result, or tuning artifact exists and approve a semantic leakage-audited target ranker view before the future model freeze",
+      "success_signal": "The six-target Wave 70 holdout remains untouched and learned ranking stays NO-GO until the semantic-target contract passes red-team review."
+    }
+  ]
+}

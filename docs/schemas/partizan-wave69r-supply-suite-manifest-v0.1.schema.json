@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-wave69r-supply-suite-manifest-v0.1.schema.json",
+  "title": "Wave 69-R complete target-free supply input suite manifest v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "suite_id", "suite_name", "implementation_commit", "source_repositories", "seed_contract", "catalog_ref", "shards", "checker_request_ref", "totals", "pre_result_boundary"],
+  "properties": {
+    "schema_version": {"const": "partizan.wave69r_structural_supply_suite.v0.1"},
+    "suite_id": {"type": "string", "pattern": "^suite-sha256:[0-9a-f]{64}$"},
+    "suite_name": {"const": "wave69r-target-free-structural-supply-inputs"},
+    "implementation_commit": {"$ref": "#/$defs/hex40"},
+    "source_repositories": {"$ref": "#/$defs/sourceRepositories"},
+    "seed_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "domain", "index_encoding", "shard_indices"],
+      "properties": {
+        "algorithm": {"const": "sha256_first_u64_big_endian_v1"},
+        "domain": {"const": "partizan/w69r/supply/v1"},
+        "index_encoding": {"const": "unpadded_ascii_decimal"},
+        "shard_indices": {"const": [0, 1, 2, 3]}
+      }
+    },
+    "catalog_ref": {"$ref": "#/$defs/catalogRef"},
+    "shards": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {"$ref": "#/$defs/shardInventory"},
+        {"$ref": "#/$defs/shardInventory"},
+        {"$ref": "#/$defs/shardInventory"},
+        {"$ref": "#/$defs/shardInventory"}
+      ],
+      "items": false
+    },
+    "checker_request_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256", "row_count"],
+      "properties": {
+        "path": {"const": "data/discovery/wave_69r/structural_supply/inputs/checker-requests.jsonl"},
+        "schema_version": {"const": "partizan.wave69r_structural_supply_request.v0.1"},
+        "sha256": {"$ref": "#/$defs/hex64"},
+        "row_count": {"const": 4096}
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shard_count", "rows_per_shard", "row_count", "unique_board_id_count", "unique_reflection_orbit_count", "unique_board_field_count", "stratum_counts"],
+      "properties": {
+        "shard_count": {"const": 4},
+        "rows_per_shard": {"const": 1024},
+        "row_count": {"const": 4096},
+        "unique_board_id_count": {"const": 4096},
+        "unique_reflection_orbit_count": {"const": 4096},
+        "unique_board_field_count": {"const": 4096},
+        "stratum_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["outer_leaper", "pawn_phalanx", "ray_cage", "mixed_color_hook"],
+          "properties": {
+            "outer_leaper": {"const": 1024},
+            "pawn_phalanx": {"const": 1024},
+            "ray_cage": {"const": 1024},
+            "mixed_color_hook": {"const": 1024}
+          }
+        }
+      }
+    },
+    "pre_result_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checker_invoked", "bitmesh_invoked", "astralbase_invoked", "thermograph_invoked", "target_fields_consumed", "stage_b_or_wave70_materialized"],
+      "properties": {
+        "checker_invoked": {"const": false},
+        "bitmesh_invoked": {"const": false},
+        "astralbase_invoked": {"const": false},
+        "thermograph_invoked": {"const": false},
+        "target_fields_consumed": {"const": []},
+        "stage_b_or_wave70_materialized": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "hex40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "hex64": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sourceRepositories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["partizan", "astralbase", "bitmesh", "thermograph"],
+      "properties": {
+        "partizan": {"$ref": "#/$defs/hex40"},
+        "astralbase": {"const": "1434fca1fc04d97798ec1b820c56f52f8014ccc7"},
+        "bitmesh": {"const": "ade3417a007b9c8392d8a153abc4b3ed23edf0aa"},
+        "thermograph": {"const": "1d9b6b01c3921aca8c2a8fb13972fee8a4de5041"}
+      }
+    },
+    "catalogRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "catalog_id", "sha256"],
+      "properties": {
+        "path": {"const": "docs/discovery_wave_69r_construction_catalog.v0.2.json"},
+        "schema_version": {"const": "partizan.dfile_two_component_constructive_catalog.v0.2"},
+        "catalog_id": {"type": "string", "pattern": "^catalog-sha256:[0-9a-f]{64}$"},
+        "sha256": {"$ref": "#/$defs/hex64"}
+      }
+    },
+    "shardInventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shard_id", "shard_index", "manifest_ref"],
+      "properties": {
+        "shard_id": {"type": "string", "pattern": "^wave69r-supply-shard-[0-3]$"},
+        "shard_index": {"type": "integer", "minimum": 0, "maximum": 3},
+        "manifest_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "schema_version", "sha256"],
+          "properties": {
+            "path": {"type": "string", "pattern": "^data/discovery/wave_69r/structural_supply/inputs/shard-[0-3]/shard-manifest\\.json$"},
+            "schema_version": {"const": "partizan.wave69r_supply_shard_manifest.v0.1"},
+            "sha256": {"$ref": "#/$defs/hex64"}
+          }
+        }
+      }
+    }
+  }
+}

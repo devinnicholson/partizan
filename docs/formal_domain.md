@@ -1,103 +1,113 @@
-# Formal Domain Specification
+# Partizan formal domain v0.1
 
-Status: draft for the first exact benchmark.
+Status: frozen release-candidate contract.
 
-The first benchmark domain must be narrow enough for exact verification and
-wide enough to test agency, temperature, decomposition, and composition.
+This document is the single normative Partizan v0.1 domain specification.
+Earlier Wave plans and reports remain historical records; when their prose
+conflicts with this document, their artifact bytes remain valid but this scope
+controls new public claims.
 
-## Label Classes
+## Label classes
 
-- `exact`: every legal child is known, the value is derived by the exact engine,
-  and the row includes a certificate.
-- `rejected`: the position is valid input but outside the exact domain.
-- `heuristic`: the position uses weak-coupling or model-assisted assumptions and
-  is excluded from exact training splits by default.
-- `prediction`: model output only; never treated as ground truth.
+- `exact`: a declared finite solver produced a verified payload and certificate
+  inside one of the domains below.
+- `rejected`: input was retained but is outside the declared exact contract.
+- `heuristic`: an estimate or diagnostic, excluded from exact supervision.
+- `prediction`: a model output, never ground truth.
 
-## Required Position Fields
+These classes are mutually exclusive. “Exact” is exact under the named finite
+rule and certificate; it is not a claim of complete orthodox-chess value.
 
-- board representation
-- side to move
-- legal move list hash
-- component masks or explicit non-decomposable marker
-- terminal status
-- generator config id
-- verifier version
+<a id="first-candidate-domain"></a>
 
-## First Candidate Domain
+## `formal_domain:first_constrained_chess:v0`
 
-The first candidate domain is locked-structure mini-endgames:
+A FEN is eligible only when all of the following hold:
 
-- standard legal chess positions unless a separate generalized-board shard is
-  explicitly declared
-- kings are present and legal
-- barrier structures are certified by `bitmesh`
-- components are solved independently only when strict independence is certified
-- positions with captures that can break a barrier are rejected from exact
-  decomposition unless the break is included in the local game graph
+- Shakmaty parses it as a legal orthodox 8×8 chess position.
+- The board contains at most eight pieces; non-pawn pieces are permitted.
+- It has no castling rights and no en-passant target.
+- It is terminal, has an immediate checkmating/stalemating move, or receives a
+  strict Bitmesh structural partition under the declared certificate contract.
 
-## Open Decisions
+Bitmesh's positive result is a conservative current-position observation. It
+does not prove that regions remain independent throughout future play or that
+their CGT values add. A capture or move that could invalidate the boundary must
+be represented inside the finite local rule or the candidate is rejected.
 
-- Maximum piece count for Dataset v0.
-- Whether Dataset v0 allows non-pawn pieces or starts with kings plus pawns only.
-- Whether generalized boards are a separate benchmark or a later OOD split.
-- Exact serialization format for canonical values and proof certificates.
+Repetition, the fifty-/seventy-five-move rules, historical draw claims, and
+general draw propagation are outside v0.1. Astralbase `Unknown` is neither a
+draw nor a proof. The terminal scalar hook is plumbing evidence only.
 
-## Wave 16 Hard-Target Requirements
+## `formal_domain:thermograph_golden_cgt:v0`
 
-Wave 12-15 established deterministic material-family shards and leakage-safe
-reports, but also showed that the current terminal-frontier exact-vs-rejected
-boundary is easy for hand-coded geometry. The next exact domain extension must
-therefore satisfy stricter requirements:
+This is a non-chess control domain for finite normal-play CGT fixtures. Position
+encoding is `cgt_canonical`. Its switch fixture can test structural payloads and
+approximate thermography, but it is not chess-temperature evidence.
 
-- At least one OOD split is compositional: train and test differ by certified
-  component structure, not only by attacking piece family.
-- At least one exact target is not solved by `fen_geometry_logistic_probe_v0`
-  under the same symmetry-safe split.
-- Target-support coverage is mandatory for exact-only targets. Unseen labels in
-  dev or test are reported as a gate condition, not hidden in aggregate
-  accuracy.
-- A chess-derived non-number target can be activated only if its value payload
-  is emitted by the exact engine with canonical serialization and certificate
-  digest. Formal CGT fixtures remain useful controls but do not count as
-  chess-derived evidence.
-- Nonconstant temperature becomes an active target only after at least two
-  certified temperature labels appear in train and at least one OOD split.
+<a id="composition-fixture"></a>
 
-Candidate hard-target families:
+## `formal_domain:bitmesh_composition_fixture:v0`
 
-- Strict composition fixtures with machine-checked independent components and
-  exact sum values.
-- Terminal-frontier positions whose option-structure target is not predictable
-  from king/attacker geometry alone.
-- Small generalized-board shards only if the domain id and board assumptions are
-  explicit and separate from `first_constrained_chess:v0`.
+Synthetic fixture rows exercise nested BMCOMPOSE certificate validation.
+Fixture FENs or abstract boards may not be reachable chess positions. They are
+plumbing controls, not evidence of full-game decomposition, value correctness,
+learned benefit, or discovery.
 
-## Wave 18 Non-Fixture Composed Domain
+## `formal_domain:bitmesh_composed_chess:v0`
 
-Wave 18 introduces standard-FEN composed-board rows outside the earlier fixture
-domain. A row is eligible for exact composition only when:
+Generated orthodox-FEN candidates must first pass the constrained-chess gate.
+Unsupported candidates remain structured rejections. Exact rows must identify
+the finite component-value rule and bind:
 
-- `bitmesh` emits a conservative legal-independence proof with at least two
-  components.
-- `astralbase` emits a structured BMCOMPOSE-style provenance certificate with a
-  decomposition digest, component value digests, composition digest, and result
-  value digest.
-- `exact.value.component_topology_family` names the topology family used by
-  composition holdout reports.
-- `exact.value.composition_spec_source` names whether the row came from a
-  curated seed specification or a profiled generated specification.
-- The row remains inside the declared solver scope and unsupported candidates
-  are emitted as `rejected`, not promoted to exact supervision.
+- a Bitmesh decomposition digest and conservative one-ply proof contract;
+- a non-empty root-to-component-value digest map;
+- a BMCOMPOSE composition digest; and
+- a Thermograph result payload digest.
 
-The current Wave 18 shard is intentionally small. It establishes provenance,
-source accounting, topology-family holdout reporting, and negative controls for
-unsupported non-fixture composition candidates. It does not yet claim broad
-chess value correctness, learned decomposition benefit, or aesthetic discovery.
+These fields establish traceable provenance under P02. They do not upgrade a
+one-ply observation to a theorem over all future play.
 
-## Acceptance Criteria
+<a id="wave-18-board-material-composition"></a>
 
-- Unsupported positions are rejected before solving.
-- Strict decompositions include a machine-checkable certificate.
-- Weak decompositions are tracked separately from exact labels.
-- Small domains can be exhaustively checked against brute-force search.
+## `formal_domain:bitmesh_composed_board_material:v0`
+
+This Board-level diagnostic domain can contain abstract 64-square constructions.
+Acceptance does not establish reachability as orthodox chess. The Wave 47
+frozen slice uses a depth-two local-move rule with material values at its depth
+cutoff or at no-move leaves. “Exact” therefore means exact replay of that
+declared bounded rule, not complete chess solution.
+
+Each promoted row must include `component_topology_family`,
+`composition_spec_source`, the solver depth/scope, and all P02 certificate
+fields. Value-identity and split-leakage gates remain mandatory.
+
+## Required position and provenance fields
+
+Every dataset row carries the versioned schema, stable row ID, domain ID,
+position encoding/text, and exactly one label payload. Exact rows additionally
+carry generator/version/config/seed, domain definition, verifier/version, and
+certificate. The normative field-level contract is
+`docs/dataset_label_schema.md` and its executable validator is
+`agents/label_schema.py`.
+
+## Active evidence and blocked claims
+
+- P01: locally evidenced for the frozen Wave 47 bytes, manifest hashes, and
+  clean validation command.
+- P02: locally evidenced for those 13 rows and a corrupted-certificate control.
+- P03: partial; hashes and deterministic reports are frozen, but historical
+  row provenance says `workspace`, so immutable regeneration equivalence is not
+  yet a release claim.
+- P04: negative/null; no learned decomposition benefit is a release claim.
+- P05: unvalidated; chess temperature, learned agency, and model-guided
+  discovery remain hypotheses or artistic interpretation only.
+
+## Promotion criteria
+
+New exact data must pass domain rejection, schema validation, independent
+replay, value/certificate identity checks, deterministic generation, and
+position/symmetry/component/result leakage checks. Reports must expose unseen
+target labels, weak controls, negative results, resource limits, and every
+skipped optional integration artifact. No missing required input may be treated
+as a pass.

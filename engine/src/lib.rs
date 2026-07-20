@@ -1,3 +1,9 @@
+//! Native Python bindings for Partizan's narrowly scoped research hooks.
+//!
+//! These functions expose conservative structural observations and a terminal
+//! position smoke evaluation. They do not prove full game-tree decomposition,
+//! learned agency, chess temperature, or model-guided discovery.
+
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -28,9 +34,10 @@ fn thermograph_seed(value: GameValue) -> CGTValue {
 }
 
 #[pyfunction]
+/// Return squares occupied by pawns in the current locked-pawn screen.
 fn find_locked_pawns(fen_str: String) -> PyResult<Vec<String>> {
-    let fen = Fen::from_str(&fen_str)
-        .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {}", e)))?;
+    let fen =
+        Fen::from_str(&fen_str).map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
     let pos: Chess = fen
         .into_position(shakmaty::CastlingMode::Standard)
         .map_err(|_| PyValueError::new_err("Could not parse position from FEN"))?;
@@ -47,9 +54,13 @@ fn find_locked_pawns(fen_str: String) -> PyResult<Vec<String>> {
 }
 
 #[pyfunction]
+/// Return Bitmesh's conservative structural partition observation.
+///
+/// A positive result is not a theorem that the regions remain independent
+/// throughout all future play.
 fn analyze_subsystems(fen_str: String) -> PyResult<(bool, u8)> {
-    let fen = Fen::from_str(&fen_str)
-        .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {}", e)))?;
+    let fen =
+        Fen::from_str(&fen_str).map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
     let pos: Chess = fen
         .into_position(shakmaty::CastlingMode::Standard)
         .map_err(|_| PyValueError::new_err("Could not parse position from FEN"))?;
@@ -61,9 +72,13 @@ fn analyze_subsystems(fen_str: String) -> PyResult<(bool, u8)> {
 }
 
 #[pyfunction]
+/// Evaluate only a terminal checkmate or stalemate FEN through the three hooks.
+///
+/// The returned thermograph fields describe a terminal scalar seed used for a
+/// plumbing smoke test. They are not evidence of chess temperature.
 fn evaluate_position(py: Python<'_>, fen_str: String) -> PyResult<Py<PyDict>> {
-    let fen = Fen::from_str(&fen_str)
-        .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {}", e)))?;
+    let fen =
+        Fen::from_str(&fen_str).map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
     let pos: Chess = fen
         .into_position(shakmaty::CastlingMode::Standard)
         .map_err(|_| PyValueError::new_err("Could not parse position from FEN"))?;
@@ -98,7 +113,7 @@ fn evaluate_position(py: Python<'_>, fen_str: String) -> PyResult<Py<PyDict>> {
 }
 
 #[pymodule]
-fn partizan(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(find_locked_pawns, m)?)?;
     m.add_function(wrap_pyfunction!(analyze_subsystems, m)?)?;
     m.add_function(wrap_pyfunction!(evaluate_position, m)?)?;

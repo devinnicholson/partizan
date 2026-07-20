@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-structural-supply-evidence-v0.1.schema.json",
+  "title": "Partizan Wave 69-R structural-supply evidence v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evidence_id", "audit_contract", "decision", "implementation_commit", "supply_pre_result", "source_repositories", "checker", "executions", "audit"],
+  "properties": {
+    "schema_version": {"const": "partizan.wave69r_structural_supply_evidence.v0.1"},
+    "evidence_id": {"type": "string", "pattern": "^evidence-sha256:[0-9a-f]{64}$"},
+    "audit_contract": {"const": "partizan.wave69r_structural_supply_audit.v0.1"},
+    "decision": {"enum": ["GO", "NO-GO"]},
+    "implementation_commit": {"$ref": "#/$defs/commit"},
+    "supply_pre_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "manifest", "checker_request_ref", "construction_certificate_inventory"],
+      "properties": {
+        "commit": {"$ref": "#/$defs/commit"},
+        "manifest": {
+          "allOf": [
+            {"$ref": "#/$defs/json_ref"},
+            {"type": "object", "properties": {"schema_version": {"const": "partizan.wave69r_structural_supply_suite.v0.1"}}}
+          ]
+        },
+        "checker_request_ref": {
+          "allOf": [
+            {"$ref": "#/$defs/jsonl_ref"},
+            {"type": "object", "properties": {"schema_version": {"const": "partizan.wave69r_structural_supply_request.v0.1"}, "row_count": {"const": 4096}}}
+          ]
+        },
+        "construction_certificate_inventory": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "shard_count", "row_count", "references_sha256", "canonical_jsonl_sha256"],
+          "properties": {
+            "schema_version": {"const": "partizan.structural_construction_certificate.v0.1"},
+            "shard_count": {"const": 4},
+            "row_count": {"const": 4096},
+            "references_sha256": {"$ref": "#/$defs/sha256"},
+            "canonical_jsonl_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        }
+      }
+    },
+    "source_repositories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["partizan", "astralbase", "bitmesh", "thermograph"],
+      "properties": {
+        "partizan": {"$ref": "#/$defs/commit"},
+        "astralbase": {"const": "1434fca1fc04d97798ec1b820c56f52f8014ccc7"},
+        "bitmesh": {"const": "ade3417a007b9c8392d8a153abc4b3ed23edf0aa"},
+        "thermograph": {"const": "1d9b6b01c3921aca8c2a8fb13972fee8a4de5041"}
+      }
+    },
+    "checker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "manifest", "lock", "source", "wrapper", "bitmesh_crate_version", "bitmesh_source_commit", "proof_api"],
+      "properties": {
+        "name": {"const": "partizan_gate_s_checker"},
+        "version": {"const": "0.1.0"},
+        "manifest": {"$ref": "#/$defs/source_ref"},
+        "lock": {"$ref": "#/$defs/source_ref"},
+        "source": {"$ref": "#/$defs/source_ref"},
+        "wrapper": {"$ref": "#/$defs/source_ref"},
+        "bitmesh_crate_version": {"const": "0.1.0"},
+        "bitmesh_source_commit": {"const": "ade3417a007b9c8392d8a153abc4b3ed23edf0aa"},
+        "proof_api": {"const": "bitmesh:conservative_legal_independence:v0"}
+      }
+    },
+    "executions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "run_count", "primary_ledger", "replay_ledger", "byte_identical"],
+      "properties": {
+        "mode": {"const": "separate_checker_processes_v1"},
+        "run_count": {"const": 2},
+        "primary_ledger": {"$ref": "#/$defs/result_ledger_ref"},
+        "replay_ledger": {"$ref": "#/$defs/result_ledger_ref"},
+        "byte_identical": {"type": "boolean"}
+      }
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_row_count", "observed_row_count", "construction_certificate_count", "outcome_counts", "predicate_counts", "failure_code_counts", "internal_error_count", "certificate_disagreement_count", "complete_ledger", "request_result_binding", "forbidden_field_scan"],
+      "properties": {
+        "expected_row_count": {"const": 4096},
+        "observed_row_count": {"type": "integer", "minimum": 0},
+        "construction_certificate_count": {"type": "integer", "minimum": 0},
+        "outcome_counts": {"$ref": "#/$defs/outcome_counts"},
+        "predicate_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["frozen_barrier", "non_capturable_barrier", "strict_exactly_two_components", "no_cross_component_entry"],
+          "properties": {
+            "frozen_barrier": {"$ref": "#/$defs/predicate_counts"},
+            "non_capturable_barrier": {"$ref": "#/$defs/predicate_counts"},
+            "strict_exactly_two_components": {"$ref": "#/$defs/predicate_counts"},
+            "no_cross_component_entry": {"$ref": "#/$defs/predicate_counts"}
+          }
+        },
+        "failure_code_counts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "count"],
+            "properties": {
+              "code": {"enum": [
+                "input.invalid_board_fen",
+                "checker.internal_error",
+                "structure.component_count_not_two",
+                "bitmesh.requires_strict_decomposition",
+                "bitmesh.barrier_square_is_empty",
+                "bitmesh.barrier_square_is_not_pawn",
+                "bitmesh.barrier_pawn_not_frozen",
+                "bitmesh.barrier_pawn_can_capture",
+                "bitmesh.active_piece_outside_certified_component",
+                "bitmesh.barrier_piece_can_be_captured",
+                "bitmesh.piece_can_enter_other_component",
+                "bitmesh.piece_can_enter_uncertified_free_square",
+                "bitmesh.invalid_certificate.strict_status_mismatch",
+                "bitmesh.invalid_certificate.component_intersects_barrier",
+                "bitmesh.invalid_certificate.active_mask_outside_component",
+                "bitmesh.invalid_certificate.active_component_count_mismatch",
+                "bitmesh.invalid_certificate.strict_with_too_few_active_components",
+                "bitmesh.invalid_certificate.strict_without_barrier",
+                "bitmesh.invalid_certificate.strict_with_rejection_reason",
+                "bitmesh.invalid_certificate.rejected_without_rejection_reason",
+                "bitmesh.invalid_certificate.no_locked_barrier_rejection_with_barrier",
+                "bitmesh.invalid_certificate.no_locked_barrier_rejection_with_multiple_active_components",
+                "bitmesh.invalid_certificate.less_than_two_active_components_rejection_without_barrier",
+                "bitmesh.invalid_certificate.less_than_two_active_components_rejection_with_too_many_active_components",
+                "bitmesh.invalid_certificate.empty_component_mask",
+                "bitmesh.invalid_certificate.component_without_active_squares",
+                "bitmesh.invalid_certificate.component_root_outside_mask",
+                "bitmesh.invalid_certificate.component_masks_overlap",
+                "bitmesh.invalid_certificate.duplicate_component_root",
+                "bitmesh.invalid_certificate.cross_component_adjacency",
+                "bitmesh.invalid_certificate.strict_component_mask_not_closed"
+              ]},
+              "count": {"type": "integer", "minimum": 1}
+            }
+          }
+        },
+        "internal_error_count": {"type": "integer", "minimum": 0},
+        "certificate_disagreement_count": {"type": "integer", "minimum": 0},
+        "complete_ledger": {"type": "boolean"},
+        "request_result_binding": {"type": "boolean"},
+        "forbidden_field_scan": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"decision": {"const": "GO"}}},
+      "then": {
+        "properties": {
+          "executions": {"properties": {"byte_identical": {"const": true}}},
+          "audit": {
+            "properties": {
+              "observed_row_count": {"const": 4096},
+              "construction_certificate_count": {"const": 4096},
+              "outcome_counts": {"properties": {"pass": {"const": 4096}, "fail": {"const": 0}, "error": {"const": 0}}},
+              "predicate_counts": {
+                "properties": {
+                  "frozen_barrier": {"properties": {"pass": {"const": 4096}, "fail": {"const": 0}, "not_evaluated": {"const": 0}}},
+                  "non_capturable_barrier": {"properties": {"pass": {"const": 4096}, "fail": {"const": 0}, "not_evaluated": {"const": 0}}},
+                  "strict_exactly_two_components": {"properties": {"pass": {"const": 4096}, "fail": {"const": 0}, "not_evaluated": {"const": 0}}},
+                  "no_cross_component_entry": {"properties": {"pass": {"const": 4096}, "fail": {"const": 0}, "not_evaluated": {"const": 0}}}
+                }
+              },
+              "failure_code_counts": {"maxItems": 0},
+              "internal_error_count": {"const": 0},
+              "certificate_disagreement_count": {"const": 0},
+              "complete_ledger": {"const": true},
+              "request_result_binding": {"const": true},
+              "forbidden_field_scan": {"const": true}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relative_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"},
+    "json_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/relative_path"}, "schema_version": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "jsonl_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema_version", "row_count", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/relative_path"}, "schema_version": {"type": "string", "minLength": 1}, "row_count": {"type": "integer", "minimum": 0}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/relative_path"}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "result_ledger_ref": {
+      "allOf": [
+        {"$ref": "#/$defs/jsonl_ref"},
+        {"type": "object", "properties": {"schema_version": {"const": "partizan.wave69r_structural_supply_result.v0.1"}, "row_count": {"const": 4096}}}
+      ]
+    },
+    "outcome_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pass", "fail", "error"],
+      "properties": {"pass": {"type": "integer", "minimum": 0}, "fail": {"type": "integer", "minimum": 0}, "error": {"type": "integer", "minimum": 0}}
+    },
+    "predicate_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pass", "fail", "not_evaluated"],
+      "properties": {"pass": {"type": "integer", "minimum": 0}, "fail": {"type": "integer", "minimum": 0}, "not_evaluated": {"type": "integer", "minimum": 0}}
+    }
+  }
+}

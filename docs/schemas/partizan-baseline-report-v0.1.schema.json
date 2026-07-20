@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan ledger-only baseline report v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "report_id", "target_id", "pool_id", "input_bindings", "join_contract", "metric_contract", "heuristic", "generator_ordinal_audit", "random"],
+  "properties": {
+    "schema_version": {"const": "partizan.baseline_report.v0.1"},
+    "report_id": {"type": "string", "pattern": "^baseline-report-sha256:[0-9a-f]{64}$"},
+    "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"},
+    "pool_id": {"type": "string", "pattern": "^pool-sha256:[0-9a-f]{64}$"},
+    "input_bindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["target_sha256", "pool_sha256", "proposals_sha256", "results_sha256", "result_row_count", "policy_orders_id", "policy_orders_sha256"],
+      "properties": {
+        "target_sha256": {"$ref": "#/$defs/sha256"},
+        "pool_sha256": {"$ref": "#/$defs/sha256"},
+        "proposals_sha256": {"$ref": "#/$defs/sha256"},
+        "results_sha256": {"$ref": "#/$defs/sha256"},
+        "result_row_count": {"type": "integer", "minimum": 1024},
+        "policy_orders_id": {"type": "string", "pattern": "^policy-orders-sha256:[0-9a-f]{64}$"},
+        "policy_orders_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "join_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "every_proposal_consumes_one_call", "proposal_count", "result_count", "result_order_matches_proposal_order"],
+      "properties": {
+        "mode": {"const": "one_complete_frozen_ledger_no_verifier_rerun"},
+        "every_proposal_consumes_one_call": {"const": true},
+        "proposal_count": {"type": "integer", "minimum": 1024},
+        "result_count": {"type": "integer", "minimum": 1024},
+        "result_order_matches_proposal_order": {"const": true}
+      }
+    },
+    "metric_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["budgets", "success", "distinctness", "outcome_rate_keys", "naudc_method", "percentile_method"],
+      "properties": {
+        "budgets": {"const": [64, 256, 1024]},
+        "success": {"const": "verified_match_with_exact_target_value_class_and_structural_sha256"},
+        "distinctness": {"const": "proposal.position.symmetry_sha256"},
+        "outcome_rate_keys": {"const": ["verified_match", "verified_nonmatch", "rejection", "internal_error"]},
+        "naudc_method": {"const": "right_endpoint_rectangles_calls_1_through_1024_v1"},
+        "percentile_method": {"const": "nearest_rank_ceiling_v1"}
+      }
+    },
+    "heuristic": {
+      "type": "object", "additionalProperties": false,
+      "required": ["order_id", "metrics"],
+      "properties": {
+        "order_id": {"type": "string", "pattern": "^policy-order-sha256:[0-9a-f]{64}$"},
+        "metrics": {"$ref": "#/$defs/metrics"}
+      }
+    },
+    "generator_ordinal_audit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["competitive_baseline", "order_id", "metrics"],
+      "properties": {
+        "competitive_baseline": {"const": false},
+        "order_id": {"type": "string", "pattern": "^policy-order-sha256:[0-9a-f]{64}$"},
+        "metrics": {"$ref": "#/$defs/metrics"}
+      }
+    },
+    "random": {
+      "type": "object", "additionalProperties": false,
+      "required": ["replicates", "summary"],
+      "properties": {
+        "replicates": {
+          "type": "array", "minItems": 1000, "maxItems": 1000,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["order_id", "replicate", "metrics"],
+            "properties": {
+              "order_id": {"type": "string", "pattern": "^policy-order-sha256:[0-9a-f]{64}$"},
+              "replicate": {"type": "integer", "minimum": 0, "maximum": 999},
+              "metrics": {"$ref": "#/$defs/metrics"}
+            }
+          }
+        },
+        "summary": {"$ref": "#/$defs/randomSummary"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "ratio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["numerator", "denominator"],
+      "properties": {"numerator": {"type": "integer", "minimum": 0}, "denominator": {"type": "integer", "minimum": 1}}
+    },
+    "exactSummary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mean", "median", "percentile_025", "percentile_975", "percentile_method"],
+      "properties": {
+        "mean": {"$ref": "#/$defs/ratio"},
+        "median": {"$ref": "#/$defs/ratio"},
+        "percentile_025": {"type": "integer", "minimum": 0},
+        "percentile_975": {"type": "integer", "minimum": 0},
+        "percentile_method": {"const": "nearest_rank_ceiling_v1"}
+      }
+    },
+    "exactOutcomeSummaries": {
+      "type": "object", "additionalProperties": false,
+      "required": ["verified_match", "verified_nonmatch", "rejection", "internal_error"],
+      "properties": {
+        "verified_match": {"$ref": "#/$defs/exactSummary"},
+        "verified_nonmatch": {"$ref": "#/$defs/exactSummary"},
+        "rejection": {"$ref": "#/$defs/exactSummary"},
+        "internal_error": {"$ref": "#/$defs/exactSummary"}
+      }
+    },
+    "randomSummary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["replicate_count", "by_budget", "naudc_numerator", "naudc_denominator", "calls_to_first_success"],
+      "properties": {
+        "replicate_count": {"const": 1000},
+        "by_budget": {
+          "type": "array", "minItems": 3, "maxItems": 3,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["calls", "raw_successes", "symmetry_unique_successes", "discovery_efficiency_numerator", "discovery_efficiency_denominator", "outcome_count_summaries", "outcome_rate_denominator"],
+            "properties": {
+              "calls": {"enum": [64, 256, 1024]},
+              "raw_successes": {"$ref": "#/$defs/exactSummary"},
+              "symmetry_unique_successes": {"$ref": "#/$defs/exactSummary"},
+              "discovery_efficiency_numerator": {"$ref": "#/$defs/exactSummary"},
+              "discovery_efficiency_denominator": {"enum": [64, 256, 1024]},
+              "outcome_count_summaries": {"$ref": "#/$defs/exactOutcomeSummaries"},
+              "outcome_rate_denominator": {"enum": [64, 256, 1024]}
+            }
+          }
+        },
+        "naudc_numerator": {"$ref": "#/$defs/exactSummary"},
+        "naudc_denominator": {"const": 1048576},
+        "calls_to_first_success": {
+          "type": "object", "additionalProperties": false,
+          "required": ["summary_with_no_success_right_censored", "right_censoring_value", "no_success_replicates"],
+          "properties": {
+            "summary_with_no_success_right_censored": {"$ref": "#/$defs/exactSummary"},
+            "right_censoring_value": {"type": "integer", "minimum": 1025},
+            "no_success_replicates": {"type": "integer", "minimum": 0, "maximum": 1000}
+          }
+        }
+      }
+    },
+    "outcomeCounts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["verified_match", "verified_nonmatch", "rejection", "internal_error"],
+      "properties": {
+        "verified_match": {"type": "integer", "minimum": 0},
+        "verified_nonmatch": {"type": "integer", "minimum": 0},
+        "rejection": {"type": "integer", "minimum": 0},
+        "internal_error": {"type": "integer", "minimum": 0}
+      }
+    },
+    "outcomeRates": {
+      "type": "object", "additionalProperties": false,
+      "required": ["verified_match", "verified_nonmatch", "rejection", "internal_error"],
+      "properties": {
+        "verified_match": {"$ref": "#/$defs/ratio"},
+        "verified_nonmatch": {"$ref": "#/$defs/ratio"},
+        "rejection": {"$ref": "#/$defs/ratio"},
+        "internal_error": {"$ref": "#/$defs/ratio"}
+      }
+    },
+    "budgetMetric": {
+      "type": "object", "additionalProperties": false,
+      "required": ["calls", "raw_successes", "symmetry_unique_successes", "discovery_efficiency", "outcome_counts", "outcome_rates"],
+      "properties": {
+        "calls": {"enum": [64, 256, 1024]},
+        "raw_successes": {"type": "integer", "minimum": 0},
+        "symmetry_unique_successes": {"type": "integer", "minimum": 0},
+        "discovery_efficiency": {"$ref": "#/$defs/ratio"},
+        "outcome_counts": {"$ref": "#/$defs/outcomeCounts"},
+        "outcome_rates": {"$ref": "#/$defs/outcomeRates"}
+      }
+    },
+    "metrics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["budget_metrics", "naudc_through_1024", "naudc_method", "calls_to_first_success", "full_pool"],
+      "properties": {
+        "budget_metrics": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/budgetMetric"}},
+        "naudc_through_1024": {"$ref": "#/$defs/ratio"},
+        "naudc_method": {"const": "right_endpoint_rectangles_calls_1_through_1024_v1"},
+        "calls_to_first_success": {"type": ["integer", "null"], "minimum": 1},
+        "full_pool": {
+          "type": "object", "additionalProperties": false,
+          "required": ["calls", "raw_successes", "symmetry_unique_successes", "outcome_counts", "outcome_rates"],
+          "properties": {
+            "calls": {"type": "integer", "minimum": 1024},
+            "raw_successes": {"type": "integer", "minimum": 0},
+            "symmetry_unique_successes": {"type": "integer", "minimum": 0},
+            "outcome_counts": {"$ref": "#/$defs/outcomeCounts"},
+            "outcome_rates": {"$ref": "#/$defs/outcomeRates"}
+          }
+        }
+      }
+    }
+  }
+}

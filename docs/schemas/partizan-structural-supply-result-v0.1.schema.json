@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-structural-supply-result-v0.1.schema.json",
+  "title": "Partizan Wave 69-R target-free structural supply result row v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "board_id", "checker", "outcome", "certification", "failure_code", "predicates", "internal_error"],
+  "properties": {
+    "schema_version": {"const": "partizan.wave69r_structural_supply_result.v0.1"},
+    "board_id": {"type": "string", "pattern": "^board-sha256:[0-9a-f]{64}$"},
+    "checker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "bitmesh_crate_version", "bitmesh_source_commit", "proof_api"],
+      "properties": {
+        "name": {"const": "partizan_gate_s_checker"},
+        "version": {"const": "0.1.0"},
+        "bitmesh_crate_version": {"const": "0.1.0"},
+        "bitmesh_source_commit": {"const": "ade3417a007b9c8392d8a153abc4b3ed23edf0aa"},
+        "proof_api": {"const": "bitmesh:conservative_legal_independence:v0"}
+      }
+    },
+    "outcome": {"enum": ["pass", "fail", "error"]},
+    "certification": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["proof_kind", "decomposition_sha256", "component_count", "barrier_squares"],
+          "properties": {
+            "proof_kind": {"const": "bitmesh:conservative_legal_independence:v0"},
+            "decomposition_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "component_count": {"type": "integer", "minimum": 0, "maximum": 255},
+            "barrier_squares": {
+              "type": "array",
+              "items": {"type": "string", "pattern": "^[a-h][1-8]$"},
+              "uniqueItems": true
+            }
+          }
+        }
+      ]
+    },
+    "failure_code": {
+      "enum": [
+        null,
+        "input.invalid_board_fen",
+        "checker.internal_error",
+        "structure.component_count_not_two",
+        "bitmesh.requires_strict_decomposition",
+        "bitmesh.barrier_square_is_empty",
+        "bitmesh.barrier_square_is_not_pawn",
+        "bitmesh.barrier_pawn_not_frozen",
+        "bitmesh.barrier_pawn_can_capture",
+        "bitmesh.active_piece_outside_certified_component",
+        "bitmesh.barrier_piece_can_be_captured",
+        "bitmesh.piece_can_enter_other_component",
+        "bitmesh.piece_can_enter_uncertified_free_square",
+        "bitmesh.invalid_certificate.strict_status_mismatch",
+        "bitmesh.invalid_certificate.component_intersects_barrier",
+        "bitmesh.invalid_certificate.active_mask_outside_component",
+        "bitmesh.invalid_certificate.active_component_count_mismatch",
+        "bitmesh.invalid_certificate.strict_with_too_few_active_components",
+        "bitmesh.invalid_certificate.strict_without_barrier",
+        "bitmesh.invalid_certificate.strict_with_rejection_reason",
+        "bitmesh.invalid_certificate.rejected_without_rejection_reason",
+        "bitmesh.invalid_certificate.no_locked_barrier_rejection_with_barrier",
+        "bitmesh.invalid_certificate.no_locked_barrier_rejection_with_multiple_active_components",
+        "bitmesh.invalid_certificate.less_than_two_active_components_rejection_without_barrier",
+        "bitmesh.invalid_certificate.less_than_two_active_components_rejection_with_too_many_active_components",
+        "bitmesh.invalid_certificate.empty_component_mask",
+        "bitmesh.invalid_certificate.component_without_active_squares",
+        "bitmesh.invalid_certificate.component_root_outside_mask",
+        "bitmesh.invalid_certificate.component_masks_overlap",
+        "bitmesh.invalid_certificate.duplicate_component_root",
+        "bitmesh.invalid_certificate.cross_component_adjacency",
+        "bitmesh.invalid_certificate.strict_component_mask_not_closed"
+      ]
+    },
+    "predicates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frozen_barrier", "non_capturable_barrier", "strict_exactly_two_components", "no_cross_component_entry"],
+      "properties": {
+        "frozen_barrier": {"enum": ["pass", "fail", "not_evaluated"]},
+        "non_capturable_barrier": {"enum": ["pass", "fail", "not_evaluated"]},
+        "strict_exactly_two_components": {"enum": ["pass", "fail", "not_evaluated"]},
+        "no_cross_component_entry": {"enum": ["pass", "fail", "not_evaluated"]}
+      }
+    },
+    "internal_error": {"type": "boolean"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"outcome": {"const": "pass"}}},
+      "then": {
+        "properties": {
+          "certification": {"type": "object", "properties": {"component_count": {"const": 2}}},
+          "failure_code": {"const": null},
+          "internal_error": {"const": false},
+          "predicates": {
+            "properties": {
+              "frozen_barrier": {"const": "pass"},
+              "non_capturable_barrier": {"const": "pass"},
+              "strict_exactly_two_components": {"const": "pass"},
+              "no_cross_component_entry": {"const": "pass"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"outcome": {"const": "error"}}},
+      "then": {
+        "properties": {
+          "certification": {"const": null},
+          "failure_code": {"const": "checker.internal_error"},
+          "internal_error": {"const": true},
+          "predicates": {
+            "properties": {
+              "frozen_barrier": {"const": "not_evaluated"},
+              "non_capturable_barrier": {"const": "not_evaluated"},
+              "strict_exactly_two_components": {"const": "not_evaluated"},
+              "no_cross_component_entry": {"const": "not_evaluated"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"outcome": {"const": "fail"}}},
+      "then": {
+        "properties": {
+          "failure_code": {"not": {"enum": [null, "checker.internal_error"]}},
+          "internal_error": {"const": false}
+        }
+      }
+    }
+  ]
+}

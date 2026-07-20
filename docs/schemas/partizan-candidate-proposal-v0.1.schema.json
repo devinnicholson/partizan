@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan candidate proposal v0.1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "proposal_id", "target_id", "domain", "candidate_key", "ordinal", "position", "generator", "proposal_features"],
+  "properties": {
+    "schema_version": {"const": "partizan.candidate_proposal.v0.1"},
+    "proposal_id": {"type": "string", "pattern": "^proposal-sha256:[0-9a-f]{64}$"},
+    "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"},
+    "domain": {"type": "string", "minLength": 1},
+    "candidate_key": {"type": "string", "pattern": "^candidate-sha256:[0-9a-f]{64}$"},
+    "ordinal": {"type": "integer", "minimum": 0},
+    "position": {
+      "type": "object", "additionalProperties": false,
+      "required": ["encoding", "text", "sha256", "symmetry_sha256"],
+      "properties": {
+        "encoding": {"const": "fen"}, "text": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "symmetry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "generator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "code_commit", "family", "operator", "config_sha256", "random_seed"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1},
+        "code_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "family": {"type": "string", "minLength": 1}, "operator": {"type": "string", "minLength": 1},
+        "config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "random_seed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "proposal_features": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "derivation_stage", "categorical", "integer", "boolean"],
+      "properties": {
+        "schema_version": {"const": "partizan.proposal_features.v0.1"},
+        "derivation_stage": {"const": "pre_verification"},
+        "categorical": {"type": "object", "additionalProperties": {"type": "string"}},
+        "integer": {"type": "object", "additionalProperties": {"type": "integer"}},
+        "boolean": {"type": "object", "additionalProperties": {"type": "boolean"}}
+      }
+    }
+  }
+}

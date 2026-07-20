@@ -1,7 +1,24 @@
 # Research Claims
 
-This table is the paper spine. A claim is not active until it has evidence,
-baselines, and a falsification condition.
+## v0.1 release-readiness claim register
+
+This section maps the frozen downstream validation IDs. It supersedes any
+stronger interpretation of the chronological Wave notes below.
+
+| ID | v0.1 status | Evidence and boundary |
+| --- | --- | --- |
+| P01 | Locally verified | `data/research-v0.1/manifest.json`, `agents/label_schema.py`, and `scripts/verify_release.py` bind and validate a reproducible five-row slice plus the frozen 13-row Wave 47 slice. Cross-platform CI remains pending execution. |
+| P02 | Locally verified for the frozen slice | All 13 rows bind decomposition, component values, composition, and result digests; `scripts/verify_release.py` also requires an intentionally corrupted certificate to fail. This is bounded-rule provenance, not a full-game theorem. |
+| P03 | Partial | The five-row vertical slice and deterministic event bytes reproduce. Historical Wave 47 rows record `code_commit=workspace`, so immutable regeneration of that slice and any published benchmark metric remain blocked. |
+| P04 | Negative/null; not a release claim | Waves 57–67 produced no decomposition-aware model that beat controls on both development and test. |
+| P05 | Unvalidated; not a release claim | No technical evidence demonstrates chess temperature, learned agency, or model-guided discovery. Those terms may be used only as clearly marked artistic interpretation or future hypothesis. |
+
+The release-supported statement is: “an experimental suite for structural
+decomposition and combinatorial-game representations in constrained chess
+positions.”
+
+This table is the claim ledger. Evidence, baselines, and a falsification
+condition activate each claim.
 
 The current vertical slice provides concrete evidence only for reproducible
 plumbing: a schema-v0 JSONL shard at `/private/tmp/partizan-wave-03.jsonl`,

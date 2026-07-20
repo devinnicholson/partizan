@@ -1,15 +1,24 @@
 [package]
 name = "partizan"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
+rust-version = "1.88"
+authors = ["Devin Nicholson"]
+description = "Python bindings for constrained chess/CGT research experiments"
+repository = "https://github.com/devinnicholson/partizan"
+homepage = "https://github.com/devinnicholson/partizan"
+readme = "README.md"
+keywords = ["chess", "cgt", "research", "python"]
+categories = ["algorithms", "game-development", "science"]
+publish = false
 
 [lib]
-name = "partizan"
+name = "_native"
 crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.29", features = ["extension-module"] }
 shakmaty = "0.27"
-thermograph = { path = "../../thermograph" }
-bitmesh = { path = "../../bitmesh" }
-astralbase = { path = "../../astralbase" }
+thermograph = "0.1.0"
+bitmesh = "0.1.0"
+astralbase = "0.1.0"

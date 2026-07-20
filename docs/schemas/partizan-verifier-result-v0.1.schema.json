@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partizan verifier result v0.1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "result_id", "target_id", "proposal_id", "candidate_key", "verifier", "verifier_io", "gates", "outcome", "target_comparison", "evidence"],
+  "properties": {
+    "schema_version": {"const": "partizan.verifier_result.v0.1"},
+    "result_id": {"type": "string", "pattern": "^result-sha256:[0-9a-f]{64}$"},
+    "target_id": {"type": "string", "pattern": "^target-sha256:[0-9a-f]{64}$"},
+    "proposal_id": {"type": "string", "pattern": "^proposal-sha256:[0-9a-f]{64}$"},
+    "candidate_key": {"type": "string", "pattern": "^candidate-sha256:[0-9a-f]{64}$"},
+    "verifier": {"type": "object", "additionalProperties": false, "required": ["name", "version", "config_sha256", "code_commits"], "properties": {
+      "name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1},
+      "config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+      "code_commits": {"type": "object", "additionalProperties": false, "required": ["astralbase", "bitmesh", "thermograph", "partizan"], "properties": {
+        "astralbase": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "bitmesh": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "thermograph": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "partizan": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }}
+    }},
+    "verifier_io": {
+      "type": "object", "additionalProperties": false,
+      "required": ["request", "request_sha256", "response", "response_sha256"],
+      "properties": {
+        "request": {
+          "type": "object", "additionalProperties": false,
+          "required": ["request_id", "domain_id", "position", "value_rule", "target", "node_budget"],
+          "properties": {
+            "request_id": {"type": "string", "pattern": "^proposal-sha256:[0-9a-f]{64}$"},
+            "domain_id": {"type": "string", "minLength": 1},
+            "position": {"type": "object", "additionalProperties": false, "required": ["encoding", "text"], "properties": {
+              "encoding": {"const": "fen"}, "text": {"type": "string", "minLength": 1}
+            }},
+            "value_rule": {"const": "component_depth2_local_move_game_v0"},
+            "target": {"type": "object", "additionalProperties": false, "required": ["identity_kind", "value_class", "digest_v1_sha256"], "properties": {
+              "identity_kind": {"const": "thermograph_structural_tree_v1"},
+              "value_class": {"type": "string", "minLength": 1},
+              "digest_v1_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }},
+            "node_budget": {"type": "integer", "minimum": 1}
+          }
+        },
+        "request_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "response": {"type": "object"},
+        "response_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "gates": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "object", "additionalProperties": false, "required": ["gate_id", "status", "reason_codes", "evidence_sha256"], "properties": {
+      "gate_id": {"enum": ["domain", "board_syntax", "structure", "target_identity"]}, "status": {"enum": ["passed", "failed", "not_run", "error"]},
+      "reason_codes": {"type": "array", "items": {"type": "string", "minLength": 1}}, "evidence_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+    }}},
+    "outcome": {"enum": ["certified_target", "certified_other", "rejected", "error"]},
+    "target_comparison": {"type": "object", "additionalProperties": false, "required": ["identity_contract", "target_identity_sha256", "observed_identity_sha256", "matches"], "properties": {
+      "identity_contract": {"const": "thermograph_structural_tree_v1"}, "target_identity_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+      "observed_identity_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}, "matches": {"type": ["boolean", "null"]}
+    }},
+    "evidence": {"type": "object", "additionalProperties": false, "required": ["label_kind", "certificate_digest", "rejection_codes", "decomposition_digest", "composition_digest", "observed_structural_sha256", "recursive_nodes"], "properties": {
+      "label_kind": {"enum": ["exact", "rejected"]}, "certificate_digest": {"type": ["string", "null"]},
+      "rejection_codes": {"type": "array", "items": {"type": "string", "minLength": 1}},
+      "decomposition_digest": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+      "composition_digest": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+      "observed_structural_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+      "recursive_nodes": {"type": ["integer", "null"], "minimum": 0}
+    }}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"outcome": {"enum": ["certified_target", "certified_other"]}}},
+      "then": {
+        "properties": {
+          "target_comparison": {"properties": {
+            "observed_identity_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "matches": {"type": "boolean"}
+          }},
+          "evidence": {"properties": {
+            "label_kind": {"const": "exact"},
+            "certificate_digest": {"type": "string", "minLength": 1},
+            "rejection_codes": {"maxItems": 0},
+            "decomposition_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "composition_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "observed_structural_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "recursive_nodes": {"type": "integer", "minimum": 0}
+          }}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"outcome": {"enum": ["rejected", "error"]}}},
+      "then": {
+        "properties": {
+          "target_comparison": {"properties": {
+            "observed_identity_sha256": {"type": "null"},
+            "matches": {"type": "null"}
+          }},
+          "evidence": {"properties": {
+            "label_kind": {"const": "rejected"},
+            "certificate_digest": {"type": "null"},
+            "rejection_codes": {"minItems": 1},
+            "decomposition_digest": {"type": "null"},
+            "composition_digest": {"type": "null"},
+            "observed_structural_sha256": {"type": "null"},
+            "recursive_nodes": {"type": "null"}
+          }}
+        }
+      }
+    }
+  ]
+}

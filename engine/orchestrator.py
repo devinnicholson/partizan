@@ -4,44 +4,48 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
 import shlex
 import subprocess
 import sys
-
-try:
-    import modal
-except ModuleNotFoundError:
-    modal = None
+import tempfile
+from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_ASTRALBASE_DIR = ROOT.parent / "astralbase"
-DEFAULT_SHARD_PATH = Path("/tmp/partizan-wave-03.jsonl")
-DEFAULT_FRONTIER_SHARD_PATH = Path("/tmp/partizan-frontier-wave-06.jsonl")
-DEFAULT_FAMILY_FRONTIER_SHARD_PATH = Path("/tmp/partizan-family-frontier-wave-07.jsonl")
+GENERATED_ARTIFACT_DIR = ROOT / "artifacts" / "generated"
+DEFAULT_SHARD_PATH = GENERATED_ARTIFACT_DIR / "partizan-wave-03.jsonl"
+DEFAULT_FRONTIER_SHARD_PATH = GENERATED_ARTIFACT_DIR / "partizan-frontier-wave-06.jsonl"
+DEFAULT_FAMILY_FRONTIER_SHARD_PATH = (
+    GENERATED_ARTIFACT_DIR / "partizan-family-frontier-wave-07.jsonl"
+)
 DEFAULT_EXPANDED_FAMILY_FRONTIER_SHARD_PATH = Path(
-    "/tmp/partizan-expanded-family-frontier-wave-12.jsonl"
+    GENERATED_ARTIFACT_DIR / "partizan-expanded-family-frontier-wave-12.jsonl"
 )
 DEFAULT_COMPOSITION_HARD_TARGET_SHARD_PATH = Path(
-    "/tmp/partizan-composition-hard-target-wave-17.jsonl"
+    GENERATED_ARTIFACT_DIR / "partizan-composition-hard-target-wave-17.jsonl"
 )
-DEFAULT_MANIFEST_PATH = ROOT / "docs" / "dataset_v0_manifest.md"
-DEFAULT_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "frontier_wave_06_manifest.md"
-DEFAULT_FAMILY_FRONTIER_MANIFEST_PATH = ROOT / "docs" / "family_frontier_wave_07_manifest.md"
+DEFAULT_MANIFEST_PATH = GENERATED_ARTIFACT_DIR / "partizan-wave-03.manifest.md"
+DEFAULT_FRONTIER_MANIFEST_PATH = GENERATED_ARTIFACT_DIR / "partizan-frontier-wave-06.manifest.md"
+DEFAULT_FAMILY_FRONTIER_MANIFEST_PATH = (
+    GENERATED_ARTIFACT_DIR / "partizan-family-frontier-wave-07.manifest.md"
+)
 DEFAULT_EXPANDED_FAMILY_FRONTIER_MANIFEST_PATH = (
-    ROOT / "docs" / "expanded_family_frontier_wave_12_manifest.md"
+    GENERATED_ARTIFACT_DIR / "partizan-expanded-family-frontier-wave-12.manifest.md"
 )
 DEFAULT_COMPOSITION_HARD_TARGET_MANIFEST_PATH = (
-    ROOT / "docs" / "composition_hard_target_wave_17_manifest.md"
+    GENERATED_ARTIFACT_DIR / "partizan-composition-hard-target-wave-17.manifest.md"
 )
 LABEL_SCHEMA_PATH = ROOT / "agents" / "label_schema.py"
 SCHEMA_VERSION = "partizan.dataset_label.v0"
 ASTRALBASE_SHARD_COMMAND = (
     "cargo",
     "run",
+    "--locked",
+    "--offline",
     "--quiet",
     "--",
     "--sample-label-shard",
@@ -49,6 +53,8 @@ ASTRALBASE_SHARD_COMMAND = (
 ASTRALBASE_FRONTIER_SHARD_BASE_COMMAND = (
     "cargo",
     "run",
+    "--locked",
+    "--offline",
     "--quiet",
     "--",
     "--frontier-label-shard",
@@ -56,6 +62,8 @@ ASTRALBASE_FRONTIER_SHARD_BASE_COMMAND = (
 ASTRALBASE_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
     "cargo",
     "run",
+    "--locked",
+    "--offline",
     "--quiet",
     "--",
     "--family-frontier-label-shard",
@@ -63,6 +71,8 @@ ASTRALBASE_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
 ASTRALBASE_EXPANDED_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
     "cargo",
     "run",
+    "--locked",
+    "--offline",
     "--quiet",
     "--",
     "--expanded-family-frontier-label-shard",
@@ -70,6 +80,8 @@ ASTRALBASE_EXPANDED_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
 ASTRALBASE_COMPOSITION_HARD_TARGET_SHARD_BASE_COMMAND = (
     "cargo",
     "run",
+    "--locked",
+    "--offline",
     "--quiet",
     "--",
     "--composition-hard-target-shard",
@@ -77,119 +89,145 @@ ASTRALBASE_COMPOSITION_HARD_TARGET_SHARD_BASE_COMMAND = (
 DEFAULT_FRONTIER_LIMIT = 1_000
 DEFAULT_FAMILY_FRONTIER_LIMIT_PER_FAMILY = 1_000
 DEFAULT_COMPOSITION_HARD_TARGET_LIMIT = 21
+DEFAULT_ASTRALBASE_DIR = ROOT.parent / "astralbase"
+DEFAULT_BITMESH_DIR = ROOT.parent / "bitmesh"
+DEFAULT_THERMOGRAPH_DIR = ROOT.parent / "thermograph"
+DISCOVERY_VALUE_RULE = "component_depth2_local_move_game_v0"
+DISCOVERY_POOL_GENERATOR_NAME = "partizan_candidate_pool_generator"
+DISCOVERY_POOL_GENERATOR_VERSION = "0.1.0"
+DISCOVERY_POOL_GENERATOR_FAMILY = "dfile_two_component_seeded_grammar_v1"
+DISCOVERY_POOL_GENERATOR_CONFIG_VERSION = "partizan.candidate_generator.v0.1"
+DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW = 20
+DISCOVERY_POOL_GENERATOR_VERSION_V2 = "0.2.0"
+DISCOVERY_POOL_GENERATOR_FAMILY_V2 = (
+    "dfile_two_component_constructive_grammar_v2"
+)
+DISCOVERY_POOL_GENERATOR_CONFIG_VERSION_V2 = "partizan.candidate_generator.v0.2"
+DISCOVERY_POOL_GENERATOR_CONSTRUCTION_CONTRACT_V2 = (
+    "partizan.dfile_two_component_constructive_grammar.v0.2"
+)
+DISCOVERY_POOL_GENERATOR_CATALOG_SCHEMA_V2 = (
+    "partizan.dfile_two_component_constructive_catalog.v0.2"
+)
+DISCOVERY_POOL_GENERATOR_CATALOG_ID_V2 = (
+    "catalog-sha256:6fb7ee4e6aa5aceb5ac55b8781cac3998c48ec2d0beb0a4aea047ab8a54cc4fd"
+)
+DISCOVERY_POOL_GENERATOR_CATALOG_PATH_V2 = (
+    "docs/discovery_wave_69r_construction_catalog.v0.2.json"
+)
+DISCOVERY_POOL_GENERATOR_PRNG_DOMAIN_V2 = (
+    "partizan/w69r/constructive-board-stream/v2"
+)
+
+_DISCOVERY_BARRIER = {
+    "d1": "P",
+    "d2": "p",
+    "d3": "P",
+    "d4": "p",
+    "d5": "P",
+    "d6": "p",
+    "d7": "P",
+    "d8": "p",
+}
+_DISCOVERY_LEFT_SQUARES = tuple(
+    f"{file_name}{rank}" for rank in range(1, 4) for file_name in "abc"
+)
+_DISCOVERY_RIGHT_SQUARES = tuple(
+    f"{file_name}{rank}" for rank in range(5, 9) for file_name in "fgh"
+)
+_DISCOVERY_WHITE_PIECES = ("P", "N", "B", "R", "Q")
+_DISCOVERY_BLACK_PIECES = ("p", "n", "b", "r", "q")
+_DISCOVERY_PIECES = _DISCOVERY_WHITE_PIECES + _DISCOVERY_BLACK_PIECES
+
+_DISCOVERY_V2_LEFT_KNIGHT_SQUARES = tuple(f"a{rank}" for rank in range(1, 9))
+_DISCOVERY_V2_RIGHT_KNIGHT_SQUARES = tuple(f"h{rank}" for rank in range(1, 9))
+_DISCOVERY_V2_LEFT_PAWNS = tuple(
+    [(f"b{rank}", "P") for rank in range(1, 8)]
+    + [(f"b{rank}", "p") for rank in range(2, 9)]
+)
+_DISCOVERY_V2_RIGHT_PAWNS = tuple(
+    [(f"g{rank}", "P") for rank in range(1, 8)]
+    + [(f"g{rank}", "p") for rank in range(2, 9)]
+)
+_DISCOVERY_V2_STRATA = (
+    "outer_leaper",
+    "pawn_phalanx",
+    "ray_cage",
+    "mixed_color_hook",
+)
+
+_DISCOVERY_V2_LEFT_RAY_CAGES = (
+    (("a1", "R"),),
+    (("a1", "B"), ("b2", "P")),
+    (("a1", "Q"), ("b2", "P")),
+)
+_DISCOVERY_V2_RIGHT_RAY_CAGES = (
+    (("h8", "r"),),
+    (("h8", "b"), ("g7", "p")),
+    (("h8", "q"), ("g7", "p")),
+)
+_DISCOVERY_V2_LEFT_MIXED_HOOKS = (
+    (("a1", "N"), ("a2", "P"), ("b3", "p")),
+)
+_DISCOVERY_V2_RIGHT_MIXED_HOOKS = (
+    (("h8", "n"), ("h7", "p"), ("g6", "P")),
+)
+
+
+class _Sha256CounterRng:
+    """Small version-stable PRNG for reproducible candidate generation."""
+
+    def __init__(self, seed: int) -> None:
+        self.seed = seed
+        self.counter = 0
+
+    def _next_int(self) -> int:
+        payload = discovery_contract.canonical_json_bytes(
+            {
+                "contract": "sha256_counter_prng_v1",
+                "counter": self.counter,
+                "random_seed": self.seed,
+            }
+        )
+        self.counter += 1
+        return int.from_bytes(hashlib.sha256(payload).digest(), "big")
+
+    def randbelow(self, upper: int) -> int:
+        if upper <= 0:
+            raise ValueError("upper must be positive")
+        return self._next_int() % upper
+
+    def randint(self, lower: int, upper: int) -> int:
+        return lower + self.randbelow(upper - lower + 1)
+
+    def choice(self, values: tuple[str, ...]) -> str:
+        return values[self.randbelow(len(values))]
+
+    def sample(self, values: tuple[str, ...], count: int) -> list[str]:
+        available = list(values)
+        selected: list[str] = []
+        for _ in range(count):
+            selected.append(available.pop(self.randbelow(len(available))))
+        return selected
+
+
+def _load_discovery_contract_module():
+    module_path = ROOT / "python" / "partizan" / "discovery.py"
+    spec = importlib.util.spec_from_file_location(
+        "partizan_discovery_contract", module_path
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"could not load discovery contracts from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+discovery_contract = _load_discovery_contract_module()
 
 
 class ShardRunnerError(RuntimeError):
     """Raised when the local dataset shard runner cannot complete."""
-
-
-if modal is not None:
-    app = modal.App("partizan-cgt-evaluator")
-
-    # Define the container environment. We need Rust, Cargo, and Maturin to
-    # compile our PyO3 engine in the cloud.
-    partizan_image = (
-        modal.Image.debian_slim(python_version="3.11")
-        .apt_install("curl", "libssl-dev", "pkg-config")
-        .run_commands(
-            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
-            "sh -s -- -y"
-        )
-        .env({"PATH": "/root/.cargo/bin:$PATH"})
-        .pip_install("maturin")
-        # To satisfy the Cargo.toml relative path dependencies (../../), mount
-        # the libraries so ../../ resolves to /root.
-        .add_local_dir(".", remote_path="/root/partizan/engine", copy=True)
-        .add_local_dir("../../thermograph", remote_path="/root/thermograph", copy=True)
-        .add_local_dir("../../bitmesh", remote_path="/root/bitmesh", copy=True)
-        .add_local_dir("../../astralbase", remote_path="/root/astralbase", copy=True)
-        .run_commands(
-            "rm -rf /root/partizan/engine/.venv && "
-            "cd /root/partizan/engine && "
-            "maturin build --release && "
-            "pip install target/wheels/partizan*.whl"
-        )
-    )
-else:
-    app = None
-    partizan_image = None
-
-
-if app is not None:
-
-    @app.function(image=partizan_image)
-    def evaluate_fens_batch(fens: list[str]):
-        """
-        This function runs in the cloud on thousands of parallel containers.
-        It takes a batch of FENs and processes them through our Rust engine.
-        """
-        import sys
-
-        sys.path.append("/root/partizan/engine")
-        import partizan
-
-        results = []
-        for fen in fens:
-            try:
-                data = partizan.evaluate_position(fen)
-                results.append(
-                    {
-                        "fen": fen,
-                        "components": data["components"],
-                        "temperature": data["temperature"],
-                        "mean_value": data["mean_value"],
-                        "expanded_nodes": data["expanded_nodes"],
-                    }
-                )
-            except Exception as e:
-                results.append(
-                    {
-                        "fen": fen,
-                        "error": str(e),
-                    }
-                )
-
-        return results
-
-
-def _run_modal_demo() -> None:
-    print("🚀 Booting up the Partizan Modal Orchestrator...")
-    
-    # In a real scenario, we generate billions of FENs.
-    # Here we simulate a large batch to demonstrate the cloud pipeline.
-    dummy_fens = [
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 
-        "rnbqkbnr/pp3ppp/4p3/2ppP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 4", 
-        "4k3/p1pppp1p/1p4p1/8/8/1P4P1/P1PPPP1P/4K3 w - - 0 1" 
-    ] * 1000 # 3,000 FENs
-    
-    batch_size = 100
-    batches = [dummy_fens[i:i + batch_size] for i in range(0, len(dummy_fens), batch_size)]
-    
-    print(f"📦 Distributing {len(dummy_fens)} positions across {len(batches)} Modal containers...")
-    
-    evaluated_positions = []
-    
-    for result_batch in evaluate_fens_batch.map(batches):
-        evaluated_positions.extend(result_batch)
-        
-    failures = sum(1 for pos in evaluated_positions if "error" in pos)
-    successes = len(evaluated_positions) - failures
-    print(f"✅ Processing complete! Evaluated {successes} positions; {failures} failed.")
-    
-    dataset_path = "cgt_dataset.jsonl"
-    with open(dataset_path, "w") as f:
-        for pos in evaluated_positions:
-            f.write(json.dumps(pos) + "\n")
-            
-    print(f"💾 Saved raw dataset to {dataset_path} for PartizanNet training!")
-
-
-if app is not None:
-
-    @app.local_entrypoint()
-    def main():
-        _run_modal_demo()
 
 
 def _resolve_from_root(path: Path) -> Path:
@@ -250,6 +288,1645 @@ def _git_head(path: Path) -> str:
             sys.stderr.write(result.stderr)
         raise ShardRunnerError(f"could not read git HEAD for {_display_path(path)}")
     return result.stdout.strip()
+
+
+def _git_is_clean(path: Path) -> bool:
+    result = subprocess.run(
+        ("git", "status", "--porcelain"),
+        cwd=path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        if result.stderr:
+            sys.stderr.write(result.stderr)
+        raise ShardRunnerError(f"could not inspect Git status for {_display_path(path)}")
+    return not result.stdout.strip()
+
+
+def _immutable_repo_commit(path: Path, label: str) -> str:
+    if not path.exists():
+        raise ShardRunnerError(f"{label} repository not found: {path}")
+    if not _git_is_clean(path):
+        raise ShardRunnerError(
+            f"{label} repository is dirty; discovery evidence requires an immutable commit"
+        )
+    commit = _git_head(path)
+    if len(commit) != 40 or any(char not in "0123456789abcdef" for char in commit):
+        raise ShardRunnerError(f"{label} HEAD is not a full lowercase Git commit")
+    return commit
+
+
+def _raise_contract_errors(label: str, errors: list[str]) -> None:
+    if errors:
+        raise ShardRunnerError(f"{label} contract failed: {'; '.join(errors)}")
+
+
+def _write_bytes(path: Path, payload: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(payload)
+
+
+def _candidate_artifact_contract_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(ROOT).as_posix()
+    except ValueError as error:
+        raise ShardRunnerError(
+            "the frozen candidate artifact must be inside the Partizan repository "
+            "or --candidate-artifact-path must provide its repository-relative path"
+        ) from error
+
+
+def _current_discovery_repositories(
+    *,
+    astralbase_dir: Path = DEFAULT_ASTRALBASE_DIR,
+    bitmesh_dir: Path = DEFAULT_BITMESH_DIR,
+    thermograph_dir: Path = DEFAULT_THERMOGRAPH_DIR,
+    partizan_dir: Path = ROOT,
+) -> dict[str, str]:
+    return {
+        "astralbase": _immutable_repo_commit(astralbase_dir, "astralbase"),
+        "bitmesh": _immutable_repo_commit(bitmesh_dir, "bitmesh"),
+        "thermograph": _immutable_repo_commit(thermograph_dir, "thermograph"),
+        "partizan": _immutable_repo_commit(partizan_dir, "partizan"),
+    }
+
+
+def _load_frozen_discovery_pool(
+    target_path: Path,
+    proposals_path: Path,
+    manifest_path: Path,
+    repository_root: Path = ROOT,
+) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
+    try:
+        target = discovery_contract.load_json(target_path)
+        proposals = discovery_contract.load_jsonl(proposals_path)
+        manifest = discovery_contract.load_json(manifest_path)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        raise ShardRunnerError(f"could not load frozen discovery pool: {error}") from error
+    _raise_contract_errors(
+        "target", discovery_contract.validate_target_spec(target)
+    )
+    for index, proposal in enumerate(proposals):
+        _raise_contract_errors(
+            f"proposal[{index}]",
+            discovery_contract.validate_candidate_proposal(proposal, target),
+        )
+    _raise_contract_errors(
+        "candidate pool manifest",
+        discovery_contract.validate_candidate_pool_manifest(
+            manifest,
+            target,
+            proposals,
+            proposals_path,
+            repository_root=repository_root,
+        ),
+    )
+    return target, proposals, manifest
+
+
+def _fen_board_from_squares(squares: dict[str, str]) -> str:
+    ranks: list[str] = []
+    for rank in range(8, 0, -1):
+        empty = 0
+        encoded: list[str] = []
+        for file_name in "abcdefgh":
+            piece = squares.get(f"{file_name}{rank}")
+            if piece is None:
+                empty += 1
+                continue
+            if empty:
+                encoded.append(str(empty))
+                empty = 0
+            encoded.append(piece)
+        if empty:
+            encoded.append(str(empty))
+        ranks.append("".join(encoded))
+    return "/".join(ranks)
+
+
+def _discovery_generator_config(
+    *, pool_size: int, random_seed: int
+) -> dict[str, Any]:
+    return {
+        "schema_version": DISCOVERY_POOL_GENERATOR_CONFIG_VERSION,
+        "name": DISCOVERY_POOL_GENERATOR_NAME,
+        "version": DISCOVERY_POOL_GENERATOR_VERSION,
+        "family": DISCOVERY_POOL_GENERATOR_FAMILY,
+        "pool_size": pool_size,
+        "random_seed": random_seed,
+        "prng": "sha256_counter_prng_v1",
+        "maximum_attempts_per_required_row": (
+            DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW
+        ),
+        "grammar": {
+            "barrier": "alternating_locked_dfile_pawns_v1",
+            "left_region": "files_a_to_c_ranks_1_to_3_mixed_material",
+            "right_region": "files_f_to_h_ranks_5_to_8_mixed_material",
+            "active_piece_count_per_region": {"minimum": 1, "maximum": 4},
+            "piece_alphabet": "P,N,B,R,Q|p,n,b,r,q",
+            "castling_rights": "none",
+            "en_passant": "none",
+        },
+        "deduplication": [
+            "candidate_key",
+            "fen_horizontal_reflection_v0",
+        ],
+    }
+
+
+def generate_discovery_candidate_pool_v1(
+    *,
+    target: dict[str, Any],
+    pool_size: int,
+    random_seed: int,
+    generator_code_commit: str,
+) -> list[dict[str, Any]]:
+    """Generate a deterministic proposal pool from a target-blind board grammar.
+
+    Target content never controls the board grammar or its random stream.  The
+    target contributes only its domain and typed identifier so each proposal is
+    bound to the experiment it belongs to.  No verifier is invoked here.
+    """
+
+    _raise_contract_errors(
+        "target", discovery_contract.validate_target_spec(target)
+    )
+    if (
+        not isinstance(pool_size, int)
+        or isinstance(pool_size, bool)
+        or pool_size <= 0
+    ):
+        raise ShardRunnerError("pool_size must be a positive integer")
+    maximum = target["search_limits"]["max_pool_size"]
+    if pool_size > maximum:
+        raise ShardRunnerError(
+            f"pool_size={pool_size} exceeds target max_pool_size={maximum}"
+        )
+    if (
+        not isinstance(random_seed, int)
+        or isinstance(random_seed, bool)
+        or random_seed < 0
+    ):
+        raise ShardRunnerError("random_seed must be a non-negative integer")
+    if (
+        len(generator_code_commit) != 40
+        or any(char not in "0123456789abcdef" for char in generator_code_commit)
+    ):
+        raise ShardRunnerError(
+            "generator_code_commit must be a full lowercase Git commit"
+        )
+
+    config = _discovery_generator_config(
+        pool_size=pool_size, random_seed=random_seed
+    )
+    config_sha = discovery_contract.sha256_hex(
+        discovery_contract.canonical_json_bytes(config)
+    )
+    rng = _Sha256CounterRng(random_seed)
+    proposals: list[dict[str, Any]] = []
+    candidate_keys: set[str] = set()
+    symmetry_keys: set[str] = set()
+    attempts = 0
+    maximum_attempts = pool_size * DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW
+
+    while len(proposals) < pool_size and attempts < maximum_attempts:
+        attempts += 1
+        left_count = rng.randint(1, 4)
+        right_count = rng.randint(1, 4)
+        left_squares = rng.sample(_DISCOVERY_LEFT_SQUARES, left_count)
+        right_squares = rng.sample(_DISCOVERY_RIGHT_SQUARES, right_count)
+        left_pieces = [rng.choice(_DISCOVERY_PIECES) for _ in left_squares]
+        right_pieces = [rng.choice(_DISCOVERY_PIECES) for _ in right_squares]
+        squares = dict(_DISCOVERY_BARRIER)
+        squares.update(zip(left_squares, left_pieces))
+        squares.update(zip(right_squares, right_pieces))
+        side_to_move = "w" if rng.randbelow(2) == 0 else "b"
+        fen = f"{_fen_board_from_squares(squares)} {side_to_move} - - 0 1"
+        position = {
+            "encoding": "fen",
+            "text": fen,
+            "sha256": discovery_contract.sha256_hex(fen.encode("utf-8")),
+            "symmetry_sha256": discovery_contract.fen_file_reflection_orbit_sha256(
+                fen
+            ),
+        }
+        candidate_key = discovery_contract.candidate_state_key_for(
+            target["domain"], position
+        )
+        if (
+            candidate_key in candidate_keys
+            or position["symmetry_sha256"] in symmetry_keys
+        ):
+            continue
+
+        ordinal = len(proposals)
+        proposal: dict[str, Any] = {
+            "schema_version": discovery_contract.PROPOSAL_SCHEMA_VERSION,
+            "proposal_id": "proposal-sha256:" + "0" * 64,
+            "target_id": target["target_id"],
+            "domain": target["domain"],
+            "candidate_key": candidate_key,
+            "ordinal": ordinal,
+            "position": position,
+            "generator": {
+                "name": DISCOVERY_POOL_GENERATOR_NAME,
+                "version": DISCOVERY_POOL_GENERATOR_VERSION,
+                "code_commit": generator_code_commit,
+                "family": DISCOVERY_POOL_GENERATOR_FAMILY,
+                "operator": "seeded_rejection_sampling_without_replacement_v1",
+                "config_sha256": config_sha,
+                "random_seed": random_seed,
+            },
+            "proposal_features": discovery_contract.partizan_pool_features_for_fen(
+                fen
+            ),
+        }
+        proposal["proposal_id"] = discovery_contract.proposal_id_for(proposal)
+        _raise_contract_errors(
+            f"proposal[{ordinal}]",
+            discovery_contract.validate_candidate_proposal(proposal, target),
+        )
+        proposals.append(proposal)
+        candidate_keys.add(candidate_key)
+        symmetry_keys.add(position["symmetry_sha256"])
+
+    if len(proposals) != pool_size:
+        raise ShardRunnerError(
+            "candidate grammar exhausted before reaching the requested pool size "
+            f"({len(proposals)}/{pool_size})"
+        )
+    return proposals
+
+
+def _discovery_generator_config_v2(
+    *, pool_size: int, random_seed: int
+) -> dict[str, Any]:
+    return {
+        "schema_version": DISCOVERY_POOL_GENERATOR_CONFIG_VERSION_V2,
+        "name": DISCOVERY_POOL_GENERATOR_NAME,
+        "version": DISCOVERY_POOL_GENERATOR_VERSION_V2,
+        "family": DISCOVERY_POOL_GENERATOR_FAMILY_V2,
+        "pool_size": pool_size,
+        "random_seed": random_seed,
+        "prng": "sha256_counter_prng_v1",
+        "prng_domain": DISCOVERY_POOL_GENERATOR_PRNG_DOMAIN_V2,
+        "prng_seed_derivation": "sha256_canonical_json_domain_seed_v1",
+        "maximum_attempts_per_required_row": (
+            DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW
+        ),
+        "construction_catalog": {
+            "schema_version": DISCOVERY_POOL_GENERATOR_CATALOG_SCHEMA_V2,
+            "catalog_id": DISCOVERY_POOL_GENERATOR_CATALOG_ID_V2,
+            "path": DISCOVERY_POOL_GENERATOR_CATALOG_PATH_V2,
+        },
+        "grammar": {
+            "barrier": "alternating_frozen_dfile_pawns_v2",
+            "component_count": 2,
+            "active_piece_count_per_region": {"minimum": 1, "maximum": 5},
+            "strata": list(_DISCOVERY_V2_STRATA),
+            "stratum_schedule": "accepted_ordinal_modulo_four_v1",
+            "component_grammar": {
+                "outer_leaper": "outer_file_knights_plus_optional_nonterminal_pawn_v1",
+                "pawn_phalanx": "two_file_nonterminal_pawn_atoms_v1",
+                "ray_cage": "static_indivisible_published_source_cages_v1",
+                "mixed_color_hook": "static_published_mixed_color_hooks_v1",
+            },
+            "construction_proof": (
+                "static_safe_atoms_and_indivisible_published_source_cages_v1"
+            ),
+            "forbidden_active_files": ["e"],
+            "castling_rights": "none",
+            "en_passant": "none",
+            "side_to_move": "white_fixed_to_prevent_semantic_duplicates",
+        },
+        "deduplication": [
+            "target_free_board_id",
+            "fen_horizontal_reflection_v0",
+        ],
+        "runtime_oracles": [],
+    }
+
+
+def _construct_discovery_v2_region(
+    rng: _Sha256CounterRng,
+    *,
+    knight_squares: tuple[str, ...],
+    pawn_options: tuple[tuple[str, str], ...],
+) -> dict[str, str]:
+    piece_count = rng.randint(1, 5)
+    include_pawn = rng.randbelow(2) == 1
+    knight_count = piece_count - int(include_pawn)
+    squares = rng.sample(knight_squares, knight_count)
+    pieces = {square: rng.choice(("N", "n")) for square in squares}
+    if include_pawn:
+        pawn_square, pawn = rng.choice(pawn_options)
+        pieces[pawn_square] = pawn
+    return pieces
+
+
+def _construct_discovery_v2_phalanx(
+    rng: _Sha256CounterRng, *, files: tuple[str, str]
+) -> dict[str, str]:
+    pieces: dict[str, str] = {}
+    for file_name in files:
+        options = tuple(
+            [(f"{file_name}{rank}", "P") for rank in range(1, 8)]
+            + [(f"{file_name}{rank}", "p") for rank in range(2, 9)]
+        )
+        square, piece = rng.choice(options)
+        pieces[square] = piece
+    return pieces
+
+
+def _construct_discovery_v2_catalog_component(
+    rng: _Sha256CounterRng,
+    *,
+    catalog: tuple[tuple[tuple[str, str], ...], ...],
+    extra_squares: tuple[str, ...],
+    maximum_extra_count: int,
+) -> dict[str, str]:
+    pieces = dict(rng.choice(catalog))
+    available = tuple(square for square in extra_squares if square not in pieces)
+    extra_count = rng.randint(
+        0, min(maximum_extra_count, 5 - len(pieces), len(available))
+    )
+    for square in rng.sample(available, extra_count):
+        pieces[square] = rng.choice(("N", "n"))
+    return pieces
+
+
+def _construct_discovery_v2_component(
+    rng: _Sha256CounterRng, *, stratum: str, side: str
+) -> dict[str, str]:
+    if side not in {"left", "right"}:
+        raise AssertionError("v2 component side must be left or right")
+    if stratum == "outer_leaper":
+        return _construct_discovery_v2_region(
+            rng,
+            knight_squares=(
+                _DISCOVERY_V2_LEFT_KNIGHT_SQUARES
+                if side == "left"
+                else _DISCOVERY_V2_RIGHT_KNIGHT_SQUARES
+            ),
+            pawn_options=(
+                _DISCOVERY_V2_LEFT_PAWNS
+                if side == "left"
+                else _DISCOVERY_V2_RIGHT_PAWNS
+            ),
+        )
+    if stratum == "pawn_phalanx":
+        return _construct_discovery_v2_phalanx(
+            rng, files=("a", "b") if side == "left" else ("g", "h")
+        )
+    if stratum == "ray_cage":
+        return _construct_discovery_v2_catalog_component(
+            rng,
+            catalog=(
+                _DISCOVERY_V2_LEFT_RAY_CAGES
+                if side == "left"
+                else _DISCOVERY_V2_RIGHT_RAY_CAGES
+            ),
+            extra_squares=tuple(
+                f"{'a' if side == 'left' else 'h'}{rank}"
+                for rank in range(1, 9)
+            ),
+            maximum_extra_count=3,
+        )
+    if stratum == "mixed_color_hook":
+        return _construct_discovery_v2_catalog_component(
+            rng,
+            catalog=(
+                _DISCOVERY_V2_LEFT_MIXED_HOOKS
+                if side == "left"
+                else _DISCOVERY_V2_RIGHT_MIXED_HOOKS
+            ),
+            extra_squares=(
+                tuple(f"a{rank}" for rank in range(4, 9))
+                if side == "left"
+                else tuple(f"h{rank}" for rank in range(1, 6))
+            ),
+            maximum_extra_count=2,
+        )
+    raise AssertionError(f"unsupported v2 stratum: {stratum}")
+
+
+def _constructive_v2_invariant_errors(
+    squares: dict[str, str], *, stratum: str
+) -> list[str]:
+    """Check the syntactic theorem used by v2; this never calls an oracle."""
+
+    errors: list[str] = []
+    if any(squares.get(square) != piece for square, piece in _DISCOVERY_BARRIER.items()):
+        errors.append("BarrierPawnNotFrozen")
+    active = {
+        square: piece
+        for square, piece in squares.items()
+        if square not in _DISCOVERY_BARRIER
+    }
+    left = {square: piece for square, piece in active.items() if square[0] in "abc"}
+    right = {square: piece for square, piece in active.items() if square[0] in "efgh"}
+    if not left or not right:
+        errors.append("RequiresStrictDecomposition")
+    if any(square[0] == "e" for square in active):
+        errors.append("BarrierPieceCanBeCaptured")
+
+    def region_is_constructive(
+        region: dict[str, str],
+        *,
+        knight_file: str,
+        pawn_file: str,
+    ) -> bool:
+        pawns = 0
+        for square, piece in region.items():
+            if square[0] == knight_file and piece in {"N", "n"}:
+                continue
+            rank = int(square[1])
+            if square[0] != pawn_file or piece not in {"P", "p"}:
+                return False
+            if piece == "P" and rank == 8:
+                return False
+            if piece == "p" and rank == 1:
+                return False
+            pawns += 1
+        return pawns <= 1 and 1 <= len(region) <= 5
+
+    def phalanx_is_constructive(
+        region: dict[str, str], *, files: tuple[str, str]
+    ) -> bool:
+        if len(region) != 2 or {square[0] for square in region} != set(files):
+            return False
+        return all(
+            piece in {"P", "p"}
+            and not (piece == "P" and square[1] == "8")
+            and not (piece == "p" and square[1] == "1")
+            for square, piece in region.items()
+        )
+
+    def catalog_is_constructive(
+        region: dict[str, str],
+        *,
+        catalog: tuple[tuple[tuple[str, str], ...], ...],
+        extra_squares: tuple[str, ...],
+        maximum_extra_count: int,
+    ) -> bool:
+        for encoded_base in catalog:
+            base = dict(encoded_base)
+            if not all(region.get(square) == piece for square, piece in base.items()):
+                continue
+            extras = {
+                square: piece
+                for square, piece in region.items()
+                if square not in base
+            }
+            if not extras:
+                return True
+            if len(extras) <= maximum_extra_count and all(
+                square in extra_squares and piece in {"N", "n"}
+                for square, piece in extras.items()
+            ):
+                return True
+        return False
+
+    if stratum == "outer_leaper":
+        left_ok = region_is_constructive(left, knight_file="a", pawn_file="b")
+        right_ok = region_is_constructive(right, knight_file="h", pawn_file="g")
+    elif stratum == "pawn_phalanx":
+        left_ok = phalanx_is_constructive(left, files=("a", "b"))
+        right_ok = phalanx_is_constructive(right, files=("g", "h"))
+    elif stratum == "ray_cage":
+        left_ok = catalog_is_constructive(
+            left,
+            catalog=_DISCOVERY_V2_LEFT_RAY_CAGES,
+            extra_squares=tuple(f"a{rank}" for rank in range(1, 9)),
+            maximum_extra_count=3,
+        )
+        right_ok = catalog_is_constructive(
+            right,
+            catalog=_DISCOVERY_V2_RIGHT_RAY_CAGES,
+            extra_squares=tuple(f"h{rank}" for rank in range(1, 9)),
+            maximum_extra_count=3,
+        )
+    elif stratum == "mixed_color_hook":
+        left_ok = catalog_is_constructive(
+            left,
+            catalog=_DISCOVERY_V2_LEFT_MIXED_HOOKS,
+            extra_squares=tuple(f"a{rank}" for rank in range(4, 9)),
+            maximum_extra_count=2,
+        )
+        right_ok = catalog_is_constructive(
+            right,
+            catalog=_DISCOVERY_V2_RIGHT_MIXED_HOOKS,
+            extra_squares=tuple(f"h{rank}" for rank in range(1, 6)),
+            maximum_extra_count=2,
+        )
+    else:
+        left_ok = right_ok = False
+    if left and not left_ok:
+        errors.append("PieceCanEnterOtherComponent")
+    if right and not right_ok:
+        errors.append("PieceCanEnterOtherComponent")
+    return sorted(set(errors))
+
+
+def _constructive_v2_template_id(
+    *, stratum: str, side: str, pieces: dict[str, str]
+) -> str:
+    payload = {
+        "construction_contract": DISCOVERY_POOL_GENERATOR_CONSTRUCTION_CONTRACT_V2,
+        "stratum": stratum,
+        "side": side,
+        "pieces": [[square, pieces[square]] for square in sorted(pieces)],
+    }
+    return "template-sha256:" + discovery_contract.sha256_hex(
+        discovery_contract.canonical_json_bytes(payload)
+    )
+
+
+def generate_discovery_board_states_v2(
+    *,
+    pool_size: int,
+    random_seed: int,
+    generator_code_commit: str,
+) -> list[dict[str, Any]]:
+    """Generate target-free boards from a conservative construction theorem.
+
+    The function has no target argument.  It does not import, invoke, or filter
+    through Bitmesh, Astralbase, Thermograph, or any target identity.
+    """
+
+    if (
+        not isinstance(pool_size, int)
+        or isinstance(pool_size, bool)
+        or pool_size <= 0
+        or pool_size > 4096
+    ):
+        raise ShardRunnerError("pool_size must be an integer from 1 through 4096")
+    if (
+        not isinstance(random_seed, int)
+        or isinstance(random_seed, bool)
+        or random_seed < 0
+    ):
+        raise ShardRunnerError("random_seed must be a non-negative integer")
+    if (
+        len(generator_code_commit) != 40
+        or any(char not in "0123456789abcdef" for char in generator_code_commit)
+    ):
+        raise ShardRunnerError(
+            "generator_code_commit must be a full lowercase Git commit"
+        )
+
+    config = _discovery_generator_config_v2(
+        pool_size=pool_size, random_seed=random_seed
+    )
+    config_sha = discovery_contract.sha256_hex(
+        discovery_contract.canonical_json_bytes(config)
+    )
+    derived_seed = int.from_bytes(
+        hashlib.sha256(
+            discovery_contract.canonical_json_bytes(
+                {
+                    "contract": "sha256_canonical_json_domain_seed_v1",
+                    "domain": DISCOVERY_POOL_GENERATOR_PRNG_DOMAIN_V2,
+                    "random_seed": random_seed,
+                }
+            )
+        ).digest(),
+        "big",
+    )
+    rng = _Sha256CounterRng(derived_seed)
+    rows: list[dict[str, Any]] = []
+    board_ids: set[str] = set()
+    symmetry_keys: set[str] = set()
+    attempts = 0
+    maximum_attempts = pool_size * DISCOVERY_MAX_ATTEMPTS_PER_REQUIRED_ROW
+
+    while len(rows) < pool_size and attempts < maximum_attempts:
+        attempts += 1
+        stratum = _DISCOVERY_V2_STRATA[len(rows) % len(_DISCOVERY_V2_STRATA)]
+        left = _construct_discovery_v2_component(
+            rng, stratum=stratum, side="left"
+        )
+        right = _construct_discovery_v2_component(
+            rng, stratum=stratum, side="right"
+        )
+        squares = dict(_DISCOVERY_BARRIER)
+        squares.update(left)
+        squares.update(right)
+        invariant_errors = _constructive_v2_invariant_errors(
+            squares, stratum=stratum
+        )
+        if invariant_errors:
+            raise ShardRunnerError(
+                "v2 construction theorem postcondition failed: "
+                + ", ".join(invariant_errors)
+            )
+        fen = f"{_fen_board_from_squares(squares)} w - - 0 1"
+        position = {
+            "encoding": "fen",
+            "text": fen,
+            "sha256": discovery_contract.sha256_hex(fen.encode("utf-8")),
+            "symmetry_sha256": discovery_contract.fen_file_reflection_orbit_sha256(
+                fen
+            ),
+        }
+        board_id = discovery_contract.board_id_for(position)
+        if board_id in board_ids or position["symmetry_sha256"] in symmetry_keys:
+            continue
+        row = {
+            "schema_version": discovery_contract.BOARD_STREAM_SCHEMA_VERSION,
+            "board_id": board_id,
+            "ordinal": len(rows),
+            "position": position,
+            "generator": {
+                "name": DISCOVERY_POOL_GENERATOR_NAME,
+                "version": DISCOVERY_POOL_GENERATOR_VERSION_V2,
+                "code_commit": generator_code_commit,
+                "family": DISCOVERY_POOL_GENERATOR_FAMILY_V2,
+                "operator": "seeded_constructive_component_composition_v2",
+                "config_sha256": config_sha,
+                "random_seed": random_seed,
+            },
+            "construction": {
+                "contract": DISCOVERY_POOL_GENERATOR_CONSTRUCTION_CONTRACT_V2,
+                "stratum": stratum,
+                "left_active_piece_count": len(left),
+                "right_active_piece_count": len(right),
+                "left_template_id": _constructive_v2_template_id(
+                    stratum=stratum, side="left", pieces=left
+                ),
+                "right_template_id": _constructive_v2_template_id(
+                    stratum=stratum, side="right", pieces=right
+                ),
+                "runtime_oracle_used": False,
+            },
+            "proposal_features": discovery_contract.partizan_pool_features_for_fen(
+                fen
+            ),
+        }
+        _raise_contract_errors(
+            f"board_stream[{len(rows)}]",
+            discovery_contract.validate_candidate_board_stream_row(row),
+        )
+        rows.append(row)
+        board_ids.add(board_id)
+        symmetry_keys.add(position["symmetry_sha256"])
+
+    if len(rows) != pool_size:
+        raise ShardRunnerError(
+            "candidate grammar exhausted before reaching the requested pool size "
+            f"({len(rows)}/{pool_size}; attempts={attempts}/{maximum_attempts})"
+        )
+    return rows
+
+
+def bind_discovery_board_states_v2(
+    *, target: dict[str, Any], board_rows: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Bind a target-free v2 board stream to proposal v0.1 contracts."""
+
+    _raise_contract_errors("target", discovery_contract.validate_target_spec(target))
+    if len(board_rows) > target["search_limits"]["max_pool_size"]:
+        raise ShardRunnerError("board stream exceeds target max_pool_size")
+    proposals: list[dict[str, Any]] = []
+    for ordinal, board_row in enumerate(board_rows):
+        _raise_contract_errors(
+            f"board_stream[{ordinal}]",
+            discovery_contract.validate_candidate_board_stream_row(board_row),
+        )
+        if board_row["ordinal"] != ordinal:
+            raise ShardRunnerError("board stream ordinals must be contiguous")
+        position = dict(board_row["position"])
+        proposal: dict[str, Any] = {
+            "schema_version": discovery_contract.PROPOSAL_SCHEMA_VERSION,
+            "proposal_id": "proposal-sha256:" + "0" * 64,
+            "target_id": target["target_id"],
+            "domain": target["domain"],
+            "candidate_key": discovery_contract.candidate_state_key_for(
+                target["domain"], position
+            ),
+            "ordinal": ordinal,
+            "position": position,
+            "generator": dict(board_row["generator"]),
+            "proposal_features": board_row["proposal_features"],
+        }
+        proposal["proposal_id"] = discovery_contract.proposal_id_for(proposal)
+        _raise_contract_errors(
+            f"proposal[{ordinal}]",
+            discovery_contract.validate_candidate_proposal(proposal, target),
+        )
+        proposals.append(proposal)
+    return proposals
+
+
+def generate_discovery_candidate_pool_v2(
+    *,
+    target: dict[str, Any],
+    pool_size: int,
+    random_seed: int,
+    generator_code_commit: str,
+) -> list[dict[str, Any]]:
+    _raise_contract_errors("target", discovery_contract.validate_target_spec(target))
+    if pool_size > target["search_limits"]["max_pool_size"]:
+        raise ShardRunnerError(
+            f"pool_size={pool_size} exceeds target max_pool_size="
+            f"{target['search_limits']['max_pool_size']}"
+        )
+    board_rows = generate_discovery_board_states_v2(
+        pool_size=pool_size,
+        random_seed=random_seed,
+        generator_code_commit=generator_code_commit,
+    )
+    return bind_discovery_board_states_v2(target=target, board_rows=board_rows)
+
+
+def build_discovery_generation_receipt_v1(
+    *,
+    target: dict[str, Any],
+    proposals: list[dict[str, Any]],
+    raw_artifact_sha256: list[str],
+) -> dict[str, Any]:
+    if not proposals:
+        raise ShardRunnerError("generation receipt requires at least one proposal")
+    if len(raw_artifact_sha256) != 2:
+        raise ShardRunnerError(
+            "generation receipt requires exactly two raw artifact hashes"
+        )
+    generator = proposals[0]["generator"]
+    receipt: dict[str, Any] = {
+        "schema_version": discovery_contract.GENERATION_RECEIPT_SCHEMA_VERSION,
+        "receipt_id": "receipt-sha256:" + "0" * 64,
+        "target_id": target["target_id"],
+        "domain": target["domain"],
+        "generator": {
+            key: generator[key]
+            for key in (
+                "name",
+                "version",
+                "code_commit",
+                "config_sha256",
+                "random_seed",
+            )
+        },
+        "candidate_artifact": {
+            "schema_version": discovery_contract.PROPOSAL_SCHEMA_VERSION,
+            "row_count": len(proposals),
+            "sha256": raw_artifact_sha256[0],
+        },
+        "executions": {
+            "mode": "separate_python_processes_v1",
+            "run_count": len(raw_artifact_sha256),
+            "raw_artifact_sha256": list(raw_artifact_sha256),
+            "byte_identical": len(set(raw_artifact_sha256)) == 1,
+        },
+    }
+    receipt["receipt_id"] = discovery_contract.generation_receipt_id_for(receipt)
+    _raise_contract_errors(
+        "generation receipt",
+        discovery_contract.validate_generation_receipt(
+            receipt, target, proposals
+        ),
+    )
+    return receipt
+
+
+def freeze_discovery_pool(
+    *,
+    target_path: Path,
+    proposals_input_path: Path,
+    proposals_output_path: Path,
+    manifest_output_path: Path,
+    source_repositories: dict[str, str],
+    candidate_artifact_path: str | None = None,
+    generation_receipt_path: Path | None = None,
+    repository_root: Path = ROOT,
+) -> dict[str, Any]:
+    """Freeze an existing proposal JSONL; this does not generate candidates."""
+
+    try:
+        target = discovery_contract.load_json(target_path)
+        proposals = discovery_contract.load_jsonl(proposals_input_path)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        raise ShardRunnerError(f"could not load discovery inputs: {error}") from error
+    _raise_contract_errors("target", discovery_contract.validate_target_spec(target))
+    if not proposals:
+        raise ShardRunnerError("proposal input must contain at least one candidate")
+    maximum = target["search_limits"]["max_pool_size"]
+    if len(proposals) > maximum:
+        raise ShardRunnerError(
+            f"proposal input has {len(proposals)} rows, exceeding max_pool_size={maximum}"
+        )
+    for index, proposal in enumerate(proposals):
+        _raise_contract_errors(
+            f"proposal[{index}]",
+            discovery_contract.validate_candidate_proposal(proposal, target),
+        )
+
+    canonical_first = discovery_contract.canonical_jsonl_bytes(proposals)
+    canonical_second = discovery_contract.canonical_jsonl_bytes(proposals)
+    if canonical_first != canonical_second:
+        raise ShardRunnerError("proposal canonicalization was not byte deterministic")
+    artifact_sha = discovery_contract.sha256_hex(canonical_first)
+
+    generator_fields = ("name", "version", "config_sha256", "random_seed")
+    first_generator = proposals[0]["generator"]
+    generator = {key: first_generator[key] for key in generator_fields}
+    for index, proposal in enumerate(proposals[1:], start=1):
+        observed = {key: proposal["generator"][key] for key in generator_fields}
+        if observed != generator:
+            raise ShardRunnerError(
+                f"proposal[{index}] does not share the frozen pool generator configuration"
+            )
+    generator_name = first_generator["name"]
+    if generator_name == DISCOVERY_POOL_GENERATOR_NAME:
+        generator_repository = "partizan"
+    elif generator_name == "astralbase_discovery_fixture_generator":
+        generator_repository = "astralbase"
+    else:
+        raise ShardRunnerError(
+            f"unsupported proposal generator identity: {generator_name}"
+        )
+    expected_generator_commit = source_repositories.get(generator_repository)
+    for index, proposal in enumerate(proposals):
+        if proposal["generator"]["code_commit"] != expected_generator_commit:
+            raise ShardRunnerError(
+                f"proposal[{index}] generator code_commit does not match frozen "
+                f"{generator_repository.capitalize()} commit"
+            )
+    if generator_repository == "partizan":
+        symmetry_counts: Counter[str] = Counter()
+        for index, proposal in enumerate(proposals):
+            position = proposal["position"]
+            expected_symmetry = (
+                discovery_contract.fen_file_reflection_orbit_sha256(
+                    position["text"]
+                )
+            )
+            if position["symmetry_sha256"] != expected_symmetry:
+                raise ShardRunnerError(
+                    f"proposal[{index}] symmetry_sha256 does not match the "
+                    "Partizan file-reflection contract"
+                )
+            symmetry_counts[expected_symmetry] += 1
+        if any(count != 1 for count in symmetry_counts.values()):
+            raise ShardRunnerError(
+                "Partizan proposal pool contains a file-reflection symmetry duplicate"
+            )
+    artifact_contract_path = candidate_artifact_path or _candidate_artifact_contract_path(
+        proposals_output_path
+    )
+    determinism: dict[str, Any]
+    if generator_repository == "partizan":
+        if generation_receipt_path is None:
+            raise ShardRunnerError(
+                "Partizan-generated pools require a generation receipt"
+            )
+        try:
+            root = repository_root.resolve(strict=True)
+            receipt_path = generation_receipt_path.resolve(strict=True)
+            receipt_relative_path = receipt_path.relative_to(root).as_posix()
+            receipt_bytes = receipt_path.read_bytes()
+            generation_receipt = json.loads(receipt_bytes.decode("utf-8"))
+        except (OSError, ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ShardRunnerError(
+                "generation receipt must be a readable file inside the "
+                f"repository root: {error}"
+            ) from error
+        if not isinstance(generation_receipt, dict):
+            raise ShardRunnerError("generation receipt must contain a JSON object")
+        canonical_receipt_bytes = discovery_contract.canonical_json_bytes(
+            generation_receipt
+        )
+        if receipt_bytes != canonical_receipt_bytes:
+            raise ShardRunnerError("generation receipt bytes must be canonical")
+        _raise_contract_errors(
+            "generation receipt",
+            discovery_contract.validate_generation_receipt(
+                generation_receipt, target, proposals
+            ),
+        )
+        determinism = {
+            "operation": "separate_process_generation",
+            "run_count": 2,
+            "byte_identical": True,
+            "artifact_sha256": artifact_sha,
+            "raw_artifact_sha256": list(
+                generation_receipt["executions"]["raw_artifact_sha256"]
+            ),
+            "generation_receipt_ref": {
+                "path": receipt_relative_path,
+                "schema_version": generation_receipt["schema_version"],
+                "receipt_id": generation_receipt["receipt_id"],
+                "sha256": discovery_contract.sha256_hex(receipt_bytes),
+            },
+        }
+    else:
+        determinism = {
+            "operation": "canonicalization",
+            "run_count": 2,
+            "byte_identical": True,
+            "artifact_sha256": artifact_sha,
+        }
+
+    manifest: dict[str, Any] = {
+        "schema_version": (
+            discovery_contract.POOL_SCHEMA_VERSION_V2
+            if generator_repository == "partizan"
+            else discovery_contract.POOL_SCHEMA_VERSION
+        ),
+        "pool_id": "pool-sha256:" + "0" * 64,
+        "target_ref": {
+            "target_id": target["target_id"],
+            "sha256": discovery_contract.sha256_hex(
+                discovery_contract.canonical_json_bytes(target)
+            ),
+        },
+        "candidate_artifact": {
+            "path": artifact_contract_path,
+            "schema_version": discovery_contract.PROPOSAL_SCHEMA_VERSION,
+            "sha256": artifact_sha,
+            "row_count": len(proposals),
+        },
+        "generator": generator,
+        "source_repositories": dict(source_repositories),
+        "determinism": determinism,
+        "ranker_boundary": {
+            "contract_id": "proposal_only_ranker_input_v0.1",
+            "generation_phase": "offline_before_any_verifier_call",
+            "allowed_target_paths": ["/ranker_view"],
+            "allowed_proposal_paths": ["/position", "/proposal_features"],
+            "audit_passed": True,
+        },
+    }
+    manifest["pool_id"] = discovery_contract.candidate_pool_id_for(manifest)
+
+    # Validate in memory before either output becomes authoritative.
+    _write_bytes(proposals_output_path, canonical_first)
+    errors = discovery_contract.validate_candidate_pool_manifest(
+        manifest,
+        target,
+        proposals,
+        proposals_output_path,
+        repository_root=repository_root,
+    )
+    if errors:
+        proposals_output_path.unlink(missing_ok=True)
+        _raise_contract_errors("candidate pool manifest", errors)
+    _write_bytes(
+        manifest_output_path, discovery_contract.canonical_json_bytes(manifest)
+    )
+    return manifest
+
+
+def _astralbase_requests(
+    target: dict[str, Any], proposals: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    return [
+        discovery_contract.astralbase_request_for(target, proposal)
+        for proposal in proposals
+    ]
+
+
+def _parse_astralbase_responses(
+    payload: bytes, proposals: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    try:
+        text = payload.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise ShardRunnerError("Astralbase response is not UTF-8") from error
+    lines = text.splitlines()
+    if not lines or any(not line.strip() for line in lines):
+        raise ShardRunnerError("Astralbase response must be non-empty JSONL without blanks")
+    try:
+        rows = [json.loads(line) for line in lines]
+    except json.JSONDecodeError as error:
+        raise ShardRunnerError(f"Astralbase returned invalid JSONL: {error}") from error
+    if len(rows) != len(proposals) or not all(isinstance(row, dict) for row in rows):
+        raise ShardRunnerError("Astralbase must return exactly one object per proposal")
+    expected_ids = [proposal["proposal_id"] for proposal in proposals]
+    observed_ids = [row.get("request_id") for row in rows]
+    if observed_ids != expected_ids:
+        raise ShardRunnerError(
+            "Astralbase responses must preserve the frozen proposal order and request IDs"
+        )
+    return rows
+
+
+def _certified_actual(response: dict[str, Any], node_budget: int) -> dict[str, Any]:
+    actual = response.get("actual")
+    required = {
+        "identity_kind",
+        "semantics",
+        "value_class",
+        "digest_v1_sha256",
+        "legacy_digest",
+        "recursive_nodes",
+        "decomposition_digest",
+        "composition_digest",
+        "component_legacy_digests",
+    }
+    if not isinstance(actual, dict) or not required.issubset(actual):
+        raise ShardRunnerError("certified Astralbase response lacks structural evidence")
+    recursive_nodes = actual.get("recursive_nodes")
+    if (
+        not isinstance(recursive_nodes, int)
+        or isinstance(recursive_nodes, bool)
+        or recursive_nodes < 0
+        or recursive_nodes > node_budget
+    ):
+        raise ShardRunnerError("Astralbase recursive_nodes violates the request node_budget")
+    for key in ("digest_v1_sha256", "decomposition_digest", "composition_digest"):
+        value = actual.get(key)
+        if (
+            not isinstance(value, str)
+            or len(value) != 64
+            or any(char not in "0123456789abcdef" for char in value)
+        ):
+            raise ShardRunnerError(f"Astralbase actual.{key} is not a SHA-256 digest")
+    if actual.get("semantics") != "structural_tree_identity_only":
+        raise ShardRunnerError("Astralbase returned unsupported identity semantics")
+    return actual
+
+
+def _translate_astralbase_result(
+    *,
+    target: dict[str, Any],
+    proposal: dict[str, Any],
+    response: dict[str, Any],
+    source_repositories: dict[str, str],
+) -> dict[str, Any]:
+    status = response.get("status")
+    if status not in {
+        "verified_match",
+        "verified_nonmatch",
+        "rejected",
+        "internal_error",
+    }:
+        raise ShardRunnerError(f"Astralbase returned unsupported status: {status}")
+    reason_code = response.get("reason_code")
+    if reason_code is not None and (not isinstance(reason_code, str) or not reason_code):
+        raise ShardRunnerError("Astralbase reason_code must be a non-empty string or null")
+
+    node_budget = target["search_limits"]["max_recursive_nodes_per_candidate"]
+    target_digest = target["target"]["identity_sha256"]
+    verifier = {
+        "name": "astralbase_target_candidate_verifier",
+        "version": "0.1.0",
+        "config_sha256": discovery_contract.verifier_config_sha256_for(target),
+        "code_commits": dict(source_repositories),
+    }
+    comparison = {
+        "identity_contract": discovery_contract.IDENTITY_CONTRACT,
+        "target_identity_sha256": target_digest,
+        "observed_identity_sha256": None,
+        "matches": None,
+    }
+    evidence = {
+        "label_kind": "rejected",
+        "certificate_digest": None,
+        "rejection_codes": [reason_code or status],
+        "decomposition_digest": None,
+        "composition_digest": None,
+        "observed_structural_sha256": None,
+        "recursive_nodes": None,
+    }
+
+    if status in {"verified_match", "verified_nonmatch"}:
+        actual = _certified_actual(response, node_budget)
+        if actual["identity_kind"] != target["target"]["identity_contract"]:
+            raise ShardRunnerError("Astralbase actual identity kind does not match target")
+        observed = actual["digest_v1_sha256"]
+        class_equal = actual["value_class"] == target["target"]["value_class"]
+        digest_equal = observed == target_digest
+        expected_match = class_equal and digest_equal
+        if (status == "verified_match") != expected_match:
+            raise ShardRunnerError(
+                "Astralbase status contradicts its value-class and structural-digest identity"
+            )
+        comparison.update(
+            {"observed_identity_sha256": observed, "matches": expected_match}
+        )
+        evidence = {
+            "label_kind": "exact",
+            "certificate_digest": "astralbase-actual-sha256:"
+            + discovery_contract.sha256_hex(
+                discovery_contract.canonical_json_bytes(actual)
+            ),
+            "rejection_codes": [],
+            "decomposition_digest": actual["decomposition_digest"],
+            "composition_digest": actual["composition_digest"],
+            "observed_structural_sha256": observed,
+            "recursive_nodes": actual["recursive_nodes"],
+        }
+        outcome = "certified_target" if expected_match else "certified_other"
+    elif status == "rejected":
+        code = reason_code or "astralbase_rejected"
+        evidence["rejection_codes"] = [code]
+        outcome = "rejected"
+    else:
+        code = reason_code or "astralbase_internal_error"
+        evidence["rejection_codes"] = [code]
+        outcome = "error"
+
+    # The gate sequence and every evidence hash are a pure derivation of the
+    # lossless response envelope, not a second interpretation maintained here.
+    gates = discovery_contract.verifier_gate_rows_for(response, proposal)
+    request = discovery_contract.astralbase_request_for(target, proposal)
+
+    result: dict[str, Any] = {
+        "schema_version": discovery_contract.RESULT_SCHEMA_VERSION,
+        "result_id": "result-sha256:" + "0" * 64,
+        "target_id": target["target_id"],
+        "proposal_id": proposal["proposal_id"],
+        "candidate_key": proposal["candidate_key"],
+        "verifier": verifier,
+        "verifier_io": {
+            "request": request,
+            "request_sha256": discovery_contract.sha256_hex(
+                discovery_contract.canonical_json_bytes(request)
+            ),
+            "response": response,
+            "response_sha256": discovery_contract.sha256_hex(
+                discovery_contract.canonical_json_bytes(response)
+            ),
+        },
+        "gates": gates,
+        "outcome": outcome,
+        "target_comparison": comparison,
+        "evidence": evidence,
+    }
+    result["result_id"] = discovery_contract.verifier_result_id_for(result)
+    _raise_contract_errors(
+        "translated verifier result",
+        discovery_contract.validate_verifier_result(result, target, proposal),
+    )
+    return result
+
+
+def verify_discovery_pool(
+    *,
+    target_path: Path,
+    proposals_path: Path,
+    manifest_path: Path,
+    results_output_path: Path,
+    astralbase_dir: Path = DEFAULT_ASTRALBASE_DIR,
+    bitmesh_dir: Path = DEFAULT_BITMESH_DIR,
+    thermograph_dir: Path = DEFAULT_THERMOGRAPH_DIR,
+    current_repositories: dict[str, str] | None = None,
+    repository_root: Path = ROOT,
+) -> list[dict[str, Any]]:
+    target, proposals, manifest = _load_frozen_discovery_pool(
+        target_path,
+        proposals_path,
+        manifest_path,
+        repository_root=repository_root,
+    )
+    astralbase_dir = astralbase_dir.resolve()
+    bitmesh_dir = bitmesh_dir.resolve()
+    thermograph_dir = thermograph_dir.resolve()
+    current = current_repositories or _current_discovery_repositories(
+        astralbase_dir=astralbase_dir,
+        bitmesh_dir=bitmesh_dir,
+        thermograph_dir=thermograph_dir,
+    )
+    if current != manifest["source_repositories"]:
+        raise ShardRunnerError(
+            "current repository commits do not match the frozen pool manifest"
+        )
+
+    requests = _astralbase_requests(target, proposals)
+    with tempfile.TemporaryDirectory(prefix="partizan-discovery-") as temp_dir:
+        temp_path = Path(temp_dir)
+        request_path = temp_path / "requests.jsonl"
+        request_path.write_bytes(discovery_contract.canonical_jsonl_bytes(requests))
+        payload = _run_capture(
+            (
+                "cargo",
+                "--config",
+                f'patch."crates-io".bitmesh.path="{bitmesh_dir}"',
+                "--config",
+                f'patch."crates-io".thermograph.path="{thermograph_dir}"',
+                "run",
+                "--locked",
+                "--offline",
+                "--quiet",
+                "--",
+                "--verify-target-candidates",
+                str(request_path),
+            ),
+            cwd=astralbase_dir,
+            label="astralbase discovery verification",
+            env={
+                **dict(os.environ),
+                "CARGO_TARGET_DIR": str(temp_path / "cargo-target"),
+            },
+        )
+    responses = _parse_astralbase_responses(payload, proposals)
+    results = [
+        _translate_astralbase_result(
+            target=target,
+            proposal=proposal,
+            response=response,
+            source_repositories=current,
+        )
+        for proposal, response in zip(proposals, responses)
+    ]
+    _write_bytes(
+        results_output_path, discovery_contract.canonical_jsonl_bytes(results)
+    )
+    return results
+
+
+def replay_discovery_run(
+    *,
+    target_path: Path,
+    proposals_path: Path,
+    manifest_path: Path,
+    results_path: Path,
+    run_output_path: Path,
+    verifier_budget: int,
+) -> dict[str, Any]:
+    target, proposals, manifest = _load_frozen_discovery_pool(
+        target_path, proposals_path, manifest_path
+    )
+    if (
+        not isinstance(verifier_budget, int)
+        or isinstance(verifier_budget, bool)
+        or verifier_budget <= 0
+    ):
+        raise ShardRunnerError("verifier budget must be a positive integer")
+    target_max = target["search_limits"]["max_verifier_calls"]
+    if verifier_budget > target_max:
+        raise ShardRunnerError("verifier budget exceeds the target search limit")
+    if verifier_budget > len(proposals):
+        raise ShardRunnerError("verifier budget exceeds the frozen proposal count")
+    try:
+        results = discovery_contract.load_jsonl(results_path)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        raise ShardRunnerError(f"could not load verifier results: {error}") from error
+    results_by_proposal: dict[str, dict[str, Any]] = {}
+    proposals_by_id = {proposal["proposal_id"]: proposal for proposal in proposals}
+    for index, result in enumerate(results):
+        proposal = proposals_by_id.get(result.get("proposal_id"))
+        if proposal is None:
+            raise ShardRunnerError(f"result[{index}] references an unknown proposal")
+        if proposal["proposal_id"] in results_by_proposal:
+            raise ShardRunnerError("verifier results contain a duplicate proposal")
+        _raise_contract_errors(
+            f"result[{index}]",
+            discovery_contract.validate_verifier_result(result, target, proposal),
+        )
+        results_by_proposal[proposal["proposal_id"]] = result
+    if set(results_by_proposal) != set(proposals_by_id):
+        raise ShardRunnerError("replay requires exactly one result for every proposal")
+
+    selected = proposals[:verifier_budget]
+    calls = []
+    selected_results = []
+    for index, proposal in enumerate(selected):
+        result = results_by_proposal[proposal["proposal_id"]]
+        selected_results.append(result)
+        calls.append(
+            {
+                "call_index": index,
+                "proposal_id": proposal["proposal_id"],
+                "candidate_key": proposal["candidate_key"],
+                "score_float_hex": None,
+                "result_id": result["result_id"],
+            }
+        )
+    outcomes = [result["outcome"] for result in selected_results]
+    first_target = next(
+        (index for index, outcome in enumerate(outcomes) if outcome == "certified_target"),
+        None,
+    )
+    run: dict[str, Any] = {
+        "schema_version": discovery_contract.RUN_SCHEMA_VERSION,
+        "run_id": "run-sha256:" + "0" * 64,
+        "target_id": target["target_id"],
+        "pool_id": manifest["pool_id"],
+        "policy": {
+            "policy_id": "input_order_v0",
+            "version": "0.1.0",
+            "random_seed": 0,
+            "checkpoint_sha256": None,
+            "candidate_order_sha256": discovery_contract.sha256_hex(
+                discovery_contract.canonical_json_bytes(
+                    [proposal["proposal_id"] for proposal in proposals]
+                )
+            ),
+        },
+        "budget": {
+            "max_verifier_calls": verifier_budget,
+            "calls_made": len(calls),
+        },
+        "calls": calls,
+        "summary": {
+            "calls_made": len(calls),
+            "unique_candidates_verified": len(
+                {proposal["candidate_key"] for proposal in selected}
+            ),
+            "outcome_counts": dict(sorted(Counter(outcomes).items())),
+            "unique_certified_targets": len(
+                {
+                    proposal["candidate_key"]
+                    for proposal, outcome in zip(selected, outcomes)
+                    if outcome == "certified_target"
+                }
+            ),
+            "first_target_call_index": first_target,
+            "budget_exhausted": len(calls) == verifier_budget,
+        },
+    }
+    run["run_id"] = discovery_contract.discovery_run_id_for(run)
+    _raise_contract_errors(
+        "discovery run",
+        discovery_contract.validate_discovery_run(
+            run, target, manifest, proposals, results
+        ),
+    )
+    _write_bytes(run_output_path, discovery_contract.canonical_json_bytes(run))
+    return run
+
+
+def run_discovery_generate_pool_v1_internal(args: argparse.Namespace) -> int:
+    target_path = _resolve_from_root(args.target)
+    try:
+        target = discovery_contract.load_json(target_path)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        raise ShardRunnerError(f"could not load discovery target: {error}") from error
+    proposals = generate_discovery_candidate_pool_v1(
+        target=target,
+        pool_size=args.pool_size,
+        random_seed=args.random_seed,
+        generator_code_commit=args.generator_code_commit,
+    )
+    _write_bytes(
+        _resolve_from_root(args.output),
+        discovery_contract.canonical_jsonl_bytes(proposals),
+    )
+    return 0
+
+
+def _run_discovery_generator_process(
+    *,
+    target_path: Path,
+    output_path: Path,
+    pool_size: int,
+    random_seed: int,
+    generator_code_commit: str,
+) -> None:
+    command = (
+        sys.executable,
+        str(ROOT / "engine/orchestrator.py"),
+        "discovery-generate-pool-v1-internal",
+        "--target",
+        str(target_path),
+        "--output",
+        str(output_path),
+        "--pool-size",
+        str(pool_size),
+        "--random-seed",
+        str(random_seed),
+        "--generator-code-commit",
+        generator_code_commit,
+    )
+    result = subprocess.run(
+        command,
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        if result.stderr:
+            sys.stderr.write(result.stderr.decode("utf-8", errors="replace"))
+        raise ShardRunnerError(
+            "separate-process candidate generation failed with exit code "
+            f"{result.returncode}"
+        )
+
+
+def run_discovery_generate_pool_v1(args: argparse.Namespace) -> int:
+    target_path = _resolve_from_root(args.target).resolve()
+    try:
+        target = discovery_contract.load_json(target_path)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        raise ShardRunnerError(f"could not load discovery target: {error}") from error
+    partizan_commit = _immutable_repo_commit(ROOT, "partizan")
+    with tempfile.TemporaryDirectory(prefix="partizan-generation-") as temp_dir:
+        temp = Path(temp_dir)
+        run_paths = [temp / "run-0.jsonl", temp / "run-1.jsonl"]
+        for run_path in run_paths:
+            _run_discovery_generator_process(
+                target_path=target_path,
+                output_path=run_path,
+                pool_size=args.pool_size,
+                random_seed=args.random_seed,
+                generator_code_commit=partizan_commit,
+            )
+        raw_runs = [run_path.read_bytes() for run_path in run_paths]
+    first_bytes, second_bytes = raw_runs
+    if first_bytes != second_bytes:
+        raise ShardRunnerError(
+            "candidate generation was not byte-identical across two separate processes"
+        )
+    try:
+        proposals = [
+            json.loads(line)
+            for line in first_bytes.decode("utf-8").splitlines()
+            if line
+        ]
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ShardRunnerError(
+            f"generated candidate artifact was not valid JSONL: {error}"
+        ) from error
+    raw_hashes = [
+        discovery_contract.sha256_hex(payload) for payload in raw_runs
+    ]
+    receipt = build_discovery_generation_receipt_v1(
+        target=target,
+        proposals=proposals,
+        raw_artifact_sha256=raw_hashes,
+    )
+    output = _resolve_from_root(args.output)
+    _write_bytes(output, first_bytes)
+    _write_bytes(
+        _resolve_from_root(args.receipt),
+        discovery_contract.canonical_json_bytes(receipt),
+    )
+    print(
+        "discovery-generate-pool-v1: ok "
+        f"(rows={len(proposals)}, seed={args.random_seed}, "
+        f"sha256={discovery_contract.sha256_hex(first_bytes)})"
+    )
+    return 0
+
+
+def run_discovery_generate_board_stream_v2_internal(args: argparse.Namespace) -> int:
+    rows = generate_discovery_board_states_v2(
+        pool_size=args.pool_size,
+        random_seed=args.random_seed,
+        generator_code_commit=args.generator_code_commit,
+    )
+    _write_bytes(
+        _resolve_from_root(args.output),
+        discovery_contract.canonical_jsonl_bytes(rows),
+    )
+    return 0
+
+
+def _run_discovery_board_stream_process_v2(
+    *,
+    output_path: Path,
+    pool_size: int,
+    random_seed: int,
+    generator_code_commit: str,
+) -> None:
+    result = subprocess.run(
+        (
+            sys.executable,
+            str(ROOT / "engine/orchestrator.py"),
+            "discovery-generate-board-stream-v2-internal",
+            "--output",
+            str(output_path),
+            "--pool-size",
+            str(pool_size),
+            "--random-seed",
+            str(random_seed),
+            "--generator-code-commit",
+            generator_code_commit,
+        ),
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        if result.stderr:
+            sys.stderr.write(result.stderr.decode("utf-8", errors="replace"))
+        raise ShardRunnerError(
+            "separate-process v2 board generation failed with exit code "
+            f"{result.returncode}"
+        )
+
+
+def run_discovery_generate_board_stream_v2(args: argparse.Namespace) -> int:
+    partizan_commit = _immutable_repo_commit(ROOT, "partizan")
+    with tempfile.TemporaryDirectory(prefix="partizan-board-stream-v2-") as temp_dir:
+        run_paths = [Path(temp_dir) / "run-0.jsonl", Path(temp_dir) / "run-1.jsonl"]
+        for run_path in run_paths:
+            _run_discovery_board_stream_process_v2(
+                output_path=run_path,
+                pool_size=args.pool_size,
+                random_seed=args.random_seed,
+                generator_code_commit=partizan_commit,
+            )
+        raw_runs = [path.read_bytes() for path in run_paths]
+    if raw_runs[0] != raw_runs[1]:
+        raise ShardRunnerError(
+            "v2 board generation was not byte-identical across separate processes"
+        )
+    rows = [json.loads(line) for line in raw_runs[0].decode("utf-8").splitlines()]
+    for index, row in enumerate(rows):
+        _raise_contract_errors(
+            f"board_stream[{index}]",
+            discovery_contract.validate_candidate_board_stream_row(row),
+        )
+    artifact_sha = discovery_contract.sha256_hex(raw_runs[0])
+    determinism = {
+        "schema_version": "partizan.candidate_board_stream_generation.v0.1",
+        "artifact_sha256": artifact_sha,
+        "row_count": len(rows),
+        "generator": {
+            key: rows[0]["generator"][key]
+            for key in ("name", "version", "code_commit", "config_sha256", "random_seed")
+        },
+        "executions": {
+            "mode": "separate_python_processes_v1",
+            "run_count": 2,
+            "raw_artifact_sha256": [artifact_sha, artifact_sha],
+            "byte_identical": True,
+        },
+        "target_fields_consumed": [],
+    }
+    _write_bytes(_resolve_from_root(args.output), raw_runs[0])
+    _write_bytes(
+        _resolve_from_root(args.determinism_report),
+        discovery_contract.canonical_json_bytes(determinism),
+    )
+    print(
+        "discovery-generate-board-stream-v2: ok "
+        f"(rows={len(rows)}, seed={args.random_seed}, sha256={artifact_sha})"
+    )
+    return 0
+
+
+def run_discovery_freeze_pool(args: argparse.Namespace) -> int:
+    repositories = _current_discovery_repositories(
+        astralbase_dir=args.astralbase_dir.resolve(),
+        bitmesh_dir=args.bitmesh_dir.resolve(),
+        thermograph_dir=args.thermograph_dir.resolve(),
+        partizan_dir=ROOT,
+    )
+    manifest = freeze_discovery_pool(
+        target_path=_resolve_from_root(args.target),
+        proposals_input_path=_resolve_from_root(args.proposals),
+        proposals_output_path=_resolve_from_root(args.output),
+        manifest_output_path=_resolve_from_root(args.manifest),
+        source_repositories=repositories,
+        candidate_artifact_path=args.candidate_artifact_path,
+        generation_receipt_path=(
+            _resolve_from_root(args.generation_receipt)
+            if args.generation_receipt is not None
+            else None
+        ),
+    )
+    print(
+        "discovery-freeze-pool: ok "
+        f"(pool_id={manifest['pool_id']}, rows={manifest['candidate_artifact']['row_count']})"
+    )
+    return 0
+
+
+def run_discovery_verify_pool(args: argparse.Namespace) -> int:
+    repositories = _current_discovery_repositories(
+        astralbase_dir=args.astralbase_dir.resolve(),
+        bitmesh_dir=args.bitmesh_dir.resolve(),
+        thermograph_dir=args.thermograph_dir.resolve(),
+        partizan_dir=ROOT,
+    )
+    results = verify_discovery_pool(
+        target_path=_resolve_from_root(args.target),
+        proposals_path=_resolve_from_root(args.proposals),
+        manifest_path=_resolve_from_root(args.manifest),
+        results_output_path=_resolve_from_root(args.output),
+        astralbase_dir=args.astralbase_dir.resolve(),
+        bitmesh_dir=args.bitmesh_dir.resolve(),
+        thermograph_dir=args.thermograph_dir.resolve(),
+        current_repositories=repositories,
+    )
+    print(f"discovery-verify-pool: ok (results={len(results)})")
+    return 0
+
+
+def run_discovery_replay(args: argparse.Namespace) -> int:
+    run = replay_discovery_run(
+        target_path=_resolve_from_root(args.target),
+        proposals_path=_resolve_from_root(args.proposals),
+        manifest_path=_resolve_from_root(args.manifest),
+        results_path=_resolve_from_root(args.results),
+        run_output_path=_resolve_from_root(args.output),
+        verifier_budget=args.verifier_budget,
+    )
+    print(
+        "discovery-replay-run: ok "
+        f"(run_id={run['run_id']}, calls={run['budget']['calls_made']})"
+    )
+    return 0
 
 
 def _validate_with_label_schema(path: Path) -> None:
@@ -505,6 +2182,8 @@ def _run_astralbase_jsonl_shard(
         "python3",
         "engine/orchestrator.py",
         command_name,
+        "--astralbase-dir",
+        _display_path(astralbase_dir),
     ]
     if getattr(args, "limit", None) is not None and args.limit != DEFAULT_FRONTIER_LIMIT:
         runner_command.extend(["--limit", str(args.limit)])
@@ -650,8 +2329,8 @@ def build_parser() -> argparse.ArgumentParser:
     shard_parser.add_argument(
         "--astralbase-dir",
         type=Path,
-        default=DEFAULT_ASTRALBASE_DIR,
-        help="Path to the astralbase repository.",
+        required=True,
+        help="Explicit path to an Astralbase 0.1.0 source checkout.",
     )
     shard_parser.add_argument(
         "--output",
@@ -678,8 +2357,8 @@ def build_parser() -> argparse.ArgumentParser:
     frontier_parser.add_argument(
         "--astralbase-dir",
         type=Path,
-        default=DEFAULT_ASTRALBASE_DIR,
-        help="Path to the astralbase repository.",
+        required=True,
+        help="Explicit path to an Astralbase 0.1.0 source checkout.",
     )
     frontier_parser.add_argument(
         "--limit",
@@ -712,8 +2391,8 @@ def build_parser() -> argparse.ArgumentParser:
     family_parser.add_argument(
         "--astralbase-dir",
         type=Path,
-        default=DEFAULT_ASTRALBASE_DIR,
-        help="Path to the astralbase repository.",
+        required=True,
+        help="Explicit path to an Astralbase 0.1.0 source checkout.",
     )
     family_parser.add_argument(
         "--limit-per-family",
@@ -746,8 +2425,8 @@ def build_parser() -> argparse.ArgumentParser:
     expanded_family_parser.add_argument(
         "--astralbase-dir",
         type=Path,
-        default=DEFAULT_ASTRALBASE_DIR,
-        help="Path to the astralbase repository.",
+        required=True,
+        help="Explicit path to an Astralbase 0.1.0 source checkout.",
     )
     expanded_family_parser.add_argument(
         "--limit-per-family",
@@ -780,8 +2459,8 @@ def build_parser() -> argparse.ArgumentParser:
     composition_parser.add_argument(
         "--astralbase-dir",
         type=Path,
-        default=DEFAULT_ASTRALBASE_DIR,
-        help="Path to the astralbase repository.",
+        required=True,
+        help="Explicit path to an Astralbase 0.1.0 source checkout.",
     )
     composition_parser.add_argument(
         "--limit",
@@ -807,6 +2486,115 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run the astralbase generator once instead of comparing two runs.",
     )
 
+    generate_parser = subcommands.add_parser(
+        "discovery-generate-pool-v1",
+        help=(
+            "Generate a deterministic, target-blind proposal JSONL from the "
+            "Wave 69 board grammar; this command never calls a verifier."
+        ),
+    )
+    generate_parser.add_argument("--target", type=Path, required=True)
+    generate_parser.add_argument("--output", type=Path, required=True)
+    generate_parser.add_argument("--receipt", type=Path, required=True)
+    generate_parser.add_argument("--pool-size", type=int, required=True)
+    generate_parser.add_argument("--random-seed", type=int, required=True)
+
+    generate_internal_parser = subcommands.add_parser(
+        "discovery-generate-pool-v1-internal",
+        help=argparse.SUPPRESS,
+    )
+    generate_internal_parser.add_argument("--target", type=Path, required=True)
+    generate_internal_parser.add_argument("--output", type=Path, required=True)
+    generate_internal_parser.add_argument("--pool-size", type=int, required=True)
+    generate_internal_parser.add_argument("--random-seed", type=int, required=True)
+    generate_internal_parser.add_argument(
+        "--generator-code-commit", required=True
+    )
+
+    board_v2_parser = subcommands.add_parser(
+        "discovery-generate-board-stream-v2",
+        help="Generate a target-free, two-process Wave 69-R board stream.",
+    )
+    board_v2_parser.add_argument("--output", type=Path, required=True)
+    board_v2_parser.add_argument(
+        "--determinism-report", type=Path, required=True
+    )
+    board_v2_parser.add_argument("--pool-size", type=int, required=True)
+    board_v2_parser.add_argument("--random-seed", type=int, required=True)
+
+    board_v2_internal_parser = subcommands.add_parser(
+        "discovery-generate-board-stream-v2-internal", help=argparse.SUPPRESS
+    )
+    board_v2_internal_parser.add_argument("--output", type=Path, required=True)
+    board_v2_internal_parser.add_argument("--pool-size", type=int, required=True)
+    board_v2_internal_parser.add_argument("--random-seed", type=int, required=True)
+    board_v2_internal_parser.add_argument("--generator-code-commit", required=True)
+
+    freeze_parser = subcommands.add_parser(
+        "discovery-freeze-pool",
+        help=(
+            "Validate and canonically freeze an already-generated proposal JSONL; "
+            "this command does not generate candidates."
+        ),
+    )
+    freeze_parser.add_argument("--target", type=Path, required=True)
+    freeze_parser.add_argument(
+        "--proposals", type=Path, required=True, help="Existing proposal JSONL."
+    )
+    freeze_parser.add_argument(
+        "--output", type=Path, required=True, help="Canonical proposal JSONL output."
+    )
+    freeze_parser.add_argument("--manifest", type=Path, required=True)
+    freeze_parser.add_argument(
+        "--candidate-artifact-path",
+        help=(
+            "Repository-relative artifact path recorded in the manifest; inferred "
+            "from --output when that file is inside Partizan."
+        ),
+    )
+    freeze_parser.add_argument(
+        "--generation-receipt",
+        type=Path,
+        help=(
+            "Receipt from discovery-generate-pool-v1; required for Partizan "
+            "generator artifacts."
+        ),
+    )
+    freeze_parser.add_argument(
+        "--astralbase-dir", type=Path, default=DEFAULT_ASTRALBASE_DIR
+    )
+    freeze_parser.add_argument("--bitmesh-dir", type=Path, default=DEFAULT_BITMESH_DIR)
+    freeze_parser.add_argument(
+        "--thermograph-dir", type=Path, default=DEFAULT_THERMOGRAPH_DIR
+    )
+
+    verify_parser = subcommands.add_parser(
+        "discovery-verify-pool",
+        help="Verify a valid frozen proposal pool with Astralbase.",
+    )
+    verify_parser.add_argument("--target", type=Path, required=True)
+    verify_parser.add_argument("--proposals", type=Path, required=True)
+    verify_parser.add_argument("--manifest", type=Path, required=True)
+    verify_parser.add_argument("--output", type=Path, required=True)
+    verify_parser.add_argument(
+        "--astralbase-dir", type=Path, default=DEFAULT_ASTRALBASE_DIR
+    )
+    verify_parser.add_argument("--bitmesh-dir", type=Path, default=DEFAULT_BITMESH_DIR)
+    verify_parser.add_argument(
+        "--thermograph-dir", type=Path, default=DEFAULT_THERMOGRAPH_DIR
+    )
+
+    replay_parser = subcommands.add_parser(
+        "discovery-replay-run",
+        help="Replay frozen verifier results under deterministic input-order policy.",
+    )
+    replay_parser.add_argument("--target", type=Path, required=True)
+    replay_parser.add_argument("--proposals", type=Path, required=True)
+    replay_parser.add_argument("--manifest", type=Path, required=True)
+    replay_parser.add_argument("--results", type=Path, required=True)
+    replay_parser.add_argument("--output", type=Path, required=True)
+    replay_parser.add_argument("--verifier-budget", type=int, required=True)
+
     return parser
 
 
@@ -815,6 +2603,20 @@ def cli_main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.command == "discovery-generate-pool-v1-internal":
+            return run_discovery_generate_pool_v1_internal(args)
+        if args.command == "discovery-generate-pool-v1":
+            return run_discovery_generate_pool_v1(args)
+        if args.command == "discovery-generate-board-stream-v2-internal":
+            return run_discovery_generate_board_stream_v2_internal(args)
+        if args.command == "discovery-generate-board-stream-v2":
+            return run_discovery_generate_board_stream_v2(args)
+        if args.command == "discovery-freeze-pool":
+            return run_discovery_freeze_pool(args)
+        if args.command == "discovery-verify-pool":
+            return run_discovery_verify_pool(args)
+        if args.command == "discovery-replay-run":
+            return run_discovery_replay(args)
         if args.command == "sample-label-shard":
             return run_sample_label_shard(args)
         if args.command == "frontier-label-shard":
