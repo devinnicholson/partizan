@@ -1060,4 +1060,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":  # pragma: no cover
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (GateCEvidenceError, OSError) as error:
+        print(f"wave69r-gate-c-evidence: error: {error}", file=sys.stderr)
+        raise SystemExit(1)

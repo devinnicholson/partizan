@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import gzip
 import importlib.util
 from pathlib import Path
 import tempfile
@@ -15,7 +16,6 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(selector)
 
 ATLAS = ROOT / "data" / "discovery" / "wave_69" / "reference-atlas.jsonl.gz"
-PLAIN_ATLAS = Path("/tmp/w69-clean-reference-atlas.jsonl")
 REPLAY = ROOT / "data" / "discovery" / "wave_69" / "reference-atlas-replay.json"
 REGISTRY = ROOT / "docs" / "discovery_targets" / "wave_69_target_registry.v0.1.json"
 REPORT = ROOT / "docs" / "discovery_wave_69_target_selection_report.md"
@@ -173,12 +173,13 @@ class Wave69TargetRegistryTests(unittest.TestCase):
             selector.eligible_records(rows)
 
     def test_plain_and_gzip_inputs_select_identically(self) -> None:
-        if not PLAIN_ATLAS.exists():
-            self.skipTest("plain /tmp atlas is unavailable")
-        self.assertEqual(
-            selector.eligible_records(selector.load_bound_atlas(ATLAS)),
-            selector.eligible_records(selector.load_bound_atlas(PLAIN_ATLAS)),
-        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            plain_atlas = Path(tmp_dir) / "reference-atlas.jsonl"
+            plain_atlas.write_bytes(gzip.decompress(ATLAS.read_bytes()))
+            self.assertEqual(
+                selector.eligible_records(selector.load_bound_atlas(ATLAS)),
+                selector.eligible_records(selector.load_bound_atlas(plain_atlas)),
+            )
 
     def test_registry_identity_binds_selection(self) -> None:
         mutated = deepcopy(self.registry)

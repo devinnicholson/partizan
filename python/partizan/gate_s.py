@@ -13,9 +13,10 @@ import hashlib
 import importlib.util
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import subprocess
+import sys
 import tempfile
 from typing import Any, Iterable, Sequence
 
@@ -142,11 +143,34 @@ class GateSContractError(ValueError):
     """Raised before any checker invocation when a Gate S contract fails."""
 
 
+_DISCOVERY_MODULE = None
+
+
+def _discovery():
+    """Load discovery.py once and reuse it as the single canonical-JSON source.
+
+    Gate S is also executed by loading this file directly via
+    ``importlib.util.spec_from_file_location`` (see
+    scripts/wave69r_structural_supply.py), so a package-relative import here
+    would fail outside that package context; a path-based load matches the
+    pattern already used by wave69r_supply.py.
+    """
+
+    global _DISCOVERY_MODULE
+    if _DISCOVERY_MODULE is None:
+        spec = importlib.util.spec_from_file_location(
+            "partizan_gate_s_discovery", ROOT / "python/partizan/discovery.py"
+        )
+        if spec is None or spec.loader is None:  # pragma: no cover
+            raise RuntimeError("cannot load discovery module for canonical JSON")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _DISCOVERY_MODULE = module
+    return _DISCOVERY_MODULE
+
+
 def canonical_json_bytes(value: Any) -> bytes:
-    return (
-        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-        + "\n"
-    ).encode("utf-8")
+    return _discovery().canonical_json_bytes(value)
 
 
 def canonical_jsonl_bytes(rows: Iterable[dict[str, Any]]) -> bytes:
@@ -416,14 +440,20 @@ def _write_bytes(path: Path, payload: bytes) -> None:
 
 
 def _relative_artifact_path(value: Any, path: str) -> str:
-    if (
-        not isinstance(value, str)
-        or not value
-        or Path(value).is_absolute()
-        or "\\" in value
-        or ".." in Path(value).parts
-    ):
+    if not isinstance(value, str) or not value:
         raise GateSContractError(f"{path}: must be a repository-relative path")
+    parsed = PurePosixPath(value)
+    if (
+        parsed.is_absolute()
+        or ".." in parsed.parts
+        or "\\" in value
+        or parsed.as_posix() != value
+        or not parsed.parts
+    ):
+        raise GateSContractError(
+            f"{path}: must be a normalized repository-relative POSIX path "
+            "without '.' or '..'"
+        )
     return value
 
 
@@ -1875,4 +1905,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":  # pragma: no cover
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (GateSContractError, OSError) as error:
+        print(f"gate-s: error: {error}", file=sys.stderr)
+        raise SystemExit(1)

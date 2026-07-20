@@ -128,8 +128,9 @@ and [`docs/architecture.md`](docs/architecture.md).
 
 ## Quick verification with the Python standard library
 
-The following checks exercise the schema, research-plan, candidate-pool, and
-discovery contracts using only Python's standard library:
+The following checks exercise a fast subset of the schema, research-plan,
+candidate-pool, and discovery contracts using only Python's standard
+library, without building the native extension:
 
 ```bash
 git clone https://github.com/devinnicholson/partizan.git
@@ -143,8 +144,10 @@ python3 -m unittest \
 ```
 
 These commands verify that the public records obey their declared schemas,
-identity rules, and frozen research contracts. Native chess and CGT claims use
-the full installation below.
+identity rules, and frozen research contracts. They are a subset of CI's gate,
+which runs the full suite (`python -m unittest discover -s tests`, 154 tests)
+against the installed package. Native chess and CGT claims use the full
+installation below.
 
 ## Full development installation
 

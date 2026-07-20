@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
-"""Verify Partizan's frozen v0.1 artifacts and required claim boundaries."""
+"""Verify Partizan's frozen v0.1 P01/P02 artifacts and required claim boundaries.
+
+Scope: this checks only the artifacts listed in
+``data/research-v0.1/manifest.json`` (the reproducible vertical slice and the
+P02 representative dataset) plus deterministic event bytes. It does not
+verify the Wave 69 / 69-R discovery evidence under ``data/discovery/``; those
+waves have their own ``--check-only`` entry points
+(``scripts/freeze_wave69_stage_a_suite.py``,
+``python/partizan/wave69r_gate_c_suite.py``,
+``python/partizan/wave69r_gate_c_evidence.py``) and are not release-complete
+artifacts (see ``docs/release_blockers.md``).
+"""
 
 from __future__ import annotations
 
@@ -117,12 +128,21 @@ def main() -> int:
     try:
         verify_manifest()
         verify_events()
-    except (ImportError, KeyError, OSError, RuntimeError, ValueError) as error:
+    except (
+        ImportError,
+        IndexError,
+        KeyError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as error:
         print(f"release verification: failed: {error}", file=sys.stderr)
         return 1
     print(
-        "release verification: ok "
-        "(5 artifacts, 5-row reproducible slice, 13-row P02 slice, events)"
+        "P01/P02 release verification: ok "
+        "(5 artifacts, 5-row reproducible slice, 13-row P02 slice, events; "
+        "Wave 69/69-R discovery evidence is out of scope, see docs/release_blockers.md)"
     )
     return 0
 

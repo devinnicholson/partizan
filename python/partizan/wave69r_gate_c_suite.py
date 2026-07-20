@@ -1392,4 +1392,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (GateCSuiteError, OSError) as error:
+        print(f"wave69r-gate-c-suite: error: {error}", file=sys.stderr)
+        raise SystemExit(1)
