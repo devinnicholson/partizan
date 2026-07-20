@@ -36,8 +36,8 @@ fn thermograph_seed(value: GameValue) -> CGTValue {
 #[pyfunction]
 /// Return squares occupied by pawns in the current locked-pawn screen.
 fn find_locked_pawns(fen_str: String) -> PyResult<Vec<String>> {
-    let fen = Fen::from_str(&fen_str)
-        .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {}", e)))?;
+    let fen =
+        Fen::from_str(&fen_str).map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
     let pos: Chess = fen
         .into_position(shakmaty::CastlingMode::Standard)
         .map_err(|_| PyValueError::new_err("Could not parse position from FEN"))?;
@@ -59,8 +59,8 @@ fn find_locked_pawns(fen_str: String) -> PyResult<Vec<String>> {
 /// A positive result is not a theorem that the regions remain independent
 /// throughout all future play.
 fn analyze_subsystems(fen_str: String) -> PyResult<(bool, u8)> {
-    let fen = Fen::from_str(&fen_str)
-        .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {}", e)))?;
+    let fen =
+        Fen::from_str(&fen_str).map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
     let pos: Chess = fen
         .into_position(shakmaty::CastlingMode::Standard)
         .map_err(|_| PyValueError::new_err("Could not parse position from FEN"))?;
@@ -77,8 +77,8 @@ fn analyze_subsystems(fen_str: String) -> PyResult<(bool, u8)> {
 /// The returned thermograph fields describe a terminal scalar seed used for a
 /// plumbing smoke test. They are not evidence of chess temperature.
 fn evaluate_position(py: Python<'_>, fen_str: String) -> PyResult<Py<PyDict>> {
-    let fen = Fen::from_str(&fen_str)
-        .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {}", e)))?;
+    let fen =
+        Fen::from_str(&fen_str).map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
     let pos: Chess = fen
         .into_position(shakmaty::CastlingMode::Standard)
         .map_err(|_| PyValueError::new_err("Could not parse position from FEN"))?;
