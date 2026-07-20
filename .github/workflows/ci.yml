@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: devinnicholson/bitmesh
-          ref: 28aee03bf1acb299fc82d5119f37893264e070e4
+          ref: 2e3ceaeae7ac9a03fa912b205467e86f0cd3d658
           path: _upstreams/bitmesh
           persist-credentials: false
       - name: Checkout frozen Thermograph candidate
@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: devinnicholson/thermograph
-          ref: 57df043a5940f4ea3bf29fcb7920f369e035030c
+          ref: 98748262475e25d0c2360e06b5126555a01dc1c1
           path: _upstreams/thermograph
           persist-credentials: false
       - name: Checkout frozen Astralbase candidate
@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: devinnicholson/astralbase
-          ref: 7ad71b542733cb61507df4bf5fba241bcc35ef79
+          ref: 1e7ce7a2e8ece442e63a20eb7600137b91b25cad
           path: _upstreams/astralbase
           persist-credentials: false
       # actions/setup-python v5

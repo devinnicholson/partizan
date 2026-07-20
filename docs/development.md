@@ -4,12 +4,12 @@
 
 | Package | Version | Frozen commit |
 | --- | --- | --- |
-| Bitmesh | 0.1.0 | `28aee03bf1acb299fc82d5119f37893264e070e4` |
-| Thermograph | 0.1.0 | `57df043a5940f4ea3bf29fcb7920f369e035030c` |
-| Astralbase | 0.1.0 | `7ad71b542733cb61507df4bf5fba241bcc35ef79` |
+| Bitmesh | 0.1.0 | `2e3ceaeae7ac9a03fa912b205467e86f0cd3d658` |
+| Thermograph | 0.1.0 | `98748262475e25d0c2360e06b5126555a01dc1c1` |
+| Astralbase | 0.1.0 | `1e7ce7a2e8ece442e63a20eb7600137b91b25cad` |
 
-These commits are release-candidate inputs, not public package releases. Do not
-replace them with a branch name or an invented tag.
+These commits are public release-candidate inputs awaiting package publication.
+Keep the immutable commit hashes in local and CI patch configurations.
 
 ## External Cargo patch
 
