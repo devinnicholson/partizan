@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: devinnicholson/bitmesh
-          ref: 2e3ceaeae7ac9a03fa912b205467e86f0cd3d658
+          ref: 961a918c16cda757322aca66e3a368cf95438cad
           path: _upstreams/bitmesh
           persist-credentials: false
       - name: Checkout frozen Thermograph candidate
@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: devinnicholson/thermograph
-          ref: 98748262475e25d0c2360e06b5126555a01dc1c1
+          ref: bdf535c7a40ce76c4d1dbfb88d8c522eb034b8bd
           path: _upstreams/thermograph
           persist-credentials: false
       - name: Checkout frozen Astralbase candidate
@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: devinnicholson/astralbase
-          ref: 1e7ce7a2e8ece442e63a20eb7600137b91b25cad
+          ref: 81c7c583ee5b3cdd4c7e3a6d543e77803313bc54
           path: _upstreams/astralbase
           persist-credentials: false
       # actions/setup-python v5
@@ -86,6 +86,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install "maturin>=1.9.3,<2"
+          python -m pip install -r scripts/requirements-fixed-value-schema.txt
           python -m pip install --no-build-isolation --no-deps .
       - name: Python and artifact checks
         run: |
@@ -94,4 +95,5 @@ jobs:
           python agents/label_schema.py self-test
           python agents/label_schema.py validate agents/fixtures/label_rows.valid.jsonl docs/signature_target_exact_wave_47.jsonl docs/signature_target_mixed_hook_exact_wave_52.jsonl docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl
           python scripts/validate_waves.py
+          python scripts/validate_fixed_value_schemas.py
           python scripts/verify_release.py

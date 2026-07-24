@@ -1,0 +1,372 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-fixed-value-repertoire-v0.1.schema.json",
+  "title": "Partizan fixed-value repertoire v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repertoire_id",
+    "target",
+    "search",
+    "source_candidates",
+    "evaluations",
+    "entries",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "partizan.fixed_value_repertoire.v0.1"
+    },
+    "repertoire_id": {
+      "type": "string",
+      "pattern": "^fixed-repertoire-sha256:[0-9a-f]{64}$"
+    },
+    "target": {
+      "$ref": "partizan-fixed-value-target-v0.1.schema.json"
+    },
+    "search": {
+      "$ref": "#/$defs/search"
+    },
+    "source_candidates": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "partizan-fixed-value-candidate-v0.1.schema.json"
+      }
+    },
+    "evaluations": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/evaluation"
+      }
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "u64": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "positive_limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "search": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seed",
+        "budget",
+        "max_results",
+        "ordering_contract",
+        "candidate_stream_sha256"
+      ],
+      "properties": {
+        "seed": {
+          "$ref": "#/$defs/u64"
+        },
+        "budget": {
+          "$ref": "#/$defs/positive_limit"
+        },
+        "max_results": {
+          "$ref": "#/$defs/positive_limit"
+        },
+        "ordering_contract": {
+          "const": "sha256_seeded_candidate_order_v1"
+        },
+        "candidate_stream_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "embodiment_sha256",
+        "literal_game_sha256",
+        "fixed_target_id"
+      ],
+      "properties": {
+        "embodiment_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "literal_game_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "fixed_target_id": {
+          "type": "string",
+          "pattern": "^fixed-target-sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "certificate_sha256",
+        "comparison_contract",
+        "target_id",
+        "candidate_id",
+        "target_literal_game_sha256",
+        "candidate_literal_game_sha256",
+        "candidate_ge_target",
+        "target_ge_candidate",
+        "equivalent",
+        "distinct_pairs_evaluated"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "partizan.fixed_value_certificate.v0.1"
+        },
+        "certificate_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "comparison_contract": {
+          "const": "conway_recursive_order_v1"
+        },
+        "target_id": {
+          "type": "string",
+          "pattern": "^fixed-target-sha256:[0-9a-f]{64}$"
+        },
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^fixed-candidate-sha256:[0-9a-f]{64}$"
+        },
+        "target_literal_game_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "candidate_literal_game_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "candidate_ge_target": {
+          "type": "boolean"
+        },
+        "target_ge_candidate": {
+          "type": "boolean"
+        },
+        "equivalent": {
+          "type": "boolean"
+        },
+        "distinct_pairs_evaluated": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "search_rank_sha256",
+        "outcome",
+        "reason_codes",
+        "fingerprint",
+        "certificate"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^fixed-candidate-sha256:[0-9a-f]{64}$"
+        },
+        "search_rank_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "outcome": {
+          "enum": ["admitted", "rejected"]
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": {
+            "enum": ["value_mismatch", "duplicate_embodiment"]
+          },
+          "uniqueItems": true
+        },
+        "fingerprint": {
+          "$ref": "#/$defs/fingerprint"
+        },
+        "certificate": {
+          "$ref": "#/$defs/certificate"
+        }
+      }
+    },
+    "descriptors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "literal_node_count",
+        "literal_option_count",
+        "literal_max_depth",
+        "root_left_option_count",
+        "root_right_option_count",
+        "representation_utf8_bytes"
+      ],
+      "properties": {
+        "literal_node_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "literal_option_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "literal_max_depth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 128
+        },
+        "root_left_option_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "root_right_option_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "representation_utf8_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "admission_relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transition_kind", "witness_candidate_id"],
+      "properties": {
+        "transition_kind": {
+          "enum": [
+            "initial",
+            "embodiment_only",
+            "literal_game_crossing"
+          ]
+        },
+        "witness_candidate_id": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "string",
+              "pattern": "^fixed-candidate-sha256:[0-9a-f]{64}$"
+            }
+          ]
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "admission_index",
+        "candidate_id",
+        "representation",
+        "fingerprint",
+        "descriptors",
+        "certificate_sha256",
+        "admission_relation"
+      ],
+      "properties": {
+        "admission_index": {
+          "$ref": "#/$defs/u64"
+        },
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^fixed-candidate-sha256:[0-9a-f]{64}$"
+        },
+        "representation": {
+          "$ref": "partizan-fixed-value-candidate-v0.1.schema.json#/$defs/representation"
+        },
+        "fingerprint": {
+          "$ref": "#/$defs/fingerprint"
+        },
+        "descriptors": {
+          "$ref": "#/$defs/descriptors"
+        },
+        "certificate_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "admission_relation": {
+          "$ref": "#/$defs/admission_relation"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_candidate_count",
+        "evaluated_candidate_count",
+        "admitted_count",
+        "outcome_counts",
+        "termination_reason"
+      ],
+      "properties": {
+        "source_candidate_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "evaluated_candidate_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "admitted_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "outcome_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "admitted",
+            "duplicate_embodiment",
+            "value_mismatch"
+          ],
+          "properties": {
+            "admitted": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "duplicate_embodiment": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "value_mismatch": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "termination_reason": {
+          "enum": [
+            "candidate_stream_exhausted",
+            "verification_budget_reached",
+            "repertoire_limit_reached"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -94,6 +94,32 @@ is target-conditioned generative search over a mathematically constrained
 design space. Deterministic game semantics provide ground truth. Aesthetic
 scoring remains a separate research problem.
 
+## Fixed-value explorer
+
+The first end-to-end explorer is available for explicit finite normal-play
+short games:
+
+```bash
+partizan explore \
+  --target tests/fixtures/fixed_value/target-zero.valid.json \
+  --seed 23 \
+  --count 8 \
+  --budget 8 \
+  --max-results 8 \
+  --output /tmp/zero-repertoire.json
+
+partizan verify /tmp/zero-repertoire.json
+partizan inspect /tmp/zero-repertoire.json
+```
+
+It applies Conway's recursive order relation, admits candidates equal to the
+target, fingerprints their embodiments and complete literal games separately,
+and classifies the transitions within the resulting repertoire. The output is
+self-contained and supports deterministic replay of every admission decision.
+
+The exact data contract and comparison scope are documented in
+[`docs/fixed_value_explorer.md`](docs/fixed_value_explorer.md).
+
 ## What is in this repository
 
 The repository contains infrastructure developed for constrained chess and

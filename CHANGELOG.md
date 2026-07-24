@@ -14,6 +14,12 @@ Semantic Versioning once an owner-approved release is published.
 - Frozen Wave 47 artifact manifest and release verification command.
 - Required local test harness without silent artifact/module skips.
 - Cross-platform CI definition and clean-room registry-patch instructions.
+- Exact fixed-value comparison and repertoire search for finite normal-play
+  short games.
+- Deterministic reversible-option candidate generation, replay certificates,
+  representation/literal-game fingerprints, and transition classification.
+- The `partizan` generate, explore, search, verify, inspect, and compare
+  commands.
 
 ### Changed
 

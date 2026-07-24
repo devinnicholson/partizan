@@ -4,9 +4,9 @@
 
 | Package | Version | Frozen commit |
 | --- | --- | --- |
-| Bitmesh | 0.1.0 | `2e3ceaeae7ac9a03fa912b205467e86f0cd3d658` |
-| Thermograph | 0.1.0 | `98748262475e25d0c2360e06b5126555a01dc1c1` |
-| Astralbase | 0.1.0 | `1e7ce7a2e8ece442e63a20eb7600137b91b25cad` |
+| Bitmesh | 0.1.0 | `961a918c16cda757322aca66e3a368cf95438cad` |
+| Thermograph | 0.1.0 | `bdf535c7a40ce76c4d1dbfb88d8c522eb034b8bd` |
+| Astralbase | 0.1.0 | `81c7c583ee5b3cdd4c7e3a6d543e77803313bc54` |
 
 These commits are public release-candidate inputs awaiting package publication.
 Keep the immutable commit hashes in local and CI patch configurations.

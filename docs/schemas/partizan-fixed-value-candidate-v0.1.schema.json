@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-fixed-value-candidate-v0.1.schema.json",
+  "title": "Partizan fixed-value candidate v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_id",
+    "ordinal",
+    "representation",
+    "literal_game",
+    "generator"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "partizan.fixed_value_candidate.v0.1"
+    },
+    "candidate_id": {
+      "type": "string",
+      "pattern": "^fixed-candidate-sha256:[0-9a-f]{64}$"
+    },
+    "ordinal": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "representation": {
+      "$ref": "#/$defs/representation"
+    },
+    "literal_game": {
+      "$ref": "#/$defs/literal_game"
+    },
+    "generator": {
+      "$ref": "#/$defs/generator"
+    }
+  },
+  "$defs": {
+    "literal_game": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["left", "right"],
+      "properties": {
+        "left": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/literal_game"
+          }
+        },
+        "right": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/literal_game"
+          }
+        }
+      }
+    },
+    "metadata_value": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "boolean"},
+        {"type": "string"},
+        {
+          "type": "integer",
+          "minimum": -9223372036854775808,
+          "maximum": 9223372036854775807
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/metadata_value"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/metadata_value"
+          }
+        }
+      ]
+    },
+    "representation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["encoding", "text", "metadata"],
+      "properties": {
+        "encoding": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/metadata_value"
+          }
+        }
+      }
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "seed", "operator"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "operator": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

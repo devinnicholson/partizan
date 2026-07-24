@@ -16,6 +16,20 @@ The Python package is the release surface. `engine/ml_model.py`, the `agents/`
 network, and historical Wave documents are research tooling, not a stable
 Python library API.
 
+The fixed-value short-game path is self-contained in the Python release
+surface:
+
+```text
+Target literal game
+ └─ deterministic reversible-option generator
+     └─ candidate literal games and declared embodiments
+         └─ exact Conway recursive-order comparison
+             └─ certified fixed-value repertoire
+```
+
+Its verifier replays finite normal-play option trees directly. The chess path
+continues to use the native boundary and the three upstream libraries.
+
 ## Data path
 
 ```text

@@ -18,6 +18,22 @@ controls new public claims.
 These classes are mutually exclusive. “Exact” is exact under the named finite
 rule and certificate; it is not a claim of complete orthodox-chess value.
 
+## `formal_domain:finite_normal_play_short_games:v0`
+
+This domain accepts explicit finite normal-play partizan game trees. Each game
+has arrays of Left and Right options, and every option is another game under
+the same contract. Trees contain at most 100,000 nodes and depth at most 128.
+
+Equality uses `conway_recursive_order_v1`: two games are equal when each is
+greater than or equal to the other under the recursive short-game order.
+Literal identity recursively sorts options and removes repeated identical
+subtrees. Search certificates record both order comparisons and are accepted
+only when deterministic replay reproduces the complete repertoire.
+
+The built-in generator adds reversible options with an immediate reply to the
+prior game. The equality verifier remains the admission gate for every
+generated realization.
+
 <a id="first-candidate-domain"></a>
 
 ## `formal_domain:first_constrained_chess:v0`

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-fixed-value-target-v0.1.schema.json",
+  "title": "Partizan fixed-value target v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "target_id",
+    "domain",
+    "comparison_contract",
+    "name",
+    "literal_game"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "partizan.fixed_value_target.v0.1"
+    },
+    "target_id": {
+      "type": "string",
+      "pattern": "^fixed-target-sha256:[0-9a-f]{64}$"
+    },
+    "domain": {
+      "const": "formal_domain:finite_normal_play_short_games:v0"
+    },
+    "comparison_contract": {
+      "const": "conway_recursive_order_v1"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "literal_game": {
+      "$ref": "#/$defs/literal_game"
+    }
+  },
+  "$defs": {
+    "literal_game": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["left", "right"],
+      "properties": {
+        "left": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/literal_game"
+          }
+        },
+        "right": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/literal_game"
+          }
+        }
+      }
+    }
+  }
+}

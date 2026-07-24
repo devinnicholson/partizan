@@ -26,6 +26,7 @@ Repository = "https://github.com/devinnicholson/partizan"
 Issues = "https://github.com/devinnicholson/partizan/issues"
 
 [project.scripts]
+partizan = "partizan.fixed_value_cli:main"
 partizan-events = "partizan.cli:main"
 partizan-discovery = "partizan.discovery_cli:main"
 
