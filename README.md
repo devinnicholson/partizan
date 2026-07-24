@@ -25,13 +25,14 @@ finite combinatorial-game experiments.
 | Package | `partizan-cgt` 0.1.0 release candidate |
 | Interface | Python 3.10+ with a Rust/PyO3 core |
 | Platforms tested locally | macOS arm64, Rust 1.92, Python 3.14 |
-| Cross-platform CI | Active on pull requests for Linux, macOS, and Windows |
-| License | **Decision pending** |
-| Stable API or release tag | Pending |
+| Cross-platform CI | Passing on `main` for Linux, macOS, and Windows |
+| License | [GPL-3.0-or-later](LICENSE) |
+| Stable API, registry package, or release tag | Pending |
 
-This repository is source-visible. Reuse and redistribution await a selected
-license. See [`docs/release_blockers.md`](docs/release_blockers.md) for the
-release requirements.
+The source code may be used, modified, and redistributed under the terms of
+GPL-3.0-or-later. See
+[`docs/release_blockers.md`](docs/release_blockers.md) for the remaining
+package and release requirements.
 
 ## Why Partizan exists
 

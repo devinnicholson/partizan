@@ -7,7 +7,7 @@ stronger interpretation of the chronological Wave notes below.
 
 | ID | v0.1 status | Evidence and boundary |
 | --- | --- | --- |
-| P01 | Locally verified | `data/research-v0.1/manifest.json`, `agents/label_schema.py`, and `scripts/verify_release.py` bind and validate a reproducible five-row slice plus the frozen 13-row Wave 47 slice. Cross-platform CI remains pending execution. |
+| P01 | Verified locally and in public CI | `data/research-v0.1/manifest.json`, `agents/label_schema.py`, and `scripts/verify_release.py` bind and validate a reproducible five-row slice plus the frozen 13-row Wave 47 slice. The [complete CI gate](https://github.com/devinnicholson/partizan/actions/runs/29781815615) passes on Linux, macOS, and Windows for commit `7dcd5cb`. |
 | P02 | Locally verified for the frozen slice | All 13 rows bind decomposition, component values, composition, and result digests; `scripts/verify_release.py` also requires an intentionally corrupted certificate to fail. This is bounded-rule provenance, not a full-game theorem. |
 | P03 | Partial | The five-row vertical slice and deterministic event bytes reproduce. Historical Wave 47 rows record `code_commit=workspace`, so immutable regeneration of that slice and any published benchmark metric remain blocked. |
 | P04 | Negative/null; not a release claim | Waves 57–67 produced no decomposition-aware model that beat controls on both development and test. |

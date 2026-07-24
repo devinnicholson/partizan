@@ -1,8 +1,8 @@
 # Partizan v0.1 release blockers
 
-The implementation is an alpha release candidate. Gates 1, 2, and 4 below are
-now resolved; the rest are not resolved by this branch and must remain visible
-in any handoff or release note:
+The implementation is an alpha release candidate. Gates 1, 2, 4, and 5 have
+completed evidence. Open gates 3, 6, and 7 must remain visible in any handoff
+or release note:
 
 1. **Project license: resolved.** Partizan is licensed
    [GPL-3.0-or-later](../LICENSE) (see `LICENSE`, `engine/Cargo.toml`,
@@ -31,9 +31,11 @@ in any handoff or release note:
    unreachable from any public ref. All three have now been pushed to their
    respective public `master` branches and are confirmed reachable via each
    repository's commit API.
-5. **Cross-platform and MSRV evidence:** the public workflow covers Linux,
-   macOS, Windows, Rust 1.88, and Python 3.10. Local validation covers macOS
-   arm64 with Rust 1.92 and Python 3.14.
+5. **Cross-platform and MSRV evidence: resolved.** The public workflow for
+   commit `7dcd5cb` passed on Linux, macOS, and Windows with Rust 1.88 and
+   Python 3.10. The run is preserved as
+   [GitHub Actions run 29781815615](https://github.com/devinnicholson/partizan/actions/runs/29781815615).
+   Local validation also covers macOS arm64 with Rust 1.92 and Python 3.14.
 6. **Wave 47 immutable provenance:** its 13 rows still record
    `code_commit=workspace`. Their bytes and report linkage are frozen, but
    source regeneration equivalence is not claimed.
