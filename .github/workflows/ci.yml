@@ -10,6 +10,29 @@ permissions:
   contents: read
 
 jobs:
+  visualizer:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: visualizer
+    steps:
+      # actions/checkout v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      # actions/setup-node v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: visualizer/package-lock.json
+      - name: Install visualizer
+        run: npm ci
+      - name: Visualizer tests
+        run: npm test
+      - name: Visualizer lint
+        run: npm run lint
+
   test:
     strategy:
       fail-fast: false

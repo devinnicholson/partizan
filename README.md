@@ -157,6 +157,31 @@ fullmove counters from creating false variation.
 The rule, trust boundary, checked crossing, and schema are documented in
 [`docs/bounded_chess_adapter.md`](docs/bounded_chess_adapter.md).
 
+## Live visualizer
+
+The checked crossing also has a live, evidence-backed visual instrument in
+[`visualizer/`](visualizer/). It synchronizes the two KQK boards, animates each
+immediate mating witness, reveals the 19-node and 11-node literal games, and
+then presents Partizan's exact equality certificate.
+
+The displayed evidence is generated from the native adapter and exact
+recursive-order verifier:
+
+```bash
+PYTHONPATH=python python3 scripts/build_visualizer_evidence.py --check
+```
+
+Run the visualizer locally with Node.js 22 or newer:
+
+```bash
+cd visualizer
+npm ci
+npm run dev
+```
+
+Its evidence contract, interaction states, and verification boundary are
+documented in [`docs/visualizer.md`](docs/visualizer.md).
+
 ## What is in this repository
 
 The repository contains infrastructure developed for constrained chess and
