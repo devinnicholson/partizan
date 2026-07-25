@@ -17,6 +17,22 @@ The release-supported statement is: “an experimental suite for structural
 decomposition and combinatorial-game representations in constrained chess
 positions.”
 
+## Fixed-value explorer claim register
+
+| ID | Status | Evidence and boundary |
+| --- | --- | --- |
+| FV01 | Verified locally | `tests/test_fixed_value.py` checks exact Conway comparison, deterministic generation, transition classification, corruption rejection, and complete repertoire replay for finite normal-play short games. |
+| FV02 | Verified locally | `tests/test_chess_adapter.py` checks Astralbase-gated FEN projection, Bitmesh and Thermograph provenance, typed domain/settings/budget refusals, schema validation, native replay, and end-to-end `chess-search`. |
+| FV03 | Verified locally | Two distinct legal KQK move states, each with an immediate `Qg7` checkmate, use the same four-ply rule and 20,000-node budget to produce different 19-node and 11-node literal trees. Both compare exactly equal to 1 and are admitted together as a `literal_game_crossing`. |
+| FV04 | Verified locally | Candidate embodiment identity uses board, side to move, castling state, and en-passant state. A FEN-clock mutation becomes `duplicate_embodiment` rather than a new realization. |
+
+These claims apply to
+`formal_domain:finite_normal_play_short_games:v0` and
+`formal_domain:bounded_chess_projection:v0`. Their scope ends at the declared
+finite horizon. They supply no evidence for unbounded orthodox-chess value,
+chess temperature, aesthetic measurement, learned agency, or model-guided
+discovery.
+
 This table is the claim ledger. Evidence, baselines, and a falsification
 condition activate each claim.
 

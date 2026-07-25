@@ -124,7 +124,8 @@ any two admitted entries from their fingerprints, keeping stored repertoire
 size linear in the number of entries.
 
 Draft 2020-12 structural schemas are available in `docs/schemas` for targets,
-candidates, and repertoires. The Python replay validator additionally checks
+candidates, repertoires, and bounded chess adapter records. The Python replay
+validator additionally checks
 identities, hashes, ordering, equality results, counts, relations, and
 deterministic output bytes.
 
@@ -134,7 +135,8 @@ deterministic output bytes.
 normal-play partizan games. Equality holds when each game is greater than or
 equal to the other.
 
-The contract currently accepts explicit option trees. Chess realization
-generation and bounded chess-to-game translation will connect through
-Astralbase, Bitmesh, and Thermograph in a later version. Representation
-metadata is descriptive input and does not enter the equality proof.
+The contract accepts explicit option trees. The bounded chess adapter now
+constructs those trees from constrained FENs through Astralbase, Bitmesh,
+Shakmaty, and Thermograph. Its derived finite rule is documented in
+`docs/bounded_chess_adapter.md`. Representation metadata is descriptive input
+and does not enter the equality proof.

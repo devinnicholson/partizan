@@ -28,7 +28,25 @@ Target literal game
 ```
 
 Its verifier replays finite normal-play option trees directly. The chess path
-continues to use the native boundary and the three upstream libraries.
+connects through a bounded adapter:
+
+```text
+Constrained FEN
+ └─ native bounded legal-move projection
+     ├─ Astralbase root-domain decision
+     ├─ Bitmesh root certificate and one-ply status
+     ├─ Shakmaty move expansion
+     └─ Thermograph structural tree identity
+         └─ fixed-value target/candidate
+             └─ exact Conway comparison and repertoire replay
+```
+
+The adapter record binds the canonical FEN, a clock-free move-state key,
+horizon, node budget, projection tree, upstream digests, and search
+statistics. Fixed-value embodiment identity uses the move-state key, keeping
+irrelevant FEN clocks outside the representation fingerprint. Typed refusals
+preserve failed domain and resource decisions without producing partial
+literal games.
 
 ## Data path
 
@@ -53,6 +71,8 @@ own `partizan_fugue.event_log.v1` schema.
   complete tablebase.
 - Thermograph structural serialization and approximate floating-point analysis
   are distinct contracts.
+- The bounded chess projection certifies its declared finite horizon. Orthodox
+  outcomes and unbounded solution values remain outside that certificate.
 - Partizan's schema validator establishes record shape and required provenance,
   not the truth of an upstream mathematical result.
 - Learning, agency, temperature-in-chess, and discovery claims remain outside

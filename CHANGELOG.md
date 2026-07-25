@@ -20,6 +20,13 @@ Semantic Versioning once an owner-approved release is published.
   representation/literal-game fingerprints, and transition classification.
 - The `partizan` generate, explore, search, verify, inspect, and compare
   commands.
+- A bounded chess-to-short-game adapter with Astralbase domain gating,
+  Bitmesh certificate provenance, Shakmaty legal-move expansion, Thermograph
+  structural identity, typed refusals, and deterministic native replay.
+- The `partizan` chess-adapt, chess-verify, chess-target, chess-candidate, and
+  chess-search commands.
+- A same-horizon KQK fixture whose distinct literal trees are exactly equal
+  under Conway comparison and enter one repertoire as a literal-game crossing.
 
 ### Changed
 

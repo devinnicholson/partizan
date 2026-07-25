@@ -1,0 +1,475 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "partizan-bounded-chess-adapter-v0.1.schema.json",
+  "title": "Partizan bounded chess adapter v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "adapter_id",
+    "native_adapter_version",
+    "upstream_sources",
+    "status",
+    "input",
+    "settings",
+    "domain_gate",
+    "projection",
+    "refusal"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "partizan.bounded_chess_adapter.v0.1"
+    },
+    "adapter_id": {
+      "type": "string",
+      "pattern": "^chess-adapter-sha256:[0-9a-f]{64}$"
+    },
+    "native_adapter_version": {
+      "const": "partizan.bounded_chess_adapter.native.v0.1"
+    },
+    "upstream_sources": {
+      "$ref": "#/$defs/upstream_sources"
+    },
+    "status": {
+      "enum": ["accepted", "refused"]
+    },
+    "input": {
+      "$ref": "#/$defs/input"
+    },
+    "settings": {
+      "$ref": "#/$defs/settings"
+    },
+    "domain_gate": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/domain_gate"}
+      ]
+    },
+    "projection": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/projection"}
+      ]
+    },
+    "refusal": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/refusal"}
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "accepted"}
+        }
+      },
+      "then": {
+        "properties": {
+          "domain_gate": {"$ref": "#/$defs/accepted_domain_gate"},
+          "projection": {"$ref": "#/$defs/projection"},
+          "refusal": {"type": "null"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "refused"}
+        }
+      },
+      "then": {
+        "properties": {
+          "projection": {"type": "null"},
+          "refusal": {"$ref": "#/$defs/refusal"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "source_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "source_commit"],
+      "properties": {
+        "version": {"const": "0.1.0"},
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "upstream_sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["astralbase", "bitmesh", "thermograph"],
+      "properties": {
+        "astralbase": {
+          "allOf": [
+            {"$ref": "#/$defs/source_candidate"},
+            {
+              "properties": {
+                "source_commit": {
+                  "const": "81c7c583ee5b3cdd4c7e3a6d543e77803313bc54"
+                }
+              }
+            }
+          ]
+        },
+        "bitmesh": {
+          "allOf": [
+            {"$ref": "#/$defs/source_candidate"},
+            {
+              "properties": {
+                "source_commit": {
+                  "const": "961a918c16cda757322aca66e3a368cf95438cad"
+                }
+              }
+            }
+          ]
+        },
+        "thermograph": {
+          "allOf": [
+            {"$ref": "#/$defs/source_candidate"},
+            {
+              "properties": {
+                "source_commit": {
+                  "const": "bdf535c7a40ce76c4d1dbfb88d8c522eb034b8bd"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["encoding", "fen"],
+      "properties": {
+        "encoding": {"const": "fen"},
+        "fen": {"type": "string", "minLength": 1}
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_plies", "node_budget"],
+      "properties": {
+        "max_plies": {"type": "integer"},
+        "node_budget": {"type": "integer"}
+      }
+    },
+    "domain_reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "detail"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "detail": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "immediate_terminal_tactic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "legal_move_count",
+        "checkmating_moves",
+        "stalemating_moves"
+      ],
+      "properties": {
+        "legal_move_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "checkmating_moves": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "stalemating_moves": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "one_ply_independence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "proof_kind",
+        "decomposition_digest_sha256"
+      ],
+      "properties": {
+        "status": {
+          "enum": ["certified", "unavailable"]
+        },
+        "proof_kind": {
+          "type": ["string", "null"]
+        },
+        "decomposition_digest_sha256": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          ]
+        }
+      }
+    },
+    "decomposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "active_component_count",
+        "digest_sha256",
+        "rejection_code",
+        "conservative_one_ply_independence"
+      ],
+      "properties": {
+        "status": {
+          "enum": ["strict", "rejected"]
+        },
+        "active_component_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 64
+        },
+        "digest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "rejection_code": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "enum": [
+                "no_locked_barrier",
+                "less_than_two_active_components",
+                "invalid_certificate"
+              ]
+            }
+          ]
+        },
+        "conservative_one_ply_independence": {
+          "$ref": "#/$defs/one_ply_independence"
+        }
+      }
+    },
+    "domain_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "domain_id",
+        "canonical_fen",
+        "move_state_key",
+        "terminal_status",
+        "immediate_terminal_tactic",
+        "decomposition",
+        "reasons"
+      ],
+      "properties": {
+        "status": {
+          "enum": ["accepted", "refused"]
+        },
+        "domain_id": {
+          "const": "formal_domain:first_constrained_chess:v0"
+        },
+        "canonical_fen": {
+          "type": ["string", "null"]
+        },
+        "move_state_key": {
+          "type": ["string", "null"]
+        },
+        "terminal_status": {
+          "enum": [null, "checkmate", "stalemate"]
+        },
+        "immediate_terminal_tactic": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/immediate_terminal_tactic"}
+          ]
+        },
+        "decomposition": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/decomposition"}
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/domain_reason"}
+        }
+      }
+    },
+    "accepted_domain_gate": {
+      "allOf": [
+        {"$ref": "#/$defs/domain_gate"},
+        {
+          "properties": {
+            "status": {"const": "accepted"},
+            "canonical_fen": {"type": "string", "minLength": 1},
+            "move_state_key": {
+              "type": "string",
+              "pattern": "^\\S+ \\S+ \\S+ \\S+$"
+            },
+            "decomposition": {"$ref": "#/$defs/decomposition"},
+            "reasons": {"maxItems": 0}
+          }
+        }
+      ]
+    },
+    "literal_game": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["left", "right"],
+      "properties": {
+        "left": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/literal_game"}
+        },
+        "right": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/literal_game"}
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visited_position_nodes",
+        "legal_edges",
+        "duplicate_literal_options_removed",
+        "horizon_leaves",
+        "checkmate_leaves",
+        "stalemate_leaves",
+        "max_depth_reached",
+        "literal_game_nodes"
+      ],
+      "properties": {
+        "visited_position_nodes": {"type": "integer", "minimum": 0},
+        "legal_edges": {"type": "integer", "minimum": 0},
+        "duplicate_literal_options_removed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "horizon_leaves": {"type": "integer", "minimum": 0},
+        "checkmate_leaves": {"type": "integer", "minimum": 0},
+        "stalemate_leaves": {"type": "integer", "minimum": 0},
+        "max_depth_reached": {"type": "integer", "minimum": 0},
+        "literal_game_nodes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "dyadic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["numerator", "denominator_power"],
+      "properties": {
+        "numerator": {"type": "integer"},
+        "denominator_power": {"type": "integer", "minimum": 0}
+      }
+    },
+    "thermograph_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "semantics",
+        "value_class",
+        "canonical_serialization",
+        "legacy_digest",
+        "digest_v1_sha256",
+        "dyadic"
+      ],
+      "properties": {
+        "semantics": {"const": "structural_tree_identity_only"},
+        "value_class": {
+          "enum": ["number", "star", "up", "down", "switch", "game_tree"]
+        },
+        "canonical_serialization": {"type": "string", "minLength": 1},
+        "legacy_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "digest_v1_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "dyadic": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/dyadic"}
+          ]
+        }
+      }
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain_id",
+        "rule",
+        "root_turn",
+        "literal_game",
+        "literal_game_sha256",
+        "statistics",
+        "thermograph_identity"
+      ],
+      "properties": {
+        "domain_id": {
+          "const": "formal_domain:bounded_chess_projection:v0"
+        },
+        "rule": {
+          "const": "bounded_alternating_legal_move_normal_play_v1"
+        },
+        "root_turn": {
+          "enum": ["white", "black"]
+        },
+        "literal_game": {
+          "$ref": "#/$defs/literal_game"
+        },
+        "literal_game_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "statistics": {
+          "$ref": "#/$defs/statistics"
+        },
+        "thermograph_identity": {
+          "$ref": "#/$defs/thermograph_identity"
+        }
+      }
+    },
+    "refusal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "details"],
+      "properties": {
+        "code": {
+          "enum": [
+            "invalid_adapter_settings",
+            "domain_rejected",
+            "node_budget_exhausted",
+            "position_transition_failed"
+          ]
+        },
+        "message": {"type": "string", "minLength": 1},
+        "details": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -55,6 +55,27 @@ Repetition, the fifty-/seventy-five-move rules, historical draw claims, and
 general draw propagation are outside v0.1. Astralbase `Unknown` is neither a
 draw nor a proof. The terminal scalar hook is plumbing evidence only.
 
+## `formal_domain:bounded_chess_projection:v0`
+
+This domain derives one finite normal-play game from a FEN that has already
+passed `formal_domain:first_constrained_chess:v0`. Under
+`bounded_alternating_legal_move_normal_play_v1`, White legal moves become
+Left options, Black legal moves become Right options, and nodes at the
+declared ply horizon become zero. Positions with no legal move also become
+zero, with checkmate and stalemate counted separately in the certificate.
+Recursively identical options are sorted and deduplicated.
+
+The declared horizon belongs to the value rule. Exactness covers the complete
+finite tree under that rule. The adapter accepts 1–8 plies and a position-node
+budget of at most 100,000. Budget exhaustion yields a typed refusal and no
+literal game.
+
+Shakmaty supplies legal moves. Astralbase supplies the root-domain decision.
+Bitmesh supplies its structural digest and conservative one-ply status for the
+root. Thermograph supplies structural tree identity. Partizan's recursive
+short-game comparison supplies value equality between accepted projections.
+Orthodox draw outcomes and unbounded chess value remain outside this domain.
+
 ## `formal_domain:thermograph_golden_cgt:v0`
 
 This is a non-chess control domain for finite normal-play CGT fixtures. Position

@@ -6,6 +6,12 @@ import argparse
 import sys
 from pathlib import Path
 
+from .chess_adapter import (
+    adapt_chess_position,
+    candidate_from_adapter,
+    target_from_adapter,
+    validate_chess_adapter_record,
+)
 from .fixed_value import (
     build_repertoire,
     canonical_json_bytes,
@@ -71,6 +77,49 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument("repertoire", type=Path)
     compare.add_argument("--left", required=True)
     compare.add_argument("--right", required=True)
+
+    chess_adapt = commands.add_parser(
+        "chess-adapt",
+        help="project one constrained FEN into a finite short game",
+    )
+    chess_adapt.add_argument("--fen", required=True)
+    chess_adapt.add_argument("--max-plies", type=int, default=2)
+    chess_adapt.add_argument("--node-budget", type=int, default=10_000)
+    chess_adapt.add_argument("--output", type=Path, required=True)
+
+    chess_verify = commands.add_parser(
+        "chess-verify",
+        help="replay one bounded chess adapter record",
+    )
+    chess_verify.add_argument("record", type=Path)
+
+    chess_target = commands.add_parser(
+        "chess-target",
+        help="convert an accepted chess adapter record into a fixed-value target",
+    )
+    chess_target.add_argument("record", type=Path)
+    chess_target.add_argument("--name", required=True)
+    chess_target.add_argument("--output", type=Path, required=True)
+
+    chess_candidate = commands.add_parser(
+        "chess-candidate",
+        help="convert an accepted chess adapter record into a search candidate",
+    )
+    chess_candidate.add_argument("record", type=Path)
+    chess_candidate.add_argument("--ordinal", type=int, required=True)
+    chess_candidate.add_argument("--output", type=Path, required=True)
+
+    chess_search = commands.add_parser(
+        "chess-search",
+        help="build a fixed-value repertoire from accepted adapter records",
+    )
+    chess_search.add_argument("--target-record", type=Path, required=True)
+    chess_search.add_argument("--candidate-records", type=Path, required=True)
+    chess_search.add_argument("--name", required=True)
+    chess_search.add_argument("--seed", type=int, required=True)
+    chess_search.add_argument("--budget", type=int, required=True)
+    chess_search.add_argument("--max-results", type=int, required=True)
+    chess_search.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -83,6 +132,91 @@ def main(argv: list[str] | None = None) -> int:
 
     args = build_parser().parse_args(argv)
     try:
+        if args.command == "chess-adapt":
+            record = adapt_chess_position(
+                args.fen,
+                max_plies=args.max_plies,
+                node_budget=args.node_budget,
+            )
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_bytes(canonical_json_bytes(record))
+            if record["status"] == "accepted":
+                print(
+                    "bounded chess adapter: accepted "
+                    f"({args.output}, id={record['adapter_id']}, "
+                    f"literal={record['projection']['literal_game_sha256']})"
+                )
+                return 0
+            print(
+                "bounded chess adapter: refused "
+                f"({args.output}, code={record['refusal']['code']}, "
+                f"id={record['adapter_id']})"
+            )
+            return 2
+
+        if args.command == "chess-verify":
+            record = load_json(args.record)
+            errors = validate_chess_adapter_record(record)
+            if errors:
+                for error in errors:
+                    print(f"{args.record}: {error}", file=sys.stderr)
+                return 1
+            print(
+                "bounded chess adapter record: ok "
+                f"({args.record}, status={record['status']}, "
+                f"id={record['adapter_id']})"
+            )
+            return 0
+
+        if args.command == "chess-target":
+            target = target_from_adapter(load_json(args.record), name=args.name)
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_bytes(canonical_json_bytes(target))
+            print(
+                "fixed-value chess target: ok "
+                f"({args.output}, id={target['target_id']})"
+            )
+            return 0
+
+        if args.command == "chess-candidate":
+            candidate = candidate_from_adapter(
+                load_json(args.record),
+                ordinal=args.ordinal,
+            )
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_bytes(canonical_json_bytes(candidate))
+            print(
+                "fixed-value chess candidate: ok "
+                f"({args.output}, id={candidate['candidate_id']})"
+            )
+            return 0
+
+        if args.command == "chess-search":
+            target = target_from_adapter(
+                load_json(args.target_record),
+                name=args.name,
+            )
+            candidates = [
+                candidate_from_adapter(record, ordinal=ordinal)
+                for ordinal, record in enumerate(load_jsonl(args.candidate_records))
+            ]
+            repertoire = build_repertoire(
+                target,
+                candidates,
+                seed=args.seed,
+                budget=args.budget,
+                max_results=args.max_results,
+            )
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_bytes(canonical_json_bytes(repertoire))
+            print(
+                "fixed-value chess search: ok "
+                f"({args.output}, admitted={len(repertoire['entries'])}, "
+                f"evaluated={len(repertoire['evaluations'])}, "
+                f"id={repertoire['repertoire_id']})"
+            )
+            return 0
+
         if args.command == "generate":
             candidates = generate_candidates(
                 load_json(args.target),

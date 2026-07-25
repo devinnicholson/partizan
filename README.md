@@ -120,6 +120,43 @@ self-contained and supports deterministic replay of every admission decision.
 The exact data contract and comparison scope are documented in
 [`docs/fixed_value_explorer.md`](docs/fixed_value_explorer.md).
 
+## Bounded chess adapter
+
+Constrained FENs can now enter the same exact explorer through a replayable
+native adapter:
+
+```bash
+partizan chess-adapt \
+  --fen '7k/5K2/6Q1/8/8/8/8/8 w - - 0 1' \
+  --max-plies 1 \
+  --node-budget 100 \
+  --output /tmp/mate-frontier.adapter.json
+
+partizan chess-verify /tmp/mate-frontier.adapter.json
+partizan chess-target /tmp/mate-frontier.adapter.json \
+  --name mate-frontier-one \
+  --output /tmp/mate-frontier.target.json
+partizan chess-candidate /tmp/mate-frontier.adapter.json \
+  --ordinal 0 \
+  --output /tmp/mate-frontier.candidates.jsonl
+```
+
+`partizan chess-search` accepts a target adapter record plus a JSONL stream of
+candidate adapter records and emits a replayable fixed-value repertoire in one
+step.
+
+The adapter records Astralbase's domain decision, Bitmesh's structural
+certificate and one-ply status, the literal projection of a complete bounded
+Shakmaty move expansion, and Thermograph's structural identity. Partizan then
+certifies value equality with its independent recursive-order verifier. Every
+horizon and resource limit is part of the content-addressed record;
+unsupported FENs and exhausted budgets produce typed refusals. Embodiment
+fingerprints use a clock-free chess move-state key, preventing halfmove and
+fullmove counters from creating false variation.
+
+The rule, trust boundary, checked crossing, and schema are documented in
+[`docs/bounded_chess_adapter.md`](docs/bounded_chess_adapter.md).
+
 ## What is in this repository
 
 The repository contains infrastructure developed for constrained chess and
@@ -141,7 +178,7 @@ The current supported statement is deliberately narrow:
 
 The following capabilities remain future work:
 
-- exact combinatorial-game values for arbitrary chess positions;
+- unbounded combinatorial-game values for arbitrary chess positions;
 - independence of apparent chess subgames throughout all future play;
 - a learned-model benefit from decomposition;
 - model-guided aesthetic discovery;
@@ -172,7 +209,7 @@ python3 -m unittest \
 
 These commands verify that the public records obey their declared schemas,
 identity rules, and frozen research contracts. They are a subset of CI's gate,
-which runs the full suite (`python -m unittest discover -s tests`, 154 tests)
+which runs the full suite (`python -m unittest discover -s tests`)
 against the installed package. Native chess and CGT claims use the full
 installation below.
 

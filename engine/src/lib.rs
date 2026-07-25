@@ -4,6 +4,8 @@
 //! position smoke evaluation. They do not prove full game-tree decomposition,
 //! learned agency, chess temperature, or model-guided discovery.
 
+mod chess_adapter;
+
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -114,6 +116,7 @@ fn evaluate_position(py: Python<'_>, fen_str: String) -> PyResult<Py<PyDict>> {
 
 #[pymodule]
 fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(chess_adapter::adapt_chess_position, m)?)?;
     m.add_function(wrap_pyfunction!(find_locked_pawns, m)?)?;
     m.add_function(wrap_pyfunction!(analyze_subsystems, m)?)?;
     m.add_function(wrap_pyfunction!(evaluate_position, m)?)?;
