@@ -1,8 +1,42 @@
 # Partizan visualizer
 
-Status: executable visual witness for the checked fixed-value crossing.
+Status: executable historical witness followed by a checked fixed-value
+crossing.
 
-## Purpose
+## Historical prelude
+
+The first instrument replays the thirteen-ply line published in Lewis Stiller's
+*Multilinear Algebra and Chess Endgames* (1996), pp. 176–177. Stiller describes
+the computer-found KQQKQQ mutual-zugzwang kernel and the eight-piece composition
+Noam Elkies built around it. The visualizer follows:
+
+```text
+1. Qg7+ Kh2 2. f8=Q Qb5+ 3. Kh6 Qb6+
+4. Bc6 Qxc6+ 5. Kxh7 b1=Q+ 6. Kh8 Kh1! 7. Qfg8!!
+```
+
+Partizan replays every UCI move from the preceding board state in the native
+Shakmaty engine. The generated artifact records canonical FEN, SAN, check
+state, legal-move count, captures, and promotions for the initial position and
+all thirteen plies.
+
+This witness has a narrow claim boundary. The artifact verifies legal replay
+and reproduces the published final position. The publication supplies the
+line's historical origin and analysis. The artifact does not independently
+prove forcedness, optimality, mutual zugzwang, or a CGT value.
+
+Rebuild or check it with:
+
+```bash
+PYTHONPATH=python python3 scripts/build_elkies_study_evidence.py
+PYTHONPATH=python python3 scripts/build_elkies_study_evidence.py --check
+```
+
+`tests/test_chess_witness.py` checks the native replay and its refusal of an
+illegal move. The visualizer's rendered-page test binds the 14-frame artifact,
+final FEN, final `Qfg8`, and visible scope labels.
+
+## Exact crossing
 
 The visualizer makes one certified comparison directly inspectable. It begins
 with two legal KQK positions:
@@ -17,7 +51,7 @@ The native adapter expands each position through four plies with the same
 fixed-value repertoire. Conway's recursive order certifies each projected game
 equal to `{0|} = 1` and equal to the other.
 
-The visual sequence exposes four stages:
+The exact crossing exposes four stages:
 
 1. **Receive** — display the two source FENs.
 2. **Distinguish** — reveal their different literal trees and search measures.
@@ -25,10 +59,12 @@ The visual sequence exposes four stages:
    `Qg6-g7`.
 4. **Certify** — disclose the shared value and crossing relation.
 
-The interface supports direct stage selection, timed replay, left/right arrow
-navigation, responsive layouts, and reduced-motion preferences.
+Both instruments support direct selection and timed replay. The historical
+line adds previous/next controls, a complete clickable score, six annotated
+landmarks, and scoped arrow-key navigation. Responsive layouts and
+reduced-motion preferences apply throughout.
 
-## Evidence contract
+## Crossing evidence contract
 
 `scripts/build_visualizer_evidence.py` produces
 `visualizer/public/evidence/crossing.json`. The bundle contains:

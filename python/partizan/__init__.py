@@ -2,7 +2,12 @@
 
 from . import chess_adapter as _chess_adapter
 from . import fixed_value as _fixed_value
-from ._native import analyze_subsystems, evaluate_position, find_locked_pawns
+from ._native import (
+    analyze_subsystems,
+    evaluate_position,
+    find_locked_pawns,
+    replay_chess_witness,
+)
 from .chess_adapter import adapt_chess_position, validate_chess_adapter_record
 from .discovery import (
     GENERATION_RECEIPT_SCHEMA_VERSION,
@@ -114,6 +119,7 @@ __all__ = [
     "make_fixed_value_target",
     "partizan_pool_features_for_fen",
     "representation_sha256",
+    "replay_chess_witness",
     "validate_candidate_pool_manifest",
     "validate_candidate_proposal",
     "validate_chess_adapter_record",

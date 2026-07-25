@@ -159,15 +159,16 @@ The rule, trust boundary, checked crossing, and schema are documented in
 
 ## Live visualizer
 
-The checked crossing also has a live, evidence-backed visual instrument in
-[`visualizer/`](visualizer/). It synchronizes the two KQK boards, animates each
-immediate mating witness, reveals the 19-node and 11-node literal games, and
-then presents Partizan's exact equality certificate.
+The live, evidence-backed instrument in [`visualizer/`](visualizer/) opens with
+a machine-verified replay of the thirteen-ply Elkies composition published by
+Lewis Stiller. It then synchronizes two KQK boards, animates each immediate
+mating witness, reveals the 19-node and 11-node literal games, and presents
+Partizan's exact equality certificate.
 
-The displayed evidence is generated from the native adapter and exact
-recursive-order verifier:
+Both displayed artifacts are generated from native records:
 
 ```bash
+PYTHONPATH=python python3 scripts/build_elkies_study_evidence.py --check
 PYTHONPATH=python python3 scripts/build_visualizer_evidence.py --check
 ```
 

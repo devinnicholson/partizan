@@ -5,9 +5,11 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import evidenceJson from "../public/evidence/crossing.json";
+import elkiesJson from "../public/evidence/elkies-study.json";
 
 type Phase = 0 | 1 | 2 | 3;
 
@@ -57,6 +59,60 @@ type CrossingEvidence = {
   realizations: Realization[];
 };
 
+type WitnessFrame = {
+  capture: boolean;
+  checkmate: boolean;
+  fen: string;
+  in_check: boolean;
+  legal_move_count: number;
+  move_display: string | null;
+  move_san: string | null;
+  move_uci: string | null;
+  ply: number;
+  promotion: boolean;
+  stalemate: boolean;
+  turn: "white" | "black";
+};
+
+type HistoricalEvidence = {
+  schema_version: string;
+  evidence_sha256: string;
+  title: string;
+  claim: string;
+  source: {
+    author: string;
+    title: string;
+    venue: string;
+    year: number;
+    pages: string;
+    figure: string;
+    url: string;
+    historical_attribution: string;
+  };
+  scope: {
+    legal_replay: string;
+    line_origin: string;
+    line_optimality: string;
+    forcedness: string;
+    cgt_value: string;
+  };
+  position: {
+    name: string;
+    initial_piece_count: number;
+    final_piece_count: number;
+  };
+  witness: {
+    native_witness_version: string;
+    move_count: number;
+    frames: WitnessFrame[];
+  };
+  motifs: {
+    at_ply: number;
+    name: string;
+    move_san: string;
+  }[];
+};
+
 type Piece = {
   id: string;
   color: "white" | "black";
@@ -67,8 +123,10 @@ type Piece = {
 type TreeNode = { x: number; y: number; parent?: number };
 
 const evidence = evidenceJson as CrossingEvidence;
+const elkies = elkiesJson as HistoricalEvidence;
 const files = "abcdefgh";
 const phaseLabels = ["Receive", "Distinguish", "Move", "Certify"] as const;
+const witnessLandmarks = [0, 3, 7, 10, 12, 13] as const;
 
 const treeNineteen: TreeNode[] = [
   { x: 50, y: 7 },
@@ -153,6 +211,11 @@ function moveSquares(move: string): { from: string; to: string } {
   return { from: match[1], to: match[2] };
 }
 
+function uciSquares(move: string | null): { from: string; to: string } | null {
+  if (!move || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) return null;
+  return { from: move.slice(0, 2), to: move.slice(2, 4) };
+}
+
 function squarePosition(square: string) {
   return { file: files.indexOf(square[0]), row: 8 - Number(square[1]) };
 }
@@ -164,6 +227,133 @@ function displayMove(move: string) {
 function shortHash(value: string) {
   const digest = value.includes(":") ? value.split(":").at(-1) : value;
   return digest?.slice(0, 10);
+}
+
+function WitnessBoard({ frame }: { frame: WitnessFrame }) {
+  const pieces = useMemo(() => parseFen(frame.fen), [frame.fen]);
+  const move = uciSquares(frame.move_uci);
+  const from = move ? squarePosition(move.from) : null;
+  const to = move ? squarePosition(move.to) : null;
+  const vectorStyle =
+    from && to
+      ? ({
+          "--vector-x": `${(from.file + 0.5) * 12.5}%`,
+          "--vector-y": `${(from.row + 0.5) * 12.5}%`,
+          "--vector-length": `${Math.hypot(
+            (to.file - from.file) * 12.5,
+            (to.row - from.row) * 12.5,
+          )}%`,
+          "--vector-angle": `${Math.atan2(
+            (to.row - from.row) * 12.5,
+            (to.file - from.file) * 12.5,
+          ) * (180 / Math.PI)}deg`,
+        } as CSSProperties)
+      : undefined;
+
+  return (
+    <div
+      className={`chessboard witness-board ${
+        frame.in_check ? "witness-check" : ""
+      }`}
+      aria-label={`Elkies historical witness at ply ${frame.ply}: ${frame.fen}`}
+    >
+      <div className="squares" aria-hidden="true">
+        {Array.from({ length: 64 }, (_, index) => {
+          const row = Math.floor(index / 8);
+          const file = index % 8;
+          const square = `${files[file]}${8 - row}`;
+          return (
+            <div
+              className={[
+                "square",
+                (row + file) % 2 === 0 ? "light" : "dark",
+                move?.from === square ? "witness-from" : "",
+                move?.to === square ? "witness-to" : "",
+              ].join(" ")}
+              key={square}
+            >
+              {file === 0 && <span className="rank-label">{8 - row}</span>}
+              {row === 7 && <span className="file-label">{files[file]}</span>}
+            </div>
+          );
+        })}
+      </div>
+      {vectorStyle && (
+        <div className="witness-vector" style={vectorStyle} aria-hidden="true" />
+      )}
+      {pieces.map((piece) => {
+        const position = squarePosition(piece.square);
+        return (
+          <span
+            className={`piece ${piece.color}`}
+            key={`${frame.ply}-${piece.id}-${piece.square}`}
+            style={{
+              "--file": position.file,
+              "--row": position.row,
+            } as CSSProperties}
+            aria-hidden="true"
+          >
+            {glyphs[piece.kind]}
+          </span>
+        );
+      })}
+      <div className="board-vignette" aria-hidden="true" />
+      <div className="witness-board-readout" aria-live="polite">
+        <span>{frame.ply === 0 ? "opening form" : `ply ${frame.ply} / 13`}</span>
+        <strong>{frame.move_san ?? "position"}</strong>
+      </div>
+      {frame.ply === 13 && (
+        <div className="kernel-mark" aria-live="polite">
+          kernel reached
+        </div>
+      )}
+    </div>
+  );
+}
+
+function historicalNote(ply: number) {
+  if (ply === 0) {
+    return {
+      eyebrow: "The composed entrance",
+      title: "The kernel is hidden.",
+      body: "Eight pieces, two pawns on the edge of promotion, and no visible resemblance to the six-piece ending ahead.",
+    };
+  }
+  const motif = elkies.motifs.find((item) => item.at_ply === ply);
+  if (motif) {
+    const notes: Record<number, { title: string; body: string }> = {
+      3: {
+        title: "The first queen arrives.",
+        body: "White promotes without check. The board grows more complicated before it becomes spare.",
+      },
+      7: {
+        title: "The bishop enters the line.",
+        body: "Bc6 invites its own removal. The sacrifice clears the geometry that the final position requires.",
+      },
+      10: {
+        title: "A second promotion answers.",
+        body: "Black’s pawn becomes a queen with check. Material symmetry appears through opposite journeys.",
+      },
+      12: {
+        title: "The smallest move turns the key.",
+        body: "Kh1 carries no capture or promotion. It prepares the exact burden of the position to come.",
+      },
+      13: {
+        title: "Qfg8. The kernel appears.",
+        body: "Queens and kings remain. The published line has reached Stiller’s computer-found mutual-zugzwang form, rotated on the board.",
+      },
+    };
+    return {
+      eyebrow: motif.name,
+      title: notes[ply].title,
+      body: notes[ply].body,
+    };
+  }
+  return {
+    eyebrow: "Published continuation",
+    title: elkies.witness.frames[ply].move_san ?? `Ply ${ply}`,
+    body: "Each move is checked against the legal moves of the preceding position before the next frame is admitted.",
+  };
 }
 
 function ChessBoard({
@@ -381,6 +571,191 @@ function RealizationCard({
   );
 }
 
+function HistoricalPrelude() {
+  const [ply, setPly] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const frame = elkies.witness.frames[ply];
+  const note = historicalNote(ply);
+
+  const selectPly = useCallback((nextPly: number) => {
+    setPlaying(false);
+    setPly(Math.max(0, Math.min(elkies.witness.move_count, nextPly)));
+  }, []);
+
+  const togglePlayback = useCallback(() => {
+    if (playing) {
+      setPlaying(false);
+      return;
+    }
+    if (ply === elkies.witness.move_count) setPly(0);
+    setPlaying(true);
+  }, [playing, ply]);
+
+  useEffect(() => {
+    if (!playing || ply >= elkies.witness.move_count) return;
+    const timer = window.setTimeout(() => {
+      const nextPly = Math.min(elkies.witness.move_count, ply + 1);
+      setPly(nextPly);
+      if (nextPly === elkies.witness.move_count) setPlaying(false);
+    }, 1_050);
+    return () => window.clearTimeout(timer);
+  }, [playing, ply]);
+
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return;
+    const handleKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("button, a")) return;
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        selectPly(ply + 1);
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        selectPly(ply - 1);
+      }
+    };
+    node.addEventListener("keydown", handleKey);
+    return () => node.removeEventListener("keydown", handleKey);
+  }, [ply, selectPly]);
+
+  return (
+    <section
+      className="historical-prelude"
+      aria-labelledby="prelude-title"
+      ref={sectionRef}
+      tabIndex={0}
+    >
+      <header className="prelude-heading">
+        <div>
+          <span>Historical prelude · 1996</span>
+          <p>Stiller / Elkies</p>
+        </div>
+        <h2 id="prelude-title">
+          A machine found the kernel.
+          <em> Elkies composed the encounter.</em>
+        </h2>
+        <p>
+          The six-piece mutual zugzwang came first. Noam Elkies placed it at the
+          end of a thirteen-ply approach whose opening position seems to belong
+          to another problem entirely.
+        </p>
+      </header>
+
+      <div className="prelude-instrument">
+        <div className="witness-stage">
+          <div
+            className="witness-stage-index"
+            style={
+              {
+                "--witness-progress": (ply / elkies.witness.move_count) * 100,
+              } as CSSProperties
+            }
+            aria-hidden="true"
+          >
+            <span>{String(ply).padStart(2, "0")}</span>
+            <i />
+            <span>13</span>
+          </div>
+          <WitnessBoard frame={frame} />
+          <div className="witness-controls">
+            <button
+              type="button"
+              onClick={() => selectPly(ply - 1)}
+              disabled={ply === 0}
+              aria-label="Previous move"
+            >
+              ←
+            </button>
+            <button
+              className="witness-play"
+              type="button"
+              onClick={togglePlayback}
+              aria-label={playing ? "Pause historical line" : "Play historical line"}
+            >
+              <span
+                className={playing ? "pause-mark" : "play-mark"}
+                aria-hidden="true"
+              />
+              {playing ? "Pause" : ply === 13 ? "Replay line" : "Play 13 plies"}
+            </button>
+            <button
+              type="button"
+              onClick={() => selectPly(ply + 1)}
+              disabled={ply === elkies.witness.move_count}
+              aria-label="Next move"
+            >
+              →
+            </button>
+          </div>
+        </div>
+
+        <div className="witness-reading">
+          <div className="witness-note" key={`${ply}-${note.title}`}>
+            <span>{note.eyebrow}</span>
+            <h3>{note.title}</h3>
+            <p>{note.body}</p>
+          </div>
+
+          <ol className="witness-score" aria-label="Published thirteen-ply line">
+            {elkies.witness.frames.slice(1).map((item) => (
+              <li key={item.ply}>
+                <button
+                  type="button"
+                  className={[
+                    item.ply === ply ? "current" : "",
+                    item.ply < ply ? "passed" : "",
+                    witnessLandmarks.includes(
+                      item.ply as (typeof witnessLandmarks)[number],
+                    )
+                      ? "landmark"
+                      : "",
+                  ].join(" ")}
+                  onClick={() => selectPly(item.ply)}
+                  aria-current={item.ply === ply ? "step" : undefined}
+                  title={`Ply ${item.ply}: ${item.move_san}`}
+                >
+                  <span>{String(item.ply).padStart(2, "0")}</span>
+                  <strong>{item.move_san}</strong>
+                </button>
+              </li>
+            ))}
+          </ol>
+
+          <div className="witness-boundary">
+            <div>
+              <span className="verified-dot" />
+              legal replay machine-verified
+            </div>
+            <div>line from published analysis</div>
+            <div>CGT value unasserted here</div>
+          </div>
+
+          <a
+            className="primary-source"
+            href={elkies.source.url}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span>Primary source</span>
+            {elkies.source.title}, pp. {elkies.source.pages} ↗
+          </a>
+        </div>
+      </div>
+
+      <div className="prelude-thesis">
+        <span>The transformation</span>
+        <p>
+          The final position is compact enough to name. The route gives that
+          position tension, delay, sacrifice, and surprise.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export function PartizanExperience() {
   const [phase, setPhase] = useState<Phase>(0);
   const [playing, setPlaying] = useState(false);
@@ -411,7 +786,12 @@ export function PartizanExperience() {
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.closest("button, a, summary, input, textarea, select")) return;
+      if (
+        target?.closest(
+          "button, a, summary, input, textarea, select, .historical-prelude",
+        )
+      )
+        return;
       if (event.key === " ") {
         event.preventDefault();
         begin();
@@ -446,8 +826,8 @@ export function PartizanExperience() {
 
       <section className="hero" id="top">
         <div className="hero-kicker">
-          <span>Checked crossing 01</span>
-          <span>KQK · four-ply horizon</span>
+          <span>Partizan · forms under constraint</span>
+          <span>Historical witness + checked crossing</span>
         </div>
         <h1>
           <span>One value.</span>
@@ -470,6 +850,24 @@ export function PartizanExperience() {
           </p>
         </div>
       </section>
+
+      <HistoricalPrelude />
+
+      <div className="crossing-intro">
+        <div>
+          <span>Partizan crossing 01</span>
+          <p>KQK · exact bounded value</p>
+        </div>
+        <h2>
+          Here the question becomes exact:
+          <em> what remains when correctness is fixed?</em>
+        </h2>
+        <p>
+          Partizan generates two literal chess games, certifies each against
+          the same target value, and preserves the differences that equality
+          leaves behind.
+        </p>
+      </div>
 
       <nav className="phase-line" aria-label="Proof stages">
         {phaseLabels.map((label, index) => (

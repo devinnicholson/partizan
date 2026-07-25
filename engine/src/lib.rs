@@ -5,6 +5,7 @@
 //! learned agency, chess temperature, or model-guided discovery.
 
 mod chess_adapter;
+mod chess_witness;
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -117,6 +118,7 @@ fn evaluate_position(py: Python<'_>, fen_str: String) -> PyResult<Py<PyDict>> {
 #[pymodule]
 fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(chess_adapter::adapt_chess_position, m)?)?;
+    m.add_function(wrap_pyfunction!(chess_witness::replay_chess_witness, m)?)?;
     m.add_function(wrap_pyfunction!(find_locked_pawns, m)?)?;
     m.add_function(wrap_pyfunction!(analyze_subsystems, m)?)?;
     m.add_function(wrap_pyfunction!(evaluate_position, m)?)?;

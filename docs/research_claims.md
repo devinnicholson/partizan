@@ -25,6 +25,7 @@ positions.”
 | FV02 | Verified locally | `tests/test_chess_adapter.py` checks Astralbase-gated FEN projection, Bitmesh and Thermograph provenance, typed domain/settings/budget refusals, schema validation, native replay, and end-to-end `chess-search`. |
 | FV03 | Verified locally | Two distinct legal KQK move states, each with an immediate `Qg7` checkmate, use the same four-ply rule and 20,000-node budget to produce different 19-node and 11-node literal trees. Both compare exactly equal to 1 and are admitted together as a `literal_game_crossing`. |
 | FV04 | Verified locally | Candidate embodiment identity uses board, side to move, castling state, and en-passant state. A FEN-clock mutation becomes `duplicate_embodiment` rather than a new realization. |
+| FV05 | Verified locally with published historical attribution | The native chess witness replays the thirteen plies attributed by Lewis Stiller to Noam Elkies's composition and reaches the recorded rotated KQQKQQ kernel FEN. This verifies move legality and deterministic reproduction. Forcedness, optimality, mutual-zugzwang analysis, and CGT value remain outside the machine-verified claim. |
 
 These claims apply to
 `formal_domain:finite_normal_play_short_games:v0` and
