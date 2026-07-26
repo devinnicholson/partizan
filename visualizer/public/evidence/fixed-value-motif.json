@@ -1,0 +1,99 @@
+{
+  "schema_version": "partizan.fixed_value_linked_motif.v1",
+  "claim": "Mathematics pronounces A, B, and C identical while their graph and option structures remain certifiably different.",
+  "completion_sha256": "a1dea5a06ee5d5bb7244ea22390a4962eeb728d6d574a678f1062ebca7c2c86e",
+  "run": {
+    "proposal_count": 73728,
+    "linked_motif_count": 8111,
+    "independent_replay": true,
+    "negative_test_families_rejected": 15
+  },
+  "comparison": {
+    "exact_value": "0",
+    "relation": "finite_normal_play_equality",
+    "statement": "v(A) = v(B) = v(C) = 0",
+    "literal_statement": "l(A) != l(B) = l(C)",
+    "quotient_statement": "q(A), q(B), and q(C) are pairwise distinct"
+  },
+  "positions": [
+    {
+      "label": "A",
+      "name": "Before the crossing",
+      "candidate_sha256": "cb1ffa7f8405ffac7e9cdb28f2da6276adfb403ae131e8bc28450bf5b14210e3",
+      "quotient_sha256": "c3884f00f78221241ed589ef34d601247e30f94ddff9fe8a4f94408f5710d9c0",
+      "literal_game_sha256": "174241ab221c7ab82aa517db7519000dbec169a3efb829b90791183fba8a43db",
+      "blue_vertices": [0, 3, 5],
+      "arcs": [[0, 1], [0, 3], [0, 4], [0, 5], [0, 6], [1, 2], [1, 4], [2, 3], [2, 4], [2, 6], [3, 0], [3, 2], [3, 4], [3, 5], [4, 1], [4, 6], [5, 0], [5, 1], [5, 3], [6, 1], [6, 2], [6, 4]],
+      "graph_arc_count": 22,
+      "literal_game_nodes": 19,
+      "literal_game_edges": 18,
+      "birthday": 3,
+      "first_global_event_index": 247
+    },
+    {
+      "label": "B",
+      "name": "A smaller literal game",
+      "candidate_sha256": "a09060e0145f2b2e8ec37474790955aed9a4ebb3ac272f8e22b47c4065cbee53",
+      "quotient_sha256": "65fd621849d1a5d4a35c466f7e1d607133a78bf5633ceac1b3c33a75818deec6",
+      "literal_game_sha256": "0b6c43cfea3d598f42fd6c9f4a4f3d5f74ae4d049f28e7e378e8e75d669ace91",
+      "blue_vertices": [0, 3, 5],
+      "arcs": [[0, 1], [0, 3], [0, 4], [0, 5], [0, 6], [1, 2], [1, 4], [2, 4], [2, 6], [3, 0], [3, 2], [3, 4], [3, 5], [4, 1], [4, 6], [5, 0], [5, 1], [5, 3], [6, 1], [6, 2], [6, 4]],
+      "graph_arc_count": 21,
+      "literal_game_nodes": 15,
+      "literal_game_edges": 14,
+      "birthday": 3,
+      "first_global_event_index": 251
+    },
+    {
+      "label": "C",
+      "name": "A different embodiment",
+      "candidate_sha256": "6d3e2117b482af4a7054103291ba33ae269b6294220afc68fbe1ce6d25fb6555",
+      "quotient_sha256": "8d47d5c76f9404d1d08715576c9d1850b8ee4371e4e581784819bc0c094ff122",
+      "literal_game_sha256": "0b6c43cfea3d598f42fd6c9f4a4f3d5f74ae4d049f28e7e378e8e75d669ace91",
+      "blue_vertices": [0, 3, 5],
+      "arcs": [[0, 1], [0, 3], [0, 4], [0, 5], [0, 6], [1, 2], [1, 4], [2, 4], [2, 6], [3, 0], [3, 2], [3, 4], [3, 5], [4, 1], [4, 6], [5, 0], [5, 1], [5, 3], [6, 0], [6, 1], [6, 2], [6, 4]],
+      "graph_arc_count": 22,
+      "literal_game_nodes": 15,
+      "literal_game_edges": 14,
+      "birthday": 3,
+      "first_global_event_index": 301
+    }
+  ],
+  "transitions": [
+    {
+      "from": "A",
+      "to": "B",
+      "operation": "remove 2->3",
+      "arc": [2, 3],
+      "class": "literal_game_crossing",
+      "headline": "The complete game changes.",
+      "detail": "Four literal nodes and four literal edges disappear. Exact value remains 0.",
+      "event_sha256": "534e947aab6fd047b01fc969b270fb7b121a97ae5300555568a94772e2eb289a"
+    },
+    {
+      "from": "B",
+      "to": "C",
+      "operation": "add 6->0",
+      "arc": [6, 0],
+      "class": "embodiment_only",
+      "headline": "The graph changes again.",
+      "detail": "The complete literal game remains byte-identical. Exact value remains 0.",
+      "event_sha256": "f88565b65dfd0b509b361ec79231290c41193cc2479d1b060414e6d6963d49a9"
+    }
+  ],
+  "atlas": {
+    "quotient_unique_representatives": 21697,
+    "targets": [
+      {"label": "0", "quotients": 7555, "literal_games": 6386},
+      {"label": "*", "quotients": 7132, "literal_games": 5352},
+      {"label": "1/2", "quotients": 7010, "literal_games": 4382}
+    ]
+  },
+  "scope": {
+    "domain": "order-7 Digraph Placement",
+    "claim_kind": "preregistered existential result plus descriptive secondary analysis",
+    "fiber_size": "not_estimated",
+    "aesthetic_ranking": "not_measured",
+    "unrestricted_chess": "not_asserted"
+  }
+}

@@ -8,56 +8,10 @@ import {
   useRef,
   useState,
 } from "react";
-import evidenceJson from "../public/evidence/crossing.json";
 import elkiesJson from "../public/evidence/elkies-study.json";
+import motifJson from "../public/evidence/fixed-value-motif.json";
 
 type Phase = 0 | 1 | 2 | 3;
-
-type Statistics = {
-  visited_position_nodes: number;
-  legal_edges: number;
-  duplicate_literal_options_removed: number;
-  horizon_leaves: number;
-  checkmate_leaves: number;
-  stalemate_leaves: number;
-  max_depth_reached: number;
-  literal_game_nodes: number;
-};
-
-type Realization = {
-  label: string;
-  name: string;
-  fen: string;
-  adapter_id: string;
-  move_state_key: string;
-  witness: { move: string; result: string; plies: number };
-  statistics: Statistics;
-  literal_game_sha256: string;
-  thermograph_identity_sha256: string;
-};
-
-type CrossingEvidence = {
-  schema_version: string;
-  evidence_sha256: string;
-  claim: string;
-  projection: {
-    domain_id: string;
-    rule: string;
-    max_plies: number;
-    node_budget: number;
-  };
-  comparison: {
-    exact_value: string;
-    canonical_game: string;
-    proof: string;
-    equal_to_value: boolean[];
-    equal_to_each_other: boolean;
-    transition_kinds: string[];
-    repertoire_id: string;
-    admitted_count: number;
-  };
-  realizations: Realization[];
-};
 
 type WitnessFrame = {
   capture: boolean;
@@ -113,6 +67,68 @@ type HistoricalEvidence = {
   }[];
 };
 
+type GraphPosition = {
+  label: "A" | "B" | "C";
+  name: string;
+  candidate_sha256: string;
+  quotient_sha256: string;
+  literal_game_sha256: string;
+  blue_vertices: number[];
+  arcs: [number, number][];
+  graph_arc_count: number;
+  literal_game_nodes: number;
+  literal_game_edges: number;
+  birthday: number;
+  first_global_event_index: number;
+};
+
+type MotifTransition = {
+  from: "A" | "B";
+  to: "B" | "C";
+  operation: string;
+  arc: [number, number];
+  class: "literal_game_crossing" | "embodiment_only";
+  headline: string;
+  detail: string;
+  event_sha256: string;
+};
+
+type FixedValueMotif = {
+  schema_version: string;
+  claim: string;
+  completion_sha256: string;
+  run: {
+    proposal_count: number;
+    linked_motif_count: number;
+    independent_replay: boolean;
+    negative_test_families_rejected: number;
+  };
+  comparison: {
+    exact_value: string;
+    relation: string;
+    statement: string;
+    literal_statement: string;
+    quotient_statement: string;
+  };
+  positions: GraphPosition[];
+  transitions: MotifTransition[];
+  atlas: {
+    quotient_unique_representatives: number;
+    targets: {
+      label: string;
+      quotients: number;
+      literal_games: number;
+    }[];
+  };
+  scope: {
+    domain: string;
+    claim_kind: string;
+    fiber_size: string;
+    aesthetic_ranking: string;
+    unrestricted_chess: string;
+  };
+};
+
 type Piece = {
   id: string;
   color: "white" | "black";
@@ -120,49 +136,20 @@ type Piece = {
   square: string;
 };
 
-type TreeNode = { x: number; y: number; parent?: number };
-
-const evidence = evidenceJson as CrossingEvidence;
 const elkies = elkiesJson as HistoricalEvidence;
+const motif = motifJson as FixedValueMotif;
 const files = "abcdefgh";
-const phaseLabels = ["Receive", "Distinguish", "Move", "Certify"] as const;
+const phaseLabels = ["Receive", "Cross literal game", "Change embodiment", "Certify"] as const;
 const witnessLandmarks = [0, 3, 7, 10, 12, 13] as const;
-
-const treeNineteen: TreeNode[] = [
-  { x: 50, y: 7 },
-  { x: 13, y: 29, parent: 0 },
-  { x: 36, y: 29, parent: 0 },
-  { x: 61, y: 29, parent: 0 },
-  { x: 86, y: 29, parent: 0 },
-  { x: 7, y: 54, parent: 1 },
-  { x: 18, y: 54, parent: 1 },
-  { x: 30, y: 54, parent: 2 },
-  { x: 42, y: 54, parent: 2 },
-  { x: 55, y: 54, parent: 3 },
-  { x: 67, y: 54, parent: 3 },
-  { x: 82, y: 54, parent: 4 },
-  { x: 93, y: 54, parent: 4 },
-  { x: 5, y: 82, parent: 5 },
-  { x: 20, y: 82, parent: 6 },
-  { x: 37, y: 82, parent: 8 },
-  { x: 59, y: 82, parent: 10 },
-  { x: 79, y: 82, parent: 11 },
-  { x: 95, y: 82, parent: 12 },
-];
-
-const treeEleven: TreeNode[] = [
-  { x: 50, y: 7 },
-  { x: 20, y: 32, parent: 0 },
-  { x: 50, y: 32, parent: 0 },
-  { x: 80, y: 32, parent: 0 },
-  { x: 12, y: 59, parent: 1 },
-  { x: 32, y: 59, parent: 1 },
-  { x: 62, y: 59, parent: 2 },
-  { x: 84, y: 59, parent: 3 },
-  { x: 27, y: 84, parent: 5 },
-  { x: 59, y: 84, parent: 6 },
-  { x: 87, y: 84, parent: 7 },
-];
+const graphCoordinates = [
+  { x: 50, y: 8 },
+  { x: 82, y: 25 },
+  { x: 88, y: 58 },
+  { x: 65, y: 88 },
+  { x: 35, y: 88 },
+  { x: 12, y: 58 },
+  { x: 18, y: 25 },
+] as const;
 
 const glyphs: Record<string, string> = {
   K: "♔",
@@ -205,12 +192,6 @@ function parseFen(fen: string): Piece[] {
   return pieces;
 }
 
-function moveSquares(move: string): { from: string; to: string } {
-  const match = move.match(/([a-h][1-8])[-x]([a-h][1-8])/);
-  if (!match) throw new Error(`Unsupported visual witness move: ${move}`);
-  return { from: match[1], to: match[2] };
-}
-
 function uciSquares(move: string | null): { from: string; to: string } | null {
   if (!move || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) return null;
   return { from: move.slice(0, 2), to: move.slice(2, 4) };
@@ -220,13 +201,187 @@ function squarePosition(square: string) {
   return { file: files.indexOf(square[0]), row: 8 - Number(square[1]) };
 }
 
-function displayMove(move: string) {
-  return move.replace("-", "–");
-}
-
 function shortHash(value: string) {
   const digest = value.includes(":") ? value.split(":").at(-1) : value;
   return digest?.slice(0, 10);
+}
+
+function GraphEdge({
+  from,
+  to,
+  emphasis,
+}: {
+  from: number;
+  to: number;
+  emphasis?: "removed" | "added";
+}) {
+  const start = graphCoordinates[from];
+  const end = graphCoordinates[to];
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const distance = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+  const reverseExists = motif.positions.some((position) =>
+    position.arcs.some(([candidateFrom, candidateTo]) =>
+      candidateFrom === to && candidateTo === from,
+    ),
+  );
+  const offset = reverseExists ? (from < to ? -1.5 : 1.5) : 0;
+
+  return (
+    <span
+      className={[
+        "graph-edge",
+        emphasis ? `graph-edge-${emphasis}` : "",
+      ].join(" ")}
+      style={{
+        "--edge-x": `${start.x}%`,
+        "--edge-y": `${start.y}%`,
+        "--edge-length": `${distance}%`,
+        "--edge-angle": `${angle}deg`,
+        "--edge-offset": `${offset}px`,
+      } as CSSProperties}
+      aria-hidden="true"
+    />
+  );
+}
+
+function DigraphBoard({
+  position,
+  phase,
+}: {
+  position: GraphPosition;
+  phase: Phase;
+}) {
+  const positionIndex = motif.positions.findIndex(
+    (candidate) => candidate.label === position.label,
+  );
+  const revealed = phase >= positionIndex || phase === 3;
+
+  return (
+    <div
+      className={[
+        "digraph-board",
+        revealed ? "revealed" : "veiled",
+        `digraph-${position.label.toLowerCase()}`,
+      ].join(" ")}
+      aria-label={`${position.name}: seven-vertex Digraph Placement graph with exact value zero`}
+    >
+      <div className="graph-orbit" aria-hidden="true" />
+      {position.arcs.map(([from, to]) => {
+        const removed =
+          position.label === "A" && from === 2 && to === 3 && phase >= 1;
+        const added =
+          position.label === "C" && from === 6 && to === 0 && phase >= 2;
+        return (
+          <GraphEdge
+            from={from}
+            to={to}
+            emphasis={removed ? "removed" : added ? "added" : undefined}
+            key={`${from}-${to}`}
+          />
+        );
+      })}
+      {graphCoordinates.map((coordinate, vertex) => {
+        const leftVertex = position.blue_vertices.includes(vertex);
+        return (
+          <span
+            className={`graph-node ${leftVertex ? "left-vertex" : "right-vertex"}`}
+            key={vertex}
+            style={{
+              "--node-x": `${coordinate.x}%`,
+              "--node-y": `${coordinate.y}%`,
+            } as CSSProperties}
+            aria-hidden="true"
+          >
+            {vertex}
+          </span>
+        );
+      })}
+      <div className="graph-value-mark" aria-live="polite">
+        <span>{phase === 3 ? "exact value" : "target"}</span>
+        <strong>{phase === 3 ? "0" : "?"}</strong>
+      </div>
+    </div>
+  );
+}
+
+function MotifCard({
+  position,
+  phase,
+  index,
+}: {
+  position: GraphPosition;
+  phase: Phase;
+  index: number;
+}) {
+  const status =
+    phase === 3
+      ? "value 0 certified"
+      : phase >= index
+        ? index === 0
+          ? "held-out position"
+          : index === 1
+            ? "literal crossing"
+            : "embodiment change"
+        : "awaiting edit";
+
+  return (
+    <article className={`motif-card motif-card-${position.label.toLowerCase()}`}>
+      <header className="card-heading">
+        <div>
+          <span className="roman">{position.label}</span>
+          <p>{position.name}</p>
+        </div>
+        <div className="status-readout" aria-live="polite">
+          <span className="status-light" />
+          {status}
+        </div>
+      </header>
+
+      <DigraphBoard position={position} phase={phase} />
+
+      <div className="motif-invariants">
+        <span>graph quotient</span>
+        <strong>{shortHash(position.quotient_sha256)}</strong>
+        <span>literal game</span>
+        <strong>{shortHash(position.literal_game_sha256)}</strong>
+      </div>
+
+      <dl className="measurements motif-measurements">
+        <div>
+          <dt>directed arcs</dt>
+          <dd>{position.graph_arc_count}</dd>
+        </div>
+        <div>
+          <dt>literal nodes</dt>
+          <dd>{position.literal_game_nodes}</dd>
+        </div>
+        <div>
+          <dt>literal edges</dt>
+          <dd>{position.literal_game_edges}</dd>
+        </div>
+      </dl>
+
+      <details className="certificate">
+        <summary>Admission record</summary>
+        <dl>
+          <div>
+            <dt>Candidate</dt>
+            <dd>{shortHash(position.candidate_sha256)}</dd>
+          </div>
+          <div>
+            <dt>Held-out event</dt>
+            <dd>{position.first_global_event_index}</dd>
+          </div>
+          <div>
+            <dt>Birthday</dt>
+            <dd>{position.birthday}</dd>
+          </div>
+        </dl>
+      </details>
+    </article>
+  );
 }
 
 function WitnessBoard({ frame }: { frame: WitnessFrame }) {
@@ -354,221 +509,6 @@ function historicalNote(ply: number) {
     title: elkies.witness.frames[ply].move_san ?? `Ply ${ply}`,
     body: "Each move is checked against the legal moves of the preceding position before the next frame is admitted.",
   };
-}
-
-function ChessBoard({
-  realization,
-  phase,
-}: {
-  realization: Realization;
-  phase: Phase;
-}) {
-  const pieces = useMemo(() => parseFen(realization.fen), [realization.fen]);
-  const move = moveSquares(realization.witness.move);
-  const from = squarePosition(move.from);
-  const to = squarePosition(move.to);
-  const movedPieces = pieces.map((piece) =>
-    phase >= 2 && piece.square === move.from ? { ...piece, square: move.to } : piece,
-  );
-  const capturedIds = new Set(
-    phase >= 2
-      ? pieces
-          .filter((piece) => piece.square === move.to && piece.square !== move.from)
-          .map((piece) => piece.id)
-      : [],
-  );
-  const dx = (to.file - from.file) * 12.5;
-  const dy = (to.row - from.row) * 12.5;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-  const vectorStyle = {
-    "--vector-x": `${(from.file + 0.5) * 12.5}%`,
-    "--vector-y": `${(from.row + 0.5) * 12.5}%`,
-    "--vector-length": `${distance}%`,
-    "--vector-angle": `${angle}deg`,
-  } as CSSProperties;
-
-  return (
-    <div
-      className={`chessboard phase-${phase}`}
-      aria-label={`${realization.name}: ${realization.fen}`}
-    >
-      <div className="squares" aria-hidden="true">
-        {Array.from({ length: 64 }, (_, index) => {
-          const row = Math.floor(index / 8);
-          const file = index % 8;
-          const square = `${files[file]}${8 - row}`;
-          return (
-            <div
-              className={[
-                "square",
-                (row + file) % 2 === 0 ? "light" : "dark",
-                square === move.from ? "move-from" : "",
-                square === move.to ? "move-to" : "",
-              ].join(" ")}
-              key={square}
-            >
-              {file === 0 && <span className="rank-label">{8 - row}</span>}
-              {row === 7 && <span className="file-label">{files[file]}</span>}
-            </div>
-          );
-        })}
-      </div>
-      <div className="trajectory" style={vectorStyle} aria-hidden="true" />
-      <div
-        className="arrival-ring"
-        style={{ "--file": to.file, "--row": to.row } as CSSProperties}
-        aria-hidden="true"
-      />
-      {movedPieces.map((piece) => {
-        const position = squarePosition(piece.square);
-        return (
-          <span
-            className={`piece ${piece.color} ${
-              capturedIds.has(piece.id) ? "captured" : ""
-            }`}
-            key={piece.id}
-            style={{
-              "--file": position.file,
-              "--row": position.row,
-            } as CSSProperties}
-            aria-hidden="true"
-          >
-            {glyphs[piece.kind]}
-          </span>
-        );
-      })}
-      <div className="board-vignette" aria-hidden="true" />
-      {phase === 3 && (
-        <div className="mate-mark" aria-live="polite">
-          <span>checkmate</span>
-          <strong>#</strong>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TreeConstellation({
-  nodes,
-  phase,
-  label,
-}: {
-  nodes: TreeNode[];
-  phase: Phase;
-  label: string;
-}) {
-  return (
-    <div
-      className={`tree-constellation phase-${phase}`}
-      aria-label={`${label}, ${nodes.length} literal game nodes`}
-    >
-      {nodes.map((node, index) => {
-        if (node.parent === undefined) return null;
-        const parent = nodes[node.parent];
-        const dx = node.x - parent.x;
-        const dy = node.y - parent.y;
-        const length = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-        return (
-          <span
-            className="tree-edge"
-            key={`edge-${index}`}
-            style={{
-              "--x": `${parent.x}%`,
-              "--y": `${parent.y}%`,
-              "--length": `${length}%`,
-              "--angle": `${angle}deg`,
-              "--delay": `${index * 38}ms`,
-            } as CSSProperties}
-          />
-        );
-      })}
-      {nodes.map((node, index) => (
-        <span
-          className={`tree-node ${index === 0 ? "root" : ""}`}
-          key={`node-${index}`}
-          style={{
-            "--x": `${node.x}%`,
-            "--y": `${node.y}%`,
-            "--delay": `${index * 42}ms`,
-          } as CSSProperties}
-        />
-      ))}
-    </div>
-  );
-}
-
-function RealizationCard({
-  realization,
-  index,
-  phase,
-}: {
-  realization: Realization;
-  index: number;
-  phase: Phase;
-}) {
-  return (
-    <article className={`realization-card realization-${index + 1}`}>
-      <header className="card-heading">
-        <div>
-          <span className="roman">{realization.label}</span>
-          <p>{realization.name}</p>
-        </div>
-        <div className="status-readout" aria-live="polite">
-          <span className="status-light" />
-          {phase === 0 && "position received"}
-          {phase === 1 && "witness selected"}
-          {phase === 2 && displayMove(realization.witness.move)}
-          {phase === 3 && "mate certified"}
-        </div>
-      </header>
-
-      <ChessBoard realization={realization} phase={phase} />
-
-      <div className="notation-row">
-        <span>chosen witness</span>
-        <strong>
-          {displayMove(realization.witness.move)}
-          <sup>#</sup>
-        </strong>
-        <span>one ply</span>
-      </div>
-
-      <dl className="measurements">
-        <div>
-          <dt>literal nodes</dt>
-          <dd>{realization.statistics.literal_game_nodes}</dd>
-        </div>
-        <div>
-          <dt>legal edges searched</dt>
-          <dd>{realization.statistics.legal_edges.toLocaleString("en-US")}</dd>
-        </div>
-        <div>
-          <dt>positions visited</dt>
-          <dd>{realization.statistics.visited_position_nodes.toLocaleString("en-US")}</dd>
-        </div>
-      </dl>
-
-      <details className="certificate">
-        <summary>Certificate</summary>
-        <dl>
-          <div>
-            <dt>Adapter</dt>
-            <dd>{shortHash(realization.adapter_id)}</dd>
-          </div>
-          <div>
-            <dt>Literal game</dt>
-            <dd>{shortHash(realization.literal_game_sha256)}</dd>
-          </div>
-          <div>
-            <dt>Structure</dt>
-            <dd>{shortHash(realization.thermograph_identity_sha256)}</dd>
-          </div>
-        </dl>
-      </details>
-    </article>
-  );
 }
 
 function HistoricalPrelude() {
@@ -826,22 +766,22 @@ export function PartizanExperience() {
 
       <section className="hero" id="top">
         <div className="hero-kicker">
-          <span>Partizan · forms under constraint</span>
-          <span>Historical witness + checked crossing</span>
+          <span>Partizan · search within correctness</span>
+          <span>73,728 proposals · independently replayed</span>
         </div>
         <h1>
           <span>One value.</span>
-          <em>Two encounters.</em>
+          <em>Three forms.</em>
         </h1>
-        <p className="hero-claim">{evidence.claim}</p>
+        <p className="hero-claim">{motif.claim}</p>
         <div className="hero-controls">
           <button className="begin-button" type="button" onClick={begin}>
             <span className={playing ? "pause-mark" : "play-mark"} aria-hidden="true" />
             {playing
-              ? "Proof in motion"
+              ? "Crossing the fiber"
               : phase === 3
-                ? "Witness again"
-                : "Begin the proof"}
+                ? "Traverse again"
+                : "Enter the fiber"}
           </button>
           <p>
             Space to replay
@@ -855,17 +795,17 @@ export function PartizanExperience() {
 
       <div className="crossing-intro">
         <div>
-          <span>Partizan crossing 01</span>
-          <p>KQK · exact bounded value</p>
+          <span>Partizan motif 01</span>
+          <p>Order-7 Digraph Placement · exact value 0</p>
         </div>
         <h2>
-          Here the question becomes exact:
-          <em> what remains when correctness is fixed?</em>
+          Correctness is the entrance.
+          <em> The search continues inside.</em>
         </h2>
         <p>
-          Partizan generates two literal chess games, certifies each against
-          the same target value, and preserves the differences that equality
-          leaves behind.
+          Two single-arc edits cross different layers of representation. The
+          first changes the complete game. The second changes only its
+          embodiment. Exact value remains zero throughout.
         </p>
       </div>
 
@@ -885,47 +825,96 @@ export function PartizanExperience() {
         <div className="phase-progress" style={{ width: `${(phase / 3) * 100}%` }} />
       </nav>
 
-      <section className="crossing" aria-label="Certified chess realizations">
-        {evidence.realizations.map((realization, index) => (
-          <RealizationCard
-            realization={realization}
-            index={index}
-            phase={phase}
-            key={realization.adapter_id}
-          />
-        ))}
+      <section className="motif-crossing" aria-label="Certified fixed-value motif">
+        <div className="motif-route" aria-label="Two single-arc transitions">
+          <span className="route-position">A</span>
+          {motif.transitions.map((transition, index) => (
+            <div
+              className={[
+                "route-transition",
+                phase >= index + 1 ? "active" : "",
+                `route-${transition.class.replaceAll("_", "-")}`,
+              ].join(" ")}
+              key={transition.event_sha256}
+            >
+              <i aria-hidden="true" />
+              <strong>{transition.operation.replace("->", "→")}</strong>
+              <span>{transition.headline}</span>
+            </div>
+          ))}
+          <span className="route-position route-position-b">B</span>
+          <span className="route-position route-position-c">C</span>
+        </div>
+
+        <div className="motif-grid">
+          {motif.positions.map((position, index) => (
+            <MotifCard
+              position={position}
+              index={index}
+              phase={phase}
+              key={position.candidate_sha256}
+            />
+          ))}
+        </div>
       </section>
 
-      <section className="identity-field" aria-label="Literal game comparison">
-        <div className="tree-panel">
-          <header>
-            <span>literal game I</span>
-            <strong>19 nodes</strong>
-          </header>
-          <TreeConstellation nodes={treeNineteen} phase={phase} label="Literal game I" />
-          <p>97062b248c</p>
+      <section className="residual-field" aria-label="Two layers of residual structure">
+        <div className={`residual-panel ${phase >= 1 ? "active" : ""}`}>
+          <span>A → B · literal-game crossing</span>
+          <h3>{motif.transitions[0].headline}</h3>
+          <p>{motif.transitions[0].detail}</p>
+          <div className="residual-equation">
+            <strong>ℓ(A) ≠ ℓ(B)</strong>
+            <small>19/18 → 15/14 nodes/edges</small>
+          </div>
         </div>
 
-        <div className="equality-axis">
+        <div className="equality-axis motif-equality-axis">
           <span className="axis-rule" aria-hidden="true" />
-          <p>Conway order</p>
+          <p>Conway comparison</p>
           <div className="value-seal" aria-live="polite">
             <span>certified value</span>
-            <strong>{phase === 3 ? "1 = 1" : "?"}</strong>
-            <small>{evidence.comparison.canonical_game}</small>
+            <strong>{phase === 3 ? "0 = 0 = 0" : "?"}</strong>
+            <small>{motif.comparison.statement}</small>
           </div>
-          <p>{phase === 3 ? "equivalent" : "comparison pending"}</p>
+          <p>{phase === 3 ? "identical in value" : "comparison pending"}</p>
           <span className="axis-rule" aria-hidden="true" />
         </div>
 
-        <div className="tree-panel">
-          <header>
-            <span>literal game II</span>
-            <strong>11 nodes</strong>
-          </header>
-          <TreeConstellation nodes={treeEleven} phase={phase} label="Literal game II" />
-          <p>81c4acda47</p>
+        <div className={`residual-panel ${phase >= 2 ? "active" : ""}`}>
+          <span>B → C · embodiment only</span>
+          <h3>{motif.transitions[1].headline}</h3>
+          <p>{motif.transitions[1].detail}</p>
+          <div className="residual-equation">
+            <strong>ℓ(B) = ℓ(C)</strong>
+            <small>byte-identical complete game</small>
+          </div>
         </div>
+      </section>
+
+      <section className="atlas-field" aria-labelledby="atlas-title">
+        <div>
+          <span>Frozen structural atlas</span>
+          <h2 id="atlas-title">
+            One motif inside
+            <em> 21,697 certified forms.</em>
+          </h2>
+          <p>
+            The held-out study found both transition classes for every target.
+            These are observed unions from dependent sampled trajectories.
+          </p>
+        </div>
+        <dl>
+          {motif.atlas.targets.map((target) => (
+            <div key={target.label}>
+              <dt>value {target.label}</dt>
+              <dd>{target.quotients.toLocaleString("en-US")}</dd>
+              <span>
+                graph quotients · {target.literal_games.toLocaleString("en-US")} literal games
+              </span>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <section className="conclusion" aria-live="polite">
@@ -933,27 +922,27 @@ export function PartizanExperience() {
         <h2>
           {phase === 3 ? (
             <>
-              The distance closes.
+              The value is settled.
               <br />
-              <em>The difference remains.</em>
+              <em>The encounter remains open.</em>
             </>
           ) : (
             <>
-              Two forms wait
+              Three forms wait
               <br />
-              <em>for judgment.</em>
+              <em>inside one value.</em>
             </>
           )}
         </h2>
         <div className="conclusion-metrics">
           <span>
-            <b>{evidence.comparison.admitted_count}</b> realizations
+            <b>3</b> certified forms
           </span>
           <span>
-            <b>{evidence.projection.max_plies}</b> ply horizon
+            <b>2</b> single-arc edits
           </span>
           <span>
-            <b>{evidence.projection.node_budget.toLocaleString("en-US")}</b> node budget
+            <b>1</b> exact value
           </span>
         </div>
       </section>
@@ -965,16 +954,16 @@ export function PartizanExperience() {
         </div>
         <dl>
           <div>
-            <dt>Evidence</dt>
-            <dd>{evidence.evidence_sha256.slice(0, 12)}</dd>
+            <dt>Completion</dt>
+            <dd>{motif.completion_sha256.slice(0, 12)}</dd>
           </div>
           <div>
-            <dt>Proof</dt>
-            <dd>recursive order</dd>
+            <dt>Replay</dt>
+            <dd>{motif.run.proposal_count.toLocaleString("en-US")} events</dd>
           </div>
           <div>
             <dt>Relation</dt>
-            <dd>literal crossing</dd>
+            <dd>fixed-value motif</dd>
           </div>
         </dl>
         <a

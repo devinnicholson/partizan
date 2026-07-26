@@ -126,7 +126,10 @@ button {
 .crossing-intro,
 .phase-line,
 .crossing,
+.motif-crossing,
 .identity-field,
+.residual-field,
+.atlas-field,
 .conclusion,
 .provenance {
   width: min(1540px, calc(100% - 64px));
@@ -805,6 +808,479 @@ button {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   border-right: 1px solid var(--line);
   border-left: 1px solid var(--line);
+}
+
+.motif-crossing {
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(124, 174, 164, 0.045), transparent 38%),
+    rgba(255, 255, 255, 0.006);
+}
+
+.motif-route {
+  display: grid;
+  min-height: 132px;
+  grid-template-columns: 0.34fr minmax(150px, 1fr) 0.34fr minmax(150px, 1fr) 0.34fr;
+  align-items: center;
+  gap: 18px;
+  padding: 24px clamp(25px, 4vw, 62px);
+  border-bottom: 1px solid var(--line);
+}
+
+.route-position {
+  display: grid;
+  width: 42px;
+  aspect-ratio: 1;
+  place-items: center;
+  justify-self: center;
+  border: 1px solid rgba(199, 166, 107, 0.35);
+  border-radius: 50%;
+  color: var(--gold);
+  font-family: var(--serif);
+  font-size: 1.25rem;
+}
+
+.route-position:first-child {
+  grid-column: 1;
+}
+
+.route-position-b {
+  grid-column: 3;
+}
+
+.route-position-c {
+  grid-column: 5;
+}
+
+.route-transition {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0.25;
+  text-align: center;
+  transition: opacity 650ms ease, transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.route-literal-game-crossing {
+  grid-column: 2;
+}
+
+.route-embodiment-only {
+  grid-column: 4;
+}
+
+.route-transition.active {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.route-transition i {
+  position: absolute;
+  top: 13px;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold) 12%, var(--gold) 88%, transparent);
+}
+
+.route-transition i::after {
+  position: absolute;
+  top: -3px;
+  right: 5%;
+  width: 7px;
+  height: 7px;
+  border-top: 1px solid var(--gold);
+  border-right: 1px solid var(--gold);
+  content: "";
+  transform: rotate(45deg);
+}
+
+.route-embodiment-only i {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--verdigris) 12%,
+    var(--verdigris) 88%,
+    transparent
+  );
+}
+
+.route-embodiment-only i::after {
+  border-color: var(--verdigris);
+}
+
+.route-transition strong {
+  position: relative;
+  z-index: 1;
+  padding: 5px 10px;
+  color: var(--bone);
+  background: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  font-weight: 400;
+}
+
+.route-transition span {
+  color: #676b65;
+  font-family: var(--mono);
+  font-size: 0.47rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.motif-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.motif-card {
+  min-width: 0;
+  padding: clamp(25px, 3vw, 48px);
+}
+
+.motif-card + .motif-card {
+  border-left: 1px solid var(--line);
+}
+
+.digraph-board {
+  position: relative;
+  width: min(100%, 450px);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  overflow: hidden;
+  border: 1px solid rgba(233, 227, 216, 0.12);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(233, 227, 216, 0.035), transparent 62%),
+    #0a0c0a;
+  box-shadow:
+    0 40px 90px rgba(0, 0, 0, 0.38),
+    inset 0 0 70px rgba(0, 0, 0, 0.48);
+  transition: opacity 700ms ease, filter 700ms ease, transform 800ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.digraph-board.veiled {
+  filter: saturate(0.25);
+  opacity: 0.22;
+  transform: scale(0.96);
+}
+
+.digraph-board.revealed {
+  filter: saturate(1);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.graph-orbit {
+  position: absolute;
+  inset: 12%;
+  border: 1px dashed rgba(233, 227, 216, 0.055);
+  border-radius: 50%;
+}
+
+.graph-edge {
+  position: absolute;
+  z-index: 1;
+  top: var(--edge-y);
+  left: var(--edge-x);
+  width: var(--edge-length);
+  height: 1px;
+  opacity: 0.36;
+  transform: rotate(var(--edge-angle)) translateY(var(--edge-offset));
+  transform-origin: left center;
+  background: rgba(233, 227, 216, 0.42);
+  transition: opacity 600ms ease, height 600ms ease, background 600ms ease, box-shadow 600ms ease;
+}
+
+.graph-edge::after {
+  position: absolute;
+  top: -2.5px;
+  right: 11%;
+  width: 0;
+  height: 0;
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  border-left: 5px solid rgba(233, 227, 216, 0.5);
+  content: "";
+}
+
+.graph-edge-removed,
+.graph-edge-added {
+  z-index: 2;
+  height: 2px;
+  opacity: 1;
+}
+
+.graph-edge-removed {
+  background: var(--oxide);
+  box-shadow: 0 0 15px rgba(183, 103, 79, 0.55);
+}
+
+.graph-edge-removed::after {
+  border-left-color: var(--oxide);
+}
+
+.graph-edge-added {
+  background: var(--verdigris);
+  box-shadow: 0 0 15px rgba(124, 174, 164, 0.55);
+}
+
+.graph-edge-added::after {
+  border-left-color: var(--verdigris);
+}
+
+.graph-node {
+  position: absolute;
+  z-index: 5;
+  top: var(--node-y);
+  left: var(--node-x);
+  display: grid;
+  width: clamp(30px, 4.2vw, 48px);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid;
+  transform: translate(-50%, -50%);
+  font-family: var(--mono);
+  font-size: clamp(0.62rem, 1vw, 0.82rem);
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.38);
+}
+
+.left-vertex {
+  border-color: #4f8ba8;
+  border-radius: 50%;
+  color: #c8e1ed;
+  background: #112a35;
+}
+
+.right-vertex {
+  border-color: #b7574c;
+  border-radius: 22%;
+  color: #f1d0ca;
+  background: #351817;
+}
+
+.graph-value-mark {
+  position: absolute;
+  z-index: 7;
+  right: 7%;
+  bottom: 7%;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid rgba(199, 166, 107, 0.25);
+  background: rgba(7, 8, 7, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+.graph-value-mark span {
+  color: #666a63;
+  font-family: var(--mono);
+  font-size: 0.42rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.graph-value-mark strong {
+  color: var(--gold);
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+}
+
+.motif-invariants {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px 20px;
+  margin-top: 24px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.motif-invariants span {
+  color: #5d605b;
+  font-family: var(--mono);
+  font-size: 0.47rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.motif-invariants strong {
+  color: #898d85;
+  font-family: var(--mono);
+  font-size: 0.54rem;
+  font-weight: 400;
+}
+
+.motif-measurements {
+  padding-top: 19px;
+  padding-bottom: 19px;
+}
+
+.residual-field {
+  display: grid;
+  min-height: 520px;
+  grid-template-columns: minmax(0, 1fr) 230px minmax(0, 1fr);
+  border: 1px solid var(--line);
+  border-top: 0;
+}
+
+.residual-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(38px, 5vw, 80px);
+  opacity: 0.24;
+  transition: opacity 700ms ease, background 700ms ease;
+}
+
+.residual-panel.active {
+  opacity: 1;
+  background: radial-gradient(circle at 50% 50%, rgba(199, 166, 107, 0.035), transparent 68%);
+}
+
+.residual-panel > span,
+.atlas-field > div > span {
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.residual-panel h3 {
+  margin: 18px 0 20px;
+  font-family: var(--serif);
+  font-size: clamp(2.1rem, 3.4vw, 4rem);
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+}
+
+.residual-panel > p {
+  max-width: 480px;
+  margin: 0;
+  color: #858981;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.residual-equation {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 46px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.residual-equation strong {
+  font-family: var(--serif);
+  font-size: 1.45rem;
+  font-weight: 400;
+}
+
+.residual-equation small {
+  color: #5c605a;
+  font-family: var(--mono);
+  font-size: 0.47rem;
+  letter-spacing: 0.07em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.motif-equality-axis .value-seal {
+  width: 160px;
+}
+
+.motif-equality-axis .value-seal strong {
+  font-size: 1.65rem;
+}
+
+.motif-equality-axis .value-seal small {
+  max-width: 125px;
+  margin-top: 6px;
+  font-size: 0.43rem;
+  text-align: center;
+}
+
+.atlas-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(470px, 0.85fr);
+  gap: clamp(45px, 7vw, 115px);
+  align-items: end;
+  padding: clamp(100px, 13vw, 190px) clamp(0px, 2vw, 32px);
+  border-bottom: 1px solid var(--line);
+}
+
+.atlas-field h2 {
+  max-width: 780px;
+  margin: 20px 0 30px;
+  font-family: var(--serif);
+  font-size: clamp(3rem, 5.3vw, 6rem);
+  font-weight: 400;
+  letter-spacing: -0.052em;
+  line-height: 0.92;
+}
+
+.atlas-field h2 em {
+  display: block;
+  color: rgba(233, 227, 216, 0.45);
+  font-weight: 400;
+}
+
+.atlas-field > div > p {
+  max-width: 620px;
+  margin: 0;
+  color: #7a7e77;
+  font-family: var(--serif);
+  font-size: 1.08rem;
+  line-height: 1.55;
+}
+
+.atlas-field dl {
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+
+.atlas-field dl div {
+  display: grid;
+  grid-template-columns: 0.8fr 0.6fr 1.6fr;
+  align-items: baseline;
+  gap: 18px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.atlas-field dt {
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.atlas-field dd {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.atlas-field dl span {
+  color: #5d615b;
+  font-family: var(--mono);
+  font-size: 0.45rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .realization-card {
@@ -1547,7 +2023,10 @@ button {
   .crossing-intro,
   .phase-line,
   .crossing,
+  .motif-crossing,
   .identity-field,
+  .residual-field,
+  .atlas-field,
   .conclusion,
   .provenance {
     width: min(100% - 36px, 760px);
@@ -1610,13 +2089,21 @@ button {
   }
 
   .crossing,
-  .identity-field {
+  .identity-field,
+  .motif-grid,
+  .residual-field,
+  .atlas-field {
     grid-template-columns: 1fr;
   }
 
-  .realization-card + .realization-card {
+  .realization-card + .realization-card,
+  .motif-card + .motif-card {
     border-top: 1px solid var(--line);
     border-left: 0;
+  }
+
+  .atlas-field {
+    align-items: start;
   }
 
   .equality-axis {
@@ -1646,7 +2133,10 @@ button {
   .crossing-intro,
   .phase-line,
   .crossing,
+  .motif-crossing,
   .identity-field,
+  .residual-field,
+  .atlas-field,
   .conclusion,
   .provenance {
     width: calc(100% - 24px);
@@ -1781,6 +2271,89 @@ button {
   .phase-line button span {
     display: block;
     margin: 0 0 4px;
+  }
+
+  .motif-route {
+    grid-template-columns: 30px 1fr 30px 1fr 30px;
+    gap: 5px;
+    padding: 17px 7px;
+  }
+
+  .route-position {
+    width: 28px;
+    font-size: 0.72rem;
+  }
+
+  .route-transition strong {
+    font-size: 0.46rem;
+  }
+
+  .route-transition span {
+    display: none;
+  }
+
+  .motif-card {
+    padding: 24px 12px 32px;
+  }
+
+  .digraph-board {
+    width: min(100%, 430px);
+  }
+
+  .graph-node {
+    width: 24px;
+    font-size: 0.47rem;
+  }
+
+  .graph-value-mark {
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .motif-invariants {
+    grid-template-columns: 1fr auto;
+    gap: 8px 12px;
+  }
+
+  .residual-panel {
+    min-height: 420px;
+    padding: 42px 22px;
+  }
+
+  .residual-panel h3 {
+    font-size: clamp(2.25rem, 11vw, 3.4rem);
+  }
+
+  .residual-equation {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .residual-equation small {
+    text-align: left;
+  }
+
+  .motif-equality-axis {
+    min-height: 340px;
+  }
+
+  .atlas-field {
+    gap: 54px;
+    padding: 112px 6px;
+  }
+
+  .atlas-field h2 {
+    font-size: clamp(3rem, 13vw, 4.6rem);
+  }
+
+  .atlas-field dl div {
+    grid-template-columns: 0.72fr 0.62fr 1.66fr;
+    gap: 10px;
+  }
+
+  .atlas-field dl span {
+    font-size: 0.4rem;
   }
 
   .realization-card {

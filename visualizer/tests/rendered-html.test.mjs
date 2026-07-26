@@ -31,36 +31,43 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Partizan — One Value, Two Encounters<\/title>/i);
+  assert.match(html, /<title>Partizan — One Value, Three Forms<\/title>/i);
   assert.match(html, /One value\./);
-  assert.match(html, /Two encounters\./);
+  assert.match(html, /Three forms\./);
   assert.match(html, /A machine found the kernel\./);
   assert.match(html, /Elkies composed the encounter\./);
   assert.match(html, /Play 13 plies/);
   assert.match(html, /Qfg8/);
   assert.match(html, /legal replay machine-verified/);
   assert.match(html, /CGT value unasserted here/);
-  assert.match(html, /what remains when correctness is fixed\?/);
-  assert.match(html, /og-v2\.png/);
-  assert.match(html, /The distant queen/);
-  assert.match(html, /The near queen/);
-  assert.match(html, /19 nodes/);
-  assert.match(html, /11 nodes/);
-  assert.match(html, /Begin the proof/);
+  assert.match(html, /Correctness is the entrance\./);
+  assert.match(html, /The search continues inside\./);
+  assert.match(html, /og\.png/);
+  assert.match(html, /remove 2→3/i);
+  assert.match(html, /add 6→0/i);
+  assert.match(html, /literal-game crossing/);
+  assert.match(html, /embodiment only/);
+  assert.match(html, /21,697 certified forms/);
+  assert.match(html, /Enter the fiber/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
 test("ships checked evidence and removes the starter preview", async () => {
-  const [evidence, historicalEvidence, packageJson] = await Promise.all([
+  const [evidence, historicalEvidence, motifEvidence, packageJson] = await Promise.all([
     readFile(new URL("../public/evidence/crossing.json", import.meta.url), "utf8"),
     readFile(
       new URL("../public/evidence/elkies-study.json", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../public/evidence/fixed-value-motif.json", import.meta.url),
       "utf8",
     ),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
   const parsed = JSON.parse(evidence);
   const historical = JSON.parse(historicalEvidence);
+  const motif = JSON.parse(motifEvidence);
 
   assert.equal(parsed.schema_version, "partizan.visual_crossing.v0.1");
   assert.deepEqual(
@@ -85,7 +92,18 @@ test("ships checked evidence and removes the starter preview", async () => {
     historical.witness.frames.at(-1).fen,
     "6QK/6Q1/2q5/8/8/8/8/1q5k b - - 3 7",
   );
+  assert.equal(motif.schema_version, "partizan.fixed_value_linked_motif.v1");
+  assert.equal(motif.comparison.exact_value, "0");
+  assert.notEqual(
+    motif.positions[0].literal_game_sha256,
+    motif.positions[1].literal_game_sha256,
+  );
+  assert.equal(
+    motif.positions[1].literal_game_sha256,
+    motif.positions[2].literal_game_sha256,
+  );
+  assert.equal(motif.atlas.quotient_unique_representatives, 21697);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
-  await access(new URL("../public/og-v2.png", import.meta.url));
+  await access(new URL("../public/og.png", import.meta.url));
   await assert.rejects(access(new URL("../app/_sites-preview", root)));
 });
