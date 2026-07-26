@@ -40,27 +40,23 @@ Combinatorial game theory identifies games through their behavior under
 addition and comparison. Syntax and appearance disappear under this powerful
 abstraction, along with many of the differences on which composition depends.
 
-For a representation \(x\), Partizan distinguishes three levels:
+For a representation `x`, Partizan distinguishes three levels:
 
-\[
-x \longmapsto q(x) \longmapsto \ell(x) \longmapsto v(x),
-\]
+`x → q(x) → ℓ(x) → v(x)`
 
 where:
 
-- \(q(x)\) is the embodied object after declared symmetries;
-- \(\ell(x)\) is its complete literal game, including its recursively derived
+- `q(x)` is the embodied object after declared symmetries;
+- `ℓ(x)` is its complete literal game, including its recursively derived
   options; and
-- \(v(x)\) is its exact combinatorial-game value.
+- `v(x)` is its exact combinatorial-game value.
 
-For a target game \(g\), the representations
+For a target game `g`, the representations
 
-\[
-X_g = \{x : v(x)=g\}
-\]
+`X_g = {x : v(x) = g}`
 
 form a fixed-value fiber. Partizan asks what a generator can discover by
-continuing to search *inside* \(X_g\) after the first member is certified.
+continuing to search *inside* `X_g` after the first member is certified.
 
 Two transitions are especially important:
 
