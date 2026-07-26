@@ -10,6 +10,7 @@ import {
 } from "react";
 import elkiesJson from "../public/evidence/elkies-study.json";
 import motifJson from "../public/evidence/fixed-value-motif.json";
+import repertoireJson from "../public/evidence/repertoire-browser.json";
 
 type Phase = 0 | 1 | 2 | 3;
 
@@ -129,6 +130,82 @@ type FixedValueMotif = {
   };
 };
 
+type TargetLabel = "0" | "*" | "1/2";
+
+type PolicyResult = {
+  policy_id: string;
+  policy_label: string;
+  policy_family: "classical_search" | "learned_ranker";
+  target: TargetLabel;
+  formal_target: string;
+  budget: {
+    unit: "raw_proposal" | "exact_verifier_call";
+    count: number;
+  };
+  status: "verified" | "awaiting_certified_result" | "failed_integrity_gate";
+  completion_sha256: string;
+  independent_replay: boolean;
+  quotient_unique_representatives: number;
+  literal_game_digests: number;
+  representative_view: "linked_motif" | "aggregate_only";
+  representative_labels: ("A" | "B" | "C")[];
+};
+
+type RepresentativeProvenance = {
+  label: "A" | "B" | "C";
+  global_event_index: number;
+  event_sha256: string;
+  candidate_sha256: string;
+  equality_certificate_sha256: string;
+  equality_sidecar_sha256: string;
+  derivation_sidecar_sha256: string;
+  artifact_sidecar_sha256: string;
+};
+
+type RepertoireBrowserEvidence = {
+  schema_version: string;
+  study: {
+    domain: string;
+    status: "GO";
+    evidence_eligible: boolean;
+    policy: {
+      policy_id: string;
+      label: string;
+      family: "classical_search";
+      status: "verified";
+      streams_per_target: number;
+      proposals_per_stream: number;
+    };
+    result_contract: {
+      schema_version: string;
+      required_fields: string[];
+      allowed_statuses: string[];
+    };
+  };
+  projection: {
+    symbol: "q(x)" | "ℓ(x)" | "v(x)";
+    label: string;
+    definition: string;
+  }[];
+  results: PolicyResult[];
+  representative_provenance: RepresentativeProvenance[];
+  bindings: {
+    completion_sha256: string;
+    run_complete_file_sha256: string;
+    manifest_file_sha256: string;
+    events_file_sha256: string;
+    summary_file_sha256: string;
+    independent_verification_file_sha256: string;
+    negative_tests_file_sha256: string;
+  };
+  claim_boundary: {
+    fiber_size: "not_estimated";
+    aesthetic_ranking: "not_measured";
+    human_preference: "not_measured";
+    policy_optimality: "not_tested";
+  };
+};
+
 type Piece = {
   id: string;
   color: "white" | "black";
@@ -138,6 +215,7 @@ type Piece = {
 
 const elkies = elkiesJson as HistoricalEvidence;
 const motif = motifJson as FixedValueMotif;
+const repertoire = repertoireJson as RepertoireBrowserEvidence;
 const files = "abcdefgh";
 const phaseLabels = ["Receive", "Cross literal game", "Change embodiment", "Certify"] as const;
 const witnessLandmarks = [0, 3, 7, 10, 12, 13] as const;
@@ -325,6 +403,9 @@ function MotifCard({
             ? "literal crossing"
             : "embodiment change"
         : "awaiting edit";
+  const provenance = repertoire.representative_provenance.find(
+    (record) => record.label === position.label,
+  );
 
   return (
     <article className={`motif-card motif-card-${position.label.toLowerCase()}`}>
@@ -365,10 +446,17 @@ function MotifCard({
 
       <details className="certificate">
         <summary>Admission record</summary>
-        <dl>
+        <dl className="admission-record">
           <div>
             <dt>Candidate</dt>
-            <dd>{shortHash(position.candidate_sha256)}</dd>
+            <dd>
+              <code
+                title={position.candidate_sha256}
+                aria-label={position.candidate_sha256}
+              >
+                {shortHash(position.candidate_sha256)}
+              </code>
+            </dd>
           </div>
           <div>
             <dt>Held-out event</dt>
@@ -378,9 +466,267 @@ function MotifCard({
             <dt>Birthday</dt>
             <dd>{position.birthday}</dd>
           </div>
+          {provenance && (
+            <>
+              <div>
+                <dt>Event digest</dt>
+                <dd>
+                  <code
+                    title={provenance.event_sha256}
+                    aria-label={provenance.event_sha256}
+                  >
+                    {shortHash(provenance.event_sha256)}
+                  </code>
+                </dd>
+              </div>
+              <div>
+                <dt>Equality certificate</dt>
+                <dd>
+                  <code
+                    title={provenance.equality_certificate_sha256}
+                    aria-label={provenance.equality_certificate_sha256}
+                  >
+                    {shortHash(provenance.equality_certificate_sha256)}
+                  </code>
+                </dd>
+              </div>
+              <div>
+                <dt>Equality sidecar</dt>
+                <dd>
+                  <code
+                    title={provenance.equality_sidecar_sha256}
+                    aria-label={provenance.equality_sidecar_sha256}
+                  >
+                    {shortHash(provenance.equality_sidecar_sha256)}
+                  </code>
+                </dd>
+              </div>
+              <div>
+                <dt>Derivation sidecar</dt>
+                <dd>
+                  <code
+                    title={provenance.derivation_sidecar_sha256}
+                    aria-label={provenance.derivation_sidecar_sha256}
+                  >
+                    {shortHash(provenance.derivation_sidecar_sha256)}
+                  </code>
+                </dd>
+              </div>
+              <div>
+                <dt>Artifact sidecar</dt>
+                <dd>
+                  <code
+                    title={provenance.artifact_sidecar_sha256}
+                    aria-label={provenance.artifact_sidecar_sha256}
+                  >
+                    {shortHash(provenance.artifact_sidecar_sha256)}
+                  </code>
+                </dd>
+              </div>
+            </>
+          )}
         </dl>
       </details>
     </article>
+  );
+}
+
+function RepertoireBrowser() {
+  const [selectedTarget, setSelectedTarget] = useState<TargetLabel>("0");
+  const result =
+    repertoire.results.find((item) => item.target === selectedTarget) ??
+    repertoire.results[0];
+  const hasLinkedMotif = result.representative_view === "linked_motif";
+  const bindingRows = [
+    ["run completion", repertoire.bindings.run_complete_file_sha256],
+    ["study manifest", repertoire.bindings.manifest_file_sha256],
+    ["event ledger", repertoire.bindings.events_file_sha256],
+    ["study summary", repertoire.bindings.summary_file_sha256],
+    [
+      "independent replay",
+      repertoire.bindings.independent_verification_file_sha256,
+    ],
+    ["negative tests", repertoire.bindings.negative_tests_file_sha256],
+  ] as const;
+
+  return (
+    <section
+      className="repertoire-browser"
+      aria-labelledby="repertoire-browser-title"
+    >
+      <header className="repertoire-heading">
+        <div>
+          <span>Certified repertoire browser</span>
+          <p>{repertoire.study.domain}</p>
+        </div>
+        <h2 id="repertoire-browser-title">
+          Choose the value.
+          <em> Keep the proof in view.</em>
+        </h2>
+        <p>
+          Each target opens a result from the same frozen study. Counts describe
+          observed sampled trajectories. Representative comparison appears only
+          where the checked browser evidence contains the underlying records.
+        </p>
+      </header>
+
+      <div
+        className="target-selector"
+        role="tablist"
+        aria-label="Select an exact target value"
+      >
+        {repertoire.results.map((item) => (
+          <button
+            type="button"
+            role="tab"
+            id={`target-tab-${item.target === "*" ? "star" : item.target === "1/2" ? "half" : "zero"}`}
+            aria-controls="selected-repertoire-panel"
+            aria-selected={item.target === selectedTarget}
+            tabIndex={item.target === selectedTarget ? 0 : -1}
+            className={item.target === selectedTarget ? "active" : ""}
+            key={item.target}
+            onClick={() => setSelectedTarget(item.target)}
+            onKeyDown={(event) => {
+              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+                return;
+              }
+              event.preventDefault();
+              const tabs = Array.from(
+                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+                  '[role="tab"]',
+                ) ?? [],
+              );
+              const currentIndex = tabs.indexOf(event.currentTarget);
+              const nextIndex =
+                event.key === "Home"
+                  ? 0
+                  : event.key === "End"
+                    ? tabs.length - 1
+                    : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
+                      tabs.length;
+              tabs[nextIndex]?.focus();
+              tabs[nextIndex]?.click();
+            }}
+          >
+            <span>target</span>
+            <strong>{item.target}</strong>
+            <small>{item.quotient_unique_representatives.toLocaleString("en-US")} q</small>
+          </button>
+        ))}
+      </div>
+
+      <div className="repertoire-dashboard">
+        <article
+          className="selected-repertoire"
+          role="tabpanel"
+          id="selected-repertoire-panel"
+          aria-labelledby={`target-tab-${result.target === "*" ? "star" : result.target === "1/2" ? "half" : "zero"}`}
+          tabIndex={0}
+        >
+          <div className="result-status">
+            <span className="verified-dot" />
+            independently replayed
+          </div>
+          <span className="result-kicker">exact target</span>
+          <h3>{result.target}</h3>
+          <p className="formal-target">
+            formal game <code>{result.formal_target}</code>
+          </p>
+          <dl>
+            <div>
+              <dt>q(x)</dt>
+              <dd>{result.quotient_unique_representatives.toLocaleString("en-US")}</dd>
+              <span>quotient-unique representatives</span>
+            </div>
+            <div>
+              <dt>ℓ(x)</dt>
+              <dd>{result.literal_game_digests.toLocaleString("en-US")}</dd>
+              <span>complete literal-game digests</span>
+            </div>
+            <div>
+              <dt>{result.budget.unit.replaceAll("_", " ")}</dt>
+              <dd>{result.budget.count.toLocaleString("en-US")}</dd>
+              <span>twelve fixed streams</span>
+            </div>
+          </dl>
+          {hasLinkedMotif ? (
+            <a className="repertoire-action" href="#motif-replay">
+              Replay A → B → C
+              <span aria-hidden="true">↓</span>
+            </a>
+          ) : (
+            <p className="aggregate-boundary">
+              Aggregate evidence is loaded for this target. Representative
+              panel status: awaiting checked records.
+            </p>
+          )}
+        </article>
+
+        <div className="projection-ledger" aria-label="Representation projections">
+          <span className="result-kicker">What each digest fixes</span>
+          {repertoire.projection.map((projection, index) => (
+            <div className="projection-row" key={projection.symbol}>
+              <strong>{projection.symbol}</strong>
+              <div>
+                <h3>{projection.label}</h3>
+                <p>{projection.definition}</p>
+              </div>
+              {index < repertoire.projection.length - 1 && (
+                <span className="projection-arrow" aria-hidden="true">↓</span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <aside className="policy-record" aria-label="Search policy record">
+          <span className="result-kicker">Proposal policy</span>
+          <h3>{repertoire.study.policy.label}</h3>
+          <p>
+            One frozen classical search policy generated every result currently
+            shown in this browser.
+          </p>
+          <dl>
+            <div>
+              <dt>policy id</dt>
+              <dd>{repertoire.study.policy.policy_id}</dd>
+            </div>
+            <div>
+              <dt>family</dt>
+              <dd>{repertoire.study.policy.family.replace("_", " ")}</dd>
+            </div>
+            <div>
+              <dt>result status</dt>
+              <dd>{result.status}</dd>
+            </div>
+          </dl>
+          <div className="policy-result-slot">
+            <span>{repertoire.study.result_contract.schema_version}</span>
+            <strong>Comparable policy-result slot</strong>
+            <p>Learned-policy result: awaiting certification.</p>
+          </div>
+        </aside>
+      </div>
+
+      <details className="study-provenance">
+        <summary>
+          <span>Study provenance</span>
+          completion {shortHash(repertoire.bindings.completion_sha256)}
+        </summary>
+        <div className="provenance-chain">
+          {bindingRows.map(([label, digest]) => (
+            <div key={label}>
+              <span>{label}</span>
+              <code title={digest}>{digest}</code>
+            </div>
+          ))}
+        </div>
+        <p>
+          Current evidence scope: observed sampled trajectories, exact-value
+          certification, and independent replay. Fiber size, aesthetic ranking,
+          human preference, and policy optimality remain unmeasured.
+        </p>
+      </details>
+    </section>
   );
 }
 
@@ -809,6 +1155,8 @@ export function PartizanExperience() {
         </p>
       </div>
 
+      <RepertoireBrowser />
+
       <nav className="phase-line" aria-label="Proof stages">
         {phaseLabels.map((label, index) => (
           <button
@@ -825,7 +1173,11 @@ export function PartizanExperience() {
         <div className="phase-progress" style={{ width: `${(phase / 3) * 100}%` }} />
       </nav>
 
-      <section className="motif-crossing" aria-label="Certified fixed-value motif">
+      <section
+        className="motif-crossing"
+        id="motif-replay"
+        aria-label="Certified fixed-value motif"
+      >
         <div className="motif-route" aria-label="Two single-arc transitions">
           <span className="route-position">A</span>
           {motif.transitions.map((transition, index) => (
@@ -840,6 +1192,12 @@ export function PartizanExperience() {
               <i aria-hidden="true" />
               <strong>{transition.operation.replace("->", "→")}</strong>
               <span>{transition.headline}</span>
+              <small
+                title={transition.event_sha256}
+                aria-label={`Event SHA-256 ${transition.event_sha256}`}
+              >
+                event {shortHash(transition.event_sha256)}
+              </small>
             </div>
           ))}
           <span className="route-position route-position-b">B</span>

@@ -1,14 +1,8 @@
 """Narrow Python interface to the Partizan constrained-research engine."""
 
-from . import chess_adapter as _chess_adapter
+from importlib import import_module
+
 from . import fixed_value as _fixed_value
-from ._native import (
-    analyze_subsystems,
-    evaluate_position,
-    find_locked_pawns,
-    replay_chess_witness,
-)
-from .chess_adapter import adapt_chess_position, validate_chess_adapter_record
 from .discovery import (
     GENERATION_RECEIPT_SCHEMA_VERSION,
     POOL_SCHEMA_VERSION,
@@ -33,12 +27,6 @@ from .discovery import (
     validate_target_spec,
     validate_verifier_result,
 )
-from .events import (
-    EVENT_SCHEMA_VERSION,
-    build_event_stream,
-    canonical_event_bytes,
-    validate_event_stream,
-)
 from .fixed_value import (
     LiteralGameStats,
     ShortGameComparison,
@@ -52,24 +40,66 @@ from .fixed_value import (
     validate_repertoire,
 )
 
-CHESS_ADAPTER_DOMAIN_ID = _chess_adapter.DOMAIN_ID
-CHESS_ADAPTER_PROJECTION_DOMAIN_ID = _chess_adapter.PROJECTION_DOMAIN_ID
-CHESS_ADAPTER_PROJECTION_RULE = _chess_adapter.PROJECTION_RULE
-CHESS_ADAPTER_SCHEMA_VERSION = _chess_adapter.ADAPTER_SCHEMA_VERSION
 FIXED_VALUE_CANDIDATE_SCHEMA_VERSION = _fixed_value.CANDIDATE_SCHEMA_VERSION
 FIXED_VALUE_CERTIFICATE_SCHEMA_VERSION = _fixed_value.CERTIFICATE_SCHEMA_VERSION
 FIXED_VALUE_REPERTOIRE_SCHEMA_VERSION = _fixed_value.REPERTOIRE_SCHEMA_VERSION
 FIXED_VALUE_TARGET_SCHEMA_VERSION = _fixed_value.TARGET_SCHEMA_VERSION
-chess_adapter_id_for = _chess_adapter.adapter_id_for
-fixed_value_candidate_from_chess_adapter = _chess_adapter.candidate_from_adapter
 fixed_value_candidate_id_for = _fixed_value.candidate_id_for
-fixed_value_target_from_chess_adapter = _chess_adapter.target_from_adapter
 fixed_value_target_id_for = _fixed_value.target_id_for
 generate_fixed_value_candidates = _fixed_value.generate_candidates
 make_fixed_value_candidate = _fixed_value.make_candidate
 make_fixed_value_target = _fixed_value.make_target
 validate_fixed_value_candidate = _fixed_value.validate_candidate
 validate_fixed_value_target = _fixed_value.validate_target
+
+_LAZY_NATIVE_EXPORTS = {
+    "analyze_subsystems": "analyze_subsystems",
+    "evaluate_position": "evaluate_position",
+    "find_locked_pawns": "find_locked_pawns",
+    "replay_chess_witness": "replay_chess_witness",
+}
+_LAZY_CHESS_EXPORTS = {
+    "CHESS_ADAPTER_DOMAIN_ID": "DOMAIN_ID",
+    "CHESS_ADAPTER_PROJECTION_DOMAIN_ID": "PROJECTION_DOMAIN_ID",
+    "CHESS_ADAPTER_PROJECTION_RULE": "PROJECTION_RULE",
+    "CHESS_ADAPTER_SCHEMA_VERSION": "ADAPTER_SCHEMA_VERSION",
+    "adapt_chess_position": "adapt_chess_position",
+    "chess_adapter_id_for": "adapter_id_for",
+    "fixed_value_candidate_from_chess_adapter": "candidate_from_adapter",
+    "fixed_value_target_from_chess_adapter": "target_from_adapter",
+    "validate_chess_adapter_record": "validate_chess_adapter_record",
+}
+_LAZY_EVENT_EXPORTS = {
+    "EVENT_SCHEMA_VERSION": "EVENT_SCHEMA_VERSION",
+    "build_event_stream": "build_event_stream",
+    "canonical_event_bytes": "canonical_event_bytes",
+    "validate_event_stream": "validate_event_stream",
+}
+
+
+def __getattr__(name: str):
+    """Load native-backed exports only when a caller asks for one.
+
+    Pure-Python discovery and neural-ranking tools therefore remain usable
+    from a source checkout before the optional PyO3 extension is built.
+    """
+
+    if name in _LAZY_NATIVE_EXPORTS:
+        module = import_module("._native", __name__)
+        value = getattr(module, _LAZY_NATIVE_EXPORTS[name])
+        globals()[name] = value
+        return value
+    if name in _LAZY_CHESS_EXPORTS:
+        module = import_module(".chess_adapter", __name__)
+        value = getattr(module, _LAZY_CHESS_EXPORTS[name])
+        globals()[name] = value
+        return value
+    if name in _LAZY_EVENT_EXPORTS:
+        module = import_module(".events", __name__)
+        value = getattr(module, _LAZY_EVENT_EXPORTS[name])
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = [
     "CHESS_ADAPTER_DOMAIN_ID",

@@ -49,11 +49,26 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(html, /embodiment only/);
   assert.match(html, /21,697 certified forms/);
   assert.match(html, /Enter the fiber/);
+  assert.match(html, /Certified repertoire browser/);
+  assert.match(html, /Choose the value\./);
+  assert.match(html, /Seeded unstructured repertoire/);
+  assert.match(html, /Learned-policy result: awaiting certification\./);
+  assert.match(html, /Replay A → B → C/);
+  assert.match(html, /Study provenance/);
+  assert.match(html, /Equality certificate/);
+  assert.match(html, /Derivation sidecar/);
+  assert.match(html, /Artifact sidecar/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
 test("ships checked evidence and removes the starter preview", async () => {
-  const [evidence, historicalEvidence, motifEvidence, packageJson] = await Promise.all([
+  const [
+    evidence,
+    historicalEvidence,
+    motifEvidence,
+    repertoireEvidence,
+    packageJson,
+  ] = await Promise.all([
     readFile(new URL("../public/evidence/crossing.json", import.meta.url), "utf8"),
     readFile(
       new URL("../public/evidence/elkies-study.json", import.meta.url),
@@ -63,11 +78,16 @@ test("ships checked evidence and removes the starter preview", async () => {
       new URL("../public/evidence/fixed-value-motif.json", import.meta.url),
       "utf8",
     ),
+    readFile(
+      new URL("../public/evidence/repertoire-browser.json", import.meta.url),
+      "utf8",
+    ),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
   const parsed = JSON.parse(evidence);
   const historical = JSON.parse(historicalEvidence);
   const motif = JSON.parse(motifEvidence);
+  const repertoire = JSON.parse(repertoireEvidence);
 
   assert.equal(parsed.schema_version, "partizan.visual_crossing.v0.1");
   assert.deepEqual(
@@ -103,6 +123,50 @@ test("ships checked evidence and removes the starter preview", async () => {
     motif.positions[2].literal_game_sha256,
   );
   assert.equal(motif.atlas.quotient_unique_representatives, 21697);
+  assert.equal(
+    repertoire.schema_version,
+    "partizan.repertoire_browser.v0.1",
+  );
+  assert.equal(repertoire.study.policy.status, "verified");
+  assert.equal(
+    repertoire.study.result_contract.schema_version,
+    "partizan.policy_result.v0.1",
+  );
+  assert.deepEqual(
+    repertoire.results.map((result) => result.target),
+    ["0", "*", "1/2"],
+  );
+  assert.deepEqual(
+    repertoire.results.map((result) => result.quotient_unique_representatives),
+    motif.atlas.targets.map((target) => target.quotients),
+  );
+  assert.deepEqual(
+    repertoire.results.map((result) => result.literal_game_digests),
+    motif.atlas.targets.map((target) => target.literal_games),
+  );
+  assert.ok(
+    repertoire.results.every((result) => result.budget.unit === "raw_proposal"),
+  );
+  assert.equal(
+    repertoire.results.reduce((total, result) => total + result.budget.count, 0),
+    motif.run.proposal_count,
+  );
+  assert.equal(
+    repertoire.bindings.completion_sha256,
+    motif.completion_sha256,
+  );
+  assert.match(repertoire.bindings.manifest_file_sha256, /^[0-9a-f]{64}$/);
+  assert.equal(repertoire.representative_provenance.length, 3);
+  assert.deepEqual(
+    repertoire.representative_provenance.map((record) => record.candidate_sha256),
+    motif.positions.map((position) => position.candidate_sha256),
+  );
+  assert.deepEqual(
+    repertoire.representative_provenance.map((record) => record.global_event_index),
+    motif.positions.map((position) => position.first_global_event_index),
+  );
+  assert.equal(repertoire.claim_boundary.aesthetic_ranking, "not_measured");
+  assert.equal(repertoire.claim_boundary.policy_optimality, "not_tested");
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await access(new URL("../public/og.png", import.meta.url));
   await assert.rejects(access(new URL("../app/_sites-preview", root)));

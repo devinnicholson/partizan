@@ -40,3 +40,7 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# The Sites packaging plugin is source code despite its generated-sounding path.
+!/build/
+!/build/sites-vite-plugin.ts

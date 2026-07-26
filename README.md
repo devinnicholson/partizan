@@ -7,9 +7,10 @@ finite combinatorial games. It is built around a simple observation: a
 mathematical value determines an equivalence class. Economy, surprise, and
 form remain properties of each representative.
 
-Most generators search toward correctness and stop when they reach it. Partizan
-treats correctness as an admission condition. It certifies a candidate, retains
-it, and continues searching among alternative realizations of the same target.
+Partizan begins with exact certification and continues searching among
+alternative realizations of the same target. Correctness becomes the admission
+condition for a repertoire whose members can still differ in economy, surprise,
+and form.
 
 > A mathematical value gives a verdict of equivalence and leaves presentation
 > open.
@@ -115,6 +116,14 @@ self-contained and supports deterministic replay of every admission decision.
 
 The exact data contract and comparison scope are documented in
 [`docs/fixed_value_explorer.md`](docs/fixed_value_explorer.md).
+
+## Experimental neural proposal ranking
+
+The order-7 Digraph Placement workflow includes a deterministic directed
+message-passing ranker for fresh, same-operator candidate pools. Exact
+verification remains the admission authority. The architecture, frozen grid,
+outcome-free ranking API, and validation protocol are documented in
+[`docs/digraph_neural_ranker.md`](docs/digraph_neural_ranker.md).
 
 ## Bounded chess adapter
 

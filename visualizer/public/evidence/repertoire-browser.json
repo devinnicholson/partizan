@@ -1,0 +1,160 @@
+{
+  "schema_version": "partizan.repertoire_browser.v0.1",
+  "study": {
+    "domain": "order-7 Digraph Placement",
+    "status": "GO",
+    "evidence_eligible": true,
+    "policy": {
+      "policy_id": "seeded_unstructured_repertoire_v1",
+      "label": "Seeded unstructured repertoire",
+      "family": "classical_search",
+      "status": "verified",
+      "streams_per_target": 12,
+      "proposals_per_stream": 2048
+    },
+    "result_contract": {
+      "schema_version": "partizan.policy_result.v0.1",
+      "required_fields": [
+        "policy_id",
+        "policy_label",
+        "policy_family",
+        "target",
+        "budget",
+        "status",
+        "completion_sha256",
+        "independent_replay",
+        "quotient_unique_representatives",
+        "literal_game_digests"
+      ],
+      "allowed_statuses": [
+        "verified",
+        "awaiting_certified_result",
+        "failed_integrity_gate"
+      ]
+    }
+  },
+  "projection": [
+    {
+      "symbol": "q(x)",
+      "label": "graph quotient",
+      "definition": "The colored directed graph after color-preserving isomorphism."
+    },
+    {
+      "symbol": "ℓ(x)",
+      "label": "literal game",
+      "definition": "The complete recursively derived game, before equality reduction."
+    },
+    {
+      "symbol": "v(x)",
+      "label": "exact value",
+      "definition": "The CGT equality class certified by mutual Conway comparison."
+    }
+  ],
+  "results": [
+    {
+      "policy_id": "seeded_unstructured_repertoire_v1",
+      "policy_label": "Seeded unstructured repertoire",
+      "policy_family": "classical_search",
+      "target": "0",
+      "formal_target": "0",
+      "budget": {
+        "unit": "raw_proposal",
+        "count": 24576
+      },
+      "status": "verified",
+      "completion_sha256": "a1dea5a06ee5d5bb7244ea22390a4962eeb728d6d574a678f1062ebca7c2c86e",
+      "independent_replay": true,
+      "quotient_unique_representatives": 7555,
+      "literal_game_digests": 6386,
+      "representative_view": "linked_motif",
+      "representative_labels": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "policy_id": "seeded_unstructured_repertoire_v1",
+      "policy_label": "Seeded unstructured repertoire",
+      "policy_family": "classical_search",
+      "target": "*",
+      "formal_target": "*",
+      "budget": {
+        "unit": "raw_proposal",
+        "count": 24576
+      },
+      "status": "verified",
+      "completion_sha256": "a1dea5a06ee5d5bb7244ea22390a4962eeb728d6d574a678f1062ebca7c2c86e",
+      "independent_replay": true,
+      "quotient_unique_representatives": 7132,
+      "literal_game_digests": 5352,
+      "representative_view": "aggregate_only",
+      "representative_labels": []
+    },
+    {
+      "policy_id": "seeded_unstructured_repertoire_v1",
+      "policy_label": "Seeded unstructured repertoire",
+      "policy_family": "classical_search",
+      "target": "1/2",
+      "formal_target": "{0|1}",
+      "budget": {
+        "unit": "raw_proposal",
+        "count": 24576
+      },
+      "status": "verified",
+      "completion_sha256": "a1dea5a06ee5d5bb7244ea22390a4962eeb728d6d574a678f1062ebca7c2c86e",
+      "independent_replay": true,
+      "quotient_unique_representatives": 7010,
+      "literal_game_digests": 4382,
+      "representative_view": "aggregate_only",
+      "representative_labels": []
+    }
+  ],
+  "representative_provenance": [
+    {
+      "label": "A",
+      "global_event_index": 247,
+      "event_sha256": "b1b68c159fe707a943aecb34888773270adca4ade49965788d639f15bf0b4358",
+      "candidate_sha256": "cb1ffa7f8405ffac7e9cdb28f2da6276adfb403ae131e8bc28450bf5b14210e3",
+      "equality_certificate_sha256": "9ccddc76ad5eb29679c77e5d08ea6e639e34b0c2d0a9956a9ed192682137a64a",
+      "equality_sidecar_sha256": "46e4c3c368fbe623d9d81df36b95fcafbf18a12687034bb9b692d677bf2f038c",
+      "derivation_sidecar_sha256": "8bf8c81f9557eabde9408d8d8e71103bc72cc8c90dbd7b0abb6d580a6488923e",
+      "artifact_sidecar_sha256": "5052e5c1bca6752a8f87fe49ccef43a2fd9f4ce770ff104ac84e748082d7b713"
+    },
+    {
+      "label": "B",
+      "global_event_index": 251,
+      "event_sha256": "534e947aab6fd047b01fc969b270fb7b121a97ae5300555568a94772e2eb289a",
+      "candidate_sha256": "a09060e0145f2b2e8ec37474790955aed9a4ebb3ac272f8e22b47c4065cbee53",
+      "equality_certificate_sha256": "8e8738702b6514a5aee1d2db6fbd0ce7febd153ff0f4966756017abc8b1800f5",
+      "equality_sidecar_sha256": "c90085e76ea3ef6a3789adbb2b61bb262f0db17732ac5e1c17c9dd8a658ab496",
+      "derivation_sidecar_sha256": "7ae5d49c2b3e146598e8d87e7b7d07dd18e2cef8bd2c8202e1d28f784c481054",
+      "artifact_sidecar_sha256": "f60a5cabc5b8d545ec1740a8e2a11ffe51d1116b143cd2d56981a18140ee426c"
+    },
+    {
+      "label": "C",
+      "global_event_index": 301,
+      "event_sha256": "f88565b65dfd0b509b361ec79231290c41193cc2479d1b060414e6d6963d49a9",
+      "candidate_sha256": "6d3e2117b482af4a7054103291ba33ae269b6294220afc68fbe1ce6d25fb6555",
+      "equality_certificate_sha256": "bb25597a2fa19197a15f658ff6712d5de21a13a2ffd4016b6cb6565e943728c6",
+      "equality_sidecar_sha256": "51f7b83bd27b1f7c7da17007d49e8e90ac8d594f2601676cf6a84c2b33252c6f",
+      "derivation_sidecar_sha256": "2fb325fa80b73d126b385431d9533093a39cc7f05be0db181677b8f36cee5174",
+      "artifact_sidecar_sha256": "71e2a5069bd31fe51b1b7db2a6219d100e7dd738de0e40a56533735365666486"
+    }
+  ],
+  "bindings": {
+    "completion_sha256": "a1dea5a06ee5d5bb7244ea22390a4962eeb728d6d574a678f1062ebca7c2c86e",
+    "run_complete_file_sha256": "61ca66ce5b107145cfa8e51181e71174d5685eb3789cdcbc7dc44518e97cf38b",
+    "manifest_file_sha256": "7faebafb572b15423b0be2e612986c7d61bd16615edbea3de53999d0b5fabfe1",
+    "events_file_sha256": "304797fe69622f4d2d88363e89538d10a6ef33d39eac01533b8aebf3bf3b5b6c",
+    "summary_file_sha256": "a991aa9e26d96abbea4276696437c2aa71a3880dd5f89243431a088028fcb98f",
+    "independent_verification_file_sha256": "ec4c8bc36b842f3c6a1efb3ff8f141270e2d676e0ec9d88ea883a9bd4c129f24",
+    "negative_tests_file_sha256": "c3e5d6e32bc0db9db0f3172c61d91e534b1553dbb42faff924973988111fbe9d"
+  },
+  "claim_boundary": {
+    "fiber_size": "not_estimated",
+    "aesthetic_ranking": "not_measured",
+    "human_preference": "not_measured",
+    "policy_optimality": "not_tested"
+  }
+}

@@ -25,10 +25,14 @@ Homepage = "https://github.com/devinnicholson/partizan"
 Repository = "https://github.com/devinnicholson/partizan"
 Issues = "https://github.com/devinnicholson/partizan/issues"
 
+[project.optional-dependencies]
+neural = ["numpy>=1.26,<3"]
+
 [project.scripts]
 partizan = "partizan.fixed_value_cli:main"
 partizan-events = "partizan.cli:main"
 partizan-discovery = "partizan.discovery_cli:main"
+partizan-digraph-ranker = "partizan.digraph_neural_ranker:main"
 
 [tool.maturin]
 manifest-path = "engine/Cargo.toml"
