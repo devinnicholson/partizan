@@ -10,6 +10,7 @@ import {
 } from "react";
 import elkiesJson from "../public/evidence/elkies-study.json";
 import motifJson from "../public/evidence/fixed-value-motif.json";
+import policyResultJson from "../public/evidence/site-policy-result.json";
 import repertoireJson from "../public/evidence/repertoire-browser.json";
 
 type Phase = 0 | 1 | 2 | 3;
@@ -206,6 +207,50 @@ type RepertoireBrowserEvidence = {
   };
 };
 
+type PolicyPromotionEvidence = {
+  schema_version: string;
+  site_result_sha256: string;
+  source_completion_sha256: string;
+  evidence_class: "VERIFIED_OFFICIAL_HELD_OUT";
+  result: "NO_GO";
+  policy_id: string;
+  policy_label: string;
+  policy_family: "learned_ranker";
+  comparison_policy_id: string;
+  learned_advantage_claim: null;
+  independent_replay: boolean;
+  corruption_families_rejected: number;
+  budget: {
+    arms: number;
+    candidate_pool_size: number;
+    total_calls: number;
+    unit: "exact_verifier_call";
+  };
+  observed_analysis: {
+    total_discoveries: Record<
+      "neural_toggle_one_ranker" | "structural_toggle_one_random",
+      number
+    >;
+    macro_paired_difference: number;
+    bootstrap_95_ci: [number, number];
+    relative_lift: number;
+    sign_flip_p_value: number;
+    paired_stream_count: number;
+  };
+  diversity: {
+    literal_game_digest_counts: Record<
+      "neural_toggle_one_ranker" | "structural_toggle_one_random",
+      number
+    >;
+    literal_game_digest_ratio_to_control: number;
+    descriptor_cell_counts: Record<
+      "neural_toggle_one_ranker" | "structural_toggle_one_random",
+      number
+    >;
+  };
+  scientific_gates: Record<string, boolean>;
+};
+
 type Piece = {
   id: string;
   color: "white" | "black";
@@ -215,6 +260,7 @@ type Piece = {
 
 const elkies = elkiesJson as HistoricalEvidence;
 const motif = motifJson as FixedValueMotif;
+const policyResult = policyResultJson as PolicyPromotionEvidence;
 const repertoire = repertoireJson as RepertoireBrowserEvidence;
 const files = "abcdefgh";
 const phaseLabels = ["Receive", "Cross literal game", "Change embodiment", "Certify"] as const;
@@ -282,6 +328,10 @@ function squarePosition(square: string) {
 function shortHash(value: string) {
   const digest = value.includes(":") ? value.split(":").at(-1) : value;
   return digest?.slice(0, 10);
+}
+
+function percent(value: number, digits = 1) {
+  return `${(value * 100).toFixed(digits)}%`;
 }
 
 function GraphEdge({
@@ -531,6 +581,151 @@ function MotifCard({
   );
 }
 
+function PolicyVerdict() {
+  const learnedDiscoveries =
+    policyResult.observed_analysis.total_discoveries.neural_toggle_one_ranker;
+  const controlDiscoveries =
+    policyResult.observed_analysis.total_discoveries.structural_toggle_one_random;
+  const learnedLiteralGames =
+    policyResult.diversity.literal_game_digest_counts.neural_toggle_one_ranker;
+  const controlLiteralGames =
+    policyResult.diversity.literal_game_digest_counts.structural_toggle_one_random;
+  const equalArmBudget = policyResult.budget.total_calls / policyResult.budget.arms;
+  const literalRatio = policyResult.diversity.literal_game_digest_ratio_to_control;
+  const requiredLiteralRatio = 0.95;
+  const gateEntries = Object.entries(policyResult.scientific_gates);
+  const passedGateCount = gateEntries.filter(([, passed]) => passed).length;
+
+  return (
+    <section className="policy-verdict" aria-labelledby="policy-verdict-title">
+      <header className="policy-verdict-header">
+        <div className="verdict-index">
+          <span>Official held-out comparison</span>
+          <p>{policyResult.evidence_class.replaceAll("_", " ")}</p>
+        </div>
+        <div className="verdict-title-block">
+          <div className="verdict-status-line">
+            <span className="verdict-status">{policyResult.result}</span>
+            <span>composite gate · {passedGateCount}/{gateEntries.length} checks</span>
+          </div>
+          <h3 id="policy-verdict-title">
+            More quotient discoveries.
+            <em> Fewer literal games.</em>
+          </h3>
+          <p>
+            The frozen model ranks one-arc proposals. The exact combinatorial-game
+            verifier certifies target equality. Equal verifier budgets expose a
+            sharp tradeoff between certified quotient discovery and complete-literal-game
+            coverage.
+          </p>
+        </div>
+      </header>
+
+      <div className="authority-line" aria-label="System authority boundary">
+        <div>
+          <span>01</span>
+          <strong>Model proposes</strong>
+          <small>{policyResult.policy_label}</small>
+        </div>
+        <i aria-hidden="true">→</i>
+        <div>
+          <span>02</span>
+          <strong>Exact verifier certifies</strong>
+          <small>target equality decides admission</small>
+        </div>
+      </div>
+
+      <div className="verdict-measures">
+        <article className="discovery-measure">
+          <div className="measure-heading">
+            <span>Certified quotient discovery</span>
+            <strong>+{percent(policyResult.observed_analysis.relative_lift)}</strong>
+          </div>
+          <p>
+            {equalArmBudget.toLocaleString("en-US")} exact verifier calls per arm · {policyResult.observed_analysis.paired_stream_count} paired streams
+          </p>
+          <div className="comparison-bars" aria-label="Quotient-unique discoveries by arm">
+            <div>
+              <span>neural ranker</span>
+              <i style={{ "--measure": "100%" } as CSSProperties} />
+              <strong>{learnedDiscoveries.toLocaleString("en-US")}</strong>
+            </div>
+            <div>
+              <span>random control</span>
+              <i
+                style={{
+                  "--measure": `${(controlDiscoveries / learnedDiscoveries) * 100}%`,
+                } as CSSProperties}
+              />
+              <strong>{controlDiscoveries.toLocaleString("en-US")}</strong>
+            </div>
+          </div>
+          <dl className="measure-footnotes">
+            <div>
+              <dt>paired difference</dt>
+              <dd>+{policyResult.observed_analysis.macro_paired_difference.toFixed(1)}</dd>
+            </div>
+            <div>
+              <dt>95% interval</dt>
+              <dd>
+                {policyResult.observed_analysis.bootstrap_95_ci[0].toFixed(1)}–
+                {policyResult.observed_analysis.bootstrap_95_ci[1].toFixed(1)}
+              </dd>
+            </div>
+          </dl>
+        </article>
+
+        <article className="diversity-measure">
+          <div className="measure-heading">
+            <span>Complete literal-game coverage</span>
+            <strong>{percent(literalRatio)}</strong>
+          </div>
+          <p>Control-relative diversity · preregistered minimum {percent(requiredLiteralRatio, 0)}</p>
+          <div className="threshold-track" aria-label="Literal-game diversity ratio and preregistered threshold">
+            <span style={{ "--ratio": `${literalRatio * 100}%` } as CSSProperties} />
+            <i style={{ "--threshold": `${requiredLiteralRatio * 100}%` } as CSSProperties} />
+            <small className="observed-label">observed {percent(literalRatio)}</small>
+            <small className="threshold-label">gate {percent(requiredLiteralRatio, 0)}</small>
+          </div>
+          <div className="literal-counts">
+            <div>
+              <span>neural ranker</span>
+              <strong>{learnedLiteralGames.toLocaleString("en-US")}</strong>
+            </div>
+            <div>
+              <span>random control</span>
+              <strong>{controlLiteralGames.toLocaleString("en-US")}</strong>
+            </div>
+          </div>
+          <p className="gate-reading">
+            The literal-diversity gate failed. Descriptor coverage remained equal at {policyResult.diversity.descriptor_cell_counts.neural_toggle_one_ranker} cells per arm.
+          </p>
+        </article>
+      </div>
+
+      <footer className="verdict-proof-strip">
+        <div>
+          <span className="verified-dot" />
+          <strong>independent replay</strong>
+          <small>{policyResult.independent_replay ? "PASS" : "FAILED"}</small>
+        </div>
+        <div>
+          <strong>{policyResult.corruption_families_rejected}/20</strong>
+          <small>corruption families rejected</small>
+        </div>
+        <div>
+          <strong>learned_advantage_claim</strong>
+          <small>{String(policyResult.learned_advantage_claim)}</small>
+        </div>
+        <div title={policyResult.source_completion_sha256}>
+          <strong>completion</strong>
+          <small>{shortHash(policyResult.source_completion_sha256)}</small>
+        </div>
+      </footer>
+    </section>
+  );
+}
+
 function RepertoireBrowser() {
   const [selectedTarget, setSelectedTarget] = useState<TargetLabel>("0");
   const result =
@@ -569,6 +764,8 @@ function RepertoireBrowser() {
           where the checked browser evidence contains the underlying records.
         </p>
       </header>
+
+      <PolicyVerdict />
 
       <div
         className="target-selector"
@@ -701,8 +898,8 @@ function RepertoireBrowser() {
           </dl>
           <div className="policy-result-slot">
             <span>{repertoire.study.result_contract.schema_version}</span>
-            <strong>Comparable policy-result slot</strong>
-            <p>Learned-policy result: awaiting certification.</p>
+            <strong>Official neural comparison</strong>
+            <p>Composite result: {policyResult.result} · independently replayed.</p>
           </div>
         </aside>
       </div>

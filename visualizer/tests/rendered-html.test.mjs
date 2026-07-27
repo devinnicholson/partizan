@@ -31,6 +31,7 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
+  const normalizedHtml = html.replaceAll("<!-- -->", "");
   assert.match(html, /<title>Partizan — One Value, Three Forms<\/title>/i);
   assert.match(html, /One value\./);
   assert.match(html, /Three forms\./);
@@ -50,9 +51,25 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(html, /21,697 certified forms/);
   assert.match(html, /Enter the fiber/);
   assert.match(html, /Certified repertoire browser/);
+  assert.match(html, /Official held-out comparison/);
+  assert.match(html, /More quotient discoveries\./);
+  assert.match(html, /Fewer literal games\./);
+  assert.match(normalizedHtml, /composite gate · 6\/7 checks/i);
+  assert.match(normalizedHtml, /\+57\.6%/);
+  assert.match(normalizedHtml, /68,232/);
+  assert.match(normalizedHtml, /43,301/);
+  assert.match(normalizedHtml, /11,083/);
+  assert.match(normalizedHtml, /27,990/);
+  assert.match(normalizedHtml, /observed 39\.6%/i);
+  assert.match(normalizedHtml, /gate 95%/i);
+  assert.match(html, /Model proposes/);
+  assert.match(html, /Exact verifier certifies/);
+  assert.match(html, /learned_advantage_claim/);
+  assert.match(normalizedHtml, />null</i);
+  assert.match(normalizedHtml, /20\/20/);
   assert.match(html, /Choose the value\./);
   assert.match(html, /Seeded unstructured repertoire/);
-  assert.match(html, /Learned-policy result: awaiting certification\./);
+  assert.match(normalizedHtml, /Composite result: NO_GO · independently replayed\./);
   assert.match(html, /Replay A → B → C/);
   assert.match(html, /Study provenance/);
   assert.match(html, /Equality certificate/);
@@ -67,6 +84,7 @@ test("ships checked evidence and removes the starter preview", async () => {
     historicalEvidence,
     motifEvidence,
     repertoireEvidence,
+    policyResultEvidence,
     packageJson,
   ] = await Promise.all([
     readFile(new URL("../public/evidence/crossing.json", import.meta.url), "utf8"),
@@ -82,12 +100,17 @@ test("ships checked evidence and removes the starter preview", async () => {
       new URL("../public/evidence/repertoire-browser.json", import.meta.url),
       "utf8",
     ),
+    readFile(
+      new URL("../public/evidence/site-policy-result.json", import.meta.url),
+      "utf8",
+    ),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
   const parsed = JSON.parse(evidence);
   const historical = JSON.parse(historicalEvidence);
   const motif = JSON.parse(motifEvidence);
   const repertoire = JSON.parse(repertoireEvidence);
+  const policyResult = JSON.parse(policyResultEvidence);
 
   assert.equal(parsed.schema_version, "partizan.visual_crossing.v0.1");
   assert.deepEqual(
@@ -167,6 +190,35 @@ test("ships checked evidence and removes the starter preview", async () => {
   );
   assert.equal(repertoire.claim_boundary.aesthetic_ranking, "not_measured");
   assert.equal(repertoire.claim_boundary.policy_optimality, "not_tested");
+  assert.equal(
+    policyResult.schema_version,
+    "partizan.digraph_order7_neural_policy_promotion.v1.site_policy_result",
+  );
+  assert.equal(policyResult.result, "NO_GO");
+  assert.equal(policyResult.learned_advantage_claim, null);
+  assert.equal(policyResult.budget.total_calls, 147456);
+  assert.equal(
+    policyResult.observed_analysis.total_discoveries.neural_toggle_one_ranker,
+    68232,
+  );
+  assert.equal(
+    policyResult.observed_analysis.total_discoveries.structural_toggle_one_random,
+    43301,
+  );
+  assert.equal(
+    policyResult.diversity.literal_game_digest_counts.neural_toggle_one_ranker,
+    11083,
+  );
+  assert.equal(
+    policyResult.diversity.literal_game_digest_counts.structural_toggle_one_random,
+    27990,
+  );
+  assert.equal(
+    policyResult.scientific_gates.minimum_literal_digest_ratio_to_control,
+    false,
+  );
+  assert.equal(policyResult.independent_replay, true);
+  assert.equal(policyResult.corruption_families_rejected, 20);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await access(new URL("../public/og.png", import.meta.url));
   await assert.rejects(access(new URL("../app/_sites-preview", root)));
