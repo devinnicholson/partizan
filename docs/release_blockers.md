@@ -1,8 +1,8 @@
 # Partizan v0.1 release blockers
 
 The implementation is an alpha release candidate. Gates 1, 2, 4, and 5 have
-completed evidence. Open gates 3, 6, and 7 must remain visible in any handoff
-or release note:
+completed evidence. Open gates 3, 6, 7, and 8 must remain visible in any
+handoff or release note:
 
 1. **Project license: resolved.** Partizan is licensed
    [GPL-3.0-or-later](../LICENSE) (see `LICENSE`, `engine/Cargo.toml`,
@@ -41,7 +41,14 @@ or release note:
    source regeneration equivalence is not claimed.
 7. **Release state:** no package was published and no tag, GitHub release, DOI,
    or external service state was created.
+8. **Bounded short-game release evidence:** the independent Python comparison
+   and canonicalization lanes have local source-only validation, including all
+   65,536 ordered day-2 comparisons, 256 canonicalizations, and 22 semantic
+   identities. The additive v2 certificate and package changes still require a
+   clean public cross-platform CI run after integration. Cross-language
+   semantic-ID agreement with the independently maintained Thermograph lane
+   remains a release gate.
 
-P04 and P05 are scientific boundaries rather than release chores: learned
+P04 and P05 are scientific boundaries separate from release chores: learned
 benefit remains negative/null, while chess temperature, learned agency, and
 model-guided discovery remain unvalidated and outside the release claim.

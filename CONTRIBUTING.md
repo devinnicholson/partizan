@@ -15,6 +15,21 @@ evidence.
 7. Treat artistic agency, tension, and discovery as interpretation. Technical
    claims require their own declared evidence and gate.
 
+Changes to bounded short-game semantics must also:
+
+1. Preserve the explicit `{left|right}` serialization and both literal digest
+   namespaces.
+2. Preserve all four comparison outcomes and replay every dependency in a
+   closed proof DAG.
+3. Add soundness, irreducibility, idempotence, and mutation controls for any
+   canonical rewrite.
+4. Keep comparison certificate v1 frozen. Additive semantic fields require a
+   new schema identifier and independent verifier coverage.
+5. Run the exhaustive 65,536-comparison day-2 gate and the 256-game,
+   22-semantic-ID canonicalization gate.
+6. Record the named resource profile and every stricter rewrite limit used by
+   a certificate or experiment.
+
 Run the commands in the root README. Pull requests must pass format, strict
 Clippy, strict Rustdoc, locked tests, Python tests with zero required skips, all
 Wave validators, and frozen-artifact verification.

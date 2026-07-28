@@ -24,7 +24,7 @@ finite combinatorial-game experiments.
 | --- | --- |
 | Repository | Public research development |
 | Package | `partizan-cgt` 0.1.0 release candidate |
-| Interface | Python 3.10+ with a Rust/PyO3 core |
+| Interface | Python 3.10+ exact short-game API with a Rust/PyO3 chess core |
 | Platforms tested locally | macOS arm64, Rust 1.92, Python 3.14 |
 | Cross-platform CI | Passing on `main` for Linux, macOS, and Windows |
 | License | [GPL-3.0-or-later](LICENSE) |
@@ -116,6 +116,63 @@ self-contained and supports deterministic replay of every admission decision.
 
 The exact data contract and comparison scope are documented in
 [`docs/fixed_value_explorer.md`](docs/fixed_value_explorer.md).
+
+## Bounded exact short games
+
+The source-only Python API compares, canonicalizes, and certifies explicit
+finite normal-play short games. It requires Python 3.10+ and no compiled
+extension.
+
+```python
+from partizan import (
+    ComparisonOutcome,
+    build_short_game_comparison_certificate_v2,
+    compare_short_game_bounded,
+    semantic_canonical_form_bounded,
+    verify_short_game_comparison_certificate_v2,
+)
+
+zero = {"left": [], "right": []}
+one = {"left": [zero], "right": []}
+star = {"left": [zero], "right": [zero]}
+half = {"left": [zero], "right": [one]}
+elkies_half = {"left": [zero, star], "right": [one]}
+
+assert compare_short_game_bounded(zero, star).outcome is ComparisonOutcome.FUZZY
+
+reduced = semantic_canonical_form_bounded(elkies_half)
+assert reduced.canonical_game == half
+assert reduced.soundness_equal and reduced.irreducible and reduced.idempotent
+
+certificate = build_short_game_comparison_certificate_v2(
+    elkies_half,
+    half,
+    candidate_binding={"artifact": "elkies-half"},
+    target_binding={"artifact": "half"},
+)
+assert verify_short_game_comparison_certificate_v2(certificate) == (
+    True,
+    "valid",
+)
+```
+
+The comparison result is exactly one of `less`, `equal`, `greater`, or
+`fuzzy`. Literal identities preserve explicit option structure. Semantic
+canonical identities use deterministic domination and reversibility reduction.
+Every completed reduction performs equality, irreducibility, and idempotence
+audits.
+
+Comparison certificate v1 remains frozen with its historical null semantic
+fields. Certificate v2 adds independently recomputed semantic canonical IDs
+and binds the canonical rewrite limit. The named operational profiles are
+`partizan.bounded_short_game.order7.v1` and
+`partizan.bounded_short_game.digraph8.v1`.
+
+The full API, identity rules, limits, certificate semantics, and validation
+evidence are documented in
+[`docs/bounded_short_game.md`](docs/bounded_short_game.md). A complete runnable
+example is available at
+[`examples/bounded_short_game.py`](examples/bounded_short_game.py).
 
 ## Experimental neural proposal ranking
 
@@ -240,8 +297,11 @@ cd partizan
 python3 agents/label_schema.py self-test
 python3 scripts/validate_waves.py
 python3 -m unittest \
+  tests.test_bounded_short_game \
+  tests.test_semantic_canonical_form \
   tests.test_discovery_contracts \
   tests.test_discovery_candidate_pool -v
+PYTHONPATH=python python3 examples/bounded_short_game.py
 ```
 
 These commands verify that the public records obey their declared schemas,
@@ -287,6 +347,7 @@ constrained position and schema.
 partizan/
 ├── python/partizan/       Python package and discovery contracts
 ├── engine/                Rust/PyO3 bridge and research tooling
+├── examples/              Source-only executable examples
 ├── agents/                Versioned research plans and label schemas
 ├── data/                  Frozen, manifest-bound evidence slices
 ├── docs/                  Formal domain, claims, protocols, and reports
@@ -298,6 +359,8 @@ Useful starting points:
 
 - [`docs/architecture.md`](docs/architecture.md) — components and trust
   boundaries
+- [`docs/bounded_short_game.md`](docs/bounded_short_game.md) — bounded exact
+  comparison, semantic canonicalization, and certificates
 - [`docs/formal_domain.md`](docs/formal_domain.md) — the exact solver domain
   and boundary
 - [`docs/research_claims.md`](docs/research_claims.md) — claim/evidence ledger

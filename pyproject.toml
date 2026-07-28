@@ -5,11 +5,17 @@ build-backend = "maturin"
 [project]
 name = "partizan-cgt"
 version = "0.1.0"
-description = "Constrained chess/CGT research bindings and provenance event tools"
+description = "Bounded exact short-game and constrained-chess research tools"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Devin Nicholson" }]
-keywords = ["chess", "combinatorial game theory", "research"]
+keywords = [
+  "chess",
+  "combinatorial game theory",
+  "canonical form",
+  "exact verification",
+  "research",
+]
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 classifiers = [
@@ -40,3 +46,14 @@ manifest-path = "engine/Cargo.toml"
 python-source = "python"
 module-name = "partizan._native"
 bindings = "pyo3"
+include = [
+  { path = "CHANGELOG.md", format = "sdist" },
+  { path = "CITATION.cff", format = "sdist" },
+  { path = "CONTRIBUTING.md", format = "sdist" },
+  { path = "docs/bounded_short_game.md", format = "sdist" },
+  { path = "docs/development.md", format = "sdist" },
+  { path = "docs/release_blockers.md", format = "sdist" },
+  { path = "examples/bounded_short_game.py", format = "sdist" },
+  { path = "tests/test_bounded_short_game.py", format = "sdist" },
+  { path = "tests/test_semantic_canonical_form.py", format = "sdist" },
+]

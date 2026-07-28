@@ -6,12 +6,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from .chess_adapter import (
-    adapt_chess_position,
-    candidate_from_adapter,
-    target_from_adapter,
-    validate_chess_adapter_record,
-)
 from .fixed_value import (
     build_repertoire,
     canonical_json_bytes,
@@ -131,6 +125,14 @@ def main(argv: list[str] | None = None) -> int:
     """Run the fixed-value explorer."""
 
     args = build_parser().parse_args(argv)
+    if args.command.startswith("chess-"):
+        from .chess_adapter import (
+            adapt_chess_position,
+            candidate_from_adapter,
+            target_from_adapter,
+            validate_chess_adapter_record,
+        )
+
     try:
         if args.command == "chess-adapt":
             record = adapt_chess_position(

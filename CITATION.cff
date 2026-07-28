@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this release candidate, cite the software and the exact artifact manifest."
-title: "Partizan: constrained chess and combinatorial-game research suite"
+title: "Partizan: exact short-game and constrained-chess research suite"
 type: software
 authors:
   - family-names: Nicholson
@@ -10,7 +10,9 @@ license: GPL-3.0-or-later
 repository-code: "https://github.com/devinnicholson/partizan"
 url: "https://github.com/devinnicholson/partizan"
 abstract: >-
-  An experimental suite for structural decomposition and combinatorial-game
-  representations in constrained chess positions. The v0.1 scope covers exact
-  bounded-domain records and replayable provenance. Learned benefit, agency,
-  chess temperature, and model-guided discovery remain research questions.
+  An experimental suite for bounded exact comparison, semantic canonicalization,
+  proof-carrying combinatorial-game records, and structural decomposition in
+  constrained chess positions. The v0.1 scope covers finite normal-play short
+  games, exact bounded-domain records, and replayable provenance. Learned
+  benefit, agency, chess temperature, and model-guided discovery remain
+  research questions.

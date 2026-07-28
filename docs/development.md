@@ -1,5 +1,24 @@
 # Development and clean-room installation
 
+## Source-only exact short games
+
+The bounded exact-comparison and semantic-canonicalization layer needs Python
+3.10+ and the standard library:
+
+```bash
+git clone https://github.com/devinnicholson/partizan.git
+cd partizan
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=python python3 -m unittest \
+  tests.test_bounded_short_game \
+  tests.test_semantic_canonical_form -v
+PYTHONPATH=python python3 examples/bounded_short_game.py
+```
+
+These commands exercise all 65,536 ordered day-2 comparisons, the 256-game
+canonicalization gate, both certificate versions, mutation controls, and the
+public source-only example. They do not load the native extension.
+
 ## Frozen upstream release candidates
 
 | Package | Version | Frozen commit |
@@ -47,6 +66,43 @@ cargo test --manifest-path engine/Cargo.toml --offline \
   --config 'patch."crates-io".thermograph.path="/absolute/path/to/thermograph"' \
   --config 'patch."crates-io".astralbase.path="/absolute/path/to/astralbase"'
 ```
+
+## Package build and installed quickstart
+
+With the external Cargo patch active:
+
+```bash
+python3 -m venv /tmp/partizan-package-venv
+/tmp/partizan-package-venv/bin/python -m pip install \
+  "maturin>=1.9.3,<2"
+
+CARGO_NET_OFFLINE=true /tmp/partizan-package-venv/bin/maturin build \
+  --manifest-path engine/Cargo.toml \
+  --locked \
+  --out /tmp/partizan-dist
+
+CARGO_NET_OFFLINE=true /tmp/partizan-package-venv/bin/maturin sdist \
+  --manifest-path engine/Cargo.toml \
+  --out /tmp/partizan-dist
+
+/tmp/partizan-package-venv/bin/python -m pip install \
+  --no-index --find-links /tmp/partizan-dist partizan-cgt
+/tmp/partizan-package-venv/bin/python -m pip install \
+  "numpy>=1.26,<3"
+/tmp/partizan-package-venv/bin/python \
+  examples/bounded_short_game.py
+/tmp/partizan-package-venv/bin/python -m unittest discover -s tests -v
+```
+
+Inspect the built metadata before release:
+
+```bash
+/tmp/partizan-package-venv/bin/python -m pip show partizan-cgt
+tar -tf /tmp/partizan-dist/partizan_cgt-0.1.0.tar.gz
+```
+
+Package builds and tests must use the frozen upstream commits listed below.
+No registry publication, tag, or release creation occurs during these checks.
 
 ## Dataset regeneration
 

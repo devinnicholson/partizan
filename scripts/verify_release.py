@@ -84,19 +84,33 @@ def verify_manifest() -> None:
     dataset = ROOT / dataset_artifact["path"]
     issues = label_schema.validate_jsonl(dataset)
     require(not issues, f"dataset schema issues: {[item.format() for item in issues]}")
-    rows = [json.loads(line) for line in dataset.read_text(encoding="utf-8").splitlines()]
+    rows = [
+        json.loads(line) for line in dataset.read_text(encoding="utf-8").splitlines()
+    ]
     require(len(rows) == 13, "representative dataset must contain 13 rows")
-    require(all(row.get("label_kind") == "exact" for row in rows), "all rows must be exact")
+    require(
+        all(row.get("label_kind") == "exact" for row in rows), "all rows must be exact"
+    )
     for row in rows:
         certificate = row["provenance"]["certificate"]
-        require(bool(certificate.get("decomposition_digest")), "P02 decomposition digest absent")
-        require(bool(certificate.get("component_values")), "P02 component values absent")
-        require(bool(certificate.get("result_value_digest")), "P02 result digest absent")
+        require(
+            bool(certificate.get("decomposition_digest")),
+            "P02 decomposition digest absent",
+        )
+        require(
+            bool(certificate.get("component_values")), "P02 component values absent"
+        )
+        require(
+            bool(certificate.get("result_value_digest")), "P02 result digest absent"
+        )
 
     corrupted = json.loads(json.dumps(rows[0]))
     del corrupted["provenance"]["certificate"]["result_value_digest"]
     require(
-        any("result_value_digest" in issue for issue in label_schema.validate_row(corrupted)),
+        any(
+            "result_value_digest" in issue
+            for issue in label_schema.validate_row(corrupted)
+        ),
         "P02 corruption control unexpectedly passed",
     )
     split_report = json.loads(
@@ -119,7 +133,44 @@ def verify_events() -> None:
     first = partizan.canonical_event_bytes(partizan.build_event_stream(fen))
     second = partizan.canonical_event_bytes(partizan.build_event_stream(fen))
     require(first == second, "event stream is not byte-identical across runs")
-    require(not partizan.validate_event_stream(json.loads(first)), "event stream is invalid")
+    require(
+        not partizan.validate_event_stream(json.loads(first)), "event stream is invalid"
+    )
+
+
+def verify_bounded_short_games() -> None:
+    """Verify installed exact comparison, canonicalization, and v2 replay."""
+
+    import partizan
+
+    zero = {"left": [], "right": []}
+    one = {"left": [zero], "right": []}
+    star = {"left": [zero], "right": [zero]}
+    half = {"left": [zero], "right": [one]}
+    reversible_half = {"left": [zero, star], "right": [one]}
+
+    comparison = partizan.compare_short_game_bounded(zero, star)
+    require(
+        comparison.outcome is partizan.ComparisonOutcome.FUZZY,
+        "zero/star comparison outcome mismatch",
+    )
+    canonical = partizan.semantic_canonical_form_bounded(reversible_half)
+    require(canonical.canonical_game == half, "semantic half reduction mismatch")
+    require(canonical.soundness_equal, "semantic equality audit failed")
+    require(canonical.irreducible, "semantic irreducibility audit failed")
+    require(canonical.idempotent, "semantic idempotence audit failed")
+
+    certificate = partizan.build_short_game_comparison_certificate_v2(
+        reversible_half,
+        half,
+        candidate_binding={"release_smoke": "reversible-half"},
+        target_binding={"release_smoke": "half"},
+    )
+    require(
+        partizan.verify_short_game_comparison_certificate_v2(certificate)
+        == (True, "valid"),
+        "semantic comparison certificate replay failed",
+    )
 
 
 def main() -> int:
@@ -127,6 +178,7 @@ def main() -> int:
 
     try:
         verify_manifest()
+        verify_bounded_short_games()
         verify_events()
     except (
         ImportError,
@@ -141,7 +193,8 @@ def main() -> int:
         return 1
     print(
         "P01/P02 release verification: ok "
-        "(5 artifacts, 5-row reproducible slice, 13-row P02 slice, events; "
+        "(5 artifacts, 5-row reproducible slice, 13-row P02 slice, "
+        "bounded short games, events; "
         "Wave 69/69-R discovery evidence is out of scope, see docs/release_blockers.md)"
     )
     return 0

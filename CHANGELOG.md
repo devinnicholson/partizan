@@ -27,11 +27,21 @@ Semantic Versioning once an owner-approved release is published.
   chess-search commands.
 - A same-horizon KQK fixture whose distinct literal trees are exactly equal
   under Conway comparison and enter one repertoire as a literal-game crossing.
+- Bounded exact comparison for explicit finite normal-play short games with
+  four outcomes, collision-checked literal identities, named resource
+  profiles, and closed proof DAGs.
+- Independent deterministic semantic canonicalization with domination and
+  reversibility traces, domain-separated semantic IDs, typed limits, equality
+  soundness, irreducibility, and idempotence audits.
+- Frozen comparison certificate v1 semantics and an additive v2 certificate
+  that binds independently recomputed semantic IDs and rewrite limits.
+- Exhaustive source-only validation across all 65,536 ordered day-2
+  comparisons and all 256 day-2 canonicalizations, yielding 22 semantic IDs.
 
 ### Changed
 
 - Rust dependencies now use version `0.1.0` instead of sibling paths.
-- Dataset output defaults now use repository-local ignored artifacts rather than
+- Dataset output defaults now use repository-local ignored artifacts instead of
   system temporary paths.
 - The formal domain is consolidated as the versioned v0.1 contract.
 - Licensed the project GPL-3.0-or-later, matching the Shakmaty (GPL-3.0)
