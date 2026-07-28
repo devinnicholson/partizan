@@ -33,6 +33,7 @@ partizan = "partizan.fixed_value_cli:main"
 partizan-events = "partizan.cli:main"
 partizan-discovery = "partizan.discovery_cli:main"
 partizan-digraph-ranker = "partizan.digraph_neural_ranker:main"
+partizan-digraph-diversity-ranker = "partizan.digraph_diversity_ranker:main"
 
 [tool.maturin]
 manifest-path = "engine/Cargo.toml"

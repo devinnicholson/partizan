@@ -125,6 +125,12 @@ verification remains the admission authority. The architecture, frozen grid,
 outcome-free ranking API, and validation protocol are documented in
 [`docs/digraph_neural_ranker.md`](docs/digraph_neural_ranker.md).
 
+An additional target-free encoder learns graph distance from training-only
+literal-game equivalence groups. Its acquisition API combines the frozen
+equality score with distance from an arm-local repertoire while keeping exact
+decisions and semantic identifiers outside inference. See
+[`docs/digraph_diversity_ranker.md`](docs/digraph_diversity_ranker.md).
+
 ## Bounded chess adapter
 
 Constrained FENs can now enter the same exact explorer through a replayable
