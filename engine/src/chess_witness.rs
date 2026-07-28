@@ -112,6 +112,7 @@ mod tests {
 
     #[test]
     fn elkies_line_replays_to_the_mutual_zugzwang_kernel() {
+        Python::initialize();
         Python::attach(|py| {
             let record = replay_chess_witness(
                 py,

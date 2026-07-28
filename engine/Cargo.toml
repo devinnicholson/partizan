@@ -17,8 +17,12 @@ publish = false
 name = "_native"
 crate-type = ["cdylib"]
 
+[features]
+default = []
+extension-module = ["pyo3/extension-module"]
+
 [dependencies]
-pyo3 = { version = "0.29", features = ["extension-module"] }
+pyo3 = "0.29"
 shakmaty = "0.27"
 thermograph = "0.1.0"
 bitmesh = "0.1.0"

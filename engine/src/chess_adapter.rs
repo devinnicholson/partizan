@@ -16,9 +16,9 @@ pub(crate) const PROJECTION_DOMAIN_ID: &str = "formal_domain:bounded_chess_proje
 pub(crate) const PROJECTION_RULE: &str = "bounded_alternating_legal_move_normal_play_v1";
 const MAX_PLIES: i64 = 8;
 const MAX_NODE_BUDGET: i64 = 100_000;
-const ASTRALBASE_SOURCE_COMMIT: &str = "81c7c583ee5b3cdd4c7e3a6d543e77803313bc54";
-const BITMESH_SOURCE_COMMIT: &str = "961a918c16cda757322aca66e3a368cf95438cad";
-const THERMOGRAPH_SOURCE_COMMIT: &str = "bdf535c7a40ce76c4d1dbfb88d8c522eb034b8bd";
+const ASTRALBASE_SOURCE_COMMIT: &str = "1ce02cfd3844ab1e5574be4e0c387f79784648bb";
+const BITMESH_SOURCE_COMMIT: &str = "b7c7858df2365d8ea4bd2f50ff2afbd51a6f8225";
+const THERMOGRAPH_SOURCE_COMMIT: &str = "381e88dad1a1259a4ccc1a015537f8a8acaf7474";
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 struct ProjectionStats {

@@ -23,9 +23,9 @@ public source-only example. They do not load the native extension.
 
 | Package | Version | Frozen commit |
 | --- | --- | --- |
-| Bitmesh | 0.1.0 | `961a918c16cda757322aca66e3a368cf95438cad` |
-| Thermograph | 0.1.0 | `bdf535c7a40ce76c4d1dbfb88d8c522eb034b8bd` |
-| Astralbase | 0.1.0 | `81c7c583ee5b3cdd4c7e3a6d543e77803313bc54` |
+| Bitmesh | 0.1.0 | `b7c7858df2365d8ea4bd2f50ff2afbd51a6f8225` |
+| Thermograph | 0.1.0 | `381e88dad1a1259a4ccc1a015537f8a8acaf7474` |
+| Astralbase | 0.1.0 | `1ce02cfd3844ab1e5574be4e0c387f79784648bb` |
 
 These commits are public release-candidate inputs awaiting package publication.
 Keep the immutable commit hashes in local and CI patch configurations.

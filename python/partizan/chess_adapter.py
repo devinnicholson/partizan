@@ -25,15 +25,15 @@ MAX_NODE_BUDGET = 100_000
 UPSTREAM_SOURCES = {
     "astralbase": {
         "version": "0.1.0",
-        "source_commit": "81c7c583ee5b3cdd4c7e3a6d543e77803313bc54",
+        "source_commit": "1ce02cfd3844ab1e5574be4e0c387f79784648bb",
     },
     "bitmesh": {
         "version": "0.1.0",
-        "source_commit": "961a918c16cda757322aca66e3a368cf95438cad",
+        "source_commit": "b7c7858df2365d8ea4bd2f50ff2afbd51a6f8225",
     },
     "thermograph": {
         "version": "0.1.0",
-        "source_commit": "bdf535c7a40ce76c4d1dbfb88d8c522eb034b8bd",
+        "source_commit": "381e88dad1a1259a4ccc1a015537f8a8acaf7474",
     },
 }
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")

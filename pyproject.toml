@@ -46,6 +46,7 @@ manifest-path = "engine/Cargo.toml"
 python-source = "python"
 module-name = "partizan._native"
 bindings = "pyo3"
+features = ["extension-module"]
 include = [
   { path = "CHANGELOG.md", format = "sdist" },
   { path = "CITATION.cff", format = "sdist" },

@@ -40,6 +40,12 @@ Semantic Versioning once an owner-approved release is published.
 
 ### Changed
 
+- PyO3 extension-module semantics are now enabled explicitly for Maturin wheel
+  builds, allowing native Rust tests to link and execute in every CI job.
+- Frozen release-candidate integration pins now reference Bitmesh
+  `b7c7858df2365d8ea4bd2f50ff2afbd51a6f8225`, Thermograph
+  `381e88dad1a1259a4ccc1a015537f8a8acaf7474`, and Astralbase
+  `1ce02cfd3844ab1e5574be4e0c387f79784648bb`.
 - Rust dependencies now use version `0.1.0` instead of sibling paths.
 - Dataset output defaults now use repository-local ignored artifacts instead of
   system temporary paths.
