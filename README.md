@@ -1,5 +1,7 @@
 # Partizan
 
+[![CI](https://github.com/devinnicholson/partizan/actions/workflows/ci.yml/badge.svg)](https://github.com/devinnicholson/partizan/actions/workflows/ci.yml)
+
 **Search inside correctness.**
 
 Partizan is a proof-carrying research system for computational composition in
@@ -34,6 +36,22 @@ The source code may be used, modified, and redistributed under the terms of
 GPL-3.0-or-later. See
 [`docs/release_blockers.md`](docs/release_blockers.md) for the remaining
 package and release requirements.
+
+## Project family and responsibility
+
+Partizan is the public orchestration layer in a four-repository research
+stack. Each repository has a deliberately separate authority:
+
+| Repository | Responsibility | Does not establish |
+| --- | --- | --- |
+| **Partizan** | Candidate generation, neural acquisition, exact-admission workflows, evidence records, and repertoire inspection | Correctness without an exact verifier |
+| [Thermograph](https://github.com/devinnicholson/thermograph) | Exact bounded comparison and canonicalization of explicit finite normal-play games | Chess or ruleset legality |
+| [Bitmesh](https://github.com/devinnicholson/bitmesh) | Conservative structural decomposition certificates for supplied chess boards | Component values, future independence, or reachability |
+| [Astralbase](https://github.com/devinnicholson/astralbase) | Bounded predecessor exploration and retrograde proof propagation from caller-declared seeds | Draw completeness, persistent tablebases, or CGT canonicalization |
+
+Partizan composes these layers through typed, content-addressed records. A
+downstream result inherits the intersection of their declared scopes; combining
+records never enlarges an upstream guarantee.
 
 ## Why Partizan exists
 
@@ -265,10 +283,10 @@ combinatorial-game experiments:
 - content hashes and manifests for retained evidence; and
 - a Python package backed by a small Rust/PyO3 extension.
 
-The current supported statement is deliberately narrow:
+The current supported statement is deliberately bounded:
 
-> Partizan is an experimental suite for structural decomposition and
-> combinatorial-game representations in constrained chess positions.
+> Partizan is an experimental orchestrator for bounded exact short games,
+> proof-carrying fixed-value repertoire search, and constrained-chess adapters.
 
 The following capabilities remain future work:
 
