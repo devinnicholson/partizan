@@ -60,6 +60,21 @@ class ReleaseTrainContractTests(unittest.TestCase):
             actual = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
             self.assertEqual(actual, expected, relative)
 
+    def test_ci_isolates_main_and_gate_s_cargo_patch_homes(self) -> None:
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        main_home = "${{ runner.temp }}/partizan-main-cargo-home"
+        gate_s_home = "${{ runner.temp }}/partizan-gate-s-cargo-home"
+
+        self.assertNotIn('Path(os.environ.get("CARGO_HOME"', workflow)
+        self.assertIn(
+            'cargo_home = runner_temp / "partizan-main-cargo-home"', workflow
+        )
+        self.assertIn(
+            'gate_s_home = runner_temp / "partizan-gate-s-cargo-home"', workflow
+        )
+        self.assertEqual(workflow.count(f"CARGO_HOME: {gate_s_home}"), 2)
+        self.assertGreaterEqual(workflow.count(f"CARGO_HOME: {main_home}"), 5)
+
 
 if __name__ == "__main__":
     unittest.main()
