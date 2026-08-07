@@ -581,6 +581,186 @@ function MotifCard({
   );
 }
 
+const composerReadings: Record<
+  GraphPosition["label"],
+  { descriptor: string; summary: string; relation: string }
+> = {
+  A: {
+    descriptor: "Option-rich form",
+    summary:
+      "The complete game has 19 nodes and 18 edges. It carries the largest literal proof surface in this three-form motif.",
+    relation:
+      "Its complete literal game differs from both contracted alternatives.",
+  },
+  B: {
+    descriptor: "Contracted form",
+    summary:
+      "Removing 2→3 changes the quotient and contracts the complete game to 15 nodes and 14 edges.",
+    relation:
+      "It shares a byte-identical complete literal game with C while retaining a different graph embodiment.",
+  },
+  C: {
+    descriptor: "Re-embodied form",
+    summary:
+      "Adding 6→0 changes the graph quotient while the complete game remains byte-identical to B.",
+    relation:
+      "It exposes representational freedom inside one literal game as well as one exact value.",
+  },
+};
+
+function ComposerStudio() {
+  const [inspectedLabel, setInspectedLabel] =
+    useState<GraphPosition["label"]>("B");
+  const [chosenLabel, setChosenLabel] =
+    useState<GraphPosition["label"] | null>(null);
+  const inspected =
+    motif.positions.find((position) => position.label === inspectedLabel) ??
+    motif.positions[1];
+  const reading = composerReadings[inspected.label];
+
+  return (
+    <section className="composer-studio" id="composer-studio" aria-labelledby="composer-studio-title">
+      <header className="composer-studio-heading">
+        <div>
+          <span>Composer&apos;s desk · paper example</span>
+          <p>Order-7 Digraph Placement · target 0 · independently replayed</p>
+        </div>
+        <h2 id="composer-studio-title">
+          Choose what the proof
+          <em> leaves open.</em>
+        </h2>
+        <p>
+          Three forms have passed the same exact admission condition. Inspect
+          their complete option structures and graph embodiments, then choose
+          one to carry forward.
+        </p>
+      </header>
+
+      <div className="creative-authority" aria-label="Creative division of labor">
+        <div>
+          <span>01</span>
+          <strong>Acquisition policy</strong>
+          <small>directs verifier attention</small>
+        </div>
+        <i aria-hidden="true">→</i>
+        <div>
+          <span>02</span>
+          <strong>Exact comparison</strong>
+          <small>admits value 0 only</small>
+        </div>
+        <i aria-hidden="true">→</i>
+        <div>
+          <span>03</span>
+          <strong>Composer</strong>
+          <small>selects the encounter</small>
+        </div>
+      </div>
+
+      <div className="composer-workbench">
+        <aside className="locked-target" aria-label="Locked exact target">
+          <span className="result-kicker">Admission condition</span>
+          <div className="locked-value">
+            <span>v(x)</span>
+            <strong>0</strong>
+          </div>
+          <p>
+            Every available form is mutually equal to the target under Conway
+            comparison. Selection cannot alter this certificate.
+          </p>
+          <dl>
+            <div>
+              <dt>available forms</dt>
+              <dd>3</dd>
+            </div>
+            <div>
+              <dt>exact relation</dt>
+              <dd>A = B = C</dd>
+            </div>
+            <div>
+              <dt>aesthetic score</dt>
+              <dd>unassigned</dd>
+            </div>
+          </dl>
+        </aside>
+
+        <div className="composer-candidates" aria-label="Certified forms">
+          <div className="candidate-shelf-heading">
+            <span className="result-kicker">Certified alternatives</span>
+            <p>Select a card to inspect its remaining degrees of freedom.</p>
+          </div>
+          <div className="composer-candidate-grid">
+            {motif.positions.map((position) => {
+              const active = position.label === inspected.label;
+              const chosen = position.label === chosenLabel;
+              return (
+                <button
+                  type="button"
+                  className={`composer-candidate ${active ? "active" : ""} ${chosen ? "chosen" : ""}`}
+                  aria-pressed={active}
+                  onClick={() => setInspectedLabel(position.label)}
+                  key={position.candidate_sha256}
+                >
+                  <span className="candidate-index">Form {position.label}</span>
+                  <DigraphBoard position={position} phase={3} />
+                  <span className="candidate-descriptor">
+                    {composerReadings[position.label].descriptor}
+                  </span>
+                  <span className="candidate-measure">
+                    {position.literal_game_nodes} nodes · {position.graph_arc_count} arcs
+                  </span>
+                  {chosen && <span className="chosen-mark">carried forward</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <article className="composer-inspection" aria-live="polite">
+          <div className="inspection-heading">
+            <span className="result-kicker">Form under inspection</span>
+            <span className="inspection-status">
+              <i /> exact value certified
+            </span>
+          </div>
+          <h3>
+            <span>{inspected.label}</span>
+            {reading.descriptor}
+          </h3>
+          <p>{reading.summary}</p>
+          <div className="inspection-relation">
+            <span>What remains different</span>
+            <p>{reading.relation}</p>
+          </div>
+          <dl className="inspection-digests">
+            <div>
+              <dt>q(x) · graph quotient</dt>
+              <dd title={inspected.quotient_sha256}>{shortHash(inspected.quotient_sha256)}</dd>
+            </div>
+            <div>
+              <dt>ℓ(x) · complete game</dt>
+              <dd title={inspected.literal_game_sha256}>{shortHash(inspected.literal_game_sha256)}</dd>
+            </div>
+          </dl>
+          <button
+            type="button"
+            className="carry-forward"
+            onClick={() => setChosenLabel(inspected.label)}
+          >
+            {chosenLabel === inspected.label
+              ? `Form ${inspected.label} selected`
+              : `Carry form ${inspected.label} forward`}
+            <span aria-hidden="true">→</span>
+          </button>
+          <p className="selection-boundary">
+            This choice records a human compositional decision. It does not
+            enter the equality certificate or create an aesthetic ranking.
+          </p>
+        </article>
+      </div>
+    </section>
+  );
+}
+
 function PolicyVerdict() {
   const learnedDiscoveries =
     policyResult.observed_analysis.total_discoveries.neural_toggle_one_ranker;
@@ -1331,6 +1511,10 @@ export function PartizanExperience() {
             <span aria-hidden="true"> · </span>
             arrows to examine
           </p>
+          <a className="composer-shortcut" href="#composer-studio">
+            Open composer&apos;s desk
+            <span aria-hidden="true">↓</span>
+          </a>
         </div>
       </section>
 
@@ -1351,6 +1535,8 @@ export function PartizanExperience() {
           embodiment. Exact value remains zero throughout.
         </p>
       </div>
+
+      <ComposerStudio />
 
       <RepertoireBrowser />
 

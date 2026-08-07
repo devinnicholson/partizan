@@ -43,6 +43,17 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(html, /CGT value unasserted here/);
   assert.match(html, /Correctness is the entrance\./);
   assert.match(html, /The search continues inside\./);
+  assert.match(html, /Open composer&#x27;s desk/);
+  assert.match(html, /Composer&#x27;s desk · paper example/);
+  assert.match(html, /Choose what the proof/);
+  assert.match(html, /leaves open\./);
+  assert.match(html, /Acquisition policy/);
+  assert.match(html, /Exact comparison/);
+  assert.match(html, /selects the encounter/);
+  assert.match(html, /Certified alternatives/);
+  assert.match(html, /Carry form B forward/);
+  assert.match(html, /aesthetic score/i);
+  assert.match(normalizedHtml, /A = B = C/);
   assert.match(html, /og\.png/);
   assert.match(html, /remove 2→3/i);
   assert.match(html, /add 6→0/i);

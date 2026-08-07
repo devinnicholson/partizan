@@ -8,6 +8,13 @@ mechanically selected A → B → C motif with event and equality-certificate
 provenance. The other targets remain aggregate-only until checked
 representative records are attached.
 
+The composer's desk opens directly on that value-0 motif. A practitioner can
+inspect the three certified forms, compare graph and complete-game identities,
+and record which form to carry forward. This selection stays outside the
+equality certificate and does not imply an aesthetic ranking.
+
+![Partizan composer's desk](../docs/media/fixed-value-composer.png)
+
 The browser's policy-result contract gives each verified proposal policy the
 same evidence vocabulary. The current site contains one verified policy result:
 the frozen seeded unstructured repertoire. Learned-policy certification, human

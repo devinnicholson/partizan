@@ -270,11 +270,15 @@ available for historical replay.
 
 The live, evidence-backed instrument in [`visualizer/`](visualizer/) opens with
 a machine-verified replay of the thirteen-ply Elkies composition published by
-Lewis Stiller. It then synchronizes two KQK boards, animates each immediate
-mating witness, reveals the 19-node and 11-node literal games, and presents
-Partizan's exact equality certificate.
+Lewis Stiller. Its composer's desk then opens a replay-certified value-0 motif:
+three graph forms whose exact value remains fixed while their graph quotient
+and complete option structure change. A practitioner can inspect each form and
+choose one to carry forward. That human selection remains outside the equality
+certificate and creates no aesthetic score.
 
-Both displayed artifacts are generated from native records:
+![Partizan composer's desk](docs/media/fixed-value-composer.png)
+
+The displayed evidence is generated from native records:
 
 ```bash
 PYTHONPATH=python python3 scripts/build_elkies_study_evidence.py --check

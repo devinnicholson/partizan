@@ -64,6 +64,27 @@ line adds previous/next controls, a complete clickable score, six annotated
 landmarks, and scoped arrow-key navigation. Responsive layouts and
 reduced-motion preferences apply throughout.
 
+## Composer's desk
+
+The composer's desk loads the mechanically selected `A → B → C` target-0 motif
+from the completed order-7 study. All three forms have already passed mutual
+Conway comparison against the same target. The interface keeps three roles
+visible:
+
+1. the acquisition policy directs verifier attention;
+2. exact comparison controls admission to the value-0 repertoire; and
+3. the composer inspects the admitted forms and chooses one for further work.
+
+Form A contains 19 literal nodes and 18 literal edges. Removing `2→3` produces
+form B, changes the graph quotient, and contracts the complete literal game to
+15 nodes and 14 edges. Adding `6→0` produces form C, changes the graph quotient
+again, and leaves the complete literal-game digest byte-identical to B. The
+interface exposes those certified differences without ranking the forms.
+
+Choosing **Carry form forward** records only browser-local interaction state.
+It does not alter an evidence artifact, update the repertoire, or enter the
+equality certificate.
+
 ## Crossing evidence contract
 
 `scripts/build_visualizer_evidence.py` produces
