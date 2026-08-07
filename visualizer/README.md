@@ -12,11 +12,18 @@ technical drawer. Aesthetic ranking remains outside this instrument.
 
 The displayed values come from checked evidence in `public/evidence/`:
 
+- `fixed-value-atlas.json.gz` is the complete browser atlas, stored with
+  deterministic gzip encoding. `fixed-value-atlas.manifest.json` binds its
+  compressed and decoded bytes to the public Pages artifact.
 - `fixed-value-motif.json` records the three forms and their exact relation.
 - `repertoire-browser.json` binds the motif to the completed held-out study.
 - `elkies-study.json` records the historical chess source cited on the page.
 
 The application uses vinext and is packaged for OpenAI Sites.
+
+The same application can be built for the repository Pages path by setting
+`PARTIZAN_ASSET_BASE` and `NEXT_PUBLIC_PARTIZAN_BASE_PATH` to
+`/partizan-reproducibility/`.
 
 ```bash
 npm ci
