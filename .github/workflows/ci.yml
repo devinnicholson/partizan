@@ -17,7 +17,7 @@ jobs:
         working-directory: visualizer
     steps:
       # actions/checkout v4
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
       # actions/setup-node v4.4.0
@@ -42,12 +42,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # actions/checkout v4
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
       - name: Checkout frozen Bitmesh candidate
         # actions/checkout v4.3.1
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: devinnicholson/bitmesh
           ref: 410550c0964004cd7ba9677539f17ae82c139dd8
@@ -55,7 +55,7 @@ jobs:
           persist-credentials: false
       - name: Checkout frozen Thermograph candidate
         # actions/checkout v4.3.1
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: devinnicholson/thermograph
           ref: 32d6bfbc966f47a87e7249d4ed8818370288e079
@@ -63,7 +63,7 @@ jobs:
           persist-credentials: false
       - name: Checkout frozen Astralbase candidate
         # actions/checkout v4.3.1
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: devinnicholson/astralbase
           ref: 0e36d14b78a7a4915689e510bff6d7c0f20152e4
