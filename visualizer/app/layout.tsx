@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 
-const title = "Partizan | Different Forms, One Value";
+const title = "Partizan | A Fixed-Value Atlas";
 const description =
-  "Explore 21,697 certified Digraph Placement forms as they gather into 16,120 complete games and three exact values.";
+  "An interactive atlas of 21,697 certified order-7 Digraph Placement graphs, grouped into 16,120 complete games and three exact values.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: socialImage,
           width: 1536,
           height: 1024,
-          alt: "Editorial illustration of many graph forms gathering into three fixed values.",
+          alt: "Graph forms grouped by complete-game identity and exact value in the Partizan fixed-value atlas.",
         },
       ],
     },
@@ -49,8 +49,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  colorScheme: "light",
-  themeColor: "#eee9de",
+  colorScheme: "dark",
+  themeColor: "#090908",
 };
 
 export default function RootLayout({

@@ -112,6 +112,11 @@ const elkies = elkiesJson as HistoricalEvidence;
 const numberFormat = new Intl.NumberFormat("en-US");
 const layerNames = ["Graph form", "Complete game", "Exact value"] as const;
 const layerCounts = [21_697, 16_120, 3] as const;
+const nextLayerActions = [
+  "Group by complete game",
+  "Group by exact value",
+  "Show graph forms",
+] as const;
 const atlasColors = ["#d7b168", "#e8e1d4", "#9b968b"] as const;
 
 const graphCoordinates = [
@@ -421,7 +426,7 @@ function AtlasCanvas({
       context.strokeRect(focusX + 0.5, focusY + 0.5, focusWidth - 1, focusHeight - 1);
       context.fillStyle = "#e96f58";
       context.font = "10px SFMono-Regular, Roboto Mono, monospace";
-      context.fillText("CERTIFIED CROSSING INSIDE VALUE 0", focusX + 20, focusY + 26);
+      context.fillText("VALUE 0 CASE STUDY", focusX + 20, focusY + 26);
 
       for (const [x, radius] of [[aX, 66], [bcX, 80]] as const) {
         context.beginPath();
@@ -465,8 +470,8 @@ function AtlasCanvas({
       context.fillText("add 6→0", bcX + 54, centerY - 1);
       context.fillStyle = "#f5f0e4";
       context.font = "16px Iowan Old Style, Baskerville, serif";
-      context.fillText("different complete game", aX, focusY + focusHeight - 22);
-      context.fillText("one complete game", bcX, focusY + focusHeight - 22);
+      context.fillText("A: distinct complete game", aX, focusY + focusHeight - 22);
+      context.fillText("B and C: same complete game", bcX, focusY + focusHeight - 22);
       context.restore();
     }
 
@@ -587,7 +592,7 @@ function AtlasCanvas({
       role="img"
       tabIndex={0}
       aria-describedby="atlas-keyboard-help"
-      aria-label={`${numberFormat.format(layerCounts[layer])} ${layerNames[layer].toLowerCase()} identities across the three target values studied. Click near a mark to inspect a certified graph form.`}
+      aria-label={`${numberFormat.format(layerCounts[layer])} ${layerNames[layer].toLowerCase()} identities across the three target values. Select a mark to inspect a certified graph form.`}
       onClick={(event) => onSelect(pick(event.clientX, event.clientY))}
       onKeyDown={handleKeyDown}
     />
@@ -622,14 +627,14 @@ function SpecimenPanel({
     const largest = Math.max(...atlas.groups.map((group) => group.c));
     return (
       <aside className="specimen-panel empty" aria-label="Atlas guide">
-        <p className="eyebrow">Inside the atlas</p>
+        <p className="eyebrow">Observed multiplicity</p>
         <strong>{numberFormat.format(multiFormGroups.length)}</strong>
-        <p>complete games have more than one graph embodiment.</p>
+        <p>complete-game identities contain multiple graph quotients.</p>
         <div>
-          <span>Largest island</span>
+          <span>Largest equivalence class</span>
           <b>{largest} forms</b>
         </div>
-        <p className="panel-hint">Click a mark or use the arrow keys after focusing the atlas.</p>
+        <p className="panel-hint">Select a mark. Arrow keys move between forms.</p>
       </aside>
     );
   }
@@ -654,7 +659,7 @@ function SpecimenPanel({
         blueVertices={decodedBlue(item.m)}
       />
       <dl className="specimen-facts">
-        <div><dt>Complete-game island</dt><dd>{numberFormat.format(group.c)} graph {group.c === 1 ? "form" : "forms"}</dd></div>
+        <div><dt>Complete-game class</dt><dd>{numberFormat.format(group.c)} graph {group.c === 1 ? "form" : "forms"}</dd></div>
         <div><dt>Complete-game nodes</dt><dd>{item.n}</dd></div>
         <div><dt>Birthday</dt><dd>{item.b}</dd></div>
         <div><dt>Source event</dt><dd>{numberFormat.format(item.i)}</dd></div>
@@ -667,19 +672,19 @@ function SpecimenPanel({
       {groupMembers.length > 1 && (
         <div className="specimen-actions">
           <button type="button" onClick={() => onSelect(nextIndex)}>
-            Show another embodiment
+            Next graph form
           </button>
           <button
             type="button"
             onClick={() => setCompareGroup(compareOpen ? null : selectedGroupIndex)}
           >
-            {compareOpen ? "Close comparison" : "Compare two forms"}
+            {compareOpen ? "Close comparison" : "Compare graph forms"}
           </button>
         </div>
       )}
       {compareOpen && comparisonItem && (
         <div className="specimen-compare">
-          <p>Same complete game. Different graph quotient.</p>
+          <p>Both graph quotients map to the same complete game.</p>
           <DirectedGraph
             compact
             label={`form ${nextIndex + 1}`}
@@ -728,13 +733,14 @@ function AtlasStage({
     <section className="atlas-section" id="atlas" aria-labelledby="atlas-title">
       <header className="atlas-intro">
         <div>
-          <p className="eyebrow">The observed fixed-value repertoire</p>
-          <h1 id="atlas-title">21,697 certified forms. Three exact values.</h1>
+          <p className="eyebrow">Observed dataset</p>
+          <h1 id="atlas-title">21,697 certified graph forms across three exact values.</h1>
         </div>
         <p>
-          Every mark is one quotient-distinct order-7 graph from the verified
-          study. Change the identity layer to watch the same repertoire gather
-          into complete games and exact values.
+          Each mark is a quotient-distinct order-7 graph recovered in the
+          study. The controls apply two further equivalence relations: graph
+          forms that induce the same recursive game, then games with the same
+          exact combinatorial value.
         </p>
       </header>
 
@@ -767,7 +773,7 @@ function AtlasStage({
               setHighlightMotif(false);
             }}
           >
-            {layer === 2 ? "Release the forms" : "Compress by identity"}
+            {nextLayerActions[layer]}
             <span aria-hidden="true">→</span>
           </button>
         </div>
@@ -794,10 +800,10 @@ function AtlasStage({
           </div>
 
           <p className="sr-only" id="atlas-keyboard-help">
-            Click or tap near a mark to inspect it. With the canvas focused, use
-            the Left and Right Arrow keys to move between forms and Escape to
-            close the specimen. The layer buttons and A, B, C focus provide
-            shorter keyboard paths through the repertoire.
+            Select a mark to inspect it. With the canvas focused, use the Left
+            and Right Arrow keys to move between forms and Escape to close the
+            specimen. The layer controls and A, B, C case study provide shorter
+            keyboard paths through the dataset.
           </p>
 
           {atlas ? (
@@ -838,7 +844,7 @@ function AtlasStage({
                     <b>→</b>
                     <span><strong>3</strong><small>exact values</small></span>
                   </div>
-                  <small>Source-bound coordinates · 5.3 MB evidence map</small>
+                  <small>Coordinates derived from the verified dataset · 5.3 MB</small>
                 </div>
               )}
             </div>
@@ -854,10 +860,10 @@ function AtlasStage({
               }}
               disabled={!atlas}
             >
-              {highlightMotif ? "Close A, B, C focus" : "Locate A, B, and C"}
+              {highlightMotif ? "Close case study" : "Show A, B, and C"}
             </button>
             <button type="button" onClick={onFindCrossing}>
-              Find the crossing <span aria-hidden="true">↓</span>
+              Open the case study <span aria-hidden="true">↓</span>
             </button>
           </div>
         </div>
@@ -873,13 +879,13 @@ function AtlasStage({
             {layer === 0
               ? "Horizontal position follows directed-arc count; vertical position follows complete-game node count."
               : layer === 1
-                ? "Each island is one complete game. Packing separates islands; distance does not measure similarity."
-                : "The study examined three target values. The marks remain visible inside each identity."}
+                ? "Each outlined class is one complete game. Packing separates classes; distance does not encode similarity."
+                : "The study examined three target values. Each mark still denotes one observed graph form."}
           </p>
         </footer>
       </div>
       <p className="claim-boundary">
-        The display covers the observed repertoire. The total mathematical fiber is not estimated.
+        These counts describe the observed sample. The total number of representations for each value is unknown.
       </p>
     </section>
   );
@@ -1001,10 +1007,10 @@ function CrossingJourney({ atlas }: { atlas: AtlasData | null }) {
     >
       <header className="crossing-header">
         <div>
-          <p className="eyebrow">A path through value zero</p>
-          <h2 id="crossing-title">Find the crossing</h2>
+          <p className="eyebrow">Case study: value 0</p>
+          <h2 id="crossing-title">Three graph forms, two complete games, one value</h2>
         </div>
-        <div className="journey-progress" aria-label="Crossing steps">
+        <div className="journey-progress" aria-label="Case-study steps">
           {Array.from({ length: 5 }, (_, index) => (
             <button
               type="button"
@@ -1033,7 +1039,7 @@ function CrossingJourney({ atlas }: { atlas: AtlasData | null }) {
         {step === 1 && (
           <div className="graph-comparison">
             <DirectedGraph label="Form A" name={A.name} arcs={A.arcs} blueVertices={A.blue_vertices} highlightedArc={[2, 3]} />
-            <div className="change-column"><strong>remove</strong><code>2→3</code><span>four complete-game nodes disappear</span></div>
+            <div className="change-column"><strong>remove</strong><code>2→3</code><span>the complete-game graph loses four nodes</span></div>
             <DirectedGraph label="Form B" name={B.name} arcs={B.arcs} blueVertices={B.blue_vertices} />
           </div>
         )}
@@ -1041,7 +1047,7 @@ function CrossingJourney({ atlas }: { atlas: AtlasData | null }) {
         {step === 2 && (
           <div className="graph-comparison">
             <DirectedGraph label="Form B" name={B.name} arcs={B.arcs} blueVertices={B.blue_vertices} />
-            <div className="change-column"><strong>add</strong><code>6→0</code><span>the complete-game digest stays identical</span></div>
+            <div className="change-column"><strong>add</strong><code>6→0</code><span>the complete-game digest is unchanged</span></div>
             <DirectedGraph label="Form C" name={C.name} arcs={C.arcs} blueVertices={C.blue_vertices} highlightedArc={[6, 0]} />
           </div>
         )}
@@ -1052,22 +1058,25 @@ function CrossingJourney({ atlas }: { atlas: AtlasData | null }) {
               <DirectedGraph compact label="B" name="21 arcs" arcs={B.arcs} blueVertices={B.blue_vertices} />
               <DirectedGraph compact label="C" name="22 arcs" arcs={C.arcs} blueVertices={C.blue_vertices} highlightedArc={[6, 0]} />
             </div>
-            <div className="collapse-arrow"><span>same literal digest</span><b aria-hidden="true">↓</b></div>
+            <div className="collapse-arrow"><span>identical complete-game digest</span><b aria-hidden="true">↓</b></div>
             {atlas && <LiteralDagFigure dag={atlas.motif_dags.B} />}
           </div>
         )}
 
         {step === 4 && (
           <div className="identity-result">
-            <p>Mathematics pronounces them identical. Their forms remain radically different.</p>
+            <p>
+              A, B, and C have the same exact value. Their graph quotients are
+              pairwise distinct, and A maps to a different complete game from B and C.
+            </p>
             <div className="island-result">
               <div><span>A’s complete game</span><strong>{aGroupCount} forms</strong></div>
               <div><span>B/C complete game</span><strong>{bGroupCount} forms</strong></div>
             </div>
             <div className="identity-equations">
-              <code>q(A), q(B), q(C) pairwise different</code>
-              <code>ℓ(A) ≠ ℓ(B) = ℓ(C)</code>
-              <code>v(A) = v(B) = v(C) = 0</code>
+              <code>q(A), q(B), q(C): pairwise distinct graph quotients</code>
+              <code>ℓ(A) ≠ ℓ(B) = ℓ(C): two complete games</code>
+              <code>v(A) = v(B) = v(C) = 0: one exact value</code>
             </div>
           </div>
         )}
@@ -1078,11 +1087,11 @@ function CrossingJourney({ atlas }: { atlas: AtlasData | null }) {
           <span>0{step + 1}</span>
           <p>
             {[
-              "Enter the observed value-zero repertoire.",
-              "A and B occupy different complete-game islands.",
-              "B and C are different graph embodiments of one complete game.",
-              "The two surface graphs resolve to one option structure.",
-              "Two complete-game islands remain inside the same exact value.",
+              "Value 0 contains 7,555 observed graph quotients and 6,386 complete games.",
+              "Removing arc 2→3 maps A to a different complete game, B.",
+              "Adding arc 6→0 maps B to graph form C without changing the complete game.",
+              "B and C have the same complete-game directed acyclic graph.",
+              "A, B, and C are distinct graph quotients with exact value 0.",
             ][step]}
           </p>
         </div>
@@ -1090,7 +1099,7 @@ function CrossingJourney({ atlas }: { atlas: AtlasData | null }) {
           type="button"
           onClick={() => setStep((current) => (current === 4 ? 0 : current + 1))}
         >
-          {step === 4 ? "Replay" : "Continue"} <span aria-hidden="true">→</span>
+          {step === 4 ? "Restart" : "Next"} <span aria-hidden="true">→</span>
         </button>
       </footer>
     </section>
@@ -1098,7 +1107,7 @@ function CrossingJourney({ atlas }: { atlas: AtlasData | null }) {
 }
 
 function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
-  const [copyState, setCopyState] = useState("Copy source authority");
+  const [copyState, setCopyState] = useState("Copy verification record");
 
   async function copyAuthority() {
     if (!atlas) return;
@@ -1120,29 +1129,41 @@ function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
   return (
     <section className="evidence-ledger" id="evidence" aria-labelledby="evidence-title">
       <header>
-        <p className="eyebrow">Evidence</p>
-        <h2 id="evidence-title">Every mark returns to a replayed event.</h2>
+        <p className="eyebrow">Verification</p>
+        <h2 id="evidence-title">The atlas is derived from the independently replayed event ledger.</h2>
       </header>
       <div className="ledger-grid">
         <div><strong>73,728</strong><span>source proposals</span></div>
         <div><strong>21,697</strong><span>quotient-unique forms</span></div>
         <div><strong>16,120</strong><span>complete-game identities</span></div>
-        <div><strong>{atlas?.source.negative_test_families_rejected ?? "—"}</strong><span>corruption families rejected</span></div>
+        <div><strong>{atlas?.source.negative_test_families_rejected ?? "pending"}</strong><span>corruption families rejected</span></div>
       </div>
       <div className="ledger-notes">
         <p>
-          Partizan proposes graph forms. The exact verifier determines their
-          combinatorial-game value. The visitor chooses which certified forms
-          to inspect.
+          Partizan proposes graph forms. The exact verifier computes the
+          combinatorial-game value of each proposal. This interface lets the
+          reader inspect the certified results at three levels of identity.
         </p>
         <p>
-          Lewis Stiller found an endgame kernel. Noam Elkies composed a study
-          around it. This atlas exposes a comparable division of labor between
-          search, proof, and human selection.
+          Stiller used computation to locate an endgame kernel, and Elkies
+          recomposed it as a chess study. That history motivates the workflow
+          used here: machine search enumerates certified possibilities, and a
+          person selects the representation.
+        </p>
+        <p>
+          The reported results concern structural novelty and certified
+          equality. Aesthetic preference was not evaluated.
         </p>
       </div>
       <div className="ledger-actions">
-        <button type="button" onClick={copyAuthority} disabled={!atlas}>{copyState}</button>
+        <button
+          type="button"
+          onClick={copyAuthority}
+          disabled={!atlas}
+          title="Copies the atlas hash, source hashes, counts, and target definitions."
+        >
+          {copyState}
+        </button>
         <a href={elkies.source.url} target="_blank" rel="noreferrer">Historical source</a>
         <a href="https://github.com/devinnicholson/partizan" target="_blank" rel="noreferrer">Source code</a>
       </div>
@@ -1187,8 +1208,8 @@ export function PartizanExperience() {
         <span>Fixed-value atlas</span>
         <nav aria-label="Page links">
           <a href="#atlas">Atlas</a>
-          <a href="#crossing">Crossing</a>
-          <a href="#evidence">Evidence</a>
+          <a href="#crossing">Case study</a>
+          <a href="#evidence">Verification</a>
         </nav>
       </header>
 
@@ -1197,7 +1218,7 @@ export function PartizanExperience() {
       <EvidenceLedger atlas={atlas} />
 
       <footer className="footer">
-        <span>Independent replay passed</span>
+        <span>Independent replay: passed</span>
         <span>completion {shortHash(motif.completion_sha256)}</span>
       </footer>
     </main>
