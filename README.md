@@ -272,7 +272,8 @@ The site in [`visualizer/`](visualizer/) shows three order-7 Digraph Placement
 positions with exact value 0. A reader can compare their graphs, inspect their
 complete-game identities, and export an exact pair-comparison record. The
 overlay marks shared arcs and the arcs found only in either form, making the
-structural change visible without weakening the certificate boundary.
+structural change visible before revealing the exact mathematical relation.
+Machine-readable evidence remains available in a secondary technical drawer.
 
 The displayed evidence is generated from native records:
 

@@ -6,9 +6,10 @@ game from forms B and C; B and C share a complete game.
 
 The interface compares one pair at a time. Its graph overlay separates shared
 arcs from arcs found only in either form, while the result panel reports exact
-value, graph-quotient identity, and complete-game identity. A reader can copy or
-download the comparison as JSON with its source completion hash and full
-records. The page does not create an aesthetic score.
+value, graph-quotient identity, and complete-game identity. Readers move between
+the two forms and reveal their exact relation. Machine-readable hashes and JSON
+exports remain in a secondary technical drawer. The page does not create an
+aesthetic score.
 
 The displayed values come from checked evidence in `public/evidence/`:
 

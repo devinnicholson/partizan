@@ -252,7 +252,8 @@ summary:focus-visible {
   transform: rotate(var(--edge-angle));
   transform-origin: left center;
   background: #8d897f;
-  transition: height 160ms ease, background 160ms ease;
+  opacity: 1;
+  transition: height 220ms ease, background 220ms ease, opacity 220ms ease;
 }
 
 .graph-edge::after {
@@ -287,6 +288,26 @@ summary:focus-visible {
 
 .graph-edge.right-only::after {
   border-left-color: var(--blue);
+}
+
+.comparison-graph.view-left .graph-edge.right-only,
+.comparison-graph.view-right .graph-edge.left-only {
+  opacity: 0;
+}
+
+.comparison-graph.view-left .graph-edge.left-only,
+.comparison-graph.view-right .graph-edge.right-only {
+  height: 1px;
+  background: #8d897f;
+}
+
+.comparison-graph.view-left .graph-edge.left-only::after,
+.comparison-graph.view-right .graph-edge.right-only::after {
+  border-left-color: #8d897f;
+}
+
+.comparison-graph.view-difference .graph-edge.shared {
+  opacity: 0.32;
 }
 
 .graph-node {
@@ -349,6 +370,34 @@ summary:focus-visible {
   background: var(--blue);
 }
 
+.view-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: min(100%, 650px);
+  margin: 10px auto 0;
+  border: 1px solid var(--line);
+}
+
+.view-controls button {
+  padding: 10px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+}
+
+.view-controls button:last-child {
+  border-right: 0;
+}
+
+.view-controls button:hover,
+.view-controls button.active {
+  color: var(--panel);
+  background: var(--ink);
+}
+
 .comparison-panel {
   min-width: 0;
   padding: clamp(28px, 4vw, 46px);
@@ -361,6 +410,53 @@ summary:focus-visible {
   font-weight: 400;
   letter-spacing: -0.03em;
   line-height: 1.05;
+}
+
+.reveal-prompt p,
+.relation-copy {
+  margin: -10px 0 24px;
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.reveal-button {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--ink);
+  color: var(--panel);
+  background: var(--ink);
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.reveal-button:hover {
+  border-color: var(--rust);
+  background: var(--rust);
+}
+
+.relation-result {
+  animation: relation-enter 280ms ease-out both;
+}
+
+.equation {
+  margin: 16px 0 0;
+  color: var(--rust);
+  font-family: var(--serif);
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+}
+
+@keyframes relation-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .comparison-facts {
@@ -430,7 +526,7 @@ summary:focus-visible {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-top: 22px;
+  margin: 4px 0 16px;
 }
 
 .record-actions button {

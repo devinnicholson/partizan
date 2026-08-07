@@ -22,11 +22,12 @@ q(A), q(B), q(C) are pairwise distinct
 ```
 
 The page exposes these values through three pairwise comparisons. Each overlay
-shows shared arcs in gray and pair-specific arcs in rust or blue. The result
-panel reports whether the graph quotient and complete game remain identical.
-It can copy or download a JSON record containing the exact relation, arc
-differences, source completion hash, and full records for the chosen pair. No
-interaction alters the evidence, repertoire, or equality certificate.
+shows either form alone or their pairwise difference. Revealing the exact
+relation reports whether the graph quotient and complete game remain identical.
+A secondary technical drawer can copy or download a JSON record containing the
+exact relation, arc differences, source completion hash, and full records for
+the chosen pair. No interaction alters the evidence, repertoire, or equality
+certificate.
 
 ## Evidence
 

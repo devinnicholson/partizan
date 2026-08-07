@@ -50,6 +50,7 @@ type HistoricalEvidence = {
 };
 
 type ArcState = "shared" | "left-only" | "right-only";
+type GraphView = "left" | "right" | "difference";
 
 const motif = motifJson as FixedValueMotif;
 const elkies = elkiesJson as HistoricalEvidence;
@@ -133,9 +134,11 @@ function GraphEdge({
 function ComparisonGraph({
   left,
   right,
+  view,
 }: {
   left: GraphPosition;
   right: GraphPosition;
+  view: GraphView;
 }) {
   const leftKeys = new Set(left.arcs.map(arcKey));
   const rightKeys = new Set(right.arcs.map(arcKey));
@@ -145,7 +148,7 @@ function ComparisonGraph({
 
   return (
     <div
-      className="comparison-graph"
+      className={`comparison-graph view-${view}`}
       aria-label={`Overlay of forms ${left.label} and ${right.label}. Rust arcs occur only in ${left.label}; blue arcs occur only in ${right.label}.`}
     >
       {[...allArcs.entries()].map(([key, [from, to]]) => {
@@ -161,7 +164,9 @@ function ComparisonGraph({
       {graphCoordinates.map((coordinate, vertex) => (
         <span
           className={`graph-node ${
-            left.blue_vertices.includes(vertex) ? "left-player" : "right-player"
+            (view === "right" ? right : left).blue_vertices.includes(vertex)
+              ? "left-player"
+              : "right-player"
           }`}
           key={vertex}
           style={
@@ -177,9 +182,15 @@ function ComparisonGraph({
       ))}
 
       <div className="graph-legend" aria-hidden="true">
-        <span><i className="left-key" />only {left.label}</span>
-        <span><i className="shared-key" />shared</span>
-        <span><i className="right-key" />only {right.label}</span>
+        {view === "difference" ? (
+          <>
+            <span><i className="left-key" />only {left.label}</span>
+            <span><i className="shared-key" />shared</span>
+            <span><i className="right-key" />only {right.label}</span>
+          </>
+        ) : (
+          <span><i className="shared-key" />form {view === "left" ? left.label : right.label}</span>
+        )}
       </div>
     </div>
   );
@@ -187,7 +198,9 @@ function ComparisonGraph({
 
 function PairWorkbench() {
   const [pairKey, setPairKey] = useState<PairKey>("B:C");
-  const [copyState, setCopyState] = useState("Copy JSON");
+  const [view, setView] = useState<GraphView>("left");
+  const [revealed, setRevealed] = useState(false);
+  const [copyState, setCopyState] = useState("Copy evidence JSON");
   const pair = pairOptions.find((option) => option.key === pairKey) ?? pairOptions[0];
   const left = getPosition(pair.left);
   const right = getPosition(pair.right);
@@ -232,6 +245,9 @@ function PairWorkbench() {
   const changeText = comparison.sameLiteralGame
     ? "The graph changes. The complete game stays the same."
     : "The graph and complete game both change.";
+  const relationText = comparison.sameLiteralGame
+    ? `Mathematics identifies ${left.label} and ${right.label} as value 0 and as the same complete game. Their graph quotients remain different.`
+    : `Both forms have value 0. Their complete games and graph quotients remain different.`;
 
   return (
     <section className="workbench" id="compare" aria-labelledby="compare-title">
@@ -250,7 +266,9 @@ function PairWorkbench() {
               key={option.key}
               onClick={() => {
                 setPairKey(option.key);
-                setCopyState("Copy JSON");
+                setView("left");
+                setRevealed(false);
+                setCopyState("Copy evidence JSON");
               }}
             >
               {option.left} / {option.right}
@@ -262,62 +280,117 @@ function PairWorkbench() {
       <div className="workbench-grid">
         <div className="graph-panel">
           <div className="value-lock">
-            <span>Exact relation</span>
-            <strong>v({left.label}) = v({right.label}) = 0</strong>
+            <span>Visible structure</span>
+            <strong>
+              {view === "left"
+                ? `Form ${left.label}`
+                : view === "right"
+                  ? `Form ${right.label}`
+                  : "Pairwise difference"}
+            </strong>
           </div>
-          <ComparisonGraph left={left} right={right} />
+          <ComparisonGraph left={left} right={right} view={view} />
+          <div className="view-controls" aria-label="Change graph view">
+            <button
+              type="button"
+              className={view === "left" ? "active" : ""}
+              aria-pressed={view === "left"}
+              onClick={() => setView("left")}
+            >
+              Form {left.label}
+            </button>
+            <button
+              type="button"
+              className={view === "right" ? "active" : ""}
+              aria-pressed={view === "right"}
+              onClick={() => setView("right")}
+            >
+              Form {right.label}
+            </button>
+            <button
+              type="button"
+              className={view === "difference" ? "active" : ""}
+              aria-pressed={view === "difference"}
+              onClick={() => setView("difference")}
+            >
+              Difference
+            </button>
+          </div>
         </div>
 
         <aside className="comparison-panel" aria-live="polite">
-          <p className="eyebrow">Result</p>
-          <h3>{changeText}</h3>
+          <p className="eyebrow">Mathematical relation</p>
+          {!revealed ? (
+            <div className="reveal-prompt">
+              <h3>Two structures are visible. What survives the change?</h3>
+              <p>
+                Move between the forms, then reveal the exact comparison.
+              </p>
+              <button
+                type="button"
+                className="reveal-button"
+                aria-expanded="false"
+                onClick={() => {
+                  setRevealed(true);
+                  setView("difference");
+                }}
+              >
+                Reveal exact relation
+              </button>
+            </div>
+          ) : (
+            <div className="relation-result" id="exact-relation">
+              <p className="equation">v({left.label}) = v({right.label}) = 0</p>
+              <h3>{changeText}</h3>
+              <p className="relation-copy">{relationText}</p>
 
-          <dl className="comparison-facts">
-            <div>
-              <dt>Exact value</dt>
-              <dd className="same">same</dd>
-            </div>
-            <div>
-              <dt>Complete game</dt>
-              <dd className={comparison.sameLiteralGame ? "same" : "different"}>
-                {comparison.sameLiteralGame ? "same" : "different"}
-              </dd>
-            </div>
-            <div>
-              <dt>Graph quotient</dt>
-              <dd className={comparison.sameGraphQuotient ? "same" : "different"}>
-                {comparison.sameGraphQuotient ? "same" : "different"}
-              </dd>
-            </div>
-          </dl>
+              <dl className="comparison-facts">
+                <div>
+                  <dt>Exact value</dt>
+                  <dd className="same">same</dd>
+                </div>
+                <div>
+                  <dt>Complete game</dt>
+                  <dd className={comparison.sameLiteralGame ? "same" : "different"}>
+                    {comparison.sameLiteralGame ? "same" : "different"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Graph quotient</dt>
+                  <dd className={comparison.sameGraphQuotient ? "same" : "different"}>
+                    {comparison.sameGraphQuotient ? "same" : "different"}
+                  </dd>
+                </div>
+              </dl>
 
-          <div className="arc-difference">
-            <div>
-              <span>Only in {left.label}</span>
-              <strong>
-                {comparison.onlyLeft.length
-                  ? comparison.onlyLeft.map(arcKey).join(", ")
-                  : "none"}
-              </strong>
+              <div className="arc-difference">
+                <div>
+                  <span>Only in {left.label}</span>
+                  <strong>
+                    {comparison.onlyLeft.length
+                      ? comparison.onlyLeft.map(arcKey).join(", ")
+                      : "none"}
+                  </strong>
+                </div>
+                <div>
+                  <span>Only in {right.label}</span>
+                  <strong>
+                    {comparison.onlyRight.length
+                      ? comparison.onlyRight.map(arcKey).join(", ")
+                      : "none"}
+                  </strong>
+                </div>
+              </div>
             </div>
-            <div>
-              <span>Only in {right.label}</span>
-              <strong>
-                {comparison.onlyRight.length
-                  ? comparison.onlyRight.map(arcKey).join(", ")
-                  : "none"}
-              </strong>
-            </div>
-          </div>
-
-          <div className="record-actions">
-            <button type="button" onClick={copyComparison}>{copyState}</button>
-            <button type="button" onClick={downloadComparison}>Download record</button>
-          </div>
+          )}
 
           <details className="certificate-record">
-            <summary>Show exact digests</summary>
-            <dl>
+            <summary>Technical evidence and JSON</summary>
+            <div className="record-actions">
+              <button type="button" onClick={copyComparison}>{copyState}</button>
+              <button type="button" onClick={downloadComparison}>Download evidence JSON</button>
+            </div>
+            <dl className="digest-list">
               <div>
                 <dt>{left.label} graph quotient</dt>
                 <dd>{left.quotient_sha256}</dd>
