@@ -238,7 +238,9 @@ test("ships checked evidence and removes the starter preview", async () => {
   assert.equal(policyResult.independent_replay, true);
   assert.equal(policyResult.corruption_families_rejected, 20);
   assert.doesNotMatch(globalCss, /linear-gradient|radial-gradient/i);
-  assert.match(globalCss, /--paper-accent:\s*#963426/i);
+  assert.match(globalCss, /--paper:\s*#090908/i);
+  assert.match(globalCss, /--stage:\s*#090908/i);
+  assert.match(globalCss, /--paper-accent:\s*#e96f58/i);
   assert.match(globalCss, /min-height:\s*44px/i);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await access(new URL("../public/og.png", import.meta.url));
