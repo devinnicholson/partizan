@@ -6,6 +6,7 @@ import motifJson from "../public/evidence/fixed-value-motif.json";
 
 type Label = "A" | "B" | "C";
 type PairKey = "A:B" | "B:C" | "A:C";
+type Stage = 0 | 1 | 2;
 
 type GraphPosition = {
   label: Label;
@@ -49,9 +50,6 @@ type HistoricalEvidence = {
   };
 };
 
-type ArcState = "shared" | "left-only" | "right-only";
-type GraphView = "left" | "right" | "difference";
-
 const motif = motifJson as FixedValueMotif;
 const elkies = elkiesJson as HistoricalEvidence;
 
@@ -82,7 +80,7 @@ function arcKey([from, to]: [number, number]) {
 }
 
 function shortHash(value: string) {
-  return value.slice(0, 10);
+  return value.slice(0, 12);
 }
 
 function compareForms(left: GraphPosition, right: GraphPosition) {
@@ -102,11 +100,13 @@ function compareForms(left: GraphPosition, right: GraphPosition) {
 function GraphEdge({
   from,
   to,
-  state,
+  unique,
+  side,
 }: {
   from: number;
   to: number;
-  state: ArcState;
+  unique: boolean;
+  side: "left" | "right";
 }) {
   const start = graphCoordinates[from];
   const end = graphCoordinates[to];
@@ -117,7 +117,7 @@ function GraphEdge({
 
   return (
     <span
-      className={`graph-edge ${state}`}
+      className={`graph-edge ${unique ? `unique ${side}` : "shared"}`}
       style={
         {
           "--edge-x": `${start.x}%`,
@@ -131,80 +131,128 @@ function GraphEdge({
   );
 }
 
-function ComparisonGraph({
+function GraphFigure({
+  position,
+  counterpart,
+  side,
+  changedVertices,
+}: {
+  position: GraphPosition;
+  counterpart: GraphPosition;
+  side: "left" | "right";
+  changedVertices: Set<number>;
+}) {
+  const counterpartArcs = new Set(counterpart.arcs.map(arcKey));
+
+  return (
+    <figure
+      className={`graph-figure ${side}`}
+      aria-label={`Form ${position.label}, a seven-vertex Digraph Placement position with ${position.graph_arc_count} directed arcs.`}
+    >
+      <figcaption>
+        <span>Form {position.label}</span>
+        <strong>{position.name}</strong>
+      </figcaption>
+
+      <div className="graph-field">
+        {position.arcs.map(([from, to]) => (
+          <GraphEdge
+            from={from}
+            to={to}
+            unique={!counterpartArcs.has(arcKey([from, to]))}
+            side={side}
+            key={`${from}-${to}`}
+          />
+        ))}
+
+        {graphCoordinates.map((coordinate, vertex) => (
+          <span
+            className={`graph-node ${
+              position.blue_vertices.includes(vertex) ? "blue" : "red"
+            } ${changedVertices.has(vertex) ? "changed" : ""}`}
+            key={vertex}
+            style={
+              {
+                "--node-x": `${coordinate.x}%`,
+                "--node-y": `${coordinate.y}%`,
+              } as CSSProperties
+            }
+            aria-hidden="true"
+          >
+            {vertex}
+          </span>
+        ))}
+      </div>
+
+      <footer>
+        <span>{position.graph_arc_count} arcs</span>
+        <span>{position.literal_game_nodes} game nodes</span>
+      </footer>
+    </figure>
+  );
+}
+
+function IdentityPlate({
   left,
   right,
-  view,
+  sameLiteralGame,
+  visible,
 }: {
   left: GraphPosition;
   right: GraphPosition;
-  view: GraphView;
+  sameLiteralGame: boolean;
+  visible: boolean;
 }) {
-  const leftKeys = new Set(left.arcs.map(arcKey));
-  const rightKeys = new Set(right.arcs.map(arcKey));
-  const allArcs = new Map<string, [number, number]>();
-
-  [...left.arcs, ...right.arcs].forEach((arc) => allArcs.set(arcKey(arc), arc));
-
   return (
-    <div
-      className={`comparison-graph view-${view}`}
-      aria-label={`Overlay of forms ${left.label} and ${right.label}. Rust arcs occur only in ${left.label}; blue arcs occur only in ${right.label}.`}
-    >
-      {[...allArcs.entries()].map(([key, [from, to]]) => {
-        const state: ArcState =
-          leftKeys.has(key) && rightKeys.has(key)
-            ? "shared"
-            : leftKeys.has(key)
-              ? "left-only"
-              : "right-only";
-        return <GraphEdge from={from} to={to} state={state} key={key} />;
-      })}
-
-      {graphCoordinates.map((coordinate, vertex) => (
-        <span
-          className={`graph-node ${
-            (view === "right" ? right : left).blue_vertices.includes(vertex)
-              ? "left-player"
-              : "right-player"
-          }`}
-          key={vertex}
-          style={
-            {
-              "--node-x": `${coordinate.x}%`,
-              "--node-y": `${coordinate.y}%`,
-            } as CSSProperties
-          }
-          aria-hidden="true"
-        >
-          {vertex}
-        </span>
-      ))}
-
-      <div className="graph-legend" aria-hidden="true">
-        {view === "difference" ? (
-          <>
-            <span><i className="left-key" />only {left.label}</span>
-            <span><i className="shared-key" />shared</span>
-            <span><i className="right-key" />only {right.label}</span>
-          </>
-        ) : (
-          <span><i className="shared-key" />form {view === "left" ? left.label : right.label}</span>
-        )}
+    <div className="identity-plate" aria-hidden={!visible}>
+      <p className="identity-kicker">Exact comparison</p>
+      <h2>
+        {sameLiteralGame
+          ? "One complete game."
+          : "One exact value."}
+      </h2>
+      <div className="identity-stack">
+        <div>
+          <span>Graph quotient</span>
+          <code>q({left.label}) ≠ q({right.label})</code>
+          <strong>different</strong>
+        </div>
+        <div className={sameLiteralGame ? "identity-focus" : ""}>
+          <span>Complete game</span>
+          <code>
+            ℓ({left.label}) {sameLiteralGame ? "=" : "≠"} ℓ({right.label})
+          </code>
+          <strong>{sameLiteralGame ? "same" : "different"}</strong>
+        </div>
+        <div className="identity-focus">
+          <span>Exact value</span>
+          <code>v({left.label}) = v({right.label}) = 0</code>
+          <strong>same</strong>
+        </div>
       </div>
     </div>
   );
 }
 
-function PairWorkbench() {
+function CrossingTheater() {
   const [pairKey, setPairKey] = useState<PairKey>("B:C");
-  const [view, setView] = useState<GraphView>("left");
-  const [revealed, setRevealed] = useState(false);
+  const [stage, setStage] = useState<Stage>(0);
   const [copyState, setCopyState] = useState("Copy evidence JSON");
   const pair = pairOptions.find((option) => option.key === pairKey) ?? pairOptions[0];
   const left = getPosition(pair.left);
   const right = getPosition(pair.right);
   const comparison = useMemo(() => compareForms(left, right), [left, right]);
+
+  const changedVertices = useMemo(
+    () =>
+      new Set(
+        [...comparison.onlyLeft, ...comparison.onlyRight].flatMap(([from, to]) => [
+          from,
+          to,
+        ]),
+      ),
+    [comparison],
+  );
 
   const payload = useMemo(
     () => ({
@@ -242,191 +290,126 @@ function PairWorkbench() {
     URL.revokeObjectURL(url);
   }
 
-  const changeText = comparison.sameLiteralGame
-    ? "The graph changes. The complete game stays the same."
-    : "The graph and complete game both change.";
-  const relationText = comparison.sameLiteralGame
-    ? `Mathematics identifies ${left.label} and ${right.label} as value 0 and as the same complete game. Their graph quotients remain different.`
-    : `Both forms have value 0. Their complete games and graph quotients remain different.`;
+  const differences = [...comparison.onlyLeft, ...comparison.onlyRight];
+  const differenceText = differences.length
+    ? differences.map(arcKey).join(" and ")
+    : "no literal arcs";
+
+  const captions = [
+    `${left.label} and ${right.label} are different directed graphs.`,
+    `${differences.length === 1 ? "One arc changes" : `${differences.length} arcs change`}: ${differenceText}.`,
+    comparison.sameLiteralGame
+      ? `Their graph quotients differ. Their complete-game digest is identical.`
+      : `Their graph quotients and complete games differ. Their exact value is identical.`,
+  ];
+
+  const nextLabels = ["Isolate the change", "Test what survives", "Replay"];
 
   return (
-    <section className="workbench" id="compare" aria-labelledby="compare-title">
-      <header className="workbench-header">
+    <section
+      className={`crossing-theater stage-${stage}`}
+      id="crossing"
+      aria-labelledby="crossing-title"
+    >
+      <header className="theater-header">
         <div>
-          <p className="eyebrow">Exact pair comparison</p>
-          <h2 id="compare-title">{left.label} and {right.label}</h2>
+          <p className="eyebrow">A certified crossing</p>
+          <h1 id="crossing-title">What remains when correctness is fixed?</h1>
         </div>
-        <div className="pair-tabs" role="tablist" aria-label="Choose two forms">
+        <div className="pair-picker" aria-label="Choose a pair">
+          <span>Compare</span>
           {pairOptions.map((option) => (
             <button
               type="button"
-              role="tab"
-              aria-selected={option.key === pairKey}
               className={option.key === pairKey ? "active" : ""}
+              aria-pressed={option.key === pairKey}
               key={option.key}
               onClick={() => {
                 setPairKey(option.key);
-                setView("left");
-                setRevealed(false);
+                setStage(0);
                 setCopyState("Copy evidence JSON");
               }}
             >
-              {option.left} / {option.right}
+              {option.left}/{option.right}
             </button>
           ))}
         </div>
       </header>
 
-      <div className="workbench-grid">
-        <div className="graph-panel">
-          <div className="value-lock">
-            <span>Visible structure</span>
-            <strong>
-              {view === "left"
-                ? `Form ${left.label}`
-                : view === "right"
-                  ? `Form ${right.label}`
-                  : "Pairwise difference"}
-            </strong>
-          </div>
-          <ComparisonGraph left={left} right={right} view={view} />
-          <div className="view-controls" aria-label="Change graph view">
-            <button
-              type="button"
-              className={view === "left" ? "active" : ""}
-              aria-pressed={view === "left"}
-              onClick={() => setView("left")}
-            >
-              Form {left.label}
-            </button>
-            <button
-              type="button"
-              className={view === "right" ? "active" : ""}
-              aria-pressed={view === "right"}
-              onClick={() => setView("right")}
-            >
-              Form {right.label}
-            </button>
-            <button
-              type="button"
-              className={view === "difference" ? "active" : ""}
-              aria-pressed={view === "difference"}
-              onClick={() => setView("difference")}
-            >
-              Difference
-            </button>
-          </div>
+      <div className="visual-stage">
+        <div className="graph-pair">
+          <GraphFigure
+            position={left}
+            counterpart={right}
+            side="left"
+            changedVertices={changedVertices}
+          />
+          <GraphFigure
+            position={right}
+            counterpart={left}
+            side="right"
+            changedVertices={changedVertices}
+          />
         </div>
-
-        <aside className="comparison-panel" aria-live="polite">
-          <p className="eyebrow">Mathematical relation</p>
-          {!revealed ? (
-            <div className="reveal-prompt">
-              <h3>Two structures are visible. What survives the change?</h3>
-              <p>
-                Move between the forms, then reveal the exact comparison.
-              </p>
-              <button
-                type="button"
-                className="reveal-button"
-                aria-expanded="false"
-                onClick={() => {
-                  setRevealed(true);
-                  setView("difference");
-                }}
-              >
-                Reveal exact relation
-              </button>
-            </div>
-          ) : (
-            <div className="relation-result" id="exact-relation">
-              <p className="equation">v({left.label}) = v({right.label}) = 0</p>
-              <h3>{changeText}</h3>
-              <p className="relation-copy">{relationText}</p>
-
-              <dl className="comparison-facts">
-                <div>
-                  <dt>Exact value</dt>
-                  <dd className="same">same</dd>
-                </div>
-                <div>
-                  <dt>Complete game</dt>
-                  <dd className={comparison.sameLiteralGame ? "same" : "different"}>
-                    {comparison.sameLiteralGame ? "same" : "different"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Graph quotient</dt>
-                  <dd className={comparison.sameGraphQuotient ? "same" : "different"}>
-                    {comparison.sameGraphQuotient ? "same" : "different"}
-                  </dd>
-                </div>
-              </dl>
-
-              <div className="arc-difference">
-                <div>
-                  <span>Only in {left.label}</span>
-                  <strong>
-                    {comparison.onlyLeft.length
-                      ? comparison.onlyLeft.map(arcKey).join(", ")
-                      : "none"}
-                  </strong>
-                </div>
-                <div>
-                  <span>Only in {right.label}</span>
-                  <strong>
-                    {comparison.onlyRight.length
-                      ? comparison.onlyRight.map(arcKey).join(", ")
-                      : "none"}
-                  </strong>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <details className="certificate-record">
-            <summary>Technical evidence and JSON</summary>
-            <div className="record-actions">
-              <button type="button" onClick={copyComparison}>{copyState}</button>
-              <button type="button" onClick={downloadComparison}>Download evidence JSON</button>
-            </div>
-            <dl className="digest-list">
-              <div>
-                <dt>{left.label} graph quotient</dt>
-                <dd>{left.quotient_sha256}</dd>
-              </div>
-              <div>
-                <dt>{right.label} graph quotient</dt>
-                <dd>{right.quotient_sha256}</dd>
-              </div>
-              <div>
-                <dt>{left.label} complete game</dt>
-                <dd>{left.literal_game_sha256}</dd>
-              </div>
-              <div>
-                <dt>{right.label} complete game</dt>
-                <dd>{right.literal_game_sha256}</dd>
-              </div>
-            </dl>
-          </details>
-        </aside>
+        <IdentityPlate
+          left={left}
+          right={right}
+          sameLiteralGame={comparison.sameLiteralGame}
+          visible={stage === 2}
+        />
+        <div className="stage-index" aria-hidden="true">0{stage + 1}</div>
       </div>
 
-      <details className="form-records">
-        <summary>All three source records</summary>
-        <div className="record-table">
-          <div className="record-row record-head">
-            <span>Form</span><span>Game</span><span>Graph</span><span>Nodes</span><span>Arcs</span>
-          </div>
-          {motif.positions.map((position) => (
-            <div className="record-row" key={position.candidate_sha256}>
-              <strong>{position.label}</strong>
-              <code title={position.literal_game_sha256}>{shortHash(position.literal_game_sha256)}</code>
-              <code title={position.quotient_sha256}>{shortHash(position.quotient_sha256)}</code>
-              <span>{position.literal_game_nodes}</span>
-              <span>{position.graph_arc_count}</span>
-            </div>
+      <div className="theater-controls">
+        <div className="stage-caption" aria-live="polite">
+          <span>0{stage + 1}</span>
+          <p>{captions[stage]}</p>
+        </div>
+        <div className="stage-buttons" aria-label="Crossing stages">
+          {([0, 1, 2] as Stage[]).map((item) => (
+            <button
+              type="button"
+              className={stage === item ? "active" : ""}
+              aria-current={stage === item ? "step" : undefined}
+              key={item}
+              onClick={() => setStage(item)}
+            >
+              {item + 1}
+            </button>
           ))}
+        </div>
+        <button
+          type="button"
+          className="next-stage"
+          onClick={() => setStage((stage === 2 ? 0 : stage + 1) as Stage)}
+        >
+          {nextLabels[stage]} <span aria-hidden="true">→</span>
+        </button>
+      </div>
+
+      <details className="technical-evidence">
+        <summary>Technical evidence</summary>
+        <div className="technical-grid">
+          <div>
+            <span>{left.label} graph quotient</span>
+            <code>{left.quotient_sha256}</code>
+          </div>
+          <div>
+            <span>{right.label} graph quotient</span>
+            <code>{right.quotient_sha256}</code>
+          </div>
+          <div>
+            <span>{left.label} complete game</span>
+            <code>{left.literal_game_sha256}</code>
+          </div>
+          <div>
+            <span>{right.label} complete game</span>
+            <code>{right.literal_game_sha256}</code>
+          </div>
+        </div>
+        <div className="technical-actions">
+          <button type="button" onClick={copyComparison}>{copyState}</button>
+          <button type="button" onClick={downloadComparison}>Download evidence JSON</button>
         </div>
       </details>
     </section>
@@ -438,31 +421,39 @@ export function PartizanExperience() {
     <main className="experience" id="top">
       <header className="masthead">
         <a className="wordmark" href="#top">Partizan</a>
+        <span>Fixed-value repertoire</span>
         <nav aria-label="Page links">
-          <a href="#compare">Compare</a>
+          <a href="#crossing">Crossing</a>
           <a
             href="https://github.com/devinnicholson/partizan"
             target="_blank"
             rel="noreferrer"
-          >Source</a>
+          >
+            Source
+          </a>
         </nav>
       </header>
 
-      <section className="intro">
-        <div>
-          <p className="eyebrow">Order-7 Digraph Placement</p>
-          <h1>Three forms. One exact value.</h1>
-        </div>
-        <div className="intro-copy">
+      <CrossingTheater />
+
+      <section className="reading-note" aria-labelledby="reading-title">
+        <p className="eyebrow">The result</p>
+        <h2 id="reading-title">
+          Mathematics can identify two objects while their visible forms remain
+          different.
+        </h2>
+        <div className="reading-columns">
           <p>
-            Pick two forms. The overlay shows every changed arc and whether the
-            complete game changed with it.
+            Partizan searches inside a fixed value. The verifier admits exact
+            realizations; the repertoire preserves the structural differences
+            between them.
           </p>
-          <a href="#compare">Start with B / C</a>
+          <p>
+            The B/C crossing is the sharpest example in this set. Form C adds
+            the arc 6→0. The complete-game digest remains unchanged.
+          </p>
         </div>
       </section>
-
-      <PairWorkbench />
 
       <section className="evidence-strip" aria-label="Study evidence">
         <div>
@@ -477,20 +468,20 @@ export function PartizanExperience() {
           <strong>{motif.run.linked_motif_count.toLocaleString("en-US")}</strong>
           <span>linked motifs</span>
         </div>
-        <p>
-          Search proposes positions. Exact comparison admits them. A person
-          decides which relation to inspect or export.
-        </p>
+        <div>
+          <strong>{motif.run.negative_test_families_rejected}</strong>
+          <span>corruption families rejected</span>
+        </div>
       </section>
 
       <section className="history-note">
         <p>
           Lewis Stiller found an endgame kernel. Noam Elkies composed a study
-          around it. Partizan tests the same division of labor in combinatorial
-          games.
+          around it. Partizan carries that division of labor into a searchable
+          combinatorial-game repertoire.
         </p>
         <a href={elkies.source.url} target="_blank" rel="noreferrer">
-          {elkies.source.title}
+          Read the historical source
         </a>
       </section>
 

@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 
-const title = "Partizan | One Value, Three Forms";
+const title = "Partizan | Different Forms, One Value";
 const description =
-  "Compare three Digraph Placement positions with the same exact combinatorial-game value.";
+  "An interactive crossing through different Digraph Placement forms with the same exact combinatorial-game value.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
     requestHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = new URL(`${protocol}://${host}`);
-  const socialImage = new URL("/og.png", origin).toString();
+  const socialImage = new URL("/og-v2.png", origin).toString();
 
   return {
     metadataBase: origin,
@@ -43,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = {
   colorScheme: "light",
-  themeColor: "#f1eee5",
+  themeColor: "#eee9de",
 };
 
 export default function RootLayout({

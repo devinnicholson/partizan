@@ -268,11 +268,10 @@ available for historical replay.
 
 ## Live visualizer
 
-The site in [`visualizer/`](visualizer/) shows three order-7 Digraph Placement
-positions with exact value 0. A reader can compare their graphs, inspect their
-complete-game identities, and export an exact pair-comparison record. The
-overlay marks shared arcs and the arcs found only in either form, making the
-structural change visible before revealing the exact mathematical relation.
+The site in [`visualizer/`](visualizer/) presents three order-7 Digraph
+Placement positions with exact value 0 as a three-stage visual crossing. It
+first places two forms side by side, then isolates their changed arcs, and
+finally exposes the graph-quotient, complete-game, and exact-value relations.
 Machine-readable evidence remains available in a secondary technical drawer.
 
 The displayed evidence is generated from native records:

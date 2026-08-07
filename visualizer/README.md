@@ -4,12 +4,11 @@ This site compares three order-7 Digraph Placement positions with exact value
 0. Their graph quotients are pairwise distinct. Form A has a different complete
 game from forms B and C; B and C share a complete game.
 
-The interface compares one pair at a time. Its graph overlay separates shared
-arcs from arcs found only in either form, while the result panel reports exact
-value, graph-quotient identity, and complete-game identity. Readers move between
-the two forms and reveal their exact relation. Machine-readable hashes and JSON
-exports remain in a secondary technical drawer. The page does not create an
-aesthetic score.
+The interface compares one pair at a time through three stages: side-by-side
+structures, an isolated difference map, and the resulting identity stack. The
+identity stack reports graph-quotient identity, complete-game identity, and
+exact value. Machine-readable hashes and JSON exports remain in a secondary
+technical drawer. Aesthetic ranking remains outside this instrument.
 
 The displayed values come from checked evidence in `public/evidence/`:
 

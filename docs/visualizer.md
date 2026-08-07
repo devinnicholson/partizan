@@ -21,13 +21,14 @@ game digest.
 q(A), q(B), q(C) are pairwise distinct
 ```
 
-The page exposes these values through three pairwise comparisons. Each overlay
-shows either form alone or their pairwise difference. Revealing the exact
-relation reports whether the graph quotient and complete game remain identical.
-A secondary technical drawer can copy or download a JSON record containing the
-exact relation, arc differences, source completion hash, and full records for
-the chosen pair. No interaction alters the evidence, repertoire, or equality
-certificate.
+The page exposes these values through three pairwise comparisons. Each crossing
+moves through side-by-side structures, a difference map, and an identity stack.
+The difference map mutes shared arcs and preserves changed vertices as a fixed
+frame of reference. The identity stack reports graph quotient, complete game,
+and exact value. A secondary technical drawer can copy or download a JSON
+record containing the exact relation, arc differences, source completion hash,
+and full records for the chosen pair. No interaction alters the evidence,
+repertoire, or equality certificate.
 
 ## Evidence
 
