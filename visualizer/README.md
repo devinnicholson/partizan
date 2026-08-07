@@ -4,9 +4,11 @@ This site compares three order-7 Digraph Placement positions with exact value
 0. Their graph quotients are pairwise distinct. Form A has a different complete
 game from forms B and C; B and C share a complete game.
 
-The interface has one local interaction. A reader can inspect each certified
-form and select one. That selection does not change the equality certificate or
-create an aesthetic score.
+The interface compares one pair at a time. Its graph overlay separates shared
+arcs from arcs found only in either form, while the result panel reports exact
+value, graph-quotient identity, and complete-game identity. A reader can copy or
+download the comparison as JSON with its source completion hash and full
+records. The page does not create an aesthetic score.
 
 The displayed values come from checked evidence in `public/evidence/`:
 
