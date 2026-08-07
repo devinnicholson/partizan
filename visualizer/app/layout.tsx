@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 
-const title = "Partizan — One Value, Three Forms";
+const title = "Partizan | One Value, Three Forms";
 const description =
-  "Three certified realizations cross graph and game structure while exact combinatorial-game value remains fixed.";
+  "Compare three Digraph Placement positions with the same exact combinatorial-game value.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -42,8 +42,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  colorScheme: "dark",
-  themeColor: "#070807",
+  colorScheme: "light",
+  themeColor: "#f1eee5",
 };
 
 export default function RootLayout({

@@ -1,36 +1,23 @@
 # Partizan visualizer
 
-An interactive, evidence-backed presentation of Partizan's checked fixed-value
-crossing. The repertoire browser exposes the three frozen target results,
-defines the graph quotient `q(x)`, literal game `ℓ(x)`, and exact value `v(x)`,
-and keeps the study bindings beside the result. The value-0 record opens a
-mechanically selected A → B → C motif with event and equality-certificate
-provenance. The other targets remain aggregate-only until checked
-representative records are attached.
+This site compares three order-7 Digraph Placement positions with exact value
+0. Their graph quotients are pairwise distinct. Form A has a different complete
+game from forms B and C; B and C share a complete game.
 
-The composer's desk opens directly on that value-0 motif. A practitioner can
-inspect the three certified forms, compare graph and complete-game identities,
-and record which form to carry forward. This selection stays outside the
-equality certificate and does not imply an aesthetic ranking.
+The interface has one local interaction. A reader can inspect each certified
+form and select one. That selection does not change the equality certificate or
+create an aesthetic score.
 
-![Partizan composer's desk](../docs/media/fixed-value-composer.png)
+The displayed values come from checked evidence in `public/evidence/`:
 
-The browser's policy-result contract gives each verified proposal policy the
-same evidence vocabulary. The current site contains one verified policy result:
-the frozen seeded unstructured repertoire. Learned-policy certification, human
-ratings, and aesthetic scores remain outside the current evidence set.
+- `fixed-value-motif.json` records the three forms and their exact relation.
+- `repertoire-browser.json` binds the motif to the completed held-out study.
+- `elkies-study.json` records the historical chess source cited on the page.
 
-The KQK control evidence is rebuilt from the native chess adapter and exact
-recursive-order verifier:
+The application uses vinext and is packaged for OpenAI Sites.
 
 ```bash
-PYTHONPATH=../python python3 ../scripts/build_visualizer_evidence.py --check
+npm ci
+npm test
+npm run lint
 ```
-
-The order-7 browser manifests bind the completed held-out run, replay record,
-negative tests, and selected event certificates in:
-
-- `public/evidence/fixed-value-motif.json`
-- `public/evidence/repertoire-browser.json`
-
-The visualizer is a vinext application packaged for OpenAI Sites.

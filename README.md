@@ -268,15 +268,10 @@ available for historical replay.
 
 ## Live visualizer
 
-The live, evidence-backed instrument in [`visualizer/`](visualizer/) opens with
-a machine-verified replay of the thirteen-ply Elkies composition published by
-Lewis Stiller. Its composer's desk then opens a replay-certified value-0 motif:
-three graph forms whose exact value remains fixed while their graph quotient
-and complete option structure change. A practitioner can inspect each form and
-choose one to carry forward. That human selection remains outside the equality
-certificate and creates no aesthetic score.
-
-![Partizan composer's desk](docs/media/fixed-value-composer.png)
+The site in [`visualizer/`](visualizer/) shows three order-7 Digraph Placement
+positions with exact value 0. A reader can compare their graphs, inspect their
+complete-game identities, and select a form. The equality certificate admits
+the positions; aesthetic judgment stays with the reader.
 
 The displayed evidence is generated from native records:
 
