@@ -2,7 +2,8 @@
 
 Partizan is a claim-sensitive research codebase. Keep changes narrow,
 reproducible, and explicit about the evidence they add and the boundary of that
-evidence.
+evidence. Every commit contributed through a pull request must carry a
+Developer Certificate of Origin sign-off as described in [`DCO.md`](DCO.md).
 
 1. Open an issue describing the domain, expected result, and affected claim ID.
 2. Add or update a deterministic fixture before changing an algorithm.
@@ -34,6 +35,13 @@ Run the commands in the root README. Pull requests must pass format, strict
 Clippy, strict Rustdoc, locked tests, Python tests with zero required skips, all
 Wave validators, and frozen-artifact verification.
 
-Partizan is licensed [GPL-3.0-or-later](LICENSE). Contribution review still
-waits on the project owner publishing separate contribution terms (e.g. a
-CLA/DCO).
+Sign each commit with:
+
+```console
+git commit -s
+```
+
+The sign-off certifies the statement in [`DCO.md`](DCO.md). Copyright remains
+with contributors. Partizan is licensed
+[GPL-3.0-or-later](LICENSE). Report vulnerabilities through
+the private channel described in [`SECURITY.md`](SECURITY.md).

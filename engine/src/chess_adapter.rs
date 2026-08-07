@@ -11,14 +11,14 @@ use shakmaty::fen::Fen;
 use shakmaty::{Color, EnPassantMode, Position};
 use thermograph::CGTValue;
 
-pub(crate) const ADAPTER_VERSION: &str = "partizan.bounded_chess_adapter.native.v0.1";
+pub(crate) const ADAPTER_VERSION: &str = "partizan.bounded_chess_adapter.native.v0.2";
 pub(crate) const PROJECTION_DOMAIN_ID: &str = "formal_domain:bounded_chess_projection:v0";
 pub(crate) const PROJECTION_RULE: &str = "bounded_alternating_legal_move_normal_play_v1";
 const MAX_PLIES: i64 = 8;
 const MAX_NODE_BUDGET: i64 = 100_000;
-const ASTRALBASE_SOURCE_COMMIT: &str = "1ce02cfd3844ab1e5574be4e0c387f79784648bb";
-const BITMESH_SOURCE_COMMIT: &str = "b7c7858df2365d8ea4bd2f50ff2afbd51a6f8225";
-const THERMOGRAPH_SOURCE_COMMIT: &str = "381e88dad1a1259a4ccc1a015537f8a8acaf7474";
+const ASTRALBASE_SOURCE_COMMIT: &str = "0e36d14b78a7a4915689e510bff6d7c0f20152e4";
+const BITMESH_SOURCE_COMMIT: &str = "410550c0964004cd7ba9677539f17ae82c139dd8";
+const THERMOGRAPH_SOURCE_COMMIT: &str = "32d6bfbc966f47a87e7249d4ed8818370288e079";
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 struct ProjectionStats {

@@ -1,6 +1,7 @@
 # Bounded chess adapter
 
-Status: executable v0.1 contract for constrained FENs.
+Status: executable v0.2 contract for constrained FENs, with v0.1 replay
+compatibility.
 
 ## Purpose
 
@@ -22,7 +23,9 @@ Every output is a content-addressed adapter record. Accepted outputs carry the
 literal game and both structural identities. Refused outputs carry a stable
 reason code. `chess-verify` reconstructs the record from its FEN and settings
 and requires exact agreement. Each record also names the frozen Astralbase,
-Bitmesh, and Thermograph source-candidate commits used by clean-room CI.
+Bitmesh, and Thermograph source-candidate commits used by clean-room CI. New
+records use `partizan.bounded_chess_adapter.v0.2` and bind the hardened release
+candidates.
 
 ## Projection rule
 
@@ -144,10 +147,19 @@ their relationship as `literal_game_crossing`. This fixture holds the
 projection rule and resource settings fixed while the chess position and
 complete literal tree both change.
 
-## Record verification
+## Versioned record verification
 
-The Draft 2020-12 schema is
-`docs/schemas/partizan-bounded-chess-adapter-v0.1.schema.json`.
+The current Draft 2020-12 schema is
+`docs/schemas/partizan-bounded-chess-adapter-v0.2.schema.json`. The original
+`docs/schemas/partizan-bounded-chess-adapter-v0.1.schema.json` remains
+unchanged. Validation dispatches on `schema_version`: v0.2 requires the
+hardened source map, while v0.1 requires its original source map and native
+version. A checked-in golden v0.1 record is replayed in CI.
+The projection algorithm and structural payload are unchanged, so legacy
+replay reconstructs the projection with the current engine and restores the
+immutable v0.1 version and provenance fields before comparing the complete
+record.
+
 `validate_chess_adapter_record` additionally checks:
 
 - the content-addressed adapter ID;

@@ -7,7 +7,10 @@ import json
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
-from partizan.chess_adapter import adapt_chess_position
+from partizan.chess_adapter import (
+    adapt_chess_position,
+    validate_chess_adapter_record,
+)
 from partizan.fixed_value import (
     build_repertoire,
     load_json,
@@ -24,6 +27,7 @@ SCHEMA_NAMES = (
     "partizan-fixed-value-candidate-v0.1.schema.json",
     "partizan-fixed-value-repertoire-v0.1.schema.json",
     "partizan-bounded-chess-adapter-v0.1.schema.json",
+    "partizan-bounded-chess-adapter-v0.2.schema.json",
 )
 
 
@@ -69,17 +73,26 @@ def main() -> int:
         node_budget=100,
     )
     adapter_validator = Draft202012Validator(
-        schemas[SCHEMA_NAMES[3]], registry=registry
+        schemas[SCHEMA_NAMES[4]], registry=registry
     )
     adapter_validator.validate(accepted_adapter)
     adapter_validator.validate(refused_adapter)
+    legacy_adapter = load_json(
+        FIXTURE_DIRECTORY / "chess-adapter-v0.1.valid.json"
+    )
+    Draft202012Validator(
+        schemas[SCHEMA_NAMES[3]], registry=registry
+    ).validate(legacy_adapter)
+    legacy_errors = validate_chess_adapter_record(legacy_adapter)
+    if legacy_errors:
+        raise ValueError("; ".join(legacy_errors))
 
     replay_errors = validate_repertoire(repertoire)
     if replay_errors:
         raise ValueError("; ".join(replay_errors))
     print(
         "fixed-value schemas: ok "
-        f"(target=1, candidates={len(candidates)}, repertoire=1, adapters=2)"
+        f"(target=1, candidates={len(candidates)}, repertoire=1, adapters=3)"
     )
     return 0
 

@@ -1,0 +1,54 @@
+name: Research-validity report
+description: Report a mathematical, provenance, leakage, or reproducibility concern.
+title: "[validity] "
+labels: ["research-validity", "needs-triage"]
+body:
+  - type: input
+    id: claim
+    attributes:
+      label: Claim, protocol, or schema
+      placeholder: Claim ID, protocol name, schema ID, or documentation link
+    validations:
+      required: true
+  - type: input
+    id: artifact
+    attributes:
+      label: Source revision and artifact digest
+      placeholder: Commit SHA and SHA-256 when applicable
+    validations:
+      required: true
+  - type: textarea
+    id: concern
+    attributes:
+      label: Concern
+      description: State the exact discrepancy and why it affects the declared claim.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Independent reproduction or falsification
+      description: Include commands, oracle versions, seeds, and raw-output locations.
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Mathematical correctness
+        - Ruleset legality or completeness
+        - Certificate or replay validity
+        - Provenance or artifact integrity
+        - Data leakage or split contamination
+        - Reproducibility
+        - Claim scope
+    validations:
+      required: true
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: Disclosure
+      options:
+        - label: This report contains no security exploit or private data.
+          required: true

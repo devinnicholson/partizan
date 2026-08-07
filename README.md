@@ -28,7 +28,7 @@ finite combinatorial-game experiments.
 | Package | `partizan-cgt` 0.1.0 release candidate |
 | Interface | Python 3.10+ exact short-game API with a Rust/PyO3 chess core |
 | Platforms tested locally | macOS arm64, Rust 1.92, Python 3.14 |
-| Cross-platform CI | Passing on `main` for Linux, macOS, and Windows |
+| Cross-platform CI | Configured for Linux, macOS, and Windows; hardened candidate run pending |
 | License | [GPL-3.0-or-later](LICENSE) |
 | Stable API, registry package, or release tag | Pending |
 
@@ -36,18 +36,39 @@ The source code may be used, modified, and redistributed under the terms of
 GPL-3.0-or-later. See
 [`docs/release_blockers.md`](docs/release_blockers.md) for the remaining
 package and release requirements.
+The installed-package and source-checkout research surfaces are separated in
+[`docs/package_boundary.md`](docs/package_boundary.md).
+
+## Start in five minutes
+
+The bounded short-game API runs directly from a source checkout with Python
+3.10 or newer:
+
+```console
+git clone https://github.com/devinnicholson/partizan.git
+cd partizan
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=python python3 -m unittest \
+  tests.test_bounded_short_game \
+  tests.test_semantic_canonical_form -v
+PYTHONPATH=python python3 examples/bounded_short_game.py
+```
+
+These commands exercise exact four-way comparison, semantic canonicalization,
+both comparison-certificate versions, and the public example. Native chess
+adapters and the complete development suite require the Rust dependencies
+described in [`docs/development.md`](docs/development.md).
 
 ## Project family and responsibility
 
 Partizan is the public orchestration layer in a four-repository research
 stack. Each repository has a deliberately separate authority:
 
-| Repository | Responsibility | Does not establish |
+| Repository | Responsibility | Authority boundary |
 | --- | --- | --- |
-| **Partizan** | Candidate generation, neural acquisition, exact-admission workflows, evidence records, and repertoire inspection | Correctness without an exact verifier |
-| [Thermograph](https://github.com/devinnicholson/thermograph) | Exact bounded comparison and canonicalization of explicit finite normal-play games | Chess or ruleset legality |
-| [Bitmesh](https://github.com/devinnicholson/bitmesh) | Conservative structural decomposition certificates for supplied chess boards | Component values, future independence, or reachability |
-| [Astralbase](https://github.com/devinnicholson/astralbase) | Bounded predecessor exploration and retrograde proof propagation from caller-declared seeds | Draw completeness, persistent tablebases, or CGT canonicalization |
+| **Partizan** | Candidate generation, neural acquisition, exact-admission workflows, evidence records, and repertoire inspection | An exact verifier controls mathematical admission |
+| [Thermograph](https://github.com/devinnicholson/thermograph) | Exact bounded comparison and canonicalization of explicit finite normal-play games | A ruleset adapter controls legality and complete move generation |
+| [Bitmesh](https://github.com/devinnicholson/bitmesh) | Conservative structural decomposition certificates for supplied chess boards | Separate authorities establish component values, reachability, and future-play claims |
+| [Astralbase](https://github.com/devinnicholson/astralbase) | Bounded predecessor exploration and retrograde proof propagation from caller-declared seeds | Separate solvers cover draws, persistent tablebases, and CGT canonicalization |
 
 Partizan composes these layers through typed, content-addressed records. A
 downstream result inherits the intersection of their declared scopes; combining
@@ -241,7 +262,9 @@ fingerprints use a clock-free chess move-state key, preventing halfmove and
 fullmove counters from creating false variation.
 
 The rule, trust boundary, checked crossing, and schema are documented in
-[`docs/bounded_chess_adapter.md`](docs/bounded_chess_adapter.md).
+[`docs/bounded_chess_adapter.md`](docs/bounded_chess_adapter.md). New records
+use the v0.2 contract; the original v0.1 schema and a golden record remain
+available for historical replay.
 
 ## Live visualizer
 
@@ -375,6 +398,8 @@ partizan/
 
 Useful starting points:
 
+- [`docs/ecosystem_compatibility.md`](docs/ecosystem_compatibility.md) —
+  repository responsibilities, versions, toolchains, and release order
 - [`docs/architecture.md`](docs/architecture.md) — components and trust
   boundaries
 - [`docs/bounded_short_game.md`](docs/bounded_short_game.md) — bounded exact
@@ -386,6 +411,12 @@ Useful starting points:
   record
 - [`docs/experiment_matrix.md`](docs/experiment_matrix.md) — chronological
   experiments, including negative results
+- [`docs/artifact_policy.md`](docs/artifact_policy.md) — rules for retained
+  fixtures, manifests, and large generated outputs
+- [`docs/release_checklist.md`](docs/release_checklist.md) — gates for an
+  immutable public release
+- [`docs/repository_settings.md`](docs/repository_settings.md) — coordinated
+  GitHub metadata, branch, ruleset, and security settings
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — evidence and artifact requirements
 
 ## Reproducibility and evidence policy
@@ -423,5 +454,7 @@ is distributed under compatible copyleft terms. Remaining release gates
 (upstream registry publication, immutable tags, public release publication)
 are tracked in [`docs/release_blockers.md`](docs/release_blockers.md).
 
-Issues and research discussion are welcome. Code contributions should wait
-until contribution terms (e.g. a CLA or DCO) are finalized.
+Issues and research discussion are welcome. Contributions use the
+[`DCO.md`](DCO.md) sign-off described in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Security reports follow [`SECURITY.md`](SECURITY.md), and general support
+questions follow [`SUPPORT.md`](SUPPORT.md).

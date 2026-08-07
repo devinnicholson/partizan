@@ -14,9 +14,54 @@ MATE_FRONTIER_FEN = "7k/5K2/6Q1/8/8/8/8/8 w - - 0 1"
 OUTSIDE_DOMAIN_FEN = "8/8/8/8/8/8/8/4K2k w - - 0 1"
 CROSSING_LEFT_FEN = "7k/8/5K2/8/8/8/8/6Q1 w - - 0 1"
 CROSSING_RIGHT_FEN = "7k/8/5KQ1/8/8/8/8/8 w - - 0 1"
+LEGACY_V01_FIXTURE = (
+    Path(__file__).resolve().parent
+    / "fixtures/fixed_value/chess-adapter-v0.1.valid.json"
+)
 
 
 class BoundedChessAdapterTests(unittest.TestCase):
+    def test_current_contract_binds_hardened_release_candidates(self) -> None:
+        record = partizan.adapt_chess_position(
+            TERMINAL_FEN,
+            max_plies=2,
+            node_budget=100,
+        )
+
+        self.assertEqual(
+            record["schema_version"],
+            "partizan.bounded_chess_adapter.v0.2",
+        )
+        self.assertEqual(
+            record["native_adapter_version"],
+            "partizan.bounded_chess_adapter.native.v0.2",
+        )
+        self.assertEqual(
+            {
+                name: source["source_commit"]
+                for name, source in record["upstream_sources"].items()
+            },
+            {
+                "astralbase": "0e36d14b78a7a4915689e510bff6d7c0f20152e4",
+                "bitmesh": "410550c0964004cd7ba9677539f17ae82c139dd8",
+                "thermograph": "32d6bfbc966f47a87e7249d4ed8818370288e079",
+            },
+        )
+
+    def test_legacy_v01_record_remains_replayable(self) -> None:
+        record = json.loads(LEGACY_V01_FIXTURE.read_text(encoding="utf-8"))
+
+        self.assertEqual(partizan.validate_chess_adapter_record(record), [])
+
+        mixed = deepcopy(record)
+        mixed["schema_version"] = "partizan.bounded_chess_adapter.v0.2"
+        mixed["adapter_id"] = partizan.chess_adapter_id_for(mixed)
+        self.assertIn(
+            "adapter native_adapter_version must be "
+            "partizan.bounded_chess_adapter.native.v0.2",
+            partizan.validate_chess_adapter_record(mixed, replay=False),
+        )
+
     def test_terminal_checkmate_projects_to_zero(self) -> None:
         record = partizan.adapt_chess_position(
             TERMINAL_FEN,

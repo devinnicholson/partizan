@@ -1,0 +1,68 @@
+name: Reproducible defect
+description: Report an implementation, installation, or documentation defect.
+title: "[bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Security-sensitive reports belong in the private channel described in
+        SECURITY.md.
+  - type: input
+    id: revision
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0 or full commit SHA
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, architecture, Python version, and Rust version.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Reproduction
+      description: Provide the smallest input and exact command.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed result
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result and supporting contract
+      description: Link the relevant API, schema, certificate, or documentation contract.
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Affected surface
+      options:
+        - Python API or CLI
+        - Rust/native adapter
+        - Exact short-game semantics
+        - Certificate or schema validation
+        - Packaging or installation
+        - Visualizer
+        - Documentation
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Reporter checks
+      options:
+        - label: I removed credentials, private paths, and unpublished data.
+          required: true
+        - label: I checked that the behavior falls within the documented bounded domain.
+          required: true

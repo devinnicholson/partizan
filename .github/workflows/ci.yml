@@ -50,7 +50,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: devinnicholson/bitmesh
-          ref: b7c7858df2365d8ea4bd2f50ff2afbd51a6f8225
+          ref: 410550c0964004cd7ba9677539f17ae82c139dd8
           path: _upstreams/bitmesh
           persist-credentials: false
       - name: Checkout frozen Thermograph candidate
@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: devinnicholson/thermograph
-          ref: 381e88dad1a1259a4ccc1a015537f8a8acaf7474
+          ref: 32d6bfbc966f47a87e7249d4ed8818370288e079
           path: _upstreams/thermograph
           persist-credentials: false
       - name: Checkout frozen Astralbase candidate
@@ -66,7 +66,7 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: devinnicholson/astralbase
-          ref: 1ce02cfd3844ab1e5574be4e0c387f79784648bb
+          ref: 0e36d14b78a7a4915689e510bff6d7c0f20152e4
           path: _upstreams/astralbase
           persist-credentials: false
       # actions/setup-python v5
@@ -102,12 +102,31 @@ jobs:
               f'{name} = {{ path = "{path}" }}\n' for name, path in paths.items()
           )
           (cargo_home / "config.toml").write_text(config, encoding="utf-8")
+          gate_s_home = Path(os.environ["RUNNER_TEMP"]) / "partizan-gate-s-cargo-home"
+          gate_s_home.mkdir(parents=True, exist_ok=True)
+          gate_s_config = (
+              "[patch.\"crates-io\"]\n"
+              f'bitmesh = {{ path = "{paths["bitmesh"]}" }}\n'
+          )
+          (gate_s_home / "config.toml").write_text(
+              gate_s_config, encoding="utf-8"
+          )
       - name: Rust format
-        run: cargo fmt --manifest-path engine/Cargo.toml --all -- --check
+        run: |
+          cargo fmt --manifest-path engine/Cargo.toml --all -- --check
+          cargo fmt --manifest-path engine/gate_s_checker/Cargo.toml -- --check
       - name: Rust tests
         run: cargo test --manifest-path engine/Cargo.toml --locked --all-targets --no-default-features
+      - name: Gate-S Rust tests
+        env:
+          CARGO_HOME: ${{ runner.temp }}/partizan-gate-s-cargo-home
+        run: cargo test --manifest-path engine/gate_s_checker/Cargo.toml --locked --all-targets
       - name: Strict Clippy
         run: cargo clippy --manifest-path engine/Cargo.toml --locked --all-targets --all-features -- -D warnings
+      - name: Gate-S strict Clippy
+        env:
+          CARGO_HOME: ${{ runner.temp }}/partizan-gate-s-cargo-home
+        run: cargo clippy --manifest-path engine/gate_s_checker/Cargo.toml --locked --all-targets -- -D warnings
       - name: Strict Rustdoc
         env:
           RUSTDOCFLAGS: -D warnings -D missing-docs
@@ -119,12 +138,25 @@ jobs:
           python -m pip install "numpy>=1.26,<3"
           python -m pip install -r scripts/requirements-fixed-value-schema.txt
           python -m pip install --no-build-isolation --no-deps .
+      - name: Build, inspect, and install source distribution
+        if: runner.os == 'Linux'
+        run: |
+          maturin sdist --out dist
+          python scripts/check_sdist_contents.py dist/partizan_cgt-0.1.0.tar.gz
+          python -m tarfile -e dist/partizan_cgt-0.1.0.tar.gz dist/extracted
+          cd dist/extracted/partizan_cgt-0.1.0
+          maturin build --locked --out ../../wheel
+          python -m pip install --force-reinstall --no-deps ../../wheel/partizan_cgt-0.1.0-*.whl
+          python -m unittest tests.test_bounded_short_game tests.test_semantic_canonical_form tests.test_chess_adapter -v
+          python -m partizan.fixed_value_cli --help
       - name: Python and artifact checks
         run: |
           python -m unittest discover -s tests -v
           python engine/test.py
+          python scripts/check_repository_hygiene.py
           python agents/label_schema.py self-test
           python agents/label_schema.py validate agents/fixtures/label_rows.valid.jsonl docs/signature_target_exact_wave_47.jsonl docs/signature_target_mixed_hook_exact_wave_52.jsonl docs/signature_target_mixed_hook_exact_wave_55_rpf36.jsonl
           python scripts/validate_waves.py
           python scripts/validate_fixed_value_schemas.py
+          python scripts/build_visualizer_evidence.py --check
           python scripts/verify_release.py

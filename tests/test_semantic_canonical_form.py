@@ -298,9 +298,16 @@ class DayTwoCanonicalConformanceTests(unittest.TestCase):
             bounded.semantic_canonical_form_bounded(tiny_to_json(game))
             for game in day_two
         ]
+        actual_ids = sorted(
+            {result.semantic_canonical_id_v1 for result in results}
+        )
+        fixture = (
+            ROOT / "tests" / "fixtures" / "semantic" / "day2-semantic-ids-v1.txt"
+        )
+        expected_ids = fixture.read_text(encoding="ascii").splitlines()
         self.assertEqual(
-            len({result.semantic_canonical_id_v1 for result in results}),
-            22,
+            actual_ids,
+            expected_ids,
         )
         self.assertTrue(
             all(

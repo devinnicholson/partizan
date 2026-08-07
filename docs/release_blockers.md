@@ -6,9 +6,8 @@ handoff or release note:
 
 1. **Project license: resolved.** Partizan is licensed
    [GPL-3.0-or-later](../LICENSE) (see `LICENSE`, `engine/Cargo.toml`,
-   `engine/gate_s_checker/Cargo.toml`, and `pyproject.toml`). Code
-   contributions still wait on separate contribution terms (e.g. a CLA/DCO),
-   which remain unpublished.
+   `engine/gate_s_checker/Cargo.toml`, and `pyproject.toml`). Contributions use
+   the checked-in Developer Certificate of Origin 1.1 sign-off.
 2. **Third-party license review: resolved.** Shakmaty's own repository
    (confirmed via its GitHub license metadata, not just Maturin's SBOM
    heuristic) is GPL-3.0. It is a direct, load-bearing dependency of
@@ -44,10 +43,10 @@ handoff or release note:
 8. **Bounded short-game release evidence:** the independent Python comparison
    and canonicalization lanes have local source-only validation, including all
    65,536 ordered day-2 comparisons, 256 canonicalizations, and 22 semantic
-   identities. The additive v2 certificate and package changes still require a
-   clean public cross-platform CI run after integration. Cross-language
-   semantic-ID agreement with the independently maintained Thermograph lane
-   remains a release gate.
+   identities. The Python and Thermograph implementations reproduce the same
+   frozen 22-ID set locally. The additive v2 certificate, shared conformance
+   fixture, and package changes still require a clean public cross-platform CI
+   run after integration.
 
 P04 and P05 are scientific boundaries separate from release chores: learned
 benefit remains negative/null, while chess temperature, learned agency, and

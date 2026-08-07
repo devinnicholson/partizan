@@ -47,6 +47,8 @@ ASTRALBASE_SHARD_COMMAND = (
     "--locked",
     "--offline",
     "--quiet",
+    "--features",
+    "partizan-dataset",
     "--",
     "--sample-label-shard",
 )
@@ -56,6 +58,8 @@ ASTRALBASE_FRONTIER_SHARD_BASE_COMMAND = (
     "--locked",
     "--offline",
     "--quiet",
+    "--features",
+    "partizan-dataset",
     "--",
     "--frontier-label-shard",
 )
@@ -65,6 +69,8 @@ ASTRALBASE_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
     "--locked",
     "--offline",
     "--quiet",
+    "--features",
+    "partizan-dataset",
     "--",
     "--family-frontier-label-shard",
 )
@@ -74,6 +80,8 @@ ASTRALBASE_EXPANDED_FAMILY_FRONTIER_SHARD_BASE_COMMAND = (
     "--locked",
     "--offline",
     "--quiet",
+    "--features",
+    "partizan-dataset",
     "--",
     "--expanded-family-frontier-label-shard",
 )
@@ -83,6 +91,8 @@ ASTRALBASE_COMPOSITION_HARD_TARGET_SHARD_BASE_COMMAND = (
     "--locked",
     "--offline",
     "--quiet",
+    "--features",
+    "partizan-dataset",
     "--",
     "--composition-hard-target-shard",
 )
@@ -1513,6 +1523,8 @@ def verify_discovery_pool(
                 "--locked",
                 "--offline",
                 "--quiet",
+                "--features",
+                "partizan-dataset",
                 "--",
                 "--verify-target-candidates",
                 str(request_path),

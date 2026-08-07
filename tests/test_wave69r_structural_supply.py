@@ -5,6 +5,7 @@ import importlib.util
 from itertools import islice, combinations
 import json
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import unittest
@@ -361,6 +362,42 @@ class GateSContractTests(unittest.TestCase):
         ):
             schema = json.loads((ROOT / "docs/schemas" / name).read_text())
             self.assertIs(schema["additionalProperties"], False)
+
+    def test_failure_code_registry_matches_checker_and_schemas(self) -> None:
+        result_schema = json.loads(
+            (
+                ROOT
+                / "docs/schemas/partizan-structural-supply-result-v0.1.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        evidence_schema = json.loads(
+            (
+                ROOT
+                / "docs/schemas/partizan-structural-supply-evidence-v0.1.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        result_codes = set(
+            result_schema["properties"]["failure_code"]["enum"]
+        ) - {None}
+        evidence_codes = set(
+            evidence_schema["properties"]["audit"]["properties"]
+            ["failure_code_counts"]["items"]["properties"]["code"]["enum"]
+        )
+        checker_source = (
+            ROOT / "engine/gate_s_checker/src/main.rs"
+        ).read_text(encoding="utf-8")
+        checker_codes = {
+            code
+            for code in re.findall(
+                r'"((?:input|checker|structure|bitmesh)\.[a-z0-9_.]+)"',
+                checker_source,
+            )
+            if not code.endswith(".")
+        }
+
+        self.assertEqual(gate_s._FAILURE_CODES, result_codes)
+        self.assertEqual(gate_s._FAILURE_CODES, evidence_codes)
+        self.assertEqual(gate_s._FAILURE_CODES, checker_codes)
 
     def test_python_lane_has_no_evaluator_dependencies_or_options(self) -> None:
         source = MODULE.read_text(encoding="utf-8")

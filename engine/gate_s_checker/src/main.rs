@@ -9,10 +9,11 @@ use std::io::{self, BufRead, Write};
 use std::panic::{self, AssertUnwindSafe};
 use std::str::FromStr;
 
+#[cfg(test)]
+use bitmesh::DecompositionStatus;
 use bitmesh::{
     ConservativeLegalIndependenceError, ConservativeLegalIndependenceProof,
-    DecompositionCertificateValidationError, DecompositionStatus,
-    certify_conservative_legal_independence,
+    DecompositionCertificateValidationError, certify_conservative_legal_independence,
 };
 use serde::{Deserialize, Serialize};
 use shakmaty::Board;
@@ -214,6 +215,8 @@ fn decomposition_validation_code(error: &DecompositionCertificateValidationError
         Error::DuplicateComponentRoot { .. } => "duplicate_component_root",
         Error::CrossComponentAdjacency { .. } => "cross_component_adjacency",
         Error::StrictComponentMaskNotClosed { .. } => "strict_component_mask_not_closed",
+        Error::PositionContextTooLong { .. } => "position_context_too_long",
+        Error::PositionContextNamespaceTooLong { .. } => "position_context_namespace_too_long",
     }
 }
 
@@ -271,6 +274,12 @@ fn failure_code(error: &ConservativeLegalIndependenceError) -> &'static str {
                 "strict_component_mask_not_closed" => {
                     "bitmesh.invalid_certificate.strict_component_mask_not_closed"
                 }
+                "position_context_too_long" => {
+                    "bitmesh.invalid_certificate.position_context_too_long"
+                }
+                "position_context_namespace_too_long" => {
+                    "bitmesh.invalid_certificate.position_context_namespace_too_long"
+                }
                 _ => unreachable!("every pinned validation code is mapped"),
             }
         }
@@ -282,6 +291,7 @@ fn failure_code(error: &ConservativeLegalIndependenceError) -> &'static str {
         Error::ActivePieceOutsideCertifiedComponent { .. } => {
             "bitmesh.active_piece_outside_certified_component"
         }
+        Error::ActiveMaskDoesNotMatchBoard { .. } => "bitmesh.active_mask_does_not_match_board",
         Error::BarrierPieceCanBeCaptured { .. } => "bitmesh.barrier_piece_can_be_captured",
         Error::PieceCanEnterOtherComponent { .. } => "bitmesh.piece_can_enter_other_component",
         Error::PieceCanEnterUncertifiedFreeSquare { .. } => {
@@ -328,6 +338,7 @@ fn predicate_results(error: &ConservativeLegalIndependenceError) -> Predicates {
             no_cross_component_entry: NotEvaluated,
         },
         Error::ActivePieceOutsideCertifiedComponent { .. }
+        | Error::ActiveMaskDoesNotMatchBoard { .. }
         | Error::PieceCanEnterOtherComponent { .. }
         | Error::PieceCanEnterUncertifiedFreeSquare { .. } => Predicates {
             frozen_barrier: Pass,
@@ -511,6 +522,10 @@ mod tests {
             ConservativeLegalIndependenceError::ActivePieceOutsideCertifiedComponent {
                 square: shakmaty::Square::A1,
             },
+            ConservativeLegalIndependenceError::ActiveMaskDoesNotMatchBoard {
+                certificate_active: shakmaty::Bitboard::from_square(shakmaty::Square::A1),
+                board_active: shakmaty::Bitboard::from_square(shakmaty::Square::H8),
+            },
             ConservativeLegalIndependenceError::BarrierPieceCanBeCaptured {
                 attacker_square: shakmaty::Square::C3,
                 barrier_square: shakmaty::Square::D1,
@@ -591,6 +606,14 @@ mod tests {
                 square: shakmaty::Square::A1,
                 omitted_square: shakmaty::Square::A2,
             },
+            ValidationError::PositionContextTooLong {
+                actual: u16::MAX as usize + 1,
+                maximum: u16::MAX as usize,
+            },
+            ValidationError::PositionContextNamespaceTooLong {
+                actual: u16::MAX as usize + 1,
+                maximum: u16::MAX as usize,
+            },
         ];
         let mut codes = std::collections::BTreeSet::new();
         for error in validation_errors {
@@ -600,6 +623,6 @@ mod tests {
             assert!(code.starts_with("bitmesh.invalid_certificate."));
             assert!(codes.insert(code), "duplicate failure code: {code}");
         }
-        assert_eq!(codes.len(), 19);
+        assert_eq!(codes.len(), 21);
     }
 }

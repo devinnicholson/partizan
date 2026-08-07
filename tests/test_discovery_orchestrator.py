@@ -199,6 +199,8 @@ class DiscoveryOrchestratorTests(unittest.TestCase):
                     "--locked",
                     "--offline",
                     "--quiet",
+                    "--features",
+                    "partizan-dataset",
                     "--",
                     "--verify-target-candidates",
                 ),

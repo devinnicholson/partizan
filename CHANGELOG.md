@@ -23,6 +23,9 @@ Semantic Versioning once an owner-approved release is published.
 - A bounded chess-to-short-game adapter with Astralbase domain gating,
   Bitmesh certificate provenance, Shakmaty legal-move expansion, Thermograph
   structural identity, typed refusals, and deterministic native replay.
+- A v0.2 bounded-chess adapter contract bound to the hardened dependency
+  release candidates. The v0.1 schema, source map, identity domain, and golden
+  record remain available for historical validation and deterministic replay.
 - The `partizan` chess-adapt, chess-verify, chess-target, chess-candidate, and
   chess-search commands.
 - A same-horizon KQK fixture whose distinct literal trees are exactly equal
@@ -37,16 +40,31 @@ Semantic Versioning once an owner-approved release is published.
   that binds independently recomputed semantic IDs and rewrite limits.
 - Exhaustive source-only validation across all 65,536 ordered day-2
   comparisons and all 256 day-2 canonicalizations, yielding 22 semantic IDs.
+- A shared frozen day-two semantic-ID fixture reproduced independently by
+  Partizan and Thermograph.
+- Security, support, community-conduct, artifact-retention, repository-setting,
+  release, and DCO contribution policies.
+- Repository hygiene enforcement for new tracked artifacts larger than 5 MiB.
 
 ### Changed
 
+- Bounded-chess generation now emits
+  `partizan.bounded_chess_adapter.v0.2` with native v0.2 provenance. Validation
+  continues to accept the immutable v0.1 schema, source map, and golden record.
 - PyO3 extension-module semantics are now enabled explicitly for Maturin wheel
   builds, allowing native Rust tests to link and execute in every CI job.
 - Frozen release-candidate integration pins now reference Bitmesh
-  `b7c7858df2365d8ea4bd2f50ff2afbd51a6f8225`, Thermograph
-  `381e88dad1a1259a4ccc1a015537f8a8acaf7474`, and Astralbase
-  `1ce02cfd3844ab1e5574be4e0c387f79784648bb`.
+  `410550c0964004cd7ba9677539f17ae82c139dd8`, Thermograph
+  `32d6bfbc966f47a87e7249d4ed8818370288e079`, and Astralbase
+  `0e36d14b78a7a4915689e510bff6d7c0f20152e4`.
 - Rust dependencies now use version `0.1.0` instead of sibling paths.
+- Astralbase's research-dataset feature is enabled explicitly while its core
+  retrograde engine remains independently reusable.
+- The Wave 69-R Gate-S checker maps the complete Bitmesh 0.1 error surface and
+  is covered by strict Clippy and locked tests in CI. The post-freeze mapping
+  extension recognizes the three additive validation errors introduced by the
+  hardened Bitmesh implementation; historical evidence remains bound to its
+  recorded Partizan implementation commit.
 - Dataset output defaults now use repository-local ignored artifacts instead of
   system temporary paths.
 - The formal domain is consolidated as the versioned v0.1 contract.
@@ -62,6 +80,5 @@ Semantic Versioning once an owner-approved release is published.
 - Upstream registry publication (crates.io) for Bitmesh, Thermograph, and
   Astralbase remains an owner-controlled gate requiring registry credentials.
 - Immutable tags and public release publication remain owner-controlled gates.
-- Contribution terms (e.g. a CLA/DCO) remain unpublished.
 - Learned benefit, agency, chess temperature, and model-guided discovery remain
   future research questions.

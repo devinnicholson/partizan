@@ -119,6 +119,7 @@
                 "bitmesh.barrier_pawn_not_frozen",
                 "bitmesh.barrier_pawn_can_capture",
                 "bitmesh.active_piece_outside_certified_component",
+                "bitmesh.active_mask_does_not_match_board",
                 "bitmesh.barrier_piece_can_be_captured",
                 "bitmesh.piece_can_enter_other_component",
                 "bitmesh.piece_can_enter_uncertified_free_square",
@@ -140,7 +141,9 @@
                 "bitmesh.invalid_certificate.component_masks_overlap",
                 "bitmesh.invalid_certificate.duplicate_component_root",
                 "bitmesh.invalid_certificate.cross_component_adjacency",
-                "bitmesh.invalid_certificate.strict_component_mask_not_closed"
+                "bitmesh.invalid_certificate.strict_component_mask_not_closed",
+                "bitmesh.invalid_certificate.position_context_too_long",
+                "bitmesh.invalid_certificate.position_context_namespace_too_long"
               ]},
               "count": {"type": "integer", "minimum": 1}
             }

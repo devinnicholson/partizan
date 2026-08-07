@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from copy import deepcopy
 from typing import Any
 
 from . import _native
@@ -15,14 +16,30 @@ from .fixed_value import (
     sha256_hex,
 )
 
-ADAPTER_SCHEMA_VERSION = "partizan.bounded_chess_adapter.v0.1"
-NATIVE_ADAPTER_VERSION = "partizan.bounded_chess_adapter.native.v0.1"
+ADAPTER_SCHEMA_VERSION = "partizan.bounded_chess_adapter.v0.2"
+NATIVE_ADAPTER_VERSION = "partizan.bounded_chess_adapter.native.v0.2"
+LEGACY_ADAPTER_SCHEMA_VERSION = "partizan.bounded_chess_adapter.v0.1"
+LEGACY_NATIVE_ADAPTER_VERSION = "partizan.bounded_chess_adapter.native.v0.1"
 DOMAIN_ID = "formal_domain:first_constrained_chess:v0"
 PROJECTION_DOMAIN_ID = "formal_domain:bounded_chess_projection:v0"
 PROJECTION_RULE = "bounded_alternating_legal_move_normal_play_v1"
 MAX_PLIES = 8
 MAX_NODE_BUDGET = 100_000
 UPSTREAM_SOURCES = {
+    "astralbase": {
+        "version": "0.1.0",
+        "source_commit": "0e36d14b78a7a4915689e510bff6d7c0f20152e4",
+    },
+    "bitmesh": {
+        "version": "0.1.0",
+        "source_commit": "410550c0964004cd7ba9677539f17ae82c139dd8",
+    },
+    "thermograph": {
+        "version": "0.1.0",
+        "source_commit": "32d6bfbc966f47a87e7249d4ed8818370288e079",
+    },
+}
+LEGACY_UPSTREAM_SOURCES = {
     "astralbase": {
         "version": "0.1.0",
         "source_commit": "1ce02cfd3844ab1e5574be4e0c387f79784648bb",
@@ -141,7 +158,7 @@ def _validate_decomposition(value: Any) -> list[str]:
         "conservative_one_ply_independence",
     }
     if set(value) != expected:
-        errors.append("adapter decomposition fields do not match the v0.1 contract")
+        errors.append("adapter decomposition fields do not match the contract")
     status = value.get("status")
     if status not in {"strict", "rejected"}:
         errors.append("adapter decomposition status is unsupported")
@@ -173,7 +190,7 @@ def _validate_decomposition(value: Any) -> list[str]:
         "proof_kind",
         "decomposition_digest_sha256",
     }:
-        errors.append("adapter one-ply proof fields do not match the v0.1 contract")
+        errors.append("adapter one-ply proof fields do not match the contract")
     proof_status = proof.get("status")
     if proof_status == "certified":
         if proof.get("proof_kind") != "bitmesh:conservative_legal_independence:v0":
@@ -212,7 +229,7 @@ def _validate_domain_gate(
         "reasons",
     }
     if set(value) != expected:
-        errors.append("adapter.domain_gate fields do not match the v0.1 contract")
+        errors.append("adapter.domain_gate fields do not match the contract")
     gate_status = value.get("status")
     if gate_status not in {"accepted", "refused"}:
         errors.append("adapter.domain_gate.status is unsupported")
@@ -301,7 +318,7 @@ def _validate_statistics(value: Any) -> list[str]:
         "literal_game_nodes",
     }
     if set(value) != expected:
-        errors.append("adapter projection statistics do not match the v0.1 contract")
+        errors.append("adapter projection statistics do not match the contract")
     for field in expected:
         number = value.get(field)
         if not _is_int(number) or number < 0:
@@ -324,7 +341,7 @@ def _validate_thermograph_identity(value: Any) -> list[str]:
         "dyadic",
     }
     if set(value) != expected:
-        errors.append("adapter Thermograph identity fields do not match v0.1")
+        errors.append("adapter Thermograph identity fields do not match the contract")
     if value.get("semantics") != "structural_tree_identity_only":
         errors.append("adapter Thermograph semantics are unsupported")
     if value.get("value_class") not in {
@@ -377,7 +394,7 @@ def _validate_projection(value: Any) -> list[str]:
         "thermograph_identity",
     }
     if set(value) != expected:
-        errors.append("adapter.projection fields do not match the v0.1 contract")
+        errors.append("adapter.projection fields do not match the contract")
     if value.get("domain_id") != PROJECTION_DOMAIN_ID:
         errors.append(f"adapter.projection.domain_id must be {PROJECTION_DOMAIN_ID}")
     if value.get("rule") != PROJECTION_RULE:
@@ -411,6 +428,16 @@ def validate_chess_adapter_record(
     if not isinstance(record, dict):
         return ["adapter record must be an object"]
     errors: list[str] = []
+    schema_version = record.get("schema_version")
+    if schema_version == ADAPTER_SCHEMA_VERSION:
+        expected_native_version = NATIVE_ADAPTER_VERSION
+        expected_upstream_sources = UPSTREAM_SOURCES
+    elif schema_version == LEGACY_ADAPTER_SCHEMA_VERSION:
+        expected_native_version = LEGACY_NATIVE_ADAPTER_VERSION
+        expected_upstream_sources = LEGACY_UPSTREAM_SOURCES
+    else:
+        expected_native_version = None
+        expected_upstream_sources = None
     expected = {
         "schema_version",
         "adapter_id",
@@ -424,16 +451,22 @@ def validate_chess_adapter_record(
         "refusal",
     }
     if set(record) != expected:
-        errors.append("adapter record fields do not match the v0.1 contract")
-    if record.get("schema_version") != ADAPTER_SCHEMA_VERSION:
-        errors.append(f"adapter schema_version must be {ADAPTER_SCHEMA_VERSION}")
-    if record.get("native_adapter_version") != NATIVE_ADAPTER_VERSION:
+        errors.append("adapter record fields do not match the contract")
+    if expected_native_version is None:
         errors.append(
-            f"adapter native_adapter_version must be {NATIVE_ADAPTER_VERSION}"
+            "adapter schema_version must be one of "
+            f"{ADAPTER_SCHEMA_VERSION} or {LEGACY_ADAPTER_SCHEMA_VERSION}"
         )
-    if record.get("upstream_sources") != UPSTREAM_SOURCES:
+    elif record.get("native_adapter_version") != expected_native_version:
         errors.append(
-            "adapter upstream_sources must match the frozen source candidates"
+            f"adapter native_adapter_version must be {expected_native_version}"
+        )
+    if (
+        expected_upstream_sources is not None
+        and record.get("upstream_sources") != expected_upstream_sources
+    ):
+        errors.append(
+            "adapter upstream_sources must match its versioned source candidates"
         )
     adapter_id = record.get("adapter_id")
     if not isinstance(adapter_id, str) or not _ADAPTER_ID_PATTERN.fullmatch(adapter_id):
@@ -489,6 +522,15 @@ def validate_chess_adapter_record(
         except (TypeError, ValueError) as error:
             errors.append(f"adapter native replay failed: {error}")
         else:
+            if schema_version == LEGACY_ADAPTER_SCHEMA_VERSION:
+                expected_record["schema_version"] = LEGACY_ADAPTER_SCHEMA_VERSION
+                expected_record["native_adapter_version"] = (
+                    LEGACY_NATIVE_ADAPTER_VERSION
+                )
+                expected_record["upstream_sources"] = deepcopy(
+                    LEGACY_UPSTREAM_SOURCES
+                )
+                expected_record["adapter_id"] = adapter_id_for(expected_record)
             if expected_record != record:
                 errors.append(
                     "adapter record does not match deterministic native replay"
