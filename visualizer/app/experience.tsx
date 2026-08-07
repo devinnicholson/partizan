@@ -826,7 +826,21 @@ function AtlasStage({
             </>
           ) : (
             <div className="atlas-loading" role="status">
-              {error ? "The checked atlas could not be loaded." : "Loading 21,697 certified forms…"}
+              {error ? (
+                <p>The checked atlas could not be loaded.</p>
+              ) : (
+                <div className="loading-receipt">
+                  <p>Loading the checked atlas</p>
+                  <div aria-hidden="true">
+                    <span><strong>21,697</strong><small>graph forms</small></span>
+                    <b>→</b>
+                    <span><strong>16,120</strong><small>complete games</small></span>
+                    <b>→</b>
+                    <span><strong>3</strong><small>exact values</small></span>
+                  </div>
+                  <small>Source-bound coordinates · 5.3 MB evidence map</small>
+                </div>
+              )}
             </div>
           )}
 

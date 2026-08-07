@@ -282,10 +282,57 @@ summary:focus-visible,
   inset: 0;
   display: grid;
   place-items: center;
+  padding: 96px 32px 82px;
   color: var(--stage-muted);
   font-family: var(--mono);
   font-size: .68rem;
 }
+
+.atlas-loading > p { margin: 0; }
+
+.loading-receipt {
+  width: min(720px, 100%);
+  padding: 30px 0;
+  border-top: 1px solid var(--stage-line);
+  border-bottom: 1px solid var(--stage-line);
+  text-align: center;
+}
+
+.loading-receipt > p {
+  margin: 0 0 28px;
+  color: var(--cream);
+  font-size: .6rem;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.loading-receipt > div {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+}
+
+.loading-receipt span { display: grid; gap: 5px; }
+
+.loading-receipt strong {
+  color: var(--gold);
+  font-family: var(--serif);
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.loading-receipt b { color: #5f5b52; font-size: 1rem; font-weight: 400; }
+
+.loading-receipt small {
+  color: var(--stage-muted);
+  font-size: .5rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.loading-receipt > small { display: block; margin-top: 28px; }
 
 .specimen-panel {
   position: absolute;
@@ -619,6 +666,10 @@ summary:focus-visible,
   .target-labels strong { font-size: 1.35rem; }
   .target-labels span { font-size: .43rem; }
   .target-labels small { max-width: 90px; font-size: .4rem; text-align: right; }
+  .atlas-loading { padding: 84px 18px 78px; }
+  .loading-receipt > div { grid-template-columns: 1fr; gap: 10px; }
+  .loading-receipt b { transform: rotate(90deg); }
+  .loading-receipt strong { font-size: 2.8rem; }
   .specimen-panel,
   .specimen-panel.empty { top: auto; right: 10px; bottom: 66px; width: calc(100% - 20px); max-height: 63%; overflow: auto; }
   .specimen-panel.empty { width: 230px; left: auto; }
