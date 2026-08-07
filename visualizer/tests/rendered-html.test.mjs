@@ -33,26 +33,23 @@ test("server-renders the finished Partizan experience", async () => {
   const html = await response.text();
   const normalizedHtml = html.replaceAll("<!-- -->", "");
   assert.match(html, /<title>Partizan \| Different Forms, One Value<\/title>/i);
-  assert.match(html, /A certified crossing/);
-  assert.match(html, /What remains when correctness is fixed\?/);
-  assert.match(normalizedHtml, /B and C/);
-  assert.match(normalizedHtml, /Form B/);
-  assert.match(normalizedHtml, /Form C/);
-  assert.match(html, /Isolate the change/);
-  assert.match(html, /Crossing stages/);
-  assert.match(html, /One complete game\./);
-  assert.match(normalizedHtml, /q\(B\) ≠ q\(C\)/);
-  assert.match(normalizedHtml, /ℓ\(B\) = ℓ\(C\)/);
-  assert.match(normalizedHtml, /v\(B\) = v\(C\) = 0/);
-  assert.match(html, /Technical evidence/);
-  assert.match(html, /Copy evidence JSON/);
-  assert.match(html, /Download evidence JSON/);
-  assert.match(html, /og-v2\.png/);
+  assert.match(html, /The observed fixed-value repertoire/);
+  assert.match(normalizedHtml, /21,697 certified forms\. Three exact values\./);
+  assert.match(html, /Graph form/);
+  assert.match(html, /Complete game/);
+  assert.match(html, /Exact value/);
+  assert.match(html, /Compress by identity/);
+  assert.match(normalizedHtml, /7,555[\s\S]*?graph forms/);
+  assert.match(normalizedHtml, /6,386[\s\S]*?complete games/);
+  assert.match(html, /Find the crossing/);
+  assert.match(html, /Locate A, B, and C/);
+  assert.match(html, /Copy source authority/);
+  assert.match(html, /og\.png/);
   assert.match(normalizedHtml, /73,728/);
   assert.match(normalizedHtml, /21,697/);
-  assert.match(normalizedHtml, /8,111/);
-  assert.match(html, /Mathematics can identify two objects/);
-  assert.match(html, /Form C adds/);
+  assert.match(normalizedHtml, /16,120/);
+  assert.match(normalizedHtml, /corruption families rejected/);
+  assert.match(html, /The display covers the observed repertoire/);
   assert.match(html, /Lewis Stiller found an endgame kernel\./);
   assert.match(html, /Noam Elkies composed a study around it\./);
   assert.doesNotMatch(html, /linear-gradient|radial-gradient/i);
@@ -65,8 +62,10 @@ test("ships checked evidence and removes the starter preview", async () => {
     evidence,
     historicalEvidence,
     motifEvidence,
+    atlasEvidence,
     repertoireEvidence,
     policyResultEvidence,
+    globalCss,
     packageJson,
   ] = await Promise.all([
     readFile(new URL("../public/evidence/crossing.json", import.meta.url), "utf8"),
@@ -79,6 +78,10 @@ test("ships checked evidence and removes the starter preview", async () => {
       "utf8",
     ),
     readFile(
+      new URL("../public/evidence/fixed-value-atlas.json", import.meta.url),
+      "utf8",
+    ),
+    readFile(
       new URL("../public/evidence/repertoire-browser.json", import.meta.url),
       "utf8",
     ),
@@ -86,11 +89,13 @@ test("ships checked evidence and removes the starter preview", async () => {
       new URL("../public/evidence/site-policy-result.json", import.meta.url),
       "utf8",
     ),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
   const parsed = JSON.parse(evidence);
   const historical = JSON.parse(historicalEvidence);
   const motif = JSON.parse(motifEvidence);
+  const atlas = JSON.parse(atlasEvidence);
   const repertoire = JSON.parse(repertoireEvidence);
   const policyResult = JSON.parse(policyResultEvidence);
 
@@ -128,6 +133,37 @@ test("ships checked evidence and removes the starter preview", async () => {
     motif.positions[2].literal_game_sha256,
   );
   assert.equal(motif.atlas.quotient_unique_representatives, 21697);
+  assert.equal(atlas.schema_version, "partizan.fixed_value_atlas.v1");
+  assert.deepEqual(atlas.counts, {
+    exact_values: 3,
+    literal_games: 16120,
+    quotient_forms: 21697,
+  });
+  assert.equal(atlas.items.length, 21697);
+  assert.equal(atlas.groups.length, 16120);
+  assert.deepEqual(
+    atlas.targets.map((target) => target.quotient_forms),
+    [7555, 7132, 7010],
+  );
+  assert.deepEqual(
+    atlas.targets.map((target) => target.literal_games),
+    [6386, 5352, 4382],
+  );
+  assert.equal(
+    atlas.source.representative_set_sha256,
+    "54488c811edd8a09155864fd1af3c469c7daba334c62788a86882e0e9c404a02",
+  );
+  assert.equal(atlas.source.independent_replay, true);
+  assert.equal(atlas.source.proposal_count, 73728);
+  assert.equal(atlas.source.negative_test_families_rejected, 15);
+  assert.match(atlas.source.completion_file_sha256, /^[0-9a-f]{64}$/);
+  assert.match(atlas.source.negative_tests_file_sha256, /^[0-9a-f]{64}$/);
+  assert.equal(atlas.groups[atlas.items[atlas.motif.A].l].c, 32);
+  assert.equal(atlas.groups[atlas.items[atlas.motif.B].l].c, 54);
+  assert.equal(atlas.items[atlas.motif.B].l, atlas.items[atlas.motif.C].l);
+  assert.notEqual(atlas.items[atlas.motif.A].l, atlas.items[atlas.motif.B].l);
+  assert.ok(atlas.items.every((item) => item.p.length === 6));
+  assert.ok(atlas.groups.every((group) => group.p.length === 2));
   assert.equal(
     repertoire.schema_version,
     "partizan.repertoire_browser.v0.1",
@@ -201,7 +237,10 @@ test("ships checked evidence and removes the starter preview", async () => {
   );
   assert.equal(policyResult.independent_replay, true);
   assert.equal(policyResult.corruption_families_rejected, 20);
+  assert.doesNotMatch(globalCss, /linear-gradient|radial-gradient/i);
+  assert.match(globalCss, /--paper-accent:\s*#963426/i);
+  assert.match(globalCss, /min-height:\s*44px/i);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
-  await access(new URL("../public/og-v2.png", import.meta.url));
+  await access(new URL("../public/og.png", import.meta.url));
   await assert.rejects(access(new URL("../app/_sites-preview", root)));
 });

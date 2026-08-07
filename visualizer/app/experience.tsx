@@ -1,12 +1,19 @@
 "use client";
 
-import { type CSSProperties, useMemo, useState } from "react";
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import elkiesJson from "../public/evidence/elkies-study.json";
 import motifJson from "../public/evidence/fixed-value-motif.json";
 
 type Label = "A" | "B" | "C";
-type PairKey = "A:B" | "B:C" | "A:C";
-type Stage = 0 | 1 | 2;
+type Layer = 0 | 1 | 2;
 
 type GraphPosition = {
   label: Label;
@@ -31,43 +38,95 @@ type FixedValueMotif = {
     independent_replay: boolean;
     negative_test_families_rejected: number;
   };
-  comparison: {
-    exact_value: string;
-    statement: string;
-    literal_statement: string;
-    quotient_statement: string;
-  };
   positions: GraphPosition[];
+  transitions: {
+    from: Label;
+    to: Label;
+    operation: string;
+    arc: [number, number];
+    headline: string;
+    detail: string;
+  }[];
   atlas: {
     quotient_unique_representatives: number;
+    targets: { label: string; quotients: number; literal_games: number }[];
   };
 };
 
-type HistoricalEvidence = {
-  source: {
-    title: string;
-    url: string;
-  };
+type AtlasItem = {
+  a: number;
+  b: number;
+  g: string;
+  i: number;
+  l: number;
+  m: number;
+  n: number;
+  p: [number, number, number, number, number, number];
+  q: string;
+  t: number;
 };
+
+type AtlasGroup = { c: number; d: string; p: [number, number]; t: number };
+type DagNode = { d: string; r: number; s: string; x: boolean };
+type DagEdge = { f: number; p: "L" | "R"; t: number };
+type LiteralDag = {
+  root: number;
+  state_count: number;
+  nodes: DagNode[];
+  edges: DagEdge[];
+};
+
+type AtlasData = {
+  atlas_sha256: string;
+  counts: {
+    exact_values: number;
+    literal_games: number;
+    quotient_forms: number;
+  };
+  groups: AtlasGroup[];
+  items: AtlasItem[];
+  motif: Record<Label, number>;
+  motif_dags: { A: LiteralDag; B: LiteralDag; C: "B" };
+  source: {
+    completion_sha256: string;
+    events_file_sha256: string;
+    independent_replay: boolean;
+    negative_test_families_rejected: number;
+    proposal_count: number;
+    representative_set_sha256: string;
+  };
+  targets: {
+    complete_game_node_range: [number, number];
+    formal: string;
+    graph_arc_range: [number, number];
+    label: string;
+    literal_games: number;
+    quotient_forms: number;
+  }[];
+};
+
+type HistoricalEvidence = { source: { title: string; url: string } };
 
 const motif = motifJson as FixedValueMotif;
 const elkies = elkiesJson as HistoricalEvidence;
-
-const pairOptions: { key: PairKey; left: Label; right: Label }[] = [
-  { key: "B:C", left: "B", right: "C" },
-  { key: "A:B", left: "A", right: "B" },
-  { key: "A:C", left: "A", right: "C" },
-];
+const numberFormat = new Intl.NumberFormat("en-US");
+const layerNames = ["Graph form", "Complete game", "Exact value"] as const;
+const layerCounts = [21_697, 16_120, 3] as const;
+const atlasColors = ["#d7b168", "#e8e1d4", "#9b968b"] as const;
 
 const graphCoordinates = [
-  { x: 50, y: 7 },
-  { x: 82, y: 25 },
-  { x: 88, y: 59 },
+  { x: 50, y: 8 },
+  { x: 82, y: 26 },
+  { x: 88, y: 60 },
   { x: 65, y: 88 },
   { x: 35, y: 88 },
-  { x: 12, y: 59 },
-  { x: 18, y: 25 },
+  { x: 12, y: 60 },
+  { x: 18, y: 26 },
 ] as const;
+
+function shortHash(value: string) {
+  return value.slice(0, 12);
+}
 
 function getPosition(label: Label) {
   const position = motif.positions.find((item) => item.label === label);
@@ -79,34 +138,33 @@ function arcKey([from, to]: [number, number]) {
   return `${from}→${to}`;
 }
 
-function shortHash(value: string) {
-  return value.slice(0, 12);
+function decodedArcs(code: string): [number, number][] {
+  const bits = BigInt(`0x${code}`);
+  const arcs: [number, number][] = [];
+  for (let source = 0; source < 7; source += 1) {
+    for (let target = 0; target < 7; target += 1) {
+      if ((bits & (1n << BigInt(source * 7 + target))) !== 0n) {
+        arcs.push([source, target]);
+      }
+    }
+  }
+  return arcs;
 }
 
-function compareForms(left: GraphPosition, right: GraphPosition) {
-  const leftKeys = new Set(left.arcs.map(arcKey));
-  const rightKeys = new Set(right.arcs.map(arcKey));
-  const onlyLeft = left.arcs.filter((arc) => !rightKeys.has(arcKey(arc)));
-  const onlyRight = right.arcs.filter((arc) => !leftKeys.has(arcKey(arc)));
-
-  return {
-    onlyLeft,
-    onlyRight,
-    sameLiteralGame: left.literal_game_sha256 === right.literal_game_sha256,
-    sameGraphQuotient: left.quotient_sha256 === right.quotient_sha256,
-  };
+function decodedBlue(mask: number) {
+  return Array.from({ length: 7 }, (_, vertex) => vertex).filter(
+    (vertex) => (mask & (1 << vertex)) !== 0,
+  );
 }
 
 function GraphEdge({
   from,
   to,
-  unique,
-  side,
+  highlighted,
 }: {
   from: number;
   to: number;
-  unique: boolean;
-  side: "left" | "right";
+  highlighted?: boolean;
 }) {
   const start = graphCoordinates[from];
   const end = graphCoordinates[to];
@@ -117,7 +175,7 @@ function GraphEdge({
 
   return (
     <span
-      className={`graph-edge ${unique ? `unique ${side}` : "shared"}`}
+      className={`graph-edge${highlighted ? " highlighted" : ""}`}
       style={
         {
           "--edge-x": `${start.x}%`,
@@ -131,45 +189,42 @@ function GraphEdge({
   );
 }
 
-function GraphFigure({
-  position,
-  counterpart,
-  side,
-  changedVertices,
+function DirectedGraph({
+  label,
+  name,
+  arcs,
+  blueVertices,
+  highlightedArc,
+  compact = false,
 }: {
-  position: GraphPosition;
-  counterpart: GraphPosition;
-  side: "left" | "right";
-  changedVertices: Set<number>;
+  label: string;
+  name: string;
+  arcs: [number, number][];
+  blueVertices: number[];
+  highlightedArc?: [number, number];
+  compact?: boolean;
 }) {
-  const counterpartArcs = new Set(counterpart.arcs.map(arcKey));
-
+  const highlightedKey = highlightedArc ? arcKey(highlightedArc) : null;
   return (
-    <figure
-      className={`graph-figure ${side}`}
-      aria-label={`Form ${position.label}, a seven-vertex Digraph Placement position with ${position.graph_arc_count} directed arcs.`}
-    >
+    <figure className={`directed-graph${compact ? " compact" : ""}`}>
       <figcaption>
-        <span>Form {position.label}</span>
-        <strong>{position.name}</strong>
+        <span>{label}</span>
+        <strong>{name}</strong>
       </figcaption>
-
       <div className="graph-field">
-        {position.arcs.map(([from, to]) => (
+        {arcs.map(([from, to]) => (
           <GraphEdge
             from={from}
             to={to}
-            unique={!counterpartArcs.has(arcKey([from, to]))}
-            side={side}
+            highlighted={arcKey([from, to]) === highlightedKey}
             key={`${from}-${to}`}
           />
         ))}
-
         {graphCoordinates.map((coordinate, vertex) => (
           <span
             className={`graph-node ${
-              position.blue_vertices.includes(vertex) ? "blue" : "red"
-            } ${changedVertices.has(vertex) ? "changed" : ""}`}
+              blueVertices.includes(vertex) ? "blue" : "red"
+            }`}
             key={vertex}
             style={
               {
@@ -183,307 +238,949 @@ function GraphFigure({
           </span>
         ))}
       </div>
-
-      <footer>
-        <span>{position.graph_arc_count} arcs</span>
-        <span>{position.literal_game_nodes} game nodes</span>
-      </footer>
     </figure>
   );
 }
 
-function IdentityPlate({
-  left,
-  right,
-  sameLiteralGame,
-  visible,
+function AtlasCanvas({
+  atlas,
+  layer,
+  selectedIndex,
+  onSelect,
+  highlightMotif,
 }: {
-  left: GraphPosition;
-  right: GraphPosition;
-  sameLiteralGame: boolean;
-  visible: boolean;
+  atlas: AtlasData;
+  layer: Layer;
+  selectedIndex: number | null;
+  onSelect: (index: number | null) => void;
+  highlightMotif: boolean;
 }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const layerValueRef = useRef<number>(layer);
+  const animationRef = useRef<number | null>(null);
+  const selectedRef = useRef(selectedIndex);
+  const motifRef = useRef(highlightMotif);
+  const groupFirstItem = useMemo(() => {
+    const first = Array.from({ length: atlas.groups.length }, () => -1);
+    for (let index = 0; index < atlas.items.length; index += 1) {
+      const group = atlas.items[index].l;
+      if (first[group] === -1) first[group] = index;
+    }
+    return first;
+  }, [atlas]);
+
+  const draw = useCallback((layerValue: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const targetWidth = Math.max(1, Math.round(width * dpr));
+    const targetHeight = Math.max(1, Math.round(height * dpr));
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+    }
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    context.clearRect(0, 0, width, height);
+
+    const lower = Math.min(1, Math.floor(layerValue));
+    const upper = Math.min(2, lower + 1);
+    const mix = layerValue - lower;
+    const lowerOffset = lower * 2;
+    const upperOffset = upper * 2;
+    const pointSize = layerValue > 1.65 ? 1.1 : layerValue > 0.65 ? 1.35 : 1.55;
+
+    context.save();
+    context.strokeStyle = "rgba(245,240,228,.12)";
+    context.lineWidth = 1;
+    for (const split of [1 / 3, 2 / 3]) {
+      context.beginPath();
+      context.moveTo(Math.round(width * split) + 0.5, 22);
+      context.lineTo(Math.round(width * split) + 0.5, height - 22);
+      context.stroke();
+    }
+    context.restore();
+
+    const islandOpacity = Math.max(0, 1 - Math.abs(layerValue - 1) / 0.48);
+    if (islandOpacity > 0) {
+      context.save();
+      context.lineWidth = 1;
+      for (let index = 0; index < atlas.groups.length; index += 1) {
+        const group = atlas.groups[index];
+        if (group.c <= 1) continue;
+        const radius = Math.min(17, 2.5 + Math.sqrt(group.c) * 0.88);
+        context.beginPath();
+        context.arc(
+          (group.p[0] / 10_000) * width,
+          (group.p[1] / 10_000) * height,
+          radius,
+          0,
+          Math.PI * 2,
+        );
+        context.globalAlpha = islandOpacity * Math.min(0.42, 0.12 + group.c / 300);
+        context.strokeStyle = "#f5f0e4";
+        context.stroke();
+      }
+      context.restore();
+    }
+
+    for (let target = 0; target < 3; target += 1) {
+      context.beginPath();
+      for (let index = 0; index < atlas.items.length; index += 1) {
+        const item = atlas.items[index];
+        if (item.t !== target) continue;
+        const x =
+          item.p[lowerOffset] +
+          (item.p[upperOffset] - item.p[lowerOffset]) * mix;
+        const y =
+          item.p[lowerOffset + 1] +
+          (item.p[upperOffset + 1] - item.p[lowerOffset + 1]) * mix;
+        const screenX = (x / 10_000) * width;
+        const screenY = (y / 10_000) * height;
+        context.rect(screenX, screenY, pointSize, pointSize);
+      }
+      context.globalAlpha = layerValue > 1.65 ? 0.36 : 0.64;
+      context.fillStyle = atlasColors[target];
+      context.fill();
+    }
+    context.globalAlpha = 1;
+
+    const valueOpacity = Math.max(0, (layerValue - 1.55) / 0.45);
+    if (valueOpacity > 0) {
+      context.save();
+      context.globalAlpha = valueOpacity;
+      context.lineWidth = 1.5;
+      context.strokeStyle = "rgba(245,240,228,.62)";
+      for (const center of [1_700, 5_000, 8_300]) {
+        context.beginPath();
+        context.arc((center / 10_000) * width, height * 0.5, 34, 0, Math.PI * 2);
+        context.stroke();
+      }
+      context.restore();
+    }
+
+    const emphasized = new Set<number>();
+    if (motifRef.current) {
+      emphasized.add(atlas.motif.A);
+      emphasized.add(atlas.motif.B);
+      emphasized.add(atlas.motif.C);
+    }
+    if (selectedRef.current !== null) emphasized.add(selectedRef.current);
+
+    for (const index of emphasized) {
+      const item = atlas.items[index];
+      const x =
+        item.p[lowerOffset] +
+        (item.p[upperOffset] - item.p[lowerOffset]) * mix;
+      const y =
+        item.p[lowerOffset + 1] +
+        (item.p[upperOffset + 1] - item.p[lowerOffset + 1]) * mix;
+      const screenX = (x / 10_000) * width;
+      const screenY = (y / 10_000) * height;
+      context.beginPath();
+      context.arc(screenX, screenY, 6, 0, Math.PI * 2);
+      context.strokeStyle = index === selectedRef.current ? "#ffffff" : "#e96f58";
+      context.lineWidth = 1.5;
+      context.stroke();
+    }
+
+    if (motifRef.current) {
+      context.save();
+      context.fillStyle = "#e96f58";
+      context.font = "11px SFMono-Regular, Roboto Mono, monospace";
+      context.textBaseline = "bottom";
+      for (const [label, index] of Object.entries(atlas.motif) as [Label, number][]) {
+        const item = atlas.items[index];
+        const x =
+          item.p[lowerOffset] +
+          (item.p[upperOffset] - item.p[lowerOffset]) * mix;
+        const y =
+          item.p[lowerOffset + 1] +
+          (item.p[upperOffset + 1] - item.p[lowerOffset + 1]) * mix;
+        context.fillText(label, (x / 10_000) * width + 9, (y / 10_000) * height - 7);
+      }
+      context.restore();
+
+      const focusX = Math.max(26, width * 0.07);
+      const focusY = Math.max(72, height * 0.15);
+      const focusWidth = Math.min(width * 0.72, 850);
+      const focusHeight = Math.min(height * 0.62, 470);
+      const aX = focusX + focusWidth * 0.28;
+      const bcX = focusX + focusWidth * 0.72;
+      const centerY = focusY + focusHeight * 0.55;
+      context.save();
+      context.globalAlpha = 0.98;
+      context.fillStyle = "#10100e";
+      context.fillRect(focusX, focusY, focusWidth, focusHeight);
+      context.globalAlpha = 1;
+      context.strokeStyle = "#5a574f";
+      context.lineWidth = 1;
+      context.strokeRect(focusX + 0.5, focusY + 0.5, focusWidth - 1, focusHeight - 1);
+      context.fillStyle = "#e96f58";
+      context.font = "10px SFMono-Regular, Roboto Mono, monospace";
+      context.fillText("CERTIFIED CROSSING INSIDE VALUE 0", focusX + 20, focusY + 26);
+
+      for (const [x, radius] of [[aX, 66], [bcX, 80]] as const) {
+        context.beginPath();
+        context.arc(x, centerY, radius, 0, Math.PI * 2);
+        context.strokeStyle = "rgba(245,240,228,.38)";
+        context.stroke();
+      }
+      context.fillStyle = "#aaa69a";
+      context.textAlign = "center";
+      context.font = "11px SFMono-Regular, Roboto Mono, monospace";
+      context.fillText("32 observed forms", aX, centerY + 94);
+      context.fillText("54 observed forms", bcX, centerY + 108);
+
+      const focusPoints = [
+        { label: "A", x: aX, y: centerY },
+        { label: "B", x: bcX - 18, y: centerY - 18 },
+        { label: "C", x: bcX + 22, y: centerY + 20 },
+      ];
+      for (const point of focusPoints) {
+        context.beginPath();
+        context.arc(point.x, point.y, 6, 0, Math.PI * 2);
+        context.fillStyle = point.label === "C" ? "#73b8bc" : "#d7b168";
+        context.fill();
+        context.fillStyle = "#f5f0e4";
+        context.font = "12px SFMono-Regular, Roboto Mono, monospace";
+        context.fillText(point.label, point.x, point.y - 13);
+      }
+
+      const arrow = (fromX: number, fromY: number, toX: number, toY: number) => {
+        context.beginPath();
+        context.moveTo(fromX, fromY);
+        context.lineTo(toX, toY);
+        context.strokeStyle = "#e96f58";
+        context.stroke();
+      };
+      arrow(aX + 72, centerY, bcX - 32, centerY - 18);
+      arrow(bcX - 11, centerY - 12, bcX + 14, centerY + 12);
+      context.fillStyle = "#aaa69a";
+      context.font = "9px SFMono-Regular, Roboto Mono, monospace";
+      context.fillText("remove 2→3", (aX + bcX) / 2, centerY - 15);
+      context.fillText("add 6→0", bcX + 54, centerY - 1);
+      context.fillStyle = "#f5f0e4";
+      context.font = "16px Iowan Old Style, Baskerville, serif";
+      context.fillText("different complete game", aX, focusY + focusHeight - 22);
+      context.fillText("one complete game", bcX, focusY + focusHeight - 22);
+      context.restore();
+    }
+
+    if (layerValue > 1.58) {
+      context.save();
+      context.globalAlpha = Math.min(0.17, (layerValue - 1.58) * 0.42);
+      context.fillStyle = "#f5f0e4";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.font = `${Math.min(190, width * 0.14)}px Iowan Old Style, Baskerville, serif`;
+      for (let target = 0; target < 3; target += 1) {
+        context.fillText(atlas.targets[target].label, width * ((target * 2 + 1) / 6), height * 0.5);
+      }
+      context.restore();
+    }
+  }, [atlas]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const observer = new ResizeObserver(() => draw(layerValueRef.current));
+    observer.observe(canvas);
+    draw(layerValueRef.current);
+    return () => observer.disconnect();
+  }, [draw]);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
+    const startValue = layerValueRef.current;
+    if (reduceMotion) {
+      layerValueRef.current = layer;
+      draw(layer);
+      return;
+    }
+    const start = performance.now();
+    const duration = 900;
+    const frame = (time: number) => {
+      const progress = Math.min(1, (time - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      layerValueRef.current = startValue + (layer - startValue) * eased;
+      draw(layerValueRef.current);
+      if (progress < 1) animationRef.current = requestAnimationFrame(frame);
+    };
+    animationRef.current = requestAnimationFrame(frame);
+    return () => {
+      if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
+    };
+  }, [layer, draw]);
+
+  useEffect(() => {
+    selectedRef.current = selectedIndex;
+    motifRef.current = highlightMotif;
+    draw(layerValueRef.current);
+  }, [selectedIndex, highlightMotif, draw]);
+
+  function pick(clientX: number, clientY: number) {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const pointerX = clientX - rect.left;
+    const pointerY = clientY - rect.top;
+    const layerValue = layerValueRef.current;
+    if (Math.abs(layerValue - 1) < 0.34) {
+      let nearestGroup: number | null = null;
+      let nearestGroupDistance = 24 * 24;
+      for (let index = 0; index < atlas.groups.length; index += 1) {
+        const group = atlas.groups[index];
+        const dx = (group.p[0] / 10_000) * rect.width - pointerX;
+        const dy = (group.p[1] / 10_000) * rect.height - pointerY;
+        const distance = dx * dx + dy * dy;
+        const radius = Math.max(14, Math.min(24, 5 + Math.sqrt(group.c) * 1.15));
+        if (distance <= radius * radius && distance < nearestGroupDistance) {
+          nearestGroupDistance = distance;
+          nearestGroup = index;
+        }
+      }
+      if (nearestGroup !== null) return groupFirstItem[nearestGroup];
+    }
+    const lower = Math.min(1, Math.floor(layerValue));
+    const upper = Math.min(2, lower + 1);
+    const mix = layerValue - lower;
+    let nearest: number | null = null;
+    let nearestDistance = 15 * 15;
+    for (let index = 0; index < atlas.items.length; index += 1) {
+      const item = atlas.items[index];
+      const x = item.p[lower * 2] + (item.p[upper * 2] - item.p[lower * 2]) * mix;
+      const y =
+        item.p[lower * 2 + 1] +
+        (item.p[upper * 2 + 1] - item.p[lower * 2 + 1]) * mix;
+      const dx = (x / 10_000) * rect.width - pointerX;
+      const dy = (y / 10_000) * rect.height - pointerY;
+      const distance = dx * dx + dy * dy;
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = index;
+      }
+    }
+    return nearest;
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLCanvasElement>) {
+    if (event.key === "Escape") {
+      onSelect(null);
+      return;
+    }
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const current = selectedIndex ?? (direction === 1 ? -1 : 0);
+    onSelect((current + direction + atlas.items.length) % atlas.items.length);
+  }
+
   return (
-    <div className="identity-plate" aria-hidden={!visible}>
-      <p className="identity-kicker">Exact comparison</p>
-      <h2>
-        {sameLiteralGame
-          ? "One complete game."
-          : "One exact value."}
-      </h2>
-      <div className="identity-stack">
-        <div>
-          <span>Graph quotient</span>
-          <code>q({left.label}) ≠ q({right.label})</code>
-          <strong>different</strong>
-        </div>
-        <div className={sameLiteralGame ? "identity-focus" : ""}>
-          <span>Complete game</span>
-          <code>
-            ℓ({left.label}) {sameLiteralGame ? "=" : "≠"} ℓ({right.label})
-          </code>
-          <strong>{sameLiteralGame ? "same" : "different"}</strong>
-        </div>
-        <div className="identity-focus">
-          <span>Exact value</span>
-          <code>v({left.label}) = v({right.label}) = 0</code>
-          <strong>same</strong>
-        </div>
-      </div>
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="atlas-canvas"
+      role="img"
+      tabIndex={0}
+      aria-describedby="atlas-keyboard-help"
+      aria-label={`${numberFormat.format(layerCounts[layer])} ${layerNames[layer].toLowerCase()} identities across the three target values studied. Click near a mark to inspect a certified graph form.`}
+      onClick={(event) => onSelect(pick(event.clientX, event.clientY))}
+      onKeyDown={handleKeyDown}
+    />
   );
 }
 
-function CrossingTheater() {
-  const [pairKey, setPairKey] = useState<PairKey>("B:C");
-  const [stage, setStage] = useState<Stage>(0);
-  const [copyState, setCopyState] = useState("Copy evidence JSON");
-  const pair = pairOptions.find((option) => option.key === pairKey) ?? pairOptions[0];
-  const left = getPosition(pair.left);
-  const right = getPosition(pair.right);
-  const comparison = useMemo(() => compareForms(left, right), [left, right]);
-
-  const changedVertices = useMemo(
+function SpecimenPanel({
+  atlas,
+  selectedIndex,
+  onSelect,
+}: {
+  atlas: AtlasData;
+  selectedIndex: number | null;
+  onSelect: (index: number | null) => void;
+}) {
+  const [compareGroup, setCompareGroup] = useState<number | null>(null);
+  const selectedGroupIndex =
+    selectedIndex === null ? -1 : atlas.items[selectedIndex].l;
+  const groupMembers = useMemo(
     () =>
-      new Set(
-        [...comparison.onlyLeft, ...comparison.onlyRight].flatMap(([from, to]) => [
-          from,
-          to,
-        ]),
-      ),
-    [comparison],
+      selectedGroupIndex < 0
+        ? []
+        : atlas.items
+            .map((item, index) => ({ item, index }))
+            .filter(({ item }) => item.l === selectedGroupIndex)
+            .map(({ index }) => index),
+    [atlas, selectedGroupIndex],
   );
 
-  const payload = useMemo(
-    () => ({
-      schema_version: "partizan.visual_comparison.v1",
-      source_completion_sha256: motif.completion_sha256,
-      exact_relation: `v(${left.label}) = v(${right.label}) = 0`,
-      same_graph_quotient: comparison.sameGraphQuotient,
-      same_complete_game: comparison.sameLiteralGame,
-      arcs_only_in_left: comparison.onlyLeft,
-      arcs_only_in_right: comparison.onlyRight,
-      left,
-      right,
-    }),
-    [comparison, left, right],
-  );
+  if (selectedIndex === null) {
+    const multiFormGroups = atlas.groups.filter((group) => group.c > 1);
+    const largest = Math.max(...atlas.groups.map((group) => group.c));
+    return (
+      <aside className="specimen-panel empty" aria-label="Atlas guide">
+        <p className="eyebrow">Inside the atlas</p>
+        <strong>{numberFormat.format(multiFormGroups.length)}</strong>
+        <p>complete games have more than one graph embodiment.</p>
+        <div>
+          <span>Largest island</span>
+          <b>{largest} forms</b>
+        </div>
+        <p className="panel-hint">Click a mark or use the arrow keys after focusing the atlas.</p>
+      </aside>
+    );
+  }
 
-  async function copyComparison() {
+  const item = atlas.items[selectedIndex];
+  const group = atlas.groups[item.l];
+  const currentMember = Math.max(0, groupMembers.indexOf(selectedIndex));
+  const nextIndex = groupMembers[(currentMember + 1) % groupMembers.length];
+  const comparisonItem = atlas.items[nextIndex];
+  const compareOpen = compareGroup === selectedGroupIndex;
+  return (
+    <aside className="specimen-panel">
+      <button className="panel-close" type="button" onClick={() => onSelect(null)}>
+        Close
+      </button>
+      <p className="eyebrow">Certified form {selectedIndex + 1}</p>
+      <DirectedGraph
+        compact
+        label={`value ${atlas.targets[item.t].label}`}
+        name={`${item.a} directed arcs`}
+        arcs={decodedArcs(item.g)}
+        blueVertices={decodedBlue(item.m)}
+      />
+      <dl className="specimen-facts">
+        <div><dt>Complete-game island</dt><dd>{numberFormat.format(group.c)} graph {group.c === 1 ? "form" : "forms"}</dd></div>
+        <div><dt>Complete-game nodes</dt><dd>{item.n}</dd></div>
+        <div><dt>Birthday</dt><dd>{item.b}</dd></div>
+        <div><dt>Source event</dt><dd>{numberFormat.format(item.i)}</dd></div>
+      </dl>
+      <details className="hash-details">
+        <summary>Technical identity</summary>
+        <span>Graph quotient</span><code>{item.q}</code>
+        <span>Complete game</span><code>{group.d}</code>
+      </details>
+      {groupMembers.length > 1 && (
+        <div className="specimen-actions">
+          <button type="button" onClick={() => onSelect(nextIndex)}>
+            Show another embodiment
+          </button>
+          <button
+            type="button"
+            onClick={() => setCompareGroup(compareOpen ? null : selectedGroupIndex)}
+          >
+            {compareOpen ? "Close comparison" : "Compare two forms"}
+          </button>
+        </div>
+      )}
+      {compareOpen && comparisonItem && (
+        <div className="specimen-compare">
+          <p>Same complete game. Different graph quotient.</p>
+          <DirectedGraph
+            compact
+            label={`form ${nextIndex + 1}`}
+            name={`${comparisonItem.a} directed arcs`}
+            arcs={decodedArcs(comparisonItem.g)}
+            blueVertices={decodedBlue(comparisonItem.m)}
+          />
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function AtlasStage({
+  atlas,
+  error,
+  onFindCrossing,
+}: {
+  atlas: AtlasData | null;
+  error: boolean;
+  onFindCrossing: () => void;
+}) {
+  const [layer, setLayer] = useState<Layer>(0);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [highlightMotif, setHighlightMotif] = useState(false);
+
+  const currentCount = layerCounts[layer];
+  const nextLayer = layer === 2 ? 0 : ((layer + 1) as Layer);
+  const targetSummaries = atlas
+    ? atlas.targets.map((target) => ({
+        label: target.label,
+        quotients: target.quotient_forms,
+        literalGames: target.literal_games,
+        graphArcRange: target.graph_arc_range,
+        nodeRange: target.complete_game_node_range,
+      }))
+    : motif.atlas.targets.map((target) => ({
+        label: target.label,
+        quotients: target.quotients,
+        literalGames: target.literal_games,
+        graphArcRange: null,
+        nodeRange: null,
+      }));
+
+  return (
+    <section className="atlas-section" id="atlas" aria-labelledby="atlas-title">
+      <header className="atlas-intro">
+        <div>
+          <p className="eyebrow">The observed fixed-value repertoire</p>
+          <h1 id="atlas-title">21,697 certified forms. Three exact values.</h1>
+        </div>
+        <p>
+          Every mark is one quotient-distinct order-7 graph from the verified
+          study. Change the identity layer to watch the same repertoire gather
+          into complete games and exact values.
+        </p>
+      </header>
+
+      <div className="atlas-shell">
+        <div className="atlas-toolbar">
+          <div className="layer-tabs" aria-label="Identity layer">
+            {([0, 1, 2] as Layer[]).map((item) => (
+              <button
+                type="button"
+                key={item}
+                className={layer === item ? "active" : ""}
+                aria-pressed={layer === item}
+                onClick={() => {
+                  setLayer(item);
+                  setSelectedIndex(null);
+                  setHighlightMotif(false);
+                }}
+              >
+                <span>{layerNames[item]}</span>
+                <strong>{numberFormat.format(layerCounts[item])}</strong>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="compress-action"
+            onClick={() => {
+              setLayer(nextLayer);
+              setSelectedIndex(null);
+              setHighlightMotif(false);
+            }}
+          >
+            {layer === 2 ? "Release the forms" : "Compress by identity"}
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+
+        <div className="atlas-view">
+          <div className="target-labels" aria-hidden="true">
+            {targetSummaries.map((target) => (
+              <div key={target.label}>
+                <strong>{target.label}</strong>
+                <span>
+                  {layer === 0
+                    ? `${numberFormat.format(target.quotients)} forms`
+                    : layer === 1
+                      ? `${numberFormat.format(target.literalGames)} games`
+                      : `one value · ${numberFormat.format(target.quotients)} forms`}
+                </span>
+                {layer === 0 && target.graphArcRange && target.nodeRange && (
+                  <small>
+                    {target.graphArcRange.join("–")} arcs · {target.nodeRange.join("–")} nodes
+                  </small>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <p className="sr-only" id="atlas-keyboard-help">
+            Click or tap near a mark to inspect it. With the canvas focused, use
+            the Left and Right Arrow keys to move between forms and Escape to
+            close the specimen. The layer buttons and A, B, C focus provide
+            shorter keyboard paths through the repertoire.
+          </p>
+
+          {atlas ? (
+            <>
+              <AtlasCanvas
+                atlas={atlas}
+                layer={layer}
+                selectedIndex={selectedIndex}
+                onSelect={setSelectedIndex}
+                highlightMotif={highlightMotif}
+              />
+              {(!highlightMotif || selectedIndex !== null) && (
+                <SpecimenPanel
+                  atlas={atlas}
+                  selectedIndex={selectedIndex}
+                  onSelect={setSelectedIndex}
+                />
+              )}
+              <p className="sr-only" aria-live="polite">
+                {selectedIndex === null
+                  ? highlightMotif
+                    ? "A is in a 32-form complete game. B and C are in one 54-form complete game. A to B removes arc 2 to 3. B to C adds arc 6 to 0."
+                    : "No atlas specimen selected."
+                  : `Selected certified form ${selectedIndex + 1}.`}
+              </p>
+            </>
+          ) : (
+            <div className="atlas-loading" role="status">
+              {error ? "The checked atlas could not be loaded." : "Loading 21,697 certified forms…"}
+            </div>
+          )}
+
+          <div className="atlas-actions">
+            <button
+              type="button"
+              onClick={() => {
+                setLayer(1);
+                setHighlightMotif((visible) => !visible);
+                setSelectedIndex(null);
+              }}
+              disabled={!atlas}
+            >
+              {highlightMotif ? "Close A, B, C focus" : "Locate A, B, and C"}
+            </button>
+            <button type="button" onClick={onFindCrossing}>
+              Find the crossing <span aria-hidden="true">↓</span>
+            </button>
+          </div>
+        </div>
+
+        <footer className="atlas-legend">
+          <p aria-live="polite">
+            <strong>{numberFormat.format(currentCount)}</strong>{" "}
+            {layer === 2
+              ? "exact values · 21,697 forms represented"
+              : `${layerNames[layer].toLowerCase()} identities shown`}
+          </p>
+          <p>
+            {layer === 0
+              ? "Horizontal position follows directed-arc count; vertical position follows complete-game node count."
+              : layer === 1
+                ? "Each island is one complete game. Packing separates islands; distance does not measure similarity."
+                : "The study examined three target values. The marks remain visible inside each identity."}
+          </p>
+        </footer>
+      </div>
+      <p className="claim-boundary">
+        The display covers the observed repertoire. The total mathematical fiber is not estimated.
+      </p>
+    </section>
+  );
+}
+
+function DagEdgeLine({
+  from,
+  to,
+  player,
+  coordinates,
+}: {
+  from: number;
+  to: number;
+  player: "L" | "R";
+  coordinates: { x: number; y: number }[];
+}) {
+  const start = coordinates[from];
+  const end = coordinates[to];
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const distance = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+  return (
+    <span
+      className={`dag-edge ${player === "L" ? "left" : "right"}`}
+      style={
+        {
+          "--edge-x": `${start.x}%`,
+          "--edge-y": `${start.y}%`,
+          "--edge-length": `${distance}%`,
+          "--edge-angle": `${angle}deg`,
+        } as CSSProperties
+      }
+      aria-hidden="true"
+    />
+  );
+}
+
+function LiteralDagFigure({ dag }: { dag: LiteralDag }) {
+  const coordinates = useMemo(() => {
+    const maxRank = Math.max(...dag.nodes.map((node) => node.r));
+    return dag.nodes.map((node, index) => {
+      const peers = dag.nodes
+        .map((peer, peerIndex) => ({ peer, peerIndex }))
+        .filter(({ peer }) => peer.r === node.r);
+      const position = peers.findIndex(({ peerIndex }) => peerIndex === index);
+      return {
+        x: ((position + 1) / (peers.length + 1)) * 100,
+        y: 10 + (node.r / Math.max(1, maxRank)) * 78,
+      };
+    });
+  }, [dag]);
+
+  return (
+    <figure className="literal-dag">
+      <figcaption>
+        <span>One complete game</span>
+        <strong>{dag.nodes.length} distinct option identities</strong>
+      </figcaption>
+      <div className="dag-field">
+        {dag.edges.map((edge, index) => (
+          <DagEdgeLine
+            key={`${edge.f}-${edge.t}-${edge.p}-${index}`}
+            from={edge.f}
+            to={edge.t}
+            player={edge.p}
+            coordinates={coordinates}
+          />
+        ))}
+        {dag.nodes.map((node, index) => (
+          <span
+            className={`dag-node${index === dag.root ? " root" : ""}`}
+            key={node.d}
+            style={
+              {
+                "--node-x": `${coordinates[index].x}%`,
+                "--node-y": `${coordinates[index].y}%`,
+              } as CSSProperties
+            }
+            title={node.s}
+          >
+            {index === dag.root ? "root" : `g${index}`}
+          </span>
+        ))}
+      </div>
+      <footer><span>Blue edge: Left option</span><span>Red edge: Right option</span></footer>
+    </figure>
+  );
+}
+
+function CrossingJourney({ atlas }: { atlas: AtlasData | null }) {
+  const [step, setStep] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
+  const A = getPosition("A");
+  const B = getPosition("B");
+  const C = getPosition("C");
+  const bGroupCount = atlas ? atlas.groups[atlas.items[atlas.motif.B].l].c : 54;
+  const aGroupCount = atlas ? atlas.groups[atlas.items[atlas.motif.A].l].c : 32;
+
+  function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      setStep((current) => Math.min(4, current + 1));
+    }
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      setStep((current) => Math.max(0, current - 1));
+    }
+  }
+
+  return (
+    <section
+      className="crossing-journey"
+      id="crossing"
+      ref={sectionRef}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      aria-labelledby="crossing-title"
+    >
+      <header className="crossing-header">
+        <div>
+          <p className="eyebrow">A path through value zero</p>
+          <h2 id="crossing-title">Find the crossing</h2>
+        </div>
+        <div className="journey-progress" aria-label="Crossing steps">
+          {Array.from({ length: 5 }, (_, index) => (
+            <button
+              type="button"
+              className={step === index ? "active" : ""}
+              aria-current={step === index ? "step" : undefined}
+              onClick={() => setStep(index)}
+              key={index}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <div className="journey-stage" aria-live="polite">
+        {step === 0 && (
+          <div className="inside-zero">
+            <div><strong>7,555</strong><span>graph forms</span></div>
+            <span aria-hidden="true">→</span>
+            <div><strong>6,386</strong><span>complete games</span></div>
+            <span aria-hidden="true">→</span>
+            <div><strong>0</strong><span>exact value</span></div>
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="graph-comparison">
+            <DirectedGraph label="Form A" name={A.name} arcs={A.arcs} blueVertices={A.blue_vertices} highlightedArc={[2, 3]} />
+            <div className="change-column"><strong>remove</strong><code>2→3</code><span>four complete-game nodes disappear</span></div>
+            <DirectedGraph label="Form B" name={B.name} arcs={B.arcs} blueVertices={B.blue_vertices} />
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="graph-comparison">
+            <DirectedGraph label="Form B" name={B.name} arcs={B.arcs} blueVertices={B.blue_vertices} />
+            <div className="change-column"><strong>add</strong><code>6→0</code><span>the complete-game digest stays identical</span></div>
+            <DirectedGraph label="Form C" name={C.name} arcs={C.arcs} blueVertices={C.blue_vertices} highlightedArc={[6, 0]} />
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="dag-collapse">
+            <div className="surface-pair">
+              <DirectedGraph compact label="B" name="21 arcs" arcs={B.arcs} blueVertices={B.blue_vertices} />
+              <DirectedGraph compact label="C" name="22 arcs" arcs={C.arcs} blueVertices={C.blue_vertices} highlightedArc={[6, 0]} />
+            </div>
+            <div className="collapse-arrow"><span>same literal digest</span><b aria-hidden="true">↓</b></div>
+            {atlas && <LiteralDagFigure dag={atlas.motif_dags.B} />}
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="identity-result">
+            <p>Mathematics pronounces them identical. Their forms remain radically different.</p>
+            <div className="island-result">
+              <div><span>A’s complete game</span><strong>{aGroupCount} forms</strong></div>
+              <div><span>B/C complete game</span><strong>{bGroupCount} forms</strong></div>
+            </div>
+            <div className="identity-equations">
+              <code>q(A), q(B), q(C) pairwise different</code>
+              <code>ℓ(A) ≠ ℓ(B) = ℓ(C)</code>
+              <code>v(A) = v(B) = v(C) = 0</code>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <footer className="journey-controls">
+        <div>
+          <span>0{step + 1}</span>
+          <p>
+            {[
+              "Enter the observed value-zero repertoire.",
+              "A and B occupy different complete-game islands.",
+              "B and C are different graph embodiments of one complete game.",
+              "The two surface graphs resolve to one option structure.",
+              "Two complete-game islands remain inside the same exact value.",
+            ][step]}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setStep((current) => (current === 4 ? 0 : current + 1))}
+        >
+          {step === 4 ? "Replay" : "Continue"} <span aria-hidden="true">→</span>
+        </button>
+      </footer>
+    </section>
+  );
+}
+
+function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
+  const [copyState, setCopyState] = useState("Copy source authority");
+
+  async function copyAuthority() {
+    if (!atlas) return;
+    const record = {
+      schema_version: "partizan.fixed_value_atlas.authority.v1",
+      atlas_sha256: atlas.atlas_sha256,
+      source: atlas.source,
+      counts: atlas.counts,
+      targets: atlas.targets,
+    };
     try {
-      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      await navigator.clipboard.writeText(JSON.stringify(record, null, 2));
       setCopyState("Copied");
     } catch {
       setCopyState("Copy failed");
     }
   }
 
-  function downloadComparison() {
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `partizan-${left.label}-${right.label}-comparison.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
-
-  const differences = [...comparison.onlyLeft, ...comparison.onlyRight];
-  const differenceText = differences.length
-    ? differences.map(arcKey).join(" and ")
-    : "no literal arcs";
-
-  const captions = [
-    `${left.label} and ${right.label} are different directed graphs.`,
-    `${differences.length === 1 ? "One arc changes" : `${differences.length} arcs change`}: ${differenceText}.`,
-    comparison.sameLiteralGame
-      ? `Their graph quotients differ. Their complete-game digest is identical.`
-      : `Their graph quotients and complete games differ. Their exact value is identical.`,
-  ];
-
-  const nextLabels = ["Isolate the change", "Test what survives", "Replay"];
-
   return (
-    <section
-      className={`crossing-theater stage-${stage}`}
-      id="crossing"
-      aria-labelledby="crossing-title"
-    >
-      <header className="theater-header">
-        <div>
-          <p className="eyebrow">A certified crossing</p>
-          <h1 id="crossing-title">What remains when correctness is fixed?</h1>
-        </div>
-        <div className="pair-picker" aria-label="Choose a pair">
-          <span>Compare</span>
-          {pairOptions.map((option) => (
-            <button
-              type="button"
-              className={option.key === pairKey ? "active" : ""}
-              aria-pressed={option.key === pairKey}
-              key={option.key}
-              onClick={() => {
-                setPairKey(option.key);
-                setStage(0);
-                setCopyState("Copy evidence JSON");
-              }}
-            >
-              {option.left}/{option.right}
-            </button>
-          ))}
-        </div>
+    <section className="evidence-ledger" id="evidence" aria-labelledby="evidence-title">
+      <header>
+        <p className="eyebrow">Evidence</p>
+        <h2 id="evidence-title">Every mark returns to a replayed event.</h2>
       </header>
-
-      <div className="visual-stage">
-        <div className="graph-pair">
-          <GraphFigure
-            position={left}
-            counterpart={right}
-            side="left"
-            changedVertices={changedVertices}
-          />
-          <GraphFigure
-            position={right}
-            counterpart={left}
-            side="right"
-            changedVertices={changedVertices}
-          />
-        </div>
-        <IdentityPlate
-          left={left}
-          right={right}
-          sameLiteralGame={comparison.sameLiteralGame}
-          visible={stage === 2}
-        />
-        <div className="stage-index" aria-hidden="true">0{stage + 1}</div>
+      <div className="ledger-grid">
+        <div><strong>73,728</strong><span>source proposals</span></div>
+        <div><strong>21,697</strong><span>quotient-unique forms</span></div>
+        <div><strong>16,120</strong><span>complete-game identities</span></div>
+        <div><strong>{atlas?.source.negative_test_families_rejected ?? "—"}</strong><span>corruption families rejected</span></div>
       </div>
-
-      <div className="theater-controls">
-        <div className="stage-caption" aria-live="polite">
-          <span>0{stage + 1}</span>
-          <p>{captions[stage]}</p>
-        </div>
-        <div className="stage-buttons" aria-label="Crossing stages">
-          {([0, 1, 2] as Stage[]).map((item) => (
-            <button
-              type="button"
-              className={stage === item ? "active" : ""}
-              aria-current={stage === item ? "step" : undefined}
-              key={item}
-              onClick={() => setStage(item)}
-            >
-              {item + 1}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="next-stage"
-          onClick={() => setStage((stage === 2 ? 0 : stage + 1) as Stage)}
-        >
-          {nextLabels[stage]} <span aria-hidden="true">→</span>
-        </button>
+      <div className="ledger-notes">
+        <p>
+          Partizan proposes graph forms. The exact verifier determines their
+          combinatorial-game value. The visitor chooses which certified forms
+          to inspect.
+        </p>
+        <p>
+          Lewis Stiller found an endgame kernel. Noam Elkies composed a study
+          around it. This atlas exposes a comparable division of labor between
+          search, proof, and human selection.
+        </p>
       </div>
-
-      <details className="technical-evidence">
-        <summary>Technical evidence</summary>
-        <div className="technical-grid">
-          <div>
-            <span>{left.label} graph quotient</span>
-            <code>{left.quotient_sha256}</code>
-          </div>
-          <div>
-            <span>{right.label} graph quotient</span>
-            <code>{right.quotient_sha256}</code>
-          </div>
-          <div>
-            <span>{left.label} complete game</span>
-            <code>{left.literal_game_sha256}</code>
-          </div>
-          <div>
-            <span>{right.label} complete game</span>
-            <code>{right.literal_game_sha256}</code>
-          </div>
-        </div>
-        <div className="technical-actions">
-          <button type="button" onClick={copyComparison}>{copyState}</button>
-          <button type="button" onClick={downloadComparison}>Download evidence JSON</button>
-        </div>
-      </details>
+      <div className="ledger-actions">
+        <button type="button" onClick={copyAuthority} disabled={!atlas}>{copyState}</button>
+        <a href={elkies.source.url} target="_blank" rel="noreferrer">Historical source</a>
+        <a href="https://github.com/devinnicholson/partizan" target="_blank" rel="noreferrer">Source code</a>
+      </div>
     </section>
   );
 }
 
 export function PartizanExperience() {
+  const [atlas, setAtlas] = useState<AtlasData | null>(null);
+  const [atlasError, setAtlasError] = useState(false);
+
+  useEffect(() => {
+    fetch("/evidence/fixed-value-atlas.json")
+      .then((response) => {
+        if (!response.ok) throw new Error("atlas request failed");
+        return response.json() as Promise<AtlasData>;
+      })
+      .then((data) => {
+        if (
+          data.counts.quotient_forms !== 21_697 ||
+          data.counts.literal_games !== 16_120 ||
+          data.counts.exact_values !== 3
+        ) {
+          throw new Error("atlas evidence count mismatch");
+        }
+        setAtlas(data);
+      })
+      .catch(() => setAtlasError(true));
+  }, []);
+
+  function findCrossing() {
+    const crossing = document.getElementById("crossing");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    crossing?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+    window.setTimeout(() => crossing?.focus(), reduceMotion ? 0 : 450);
+  }
+
   return (
     <main className="experience" id="top">
       <header className="masthead">
         <a className="wordmark" href="#top">Partizan</a>
-        <span>Fixed-value repertoire</span>
+        <span>Fixed-value atlas</span>
         <nav aria-label="Page links">
+          <a href="#atlas">Atlas</a>
           <a href="#crossing">Crossing</a>
-          <a
-            href="https://github.com/devinnicholson/partizan"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Source
-          </a>
+          <a href="#evidence">Evidence</a>
         </nav>
       </header>
 
-      <CrossingTheater />
-
-      <section className="reading-note" aria-labelledby="reading-title">
-        <p className="eyebrow">The result</p>
-        <h2 id="reading-title">
-          Mathematics can identify two objects while their visible forms remain
-          different.
-        </h2>
-        <div className="reading-columns">
-          <p>
-            Partizan searches inside a fixed value. The verifier admits exact
-            realizations; the repertoire preserves the structural differences
-            between them.
-          </p>
-          <p>
-            The B/C crossing is the sharpest example in this set. Form C adds
-            the arc 6→0. The complete-game digest remains unchanged.
-          </p>
-        </div>
-      </section>
-
-      <section className="evidence-strip" aria-label="Study evidence">
-        <div>
-          <strong>{motif.run.proposal_count.toLocaleString("en-US")}</strong>
-          <span>replayed proposals</span>
-        </div>
-        <div>
-          <strong>{motif.atlas.quotient_unique_representatives.toLocaleString("en-US")}</strong>
-          <span>quotient-unique forms</span>
-        </div>
-        <div>
-          <strong>{motif.run.linked_motif_count.toLocaleString("en-US")}</strong>
-          <span>linked motifs</span>
-        </div>
-        <div>
-          <strong>{motif.run.negative_test_families_rejected}</strong>
-          <span>corruption families rejected</span>
-        </div>
-      </section>
-
-      <section className="history-note">
-        <p>
-          Lewis Stiller found an endgame kernel. Noam Elkies composed a study
-          around it. Partizan carries that division of labor into a searchable
-          combinatorial-game repertoire.
-        </p>
-        <a href={elkies.source.url} target="_blank" rel="noreferrer">
-          Read the historical source
-        </a>
-      </section>
+      <AtlasStage atlas={atlas} error={atlasError} onFindCrossing={findCrossing} />
+      <CrossingJourney atlas={atlas} />
+      <EvidenceLedger atlas={atlas} />
 
       <footer className="footer">
         <span>Independent replay passed</span>
