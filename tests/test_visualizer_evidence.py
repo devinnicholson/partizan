@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import gzip
 import hashlib
 import json
 import unittest
@@ -11,7 +12,14 @@ import partizan
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "build_visualizer_evidence.py"
 EVIDENCE = ROOT / "visualizer" / "public" / "evidence" / "crossing.json"
-ATLAS = ROOT / "visualizer" / "public" / "evidence" / "fixed-value-atlas.json"
+ATLAS = ROOT / "visualizer" / "public" / "evidence" / "fixed-value-atlas.json.gz"
+ATLAS_MANIFEST = (
+    ROOT
+    / "visualizer"
+    / "public"
+    / "evidence"
+    / "fixed-value-atlas.manifest.json"
+)
 SPEC = importlib.util.spec_from_file_location("partizan_visualizer_evidence", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 visualizer_evidence = importlib.util.module_from_spec(SPEC)
@@ -41,8 +49,32 @@ class VisualizerEvidenceTests(unittest.TestCase):
         )
 
     def test_fixed_value_atlas_has_a_self_consistent_authority(self) -> None:
-        atlas = json.loads(ATLAS.read_text(encoding="utf-8"))
+        compressed = ATLAS.read_bytes()
+        decoded = gzip.decompress(compressed)
+        atlas = json.loads(decoded)
+        manifest = json.loads(ATLAS_MANIFEST.read_text(encoding="utf-8"))
+        self.assertEqual(
+            manifest["schema_version"],
+            "partizan.fixed_value_atlas.publication.v1",
+        )
+        self.assertEqual(manifest["artifact"]["file"], ATLAS.name)
+        self.assertEqual(manifest["artifact"]["gzip_bytes"], len(compressed))
+        self.assertEqual(
+            manifest["artifact"]["gzip_sha256"],
+            hashlib.sha256(compressed).hexdigest(),
+        )
+        self.assertEqual(manifest["artifact"]["decoded_bytes"], len(decoded))
+        self.assertEqual(
+            manifest["artifact"]["decoded_sha256"],
+            hashlib.sha256(decoded).hexdigest(),
+        )
+        self.assertEqual(
+            manifest["publication_url"],
+            "https://devinnicholson.github.io/partizan-reproducibility/"
+            "evidence/fixed-value-atlas.json.gz",
+        )
         atlas_sha256 = atlas.pop("atlas_sha256")
+        self.assertEqual(manifest["atlas_sha256"], atlas_sha256)
         self.assertEqual(
             hashlib.sha256(partizan.canonical_json_bytes(atlas)).hexdigest(),
             atlas_sha256,

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { gunzipSync } from "node:zlib";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -63,6 +64,7 @@ test("ships checked evidence and removes the starter preview", async () => {
     historicalEvidence,
     motifEvidence,
     atlasEvidence,
+    atlasManifestEvidence,
     repertoireEvidence,
     policyResultEvidence,
     globalCss,
@@ -78,7 +80,10 @@ test("ships checked evidence and removes the starter preview", async () => {
       "utf8",
     ),
     readFile(
-      new URL("../public/evidence/fixed-value-atlas.json", import.meta.url),
+      new URL("../public/evidence/fixed-value-atlas.json.gz", import.meta.url),
+    ),
+    readFile(
+      new URL("../public/evidence/fixed-value-atlas.manifest.json", import.meta.url),
       "utf8",
     ),
     readFile(
@@ -95,7 +100,8 @@ test("ships checked evidence and removes the starter preview", async () => {
   const parsed = JSON.parse(evidence);
   const historical = JSON.parse(historicalEvidence);
   const motif = JSON.parse(motifEvidence);
-  const atlas = JSON.parse(atlasEvidence);
+  const atlas = JSON.parse(gunzipSync(atlasEvidence).toString("utf8"));
+  const atlasManifest = JSON.parse(atlasManifestEvidence);
   const repertoire = JSON.parse(repertoireEvidence);
   const policyResult = JSON.parse(policyResultEvidence);
 
@@ -134,6 +140,12 @@ test("ships checked evidence and removes the starter preview", async () => {
   );
   assert.equal(motif.atlas.quotient_unique_representatives, 21697);
   assert.equal(atlas.schema_version, "partizan.fixed_value_atlas.v1");
+  assert.equal(
+    atlasManifest.schema_version,
+    "partizan.fixed_value_atlas.publication.v1",
+  );
+  assert.equal(atlasManifest.artifact.file, "fixed-value-atlas.json.gz");
+  assert.equal(atlasManifest.atlas_sha256, atlas.atlas_sha256);
   assert.deepEqual(atlas.counts, {
     exact_values: 3,
     literal_games: 16120,

@@ -6,6 +6,12 @@ const title = "Partizan | A Fixed-Value Atlas";
 const description =
   "An interactive atlas of 21,697 certified order-7 Digraph Placement graphs, grouped into 16,120 complete games and three exact values.";
 
+function normalizedBasePath() {
+  const value = process.env.NEXT_PUBLIC_PARTIZAN_BASE_PATH ?? "";
+  if (!value || value === "/") return "";
+  return `/${value.replace(/^\/+|\/+$/g, "")}`;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const host =
@@ -15,16 +21,19 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol =
     requestHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
-  const origin = new URL(`${protocol}://${host}`);
-  const socialImage = new URL("/og.png", origin).toString();
+  const configuredOrigin = process.env.PARTIZAN_PUBLIC_ORIGIN;
+  const origin = new URL(configuredOrigin ?? `${protocol}://${host}`);
+  const basePath = normalizedBasePath();
+  const socialImage = new URL(`${basePath}/og.png`, origin).toString();
+  const favicon = new URL(`${basePath}/favicon.png`, origin).toString();
 
   return {
     metadataBase: origin,
     title,
     description,
     icons: {
-      icon: "/favicon.png",
-      shortcut: "/favicon.png",
+      icon: favicon,
+      shortcut: favicon,
     },
     openGraph: {
       title,

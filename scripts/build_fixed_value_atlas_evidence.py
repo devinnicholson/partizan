@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import math
@@ -14,7 +15,12 @@ from typing import Any
 SCHEMA_VERSION = "partizan.fixed_value_atlas.v1"
 TARGETS = ("0", "*", "{0|1}")
 TARGET_LABELS = {"0": "0", "*": "*", "{0|1}": "1/2"}
-DEFAULT_OUTPUT = Path("visualizer/public/evidence/fixed-value-atlas.json")
+DEFAULT_OUTPUT = Path("visualizer/public/evidence/fixed-value-atlas.json.gz")
+DEFAULT_MANIFEST = Path("visualizer/public/evidence/fixed-value-atlas.manifest.json")
+PUBLICATION_URL = (
+    "https://devinnicholson.github.io/partizan-reproducibility/"
+    "evidence/fixed-value-atlas.json.gz"
+)
 DESCRIPTORS = (
     "graph_arc_count",
     "blue_vertex_count",
@@ -583,19 +589,53 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 
-    payload = canonical_bytes(build_atlas(args.source))
+    atlas = build_atlas(args.source)
+    payload = canonical_bytes(atlas)
+    compressed = gzip.compress(payload, compresslevel=9, mtime=0)
+    manifest = canonical_bytes(
+        {
+            "schema_version": "partizan.fixed_value_atlas.publication.v1",
+            "artifact": {
+                "content_encoding": "gzip",
+                "content_type": "application/json",
+                "decoded_bytes": len(payload),
+                "decoded_sha256": hashlib.sha256(payload).hexdigest(),
+                "file": args.output.name,
+                "gzip_bytes": len(compressed),
+                "gzip_sha256": hashlib.sha256(compressed).hexdigest(),
+            },
+            "atlas_sha256": atlas["atlas_sha256"],
+            "counts": atlas["counts"],
+            "publication_url": PUBLICATION_URL,
+            "source": {
+                "completion_sha256": atlas["source"]["completion_sha256"],
+                "representative_set_sha256": atlas["source"]
+                ["representative_set_sha256"],
+            },
+        }
+    )
     if args.check:
-        if not args.output.is_file() or args.output.read_bytes() != payload:
+        if not args.output.is_file() or args.output.read_bytes() != compressed:
             raise SystemExit(f"{args.output}: generated atlas is stale")
-        print(f"{args.output}: atlas evidence is current")
+        if not args.manifest.is_file() or args.manifest.read_bytes() != manifest:
+            raise SystemExit(f"{args.manifest}: generated manifest is stale")
+        print(f"{args.output}: compressed atlas evidence is current")
+        print(f"{args.manifest}: publication manifest is current")
         return 0
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_bytes(payload)
-    print(f"{args.output}: wrote {len(payload)} bytes")
+    args.manifest.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_bytes(compressed)
+    args.manifest.write_bytes(manifest)
+    print(
+        f"{args.output}: wrote {len(compressed)} compressed bytes "
+        f"({len(payload)} decoded)"
+    )
+    print(f"{args.manifest}: wrote {len(manifest)} bytes")
     return 0
 
 

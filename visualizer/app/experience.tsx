@@ -1176,10 +1176,17 @@ export function PartizanExperience() {
   const [atlasError, setAtlasError] = useState(false);
 
   useEffect(() => {
-    fetch("/evidence/fixed-value-atlas.json")
+    const basePath = process.env.NEXT_PUBLIC_PARTIZAN_BASE_PATH ?? "";
+    fetch(`${basePath}/evidence/fixed-value-atlas.json.gz`)
       .then((response) => {
         if (!response.ok) throw new Error("atlas request failed");
-        return response.json() as Promise<AtlasData>;
+        if (!response.body || typeof DecompressionStream === "undefined") {
+          throw new Error("gzip decoding is unavailable");
+        }
+        const decoded = response.body.pipeThrough(
+          new DecompressionStream("gzip"),
+        );
+        return new Response(decoded).json() as Promise<AtlasData>;
       })
       .then((data) => {
         if (
