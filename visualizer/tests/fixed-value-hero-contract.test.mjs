@@ -154,6 +154,10 @@ test("the 193-form hero exposes evidence, columns, and reachable controls", asyn
     "the focused plot must not be covered by an explanatory card",
   );
   assert.match(experienceSource, /data-secondary-corpus-view/i);
+  assert.match(experienceSource, /graph in\s+this class/i);
+  assert.match(experienceSource, /column containing the median form/i);
+  assert.match(experienceSource, /similar overall silhouettes/i);
+  assert.match(experienceSource, /<details className="further-example"/i);
   assert.match(experienceSource, /log(?:arithmic)?/i);
   assert.match(experienceSource, /jitter/i);
 

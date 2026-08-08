@@ -36,7 +36,10 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(html, /<title>Partizan \| 193 Graph Forms, One Complete Game<\/title>/i);
   assert.match(html, /One certified equivalence class/);
   assert.match(normalizedHtml, /193 graph forms\. One complete game\./i);
+  assert.match(normalizedHtml, /graph in this class/i);
+  assert.match(normalizedHtml, /column containing the median form/i);
   assert.match(html, /Secondary corpus overview/);
+  assert.match(normalizedHtml, /similar overall silhouettes/i);
   assert.match(normalizedHtml, /21,697 certified graph forms across three exact values\./);
   assert.match(html, /Graph form/);
   assert.match(html, /Complete game/);
@@ -45,6 +48,8 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(normalizedHtml, /7,555[\s\S]*?graph forms/);
   assert.match(normalizedHtml, /6,386[\s\S]*?complete games/);
   assert.match(html, /Three graph forms, two complete games, one value/);
+  assert.match(html, /<details[^>]*class="further-example"/i);
+  assert.doesNotMatch(html, /<details[^>]*class="further-example"[^>]*\sopen(?:\s|>)/i);
   assert.match(html, /Show A, B, and C/);
   assert.match(html, /Copy verification record/);
   assert.match(html, /og-progressive\.png/);
