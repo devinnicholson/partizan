@@ -47,7 +47,7 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(html, /Three graph forms, two complete games, one value/);
   assert.match(html, /Show A, B, and C/);
   assert.match(html, /Copy verification record/);
-  assert.match(html, /og\.png/);
+  assert.match(html, /og-progressive\.png/);
   assert.match(normalizedHtml, /73,728/);
   assert.match(normalizedHtml, /21,697/);
   assert.match(normalizedHtml, /16,120/);
