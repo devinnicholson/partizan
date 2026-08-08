@@ -13,14 +13,28 @@ from typing import Any
 
 
 SCHEMA_VERSION = "partizan.fixed_value_atlas.v1"
+HERO_SCHEMA_VERSION = "partizan.fixed_value_fiber_193.v1"
 TARGETS = ("0", "*", "{0|1}")
 TARGET_LABELS = {"0": "0", "*": "*", "{0|1}": "1/2"}
 DEFAULT_OUTPUT = Path("visualizer/public/evidence/fixed-value-atlas.json.gz")
+DEFAULT_HERO_OUTPUT = Path("visualizer/public/evidence/fixed-value-fiber-193.json")
+DEFAULT_HERO_MANIFEST = Path(
+    "visualizer/public/evidence/fixed-value-fiber-193.manifest.json"
+)
 DEFAULT_MANIFEST = Path("visualizer/public/evidence/fixed-value-atlas.manifest.json")
 PUBLICATION_URL = (
     "https://devinnicholson.github.io/partizan-reproducibility/"
     "evidence/fixed-value-atlas.json.gz"
 )
+HERO_PUBLICATION_URL = (
+    "https://devinnicholson.github.io/partizan-reproducibility/"
+    "evidence/fixed-value-fiber-193.json"
+)
+HERO_EXPECTED_TARGET = "{0|1}"
+HERO_EXPECTED_LITERAL_SHA256 = (
+    "830ef59c3454d13324e6841d466a702ef3e168bab7615bb4043d6e6d58e8fd66"
+)
+HERO_EXPECTED_QUOTIENT_FORMS = 193
 DESCRIPTORS = (
     "graph_arc_count",
     "blue_vertex_count",
@@ -273,7 +287,213 @@ def add_layout(items: list[dict[str, Any]], groups: list[dict[str, Any]]) -> Non
         ]
 
 
-def build_atlas(source: Path) -> dict[str, Any]:
+def build_hero(
+    source: Path,
+    atlas: dict[str, Any],
+    ordered_events: list[dict[str, Any]],
+    literal_counts: dict[tuple[str, str], int],
+) -> dict[str, Any]:
+    """Build the small, independently checkable landing payload."""
+
+    ranked_literal_keys = sorted(
+        literal_counts,
+        key=lambda key: (-literal_counts[key], TARGETS.index(key[0]), key[1]),
+    )
+    hero_target, hero_literal = ranked_literal_keys[0]
+    hero_count = literal_counts[(hero_target, hero_literal)]
+    largest_group_tie_count = sum(
+        count == hero_count for count in literal_counts.values()
+    )
+    expected = (
+        HERO_EXPECTED_TARGET,
+        HERO_EXPECTED_LITERAL_SHA256,
+        HERO_EXPECTED_QUOTIENT_FORMS,
+    )
+    observed = (hero_target, hero_literal, hero_count)
+    if observed != expected:
+        raise ValueError(f"largest observed literal-game group changed: {observed}")
+    if largest_group_tie_count != 1:
+        raise ValueError("the largest observed literal-game group is no longer unique")
+
+    hero_events = sorted(
+        (
+            event
+            for event in ordered_events
+            if event["target"] == hero_target
+            and event["exact_decision"]["candidate_root_game_sha256"]
+            == hero_literal
+        ),
+        key=lambda event: event["quotient"]["quotient_sha256"],
+    )
+    if len(hero_events) != hero_count:
+        raise ValueError("hero event count does not match its literal-game group")
+    hero_quotients = {
+        event["quotient"]["quotient_sha256"] for event in hero_events
+    }
+    if len(hero_quotients) != hero_count:
+        raise ValueError("hero graph quotients are not pairwise distinct")
+    if len({event["candidate_sha256"] for event in hero_events}) != hero_count:
+        raise ValueError("hero candidate digraphs are not pairwise distinct")
+
+    records: list[dict[str, Any]] = []
+    for event in hero_events:
+        if not accepted_heldout(event):
+            raise ValueError(
+                "hero member falls outside the checked population predicate"
+            )
+        declared_self_hash(event, "event_sha256")
+        candidate_sha256 = hashlib.sha256(
+            json.dumps(
+                event["candidate"],
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        if candidate_sha256 != event["candidate_sha256"]:
+            raise ValueError("hero candidate hash does not match its digraph")
+        quotient_sha256 = hashlib.sha256(
+            event["quotient"]["canonical_code"].encode("utf-8")
+        ).hexdigest()
+        if quotient_sha256 != event["quotient"]["quotient_sha256"]:
+            raise ValueError("hero quotient hash does not match its canonical code")
+        measurement = event["measurements"]
+        decision = event["exact_decision"]
+        if not (
+            len(event["candidate"]["arcs"]) == measurement["graph_arc_count"]
+            and len(event["candidate"]["blue_vertices"])
+            == measurement["blue_vertex_count"]
+            and decision["game_birthday"] == measurement["game_birthday"]
+            and decision["distinct_game_tree_node_count"]
+            == measurement["distinct_game_tree_node_count"]
+            and event["transition"]["candidate_literal_game_sha256"]
+            == hero_literal
+            and event["retention"]["sidecars"]["candidate_root_game_sha256"]
+            == hero_literal
+        ):
+            raise ValueError("hero event measurements or literal bindings changed")
+        records.append(
+            {
+                "a": int(measurement["graph_arc_count"]),
+                "b": int(measurement["game_birthday"]),
+                "c": event["candidate_sha256"],
+                "e": event["event_sha256"],
+                "g": adjacency_hex(event["candidate"]),
+                "i": int(event["global_event_index"]),
+                "m": blue_mask(event["candidate"]),
+                "n": int(measurement["distinct_game_tree_node_count"]),
+                "q": event["quotient"]["quotient_sha256"],
+            }
+        )
+
+    if len({(record["g"], record["m"]) for record in records}) != hero_count:
+        raise ValueError("hero adjacency/color encodings are not pairwise distinct")
+
+    arc_values = sorted({record["a"] for record in records})
+    arc_histogram = []
+    for arc_rank, arc_count in enumerate(arc_values):
+        members = sorted(
+            (record for record in records if record["a"] == arc_count),
+            key=lambda record: record["q"],
+        )
+        x = round(800 + arc_rank / max(1, len(arc_values) - 1) * 8400)
+        for member_rank, record in enumerate(members):
+            record["p"] = [
+                x,
+                round(700 + (member_rank + 0.5) / len(members) * 8600),
+            ]
+        arc_histogram.append([arc_count, len(members)])
+
+    literal_game_dag = literal_dag(source, hero_events[0])
+    if literal_game_dag["nodes"][literal_game_dag["root"]]["d"] != hero_literal:
+        raise ValueError(
+            "hero derivation root does not match the selected literal game"
+        )
+
+    payload = {
+        "schema_version": HERO_SCHEMA_VERSION,
+        "source": {
+            **atlas["source"],
+            "atlas_sha256": atlas["atlas_sha256"],
+        },
+        "selection": {
+            "population_count": atlas["counts"]["quotient_forms"],
+            "population_rule": (
+                "For each target, retain the first accepted held-out event for "
+                "every distinct graph-quotient SHA-256."
+            ),
+            "group_identity": "(target, candidate_root_game_sha256)",
+            "rule": (
+                "Choose the observed literal-game group with the most "
+                "quotient-distinct representatives; break ties by target order "
+                "0, *, {0|1}, then literal-game SHA-256."
+            ),
+            "target_formal": hero_target,
+            "target_label": TARGET_LABELS[hero_target],
+            "literal_game_sha256": hero_literal,
+            "observed_quotient_forms": hero_count,
+            "largest_group_tie_count": largest_group_tie_count,
+        },
+        "measurements": {
+            "graph_arc_range": [arc_values[0], arc_values[-1]],
+            "graph_arc_histogram": arc_histogram,
+            "game_birthday_values": sorted({record["b"] for record in records}),
+            "complete_game_node_values": sorted(
+                {record["n"] for record in records}
+            ),
+            "blue_vertex_count_values": sorted(
+                {record["m"].bit_count() for record in records}
+            ),
+            "observed_distinct_adjacency_colorings": len(
+                {(record["g"], record["m"]) for record in records}
+            ),
+        },
+        "encoding": {
+            "g": "49 adjacency bits in source-major order, lower-case hexadecimal",
+            "m": "seven-bit blue-vertex mask; unset vertices are red",
+            "item_keys": {
+                "a": "graph arc count",
+                "b": "game birthday",
+                "c": "candidate sha256",
+                "e": "source event sha256",
+                "g": "adjacency encoding",
+                "i": "source global event index",
+                "m": "blue-vertex mask",
+                "n": "distinct complete-game node count",
+                "p": "hero layout coordinate",
+                "q": "graph quotient sha256",
+            },
+            "layout": {
+                "coordinate_extent": [0, 10000],
+                "x": "directed-arc count, 17 through 27",
+                "y": "quotient-digest order within each arc-count column",
+                "distance_boundary": (
+                    "Only x encodes a measurement; y order and distance do not "
+                    "measure graph or aesthetic similarity."
+                ),
+                "version": "partizan.fixed_value_atlas.hero.layout.v1",
+            },
+        },
+        "claim_boundary": {
+            "scope": (
+                "Largest literal-game group in the frozen observed population "
+                "of quotient-unique held-out exact matches."
+            ),
+            "total_mathematical_fiber_size": "not_estimated",
+            "population_prevalence": "not_estimated",
+            "aesthetic_preference": "not_measured",
+            "human_preference": "not_measured",
+        },
+        "literal_game_dag": literal_game_dag,
+        "items": records,
+    }
+    return {
+        **payload,
+        "hero_sha256": hashlib.sha256(canonical_bytes(payload)).hexdigest(),
+    }
+
+
+def build_artifacts(source: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     manifest_path = source / "manifest.json"
     summary_path = source / "summary.json"
     events_path = source / "events.jsonl"
@@ -290,10 +510,14 @@ def build_atlas(source: Path) -> dict[str, Any]:
     negative_tests = load_json(negative_tests_path)
     descriptor_atlas = load_json(descriptor_atlas_path)
 
+    manifest_sha256 = declared_self_hash(manifest, "manifest_sha256")
+    summary_sha256 = declared_self_hash(summary, "summary_sha256")
+    verification_sha256 = declared_self_hash(verification, "verification_sha256")
     completion_sha256 = declared_self_hash(completion, "completion_sha256")
     negative_tests_sha256 = declared_self_hash(
         negative_tests, "negative_tests_sha256"
     )
+    descriptor_atlas_sha256 = declared_self_hash(descriptor_atlas, "atlas_sha256")
     if verification.get("status") != "PASS":
         raise ValueError("the source study has not passed independent replay")
     required_completion = {
@@ -335,6 +559,23 @@ def build_atlas(source: Path) -> dict[str, Any]:
         if completion.get(field) != observed:
             raise ValueError(
                 f"completion binding {field} mismatch: {observed} != {completion.get(field)}"
+            )
+    descriptor_source = descriptor_atlas.get("source") or {}
+    expected_descriptor_source = {
+        "event_count": summary["event_count"],
+        "events_sha256": file_sha256(events_path),
+        "independent_replay_pass": True,
+        "independent_verification_sha256": file_sha256(verification_path),
+        "run_complete_sha256": file_sha256(completion_path),
+        "run_complete_status": "GO",
+        "summary_declared_sha256": summary_sha256,
+        "summary_sha256": file_sha256(summary_path),
+    }
+    for key, expected in expected_descriptor_source.items():
+        if descriptor_source.get(key) != expected:
+            raise ValueError(
+                f"descriptor atlas source binding {key} mismatch: "
+                f"{descriptor_source.get(key)!r} != {expected!r}"
             )
 
     representatives: dict[tuple[str, str], dict[str, Any]] = {}
@@ -497,15 +738,21 @@ def build_atlas(source: Path) -> dict[str, Any]:
         "source": {
             "completion_file_sha256": file_sha256(completion_path),
             "completion_sha256": completion_sha256,
+            "descriptor_atlas_file_sha256": file_sha256(descriptor_atlas_path),
+            "descriptor_atlas_sha256": descriptor_atlas_sha256,
             "events_file_sha256": file_sha256(events_path),
             "independent_replay": completion["independent_replay_pass"],
             "manifest_file_sha256": file_sha256(manifest_path),
+            "manifest_sha256": manifest_sha256,
             "negative_tests_file_sha256": file_sha256(negative_tests_path),
             "negative_tests_sha256": negative_tests_sha256,
             "negative_test_families_rejected": rejected_test_count,
             "proposal_count": event_count,
+            "report_file_sha256": file_sha256(report_path),
             "summary_file_sha256": file_sha256(summary_path),
+            "summary_sha256": summary_sha256,
             "verification_file_sha256": file_sha256(verification_path),
+            "verification_sha256": verification_sha256,
             "representative_set_sha256": observed_representative_sha,
         },
         "counts": {
@@ -579,23 +826,64 @@ def build_atlas(source: Path) -> dict[str, Any]:
         "groups": groups,
         "items": items,
     }
-    return {
+    atlas = {
         **payload,
         "atlas_sha256": hashlib.sha256(canonical_bytes(payload)).hexdigest(),
     }
+    return atlas, build_hero(source, atlas, ordered_events, literal_counts)
+
+
+def build_atlas(source: Path) -> dict[str, Any]:
+    """Compatibility wrapper for callers that only need the complete atlas."""
+
+    atlas, _ = build_artifacts(source)
+    return atlas
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--hero-output", type=Path, default=DEFAULT_HERO_OUTPUT)
+    parser.add_argument("--hero-manifest", type=Path, default=DEFAULT_HERO_MANIFEST)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 
-    atlas = build_atlas(args.source)
+    atlas, hero = build_artifacts(args.source)
     payload = canonical_bytes(atlas)
+    hero_payload = canonical_bytes(hero)
     compressed = gzip.compress(payload, compresslevel=9, mtime=0)
+    hero_manifest = canonical_bytes(
+        {
+            "schema_version": "partizan.fixed_value_fiber_193.publication.v1",
+            "artifact": {
+                "bytes": len(hero_payload),
+                "content_type": "application/json",
+                "file": args.hero_output.name,
+                "sha256": hashlib.sha256(hero_payload).hexdigest(),
+            },
+            "hero_sha256": hero["hero_sha256"],
+            "publication_url": HERO_PUBLICATION_URL,
+            "selection": {
+                "literal_game_sha256": hero["selection"][
+                    "literal_game_sha256"
+                ],
+                "observed_quotient_forms": hero["selection"][
+                    "observed_quotient_forms"
+                ],
+                "target_formal": hero["selection"]["target_formal"],
+                "target_label": hero["selection"]["target_label"],
+            },
+            "source": {
+                "atlas_sha256": atlas["atlas_sha256"],
+                "completion_sha256": atlas["source"]["completion_sha256"],
+                "representative_set_sha256": atlas["source"][
+                    "representative_set_sha256"
+                ],
+            },
+        }
+    )
     manifest = canonical_bytes(
         {
             "schema_version": "partizan.fixed_value_atlas.publication.v1",
@@ -610,6 +898,20 @@ def main() -> int:
             },
             "atlas_sha256": atlas["atlas_sha256"],
             "counts": atlas["counts"],
+            "hero": {
+                "bytes": len(hero_payload),
+                "content_type": "application/json",
+                "file": args.hero_output.name,
+                "hero_sha256": hero["hero_sha256"],
+                "literal_game_sha256": hero["selection"]["literal_game_sha256"],
+                "observed_quotient_forms": hero["selection"][
+                    "observed_quotient_forms"
+                ],
+                "publication_url": HERO_PUBLICATION_URL,
+                "sha256": hashlib.sha256(hero_payload).hexdigest(),
+                "target_formal": hero["selection"]["target_formal"],
+                "target_label": hero["selection"]["target_label"],
+            },
             "publication_url": PUBLICATION_URL,
             "source": {
                 "completion_sha256": atlas["source"]["completion_sha256"],
@@ -621,20 +923,38 @@ def main() -> int:
     if args.check:
         if not args.output.is_file() or args.output.read_bytes() != compressed:
             raise SystemExit(f"{args.output}: generated atlas is stale")
+        if (
+            not args.hero_output.is_file()
+            or args.hero_output.read_bytes() != hero_payload
+        ):
+            raise SystemExit(f"{args.hero_output}: generated hero evidence is stale")
+        if (
+            not args.hero_manifest.is_file()
+            or args.hero_manifest.read_bytes() != hero_manifest
+        ):
+            raise SystemExit(f"{args.hero_manifest}: generated hero manifest is stale")
         if not args.manifest.is_file() or args.manifest.read_bytes() != manifest:
             raise SystemExit(f"{args.manifest}: generated manifest is stale")
         print(f"{args.output}: compressed atlas evidence is current")
+        print(f"{args.hero_output}: hero evidence is current")
+        print(f"{args.hero_manifest}: hero manifest is current")
         print(f"{args.manifest}: publication manifest is current")
         return 0
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.hero_output.parent.mkdir(parents=True, exist_ok=True)
+    args.hero_manifest.parent.mkdir(parents=True, exist_ok=True)
     args.manifest.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(compressed)
+    args.hero_output.write_bytes(hero_payload)
+    args.hero_manifest.write_bytes(hero_manifest)
     args.manifest.write_bytes(manifest)
     print(
         f"{args.output}: wrote {len(compressed)} compressed bytes "
         f"({len(payload)} decoded)"
     )
+    print(f"{args.hero_output}: wrote {len(hero_payload)} bytes")
+    print(f"{args.hero_manifest}: wrote {len(hero_manifest)} bytes")
     print(f"{args.manifest}: wrote {len(manifest)} bytes")
     return 0
 

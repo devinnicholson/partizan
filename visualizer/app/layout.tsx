@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 
-const title = "Partizan | A Fixed-Value Atlas";
+const title = "Partizan | 193 Graph Forms, One Complete Game";
 const description =
-  "An interactive atlas of 21,697 certified order-7 Digraph Placement graphs, grouped into 16,120 complete games and three exact values.";
+  "Inspect 193 certified order-7 Digraph Placement graphs that share one complete game and the exact value 1/2, then explore the larger fixed-value corpus.";
 
 function normalizedBasePath() {
   const value = process.env.NEXT_PUBLIC_PARTIZAN_BASE_PATH ?? "";
@@ -44,7 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: socialImage,
           width: 1536,
           height: 1024,
-          alt: "Graph forms grouped by complete-game identity and exact value in the Partizan fixed-value atlas.",
+          alt: "Three colored fields of graph-form marks converge on circular centers against a black background.",
         },
       ],
     },

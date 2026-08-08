@@ -3,6 +3,7 @@
 import {
   type CSSProperties,
   type KeyboardEvent,
+  type MouseEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -10,6 +11,7 @@ import {
   useState,
 } from "react";
 import elkiesJson from "../public/evidence/elkies-study.json";
+import fiberJson from "../public/evidence/fixed-value-fiber-193.json";
 import motifJson from "../public/evidence/fixed-value-motif.json";
 
 type Label = "A" | "B" | "C";
@@ -106,9 +108,28 @@ type AtlasData = {
 };
 
 type HistoricalEvidence = { source: { title: string; url: string } };
+type CompactFiber = {
+  items: {
+    a: number;
+    b: number;
+    g: string;
+    i: number;
+    m: number;
+    n: number;
+    p: [number, number];
+    q: string;
+  }[];
+  selection: {
+    literal_game_sha256: string;
+    observed_quotient_forms: number;
+    target_formal: string;
+    target_label: string;
+  };
+};
 
-const motif = motifJson as FixedValueMotif;
+const motif = motifJson as unknown as FixedValueMotif;
 const elkies = elkiesJson as HistoricalEvidence;
+const compactFiber = fiberJson as unknown as CompactFiber;
 const numberFormat = new Intl.NumberFormat("en-US");
 const layerNames = ["Graph form", "Complete game", "Exact value"] as const;
 const layerCounts = [21_697, 16_120, 3] as const;
@@ -118,6 +139,7 @@ const nextLayerActions = [
   "Show graph forms",
 ] as const;
 const atlasColors = ["#d7b168", "#e8e1d4", "#9b968b"] as const;
+const FOCUS_LITERAL_DIGEST = compactFiber.selection.literal_game_sha256;
 
 const graphCoordinates = [
   { x: 50, y: 8 },
@@ -244,6 +266,567 @@ function DirectedGraph({
         ))}
       </div>
     </figure>
+  );
+}
+
+type FiberMember = { index: number; item: AtlasItem };
+type FiberArcState = "shared" | "added" | "removed";
+
+function FiberEdge({
+  from,
+  to,
+  state,
+}: {
+  from: number;
+  to: number;
+  state: FiberArcState;
+}) {
+  const start = graphCoordinates[from];
+  const end = graphCoordinates[to];
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const distance = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+  return (
+    <span
+      className={`fiber-edge ${state}`}
+      style={
+        {
+          "--edge-x": `${start.x}%`,
+          "--edge-y": `${start.y}%`,
+          "--edge-length": `${distance}%`,
+          "--edge-angle": `${angle}deg`,
+        } as CSSProperties
+      }
+      aria-hidden="true"
+    />
+  );
+}
+
+function FiberGraph({
+  item,
+  reference,
+  large = false,
+}: {
+  item: AtlasItem;
+  reference?: AtlasItem;
+  large?: boolean;
+}) {
+  const arcs = decodedArcs(item.g);
+  const referenceArcs = reference ? decodedArcs(reference.g) : arcs;
+  const arcSet = new Set(arcs.map(arcKey));
+  const referenceSet = new Set(referenceArcs.map(arcKey));
+  const union = new Map<string, [number, number]>();
+  for (const arc of [...referenceArcs, ...arcs]) union.set(arcKey(arc), arc);
+
+  return (
+    <div className={`fiber-graph${large ? " large" : ""}`} aria-hidden="true">
+      {Array.from(union.values()).map(([from, to]) => {
+        const key = arcKey([from, to]);
+        const state: FiberArcState = !referenceSet.has(key)
+          ? "added"
+          : !arcSet.has(key)
+            ? "removed"
+            : "shared";
+        return <FiberEdge from={from} to={to} state={state} key={key} />;
+      })}
+      {graphCoordinates.map((coordinate, vertex) => (
+        <span
+          className={`fiber-node ${
+            (item.m & (1 << vertex)) !== 0 ? "blue" : "red"
+          }`}
+          key={vertex}
+          style={
+            {
+              "--node-x": `${coordinate.x}%`,
+              "--node-y": `${coordinate.y}%`,
+            } as CSSProperties
+          }
+        >
+          {large ? vertex : ""}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function edgeDifference(reference: AtlasItem, selected: AtlasItem) {
+  const referenceSet = new Set(decodedArcs(reference.g).map(arcKey));
+  const selectedSet = new Set(decodedArcs(selected.g).map(arcKey));
+  return {
+    added: Array.from(selectedSet).filter((arc) => !referenceSet.has(arc)),
+    removed: Array.from(referenceSet).filter((arc) => !selectedSet.has(arc)),
+  };
+}
+
+type FiberCanvasCell = {
+  member: FiberMember;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+function FiberHeroCanvas({
+  columns,
+  selected,
+  reference,
+  onSelect,
+  onNavigate,
+}: {
+  columns: { arcCount: number; members: FiberMember[] }[];
+  selected: FiberMember | null;
+  reference: FiberMember | null;
+  onSelect: (member: FiberMember) => void;
+  onNavigate: (key: string) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cellsRef = useRef<FiberCanvasCell[]>([]);
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const targetWidth = Math.max(1, Math.round(width * dpr));
+    const targetHeight = Math.max(1, Math.round(height * dpr));
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+    }
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    context.clearRect(0, 0, width, height);
+    context.fillStyle = "#090908";
+    context.fillRect(0, 0, width, height);
+
+    const rows = 11;
+    const top = 76;
+    const bottom = 18;
+    const outer = 18;
+    const gap = 12;
+    const usableWidth = width - outer * 2 - gap * (columns.length - 1);
+    const units = columns.map(({ members }) => Math.max(1, Math.ceil(members.length / rows)));
+    const totalUnits = units.reduce((sum, value) => sum + value, 0);
+    const unitWidth = usableWidth / totalUnits;
+    const rowHeight = (height - top - bottom) / rows;
+    const cells: FiberCanvasCell[] = [];
+    let columnX = outer;
+
+    context.textBaseline = "alphabetic";
+    columns.forEach(({ arcCount, members }, columnIndex) => {
+      const columnWidth = units[columnIndex] * unitWidth;
+      context.strokeStyle = "rgba(241,236,223,.17)";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(Math.round(columnX) + 0.5, 16);
+      context.lineTo(Math.round(columnX) + 0.5, height - 12);
+      context.stroke();
+      context.fillStyle = "#f1ecdf";
+      context.font = "22px Iowan Old Style, Baskerville, serif";
+      context.fillText(String(arcCount), columnX + 7, 34);
+      context.fillStyle = "#8f8b81";
+      context.font = "9px SFMono-Regular, Roboto Mono, monospace";
+      context.fillText(`${members.length} ${members.length === 1 ? "FORM" : "FORMS"}`, columnX + 7, 51);
+
+      members.forEach((member, memberIndex) => {
+        const subcolumn = Math.floor(memberIndex / rows);
+        const row = memberIndex % rows;
+        const cellX = columnX + subcolumn * unitWidth;
+        const cellY = top + row * rowHeight;
+        const cellWidth = unitWidth;
+        const cellHeight = rowHeight;
+        cells.push({ member, x: cellX, y: cellY, width: cellWidth, height: cellHeight });
+
+        const centerX = cellX + cellWidth / 2;
+        const centerY = cellY + cellHeight / 2;
+        const graphSize = Math.min(38, cellWidth - 7, cellHeight - 7);
+        const radius = 1.65;
+        const nodePosition = (vertex: number) => ({
+          x: centerX + ((graphCoordinates[vertex].x - 50) / 100) * graphSize,
+          y: centerY + ((graphCoordinates[vertex].y - 50) / 100) * graphSize,
+        });
+
+        const isSelected = member.index === selected?.index;
+        const isReference = member.index === reference?.index;
+        if (isSelected || isReference) {
+          context.strokeStyle = isSelected ? "#e96f58" : "#d7b168";
+          context.lineWidth = isSelected ? 1.5 : 1;
+          context.strokeRect(
+            Math.round(cellX + 2) + 0.5,
+            Math.round(cellY + 2) + 0.5,
+            Math.max(4, cellWidth - 5),
+            Math.max(4, cellHeight - 5),
+          );
+        }
+
+        context.strokeStyle = "rgba(241,236,223,.42)";
+        context.fillStyle = "rgba(241,236,223,.42)";
+        context.lineWidth = 0.75;
+        for (const [from, to] of decodedArcs(member.item.g)) {
+          const start = nodePosition(from);
+          const end = nodePosition(to);
+          if (from === to) {
+            context.beginPath();
+            context.arc(start.x + 2.4, start.y - 2.4, 3.2, 0.4, Math.PI * 2.05);
+            context.stroke();
+            context.beginPath();
+            context.moveTo(start.x + 4.8, start.y - 4.7);
+            context.lineTo(start.x + 2.7, start.y - 5.1);
+            context.lineTo(start.x + 4.2, start.y - 2.9);
+            context.fill();
+            continue;
+          }
+          const dx = end.x - start.x;
+          const dy = end.y - start.y;
+          const length = Math.hypot(dx, dy) || 1;
+          const ux = dx / length;
+          const uy = dy / length;
+          const startX = start.x + ux * (radius + 0.5);
+          const startY = start.y + uy * (radius + 0.5);
+          const endX = end.x - ux * (radius + 0.8);
+          const endY = end.y - uy * (radius + 0.8);
+          context.beginPath();
+          context.moveTo(startX, startY);
+          context.lineTo(endX, endY);
+          context.stroke();
+          const arrowX = startX + (endX - startX) * 0.73;
+          const arrowY = startY + (endY - startY) * 0.73;
+          context.beginPath();
+          context.moveTo(arrowX + ux * 2.2, arrowY + uy * 2.2);
+          context.lineTo(arrowX - uy * 1.6, arrowY + ux * 1.6);
+          context.lineTo(arrowX + uy * 1.6, arrowY - ux * 1.6);
+          context.closePath();
+          context.fill();
+        }
+
+        graphCoordinates.forEach((_, vertex) => {
+          const point = nodePosition(vertex);
+          context.beginPath();
+          context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+          context.fillStyle =
+            (member.item.m & (1 << vertex)) !== 0 ? "#73b8bc" : "#e96f58";
+          context.fill();
+        });
+      });
+      columnX += columnWidth + gap;
+    });
+
+    context.beginPath();
+    context.moveTo(Math.round(width - outer) + 0.5, 16);
+    context.lineTo(Math.round(width - outer) + 0.5, height - 12);
+    context.strokeStyle = "rgba(241,236,223,.17)";
+    context.stroke();
+    cellsRef.current = cells;
+  }, [columns, reference, selected]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const observer = new ResizeObserver(draw);
+    observer.observe(canvas);
+    draw();
+    return () => observer.disconnect();
+  }, [draw]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const scroller = canvas?.parentElement;
+    if (!canvas || !scroller || !selected) return;
+    const frame = requestAnimationFrame(() => {
+      const cell = cellsRef.current.find(
+        (candidate) => candidate.member.index === selected.index,
+      );
+      if (!cell) return;
+      const leftEdge = scroller.scrollLeft;
+      const rightEdge = leftEdge + scroller.clientWidth;
+      const cellLeft = cell.x;
+      const cellRight = cell.x + cell.width;
+      if (cellLeft < leftEdge || cellRight > rightEdge) {
+        scroller.scrollTo({
+          left: Math.max(0, cell.x + cell.width / 2 - scroller.clientWidth / 2),
+          behavior: "auto",
+        });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selected]);
+
+  function pick(clientX: number, clientY: number) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const bounds = canvas.getBoundingClientRect();
+    const x = clientX - bounds.left;
+    const y = clientY - bounds.top;
+    const cell = cellsRef.current.find(
+      (candidate) =>
+        x >= candidate.x &&
+        x <= candidate.x + candidate.width &&
+        y >= candidate.y &&
+        y <= candidate.y + candidate.height,
+    );
+    if (cell) onSelect(cell.member);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLCanvasElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      if (reference) onSelect(reference);
+      return;
+    }
+    if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    onNavigate(event.key);
+  }
+
+  function handleClick(event: MouseEvent<HTMLCanvasElement>) {
+    pick(event.clientX, event.clientY);
+  }
+
+  return (
+    <canvas
+      data-fiber-hero-canvas
+      ref={canvasRef}
+      className="fiber-hero-canvas"
+      role="group"
+      tabIndex={0}
+      aria-describedby="fiber-keyboard-help"
+      aria-label="All 193 observed graph forms arranged in columns by directed-arc count from 17 through 27"
+      onKeyDown={handleKeyDown}
+      onClick={handleClick}
+    />
+  );
+}
+
+function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean }) {
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const largestGroupIndex = useMemo(() => {
+    if (!atlas) return -1;
+    return atlas.groups.findIndex(
+      (group) => group.c === 193 && group.d === FOCUS_LITERAL_DIGEST,
+    );
+  }, [atlas]);
+
+  const members = useMemo<FiberMember[]>(() => {
+    const source =
+      atlas && largestGroupIndex >= 0
+        ? atlas.items
+            .map((item, index) => ({ item, index }))
+            .filter(({ item }) => item.l === largestGroupIndex)
+        : compactFiber.items.map((item, index) => ({
+            index,
+            item: {
+              ...item,
+              l: -1,
+              p: [item.p[0], item.p[1], 0, 0, 0, 0] as AtlasItem["p"],
+              t: 2,
+            },
+          }));
+    return source
+      .sort((left, right) => left.item.a - right.item.a || left.item.q.localeCompare(right.item.q));
+  }, [atlas, largestGroupIndex]);
+
+  const byArcCount = useMemo(
+    () =>
+      Array.from({ length: 11 }, (_, offset) => 17 + offset).map((arcCount) => ({
+        arcCount,
+        members: members.filter(({ item }) => item.a === arcCount),
+      })),
+    [members],
+  );
+
+  const reference = useMemo(
+    () => members.find(({ item }) => item.a === 23) ?? members[0] ?? null,
+    [members],
+  );
+
+  const selected =
+    members.find((member) => member.index === selectedIndex) ??
+    members.find(({ item }) => item.a === 27) ??
+    members.at(-1) ??
+    reference;
+  const selectedPosition = selected
+    ? members.findIndex((member) => member.index === selected.index)
+    : -1;
+  const difference =
+    reference && selected ? edgeDifference(reference.item, selected.item) : null;
+  const largestGroup =
+    atlas && largestGroupIndex >= 0
+      ? atlas.groups[largestGroupIndex]
+      : ({ c: 193, d: FOCUS_LITERAL_DIGEST, p: [0, 0], t: 2 } as AtlasGroup);
+
+  function focusMember(member: FiberMember) {
+    setSelectedIndex(member.index);
+  }
+
+  function moveWithinBoard(key: string) {
+    if (!selected) return;
+    const columnIndex = byArcCount.findIndex(
+      ({ arcCount }) => arcCount === selected.item.a,
+    );
+    const column = byArcCount[columnIndex];
+    const rowIndex = column.members.findIndex(
+      (member) => member.index === selected.index,
+    );
+    if (key === "ArrowUp" || key === "ArrowDown") {
+      const delta = key === "ArrowUp" ? -1 : 1;
+      const next = column.members[Math.max(0, Math.min(column.members.length - 1, rowIndex + delta))];
+      if (next) focusMember(next);
+      return;
+    }
+    if (key === "ArrowLeft" || key === "ArrowRight") {
+      const delta = key === "ArrowLeft" ? -1 : 1;
+      const nextColumn = byArcCount[Math.max(0, Math.min(byArcCount.length - 1, columnIndex + delta))];
+      const next = nextColumn.members[Math.min(rowIndex, nextColumn.members.length - 1)];
+      if (next) focusMember(next);
+      return;
+    }
+    if (key === "Home" && members[0]) focusMember(members[0]);
+    if (key === "End" && members.at(-1)) focusMember(members.at(-1)!);
+  }
+
+  function moveSequentially(delta: number) {
+    if (!members.length) return;
+    const nextPosition =
+      (Math.max(0, selectedPosition) + delta + members.length) % members.length;
+    focusMember(members[nextPosition]);
+  }
+
+  return (
+    <section
+      className="fiber-class"
+      id="class"
+      aria-labelledby="fiber-title"
+      data-fixed-fiber-hero="193"
+    >
+      <header className="fiber-intro">
+        <div>
+          <p className="eyebrow">One certified equivalence class</p>
+          <h1 id="fiber-title">193 graph forms. One complete game.</h1>
+        </div>
+        <p>
+          Each miniature is an observed order-7 Digraph Placement graph. Move
+          through the forms with the arrow keys or choose one directly. The
+          complete-game digest and exact value stay fixed.
+        </p>
+      </header>
+
+      <div className="identity-receipt" aria-label="Exact identity receipt">
+        <div><strong>193</strong><span>graph quotient digests</span></div>
+        <b aria-hidden="true">→</b>
+        <div><strong>1</strong><span>complete-game digest</span></div>
+        <b aria-hidden="true">→</b>
+        <div><strong>1/2</strong><span>exact value</span></div>
+      </div>
+      <p className="fiber-digest-receipt">
+        Shared complete-game identity <code>{FOCUS_LITERAL_DIGEST}</code>
+      </p>
+
+      <div className="fiber-instrument">
+        <div className="fiber-instrument-header">
+          <div>
+            <p className="eyebrow">All 193 certified forms</p>
+            <p>Columns report directed-arc count. Every graph uses the same fixed seven-vertex layout.</p>
+          </div>
+          <div className="fiber-keyboard-hint">
+            <kbd>←</kbd><kbd>→</kbd> arc column
+            <kbd>↑</kbd><kbd>↓</kbd> form
+          </div>
+        </div>
+
+        <div className="sr-only" aria-label="Arc-count distribution">
+          {byArcCount.map(({ arcCount, members: columnMembers }) => (
+            <div data-arc-column={arcCount} key={arcCount}>
+              <strong>{arcCount}</strong>
+              <span>
+                {columnMembers.length} {columnMembers.length === 1 ? "form" : "forms"}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <p className="sr-only" id="fiber-keyboard-help">
+          Use Left and Right Arrow keys to change arc-count columns, Up and Down
+          Arrow keys to move within a column, Home and End to reach the limits,
+          and Escape to return to the stable reference. Touch or click any graph
+          to compare it.
+        </p>
+
+        {largestGroup && members.length === 193 ? (
+          <div className="fiber-board-scroll">
+            <FiberHeroCanvas
+              columns={byArcCount}
+              selected={selected}
+              reference={reference}
+              onSelect={focusMember}
+              onNavigate={moveWithinBoard}
+            />
+          </div>
+        ) : (
+          <div className="fiber-loading" role="status">
+            {error ? "The checked equivalence class could not be loaded." : "Loading 193 certified graphs…"}
+          </div>
+        )}
+
+        {reference && selected && difference && largestGroup && (
+          <div className="fiber-inspector">
+            <header className="fiber-selection-bar">
+              <div>
+                <span>Selected form</span>
+                <strong>{selectedPosition + 1} / 193</strong>
+                <small>{selected.item.a} directed arcs · event {numberFormat.format(selected.item.i)}</small>
+              </div>
+              <div className="fiber-step-buttons">
+                <button data-fiber-previous type="button" onClick={() => moveSequentially(-1)} aria-label="Previous graph form">← Previous</button>
+                <button data-fiber-next type="button" onClick={() => moveSequentially(1)} aria-label="Next graph form">Next →</button>
+              </div>
+            </header>
+            <p className="sr-only" aria-live="polite">
+              Selected form {selectedPosition + 1} of 193 with {selected.item.a} directed arcs.
+            </p>
+            <div className="fiber-specimens">
+              <figure>
+                <figcaption><span>Stable reference</span><strong>23 arcs</strong></figcaption>
+                <FiberGraph item={reference.item} large />
+                <small>Lexicographically first quotient digest in the median arc-count column.</small>
+              </figure>
+              <figure>
+                <figcaption><span>Selected embodiment</span><strong>{selected.item.a} arcs</strong></figcaption>
+                <FiberGraph item={selected.item} reference={reference.item} large />
+                <small>{shortHash(selected.item.q)} · birthday {selected.item.b} · {selected.item.n} complete-game nodes</small>
+              </figure>
+              <aside className="fiber-difference">
+                <p className="eyebrow">Against the reference</p>
+                <div><strong>+{difference.added.length}</strong><span>added arcs</span></div>
+                <p>{difference.added.length ? difference.added.join(", ") : "None"}</p>
+                <div><strong>−{difference.removed.length}</strong><span>removed arcs</span></div>
+                <p>{difference.removed.length ? difference.removed.join(", ") : "None"}</p>
+                <dl>
+                  <div>
+                    <dt>Graph quotient</dt>
+                    <dd>{selected.item.q === reference.item.q ? "same" : "different"}</dd>
+                  </div>
+                  <div><dt>Complete game</dt><dd>same</dd></div>
+                  <div><dt>Exact value</dt><dd>1/2</dd></div>
+                </dl>
+              </aside>
+            </div>
+            <div className="fiber-legend" aria-label="Graph legend">
+              <span><i className="node-blue" /> Blue vertex: Left</span>
+              <span><i className="node-red" /> Red vertex: Right</span>
+              <span><i className="line-shared" /> shared arc</span>
+              <span><i className="line-added" /> added arc</span>
+              <span><i className="line-removed" /> removed arc</span>
+              <code>complete game {largestGroup.d}</code>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -728,20 +1311,41 @@ function AtlasStage({
         graphArcRange: null,
         nodeRange: null,
       }));
+  const multiFormGroups = atlas
+    ? atlas.groups.filter((group) => group.c > 1).length
+    : 2_402;
+  const largestClass = atlas
+    ? Math.max(...atlas.groups.map((group) => group.c))
+    : 193;
 
   return (
-    <section className="atlas-section" id="atlas" aria-labelledby="atlas-title">
+    <section
+      className="atlas-section"
+      id="atlas"
+      aria-labelledby="atlas-title"
+      data-secondary-corpus-view
+    >
       <header className="atlas-intro">
         <div>
-          <p className="eyebrow">Observed dataset</p>
+          <p className="eyebrow">Secondary corpus overview</p>
           <h1 id="atlas-title">21,697 certified graph forms across three exact values.</h1>
         </div>
-        <p>
-          Each mark is a quotient-distinct order-7 graph recovered in the
-          study. The controls apply two further equivalence relations: graph
-          forms that induce the same recursive game, then games with the same
-          exact combinatorial value.
-        </p>
+        <div className="atlas-context">
+          <p>
+            Each mark is a quotient-distinct order-7 graph recovered in the
+            study. The controls group forms by recursive complete game and then
+            by exact combinatorial value.
+          </p>
+          <aside className="corpus-summary-card" aria-label="Observed multiplicity summary">
+            <div><strong>{numberFormat.format(multiFormGroups)}</strong><span>complete games with multiple observed graph forms</span></div>
+            <div><strong>{largestClass}</strong><span>forms in the largest observed class</span></div>
+          </aside>
+          <div className="corpus-color-key" aria-label="Exact-value color key">
+            <span><i style={{ background: atlasColors[0] }} /> value 0</span>
+            <span><i style={{ background: atlasColors[1] }} /> value ∗</span>
+            <span><i style={{ background: atlasColors[2] }} /> value 1/2</span>
+          </div>
+        </div>
       </header>
 
       <div className="atlas-shell">
@@ -806,6 +1410,17 @@ function AtlasStage({
             keyboard paths through the dataset.
           </p>
 
+          {layer === 0 && (
+            <>
+              <div className="corpus-axis-y" aria-hidden="true">
+                complete-game nodes · logarithmic scale
+              </div>
+              <div className="corpus-axis-x" aria-hidden="true">
+                directed arcs →
+              </div>
+            </>
+          )}
+
           {atlas ? (
             <>
               <AtlasCanvas
@@ -815,7 +1430,7 @@ function AtlasStage({
                 onSelect={setSelectedIndex}
                 highlightMotif={highlightMotif}
               />
-              {(!highlightMotif || selectedIndex !== null) && (
+              {selectedIndex !== null && (
                 <SpecimenPanel
                   atlas={atlas}
                   selectedIndex={selectedIndex}
@@ -877,7 +1492,7 @@ function AtlasStage({
           </p>
           <p>
             {layer === 0
-              ? "Horizontal position follows directed-arc count; vertical position follows complete-game node count."
+              ? "Horizontal position is directed-arc count. Vertical position is complete-game node count on a logarithmic scale. A small deterministic digest jitter separates coincident marks and has no semantic meaning."
               : layer === 1
                 ? "Each outlined class is one complete game. Packing separates classes; distance does not encode similarity."
                 : "The study examined three target values. Each mark still denotes one observed graph form."}
@@ -1212,14 +1827,16 @@ export function PartizanExperience() {
     <main className="experience" id="top">
       <header className="masthead">
         <a className="wordmark" href="#top">Partizan</a>
-        <span>Fixed-value atlas</span>
+        <span>One value, many forms</span>
         <nav aria-label="Page links">
-          <a href="#atlas">Atlas</a>
+          <a href="#class">193 forms</a>
+          <a href="#atlas">Corpus</a>
           <a href="#crossing">Case study</a>
           <a href="#evidence">Verification</a>
         </nav>
       </header>
 
+      <FiberClass atlas={atlas} error={atlasError} />
       <AtlasStage atlas={atlas} error={atlasError} onFindCrossing={findCrossing} />
       <CrossingJourney atlas={atlas} />
       <EvidenceLedger atlas={atlas} />
