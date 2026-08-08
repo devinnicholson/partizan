@@ -141,7 +141,7 @@ summary:focus-visible,
   max-width: 950px;
   margin: 11px 0 0;
   font-family: var(--serif);
-  font-size: clamp(2.15rem, 4.4vw, 4.25rem);
+  font-size: clamp(1.85rem, 3vw, 2.9rem);
   font-weight: 400;
   letter-spacing: -.045em;
   line-height: .96;
@@ -951,7 +951,7 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   .masthead nav { gap: 10px; }
   .masthead nav a { font-size: .58rem; }
   .fiber-class { padding: 40px 0 72px; }
-  .fiber-intro h1 { font-size: clamp(2.05rem, 10.5vw, 3rem); }
+  .fiber-intro h1 { font-size: clamp(1.8rem, 8.5vw, 2.35rem); }
   .identity-receipt { grid-template-columns: 1fr; }
   .identity-receipt > div { grid-template-columns: auto 1fr; justify-content: start !important; padding: 10px 4px; }
   .identity-receipt b { min-height: 14px; transform: rotate(90deg); }
