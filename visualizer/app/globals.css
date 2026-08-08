@@ -141,10 +141,10 @@ summary:focus-visible,
   max-width: 950px;
   margin: 11px 0 0;
   font-family: var(--serif);
-  font-size: clamp(2.65rem, 5.9vw, 6rem);
+  font-size: clamp(2.15rem, 4.4vw, 4.25rem);
   font-weight: 400;
-  letter-spacing: -.055em;
-  line-height: .9;
+  letter-spacing: -.045em;
+  line-height: .96;
 }
 
 .fiber-intro > p {
@@ -378,7 +378,7 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   line-height: .95;
 }
 
-.atlas-intro h1 { max-width: 760px; font-size: clamp(1.95rem, 3.45vw, 3.45rem); line-height: 1.04; }
+.atlas-intro h1 { max-width: 760px; font-size: clamp(1.7rem, 2.65vw, 2.65rem); line-height: 1.08; }
 
 .atlas-context > p {
   max-width: 480px;
@@ -808,7 +808,7 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   border-bottom: 1px solid var(--stage-line);
 }
 
-.crossing-header h2 { font-size: clamp(1.65rem, 2.7vw, 2.6rem); }
+.crossing-header h2 { font-size: clamp(1.45rem, 2.1vw, 2.1rem); line-height: 1.04; }
 
 .journey-progress { display: flex; border: 1px solid var(--stage-line); }
 .journey-progress button { display: grid; width: 42px; height: 42px; place-items: center; border: 0; border-right: 1px solid var(--stage-line); color: var(--stage-muted); background: transparent; cursor: pointer; font-family: var(--mono); font-size: .58rem; }
@@ -869,7 +869,7 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
 .literal-dag footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 10px; color: var(--stage-muted); font-size: .52rem; }
 
 .identity-result { display: grid; width: min(1100px, 100%); gap: 34px; }
-.identity-result > p { max-width: 820px; margin: 0 auto; font-family: var(--serif); font-size: clamp(1.65rem, 2.8vw, 2.7rem); letter-spacing: -.025em; line-height: 1.05; text-align: center; }
+.identity-result > p { max-width: 820px; margin: 0 auto; font-family: var(--serif); font-size: clamp(1.4rem, 2.15vw, 2.1rem); letter-spacing: -.02em; line-height: 1.12; text-align: center; }
 .island-result { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--stage-line); }
 .island-result > div { display: grid; gap: 10px; padding: 19px 24px; }
 .island-result > div + div { border-left: 1px solid var(--stage-line); }
@@ -894,7 +894,7 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   padding: 0 0 110px;
 }
 
-.evidence-ledger h2 { max-width: 520px; font-size: clamp(1.65rem, 2.8vw, 2.75rem); }
+.evidence-ledger h2 { max-width: 520px; font-size: clamp(1.45rem, 2.15vw, 2.15rem); line-height: 1.05; }
 .ledger-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--ink); border-left: 1px solid var(--ink); }
 .ledger-grid > div { display: grid; min-height: 145px; align-content: space-between; padding: 18px; border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
 .ledger-grid strong { font-family: var(--serif); font-size: clamp(1.5rem, 2.2vw, 2.2rem); font-weight: 400; }
@@ -951,7 +951,7 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   .masthead nav { gap: 10px; }
   .masthead nav a { font-size: .58rem; }
   .fiber-class { padding: 40px 0 72px; }
-  .fiber-intro h1 { font-size: clamp(2.6rem, 15vw, 4.2rem); }
+  .fiber-intro h1 { font-size: clamp(2.05rem, 10.5vw, 3rem); }
   .identity-receipt { grid-template-columns: 1fr; }
   .identity-receipt > div { grid-template-columns: auto 1fr; justify-content: start !important; padding: 10px 4px; }
   .identity-receipt b { min-height: 14px; transform: rotate(90deg); }
@@ -976,7 +976,7 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   .fiber-legend { gap: 11px; }
   .fiber-legend code { width: 100%; margin-left: 0; }
   .atlas-section { padding: 44px 0 72px; }
-  .atlas-intro h1 { font-size: clamp(2rem, 8.5vw, 2.95rem); }
+  .atlas-intro h1 { font-size: clamp(1.7rem, 7vw, 2.35rem); }
   .layer-tabs { grid-template-columns: 1fr; }
   .layer-tabs button { min-height: 58px; border-right: 0; border-bottom: 1px solid var(--stage-line); }
   .layer-tabs button:last-child { border-bottom: 0; }
@@ -1023,7 +1023,7 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   .collapse-arrow b { transform: none; }
   .dag-field { aspect-ratio: 1.15; }
   .identity-result { gap: 22px; }
-  .identity-result > p { font-size: clamp(1.65rem, 7vw, 2.35rem); }
+  .identity-result > p { font-size: clamp(1.4rem, 6vw, 1.95rem); }
   .island-result { grid-template-columns: 1fr; }
   .island-result > div + div { border-top: 1px solid var(--stage-line); border-left: 0; }
   .identity-equations { grid-template-columns: 1fr; }
