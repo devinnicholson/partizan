@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const configuredOrigin = process.env.PARTIZAN_PUBLIC_ORIGIN;
   const origin = new URL(configuredOrigin ?? `${protocol}://${host}`);
   const basePath = normalizedBasePath();
-  const socialImage = new URL(`${basePath}/og.png`, origin).toString();
+  const socialImage = new URL(`${basePath}/og-progressive.png`, origin).toString();
   const favicon = new URL(`${basePath}/favicon.png`, origin).toString();
 
   return {
@@ -44,7 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: socialImage,
           width: 1536,
           height: 1024,
-          alt: "Three colored fields of graph-form marks converge on circular centers against a black background.",
+          alt: "A complete field of graph forms narrows to nine readable forms and one inspected seven-node graph on black.",
         },
       ],
     },

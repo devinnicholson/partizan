@@ -132,6 +132,10 @@ test("the 193-form hero exposes evidence, columns, and reachable controls", asyn
   assert.match(experienceSource, /Escape/);
   assert.match(experienceSource, /data-fiber-(?:previous|prev)/i);
   assert.match(experienceSource, /data-fiber-next/i);
+  assert.match(experienceSource, /data-fiber-neighborhood=["']9["']/i);
+  assert.match(experienceSource, /const neighborhoodSize = 9/);
+  assert.match(experienceSource, /Nine neighboring forms/);
+  assert.match(experienceSource, /data-fiber-specimen/i);
   assert.match(experienceSource, /const rows = 11/);
   assert.match(experienceSource, /scroller\.scrollTo/);
   assert.match(
