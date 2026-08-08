@@ -772,6 +772,32 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   color: var(--cream);
 }
 
+.further-example {
+  width: min(1440px, calc(100% - 48px));
+  margin: 0 auto 100px;
+  border: 1px solid var(--line);
+}
+
+.further-example > summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(260px, .65fr) auto;
+  gap: 24px;
+  align-items: baseline;
+  padding: 22px 24px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.further-example > summary::-webkit-details-marker { display: none; }
+.further-example > summary::marker { content: ""; }
+.further-example > summary span { color: var(--coral); font-family: var(--mono); font-size: .56rem; letter-spacing: .1em; text-transform: uppercase; }
+.further-example > summary strong { font-family: var(--serif); font-size: 1.25rem; font-weight: 400; }
+.further-example > summary small { color: var(--muted); font-size: .62rem; line-height: 1.45; }
+.further-example > summary::after { content: "+"; justify-self: end; color: var(--muted); font-family: var(--mono); grid-column: 4; grid-row: 1; }
+.further-example[open] > summary { border-bottom: 1px solid var(--stage-line); }
+.further-example[open] > summary::after { content: "−"; }
+.further-example .crossing-journey { width: 100%; margin: 0; border: 0; }
+
 .crossing-header {
   display: flex;
   min-height: 122px;
@@ -975,6 +1001,11 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   .atlas-legend { grid-template-columns: 1fr; }
   .atlas-legend p + p { border-top: 1px solid var(--stage-line); border-left: 0; }
   .claim-boundary { text-align: left; }
+  .further-example { width: min(100% - 24px, 1440px); margin-bottom: 72px; }
+  .further-example > summary { grid-template-columns: 1fr auto; gap: 8px 18px; padding: 18px; }
+  .further-example > summary strong,
+  .further-example > summary small { grid-column: 1 / -1; }
+  .further-example > summary::after { grid-column: 2; }
   .crossing-journey { margin-bottom: 72px; }
   .crossing-header { align-items: flex-start; flex-direction: column; padding: 22px 18px; }
   .journey-progress { width: 100%; }

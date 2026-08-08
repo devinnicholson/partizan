@@ -720,9 +720,9 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
           <h1 id="fiber-title">193 graph forms. One complete game.</h1>
         </div>
         <p>
-          The class map shows every observed order-7 Digraph Placement graph.
-          The neighborhood and specimen views support direct comparison. The
-          complete-game digest and exact value stay fixed.
+          The class map shows every observed order-7 Digraph Placement graph in
+          this class. The neighborhood and specimen views support direct
+          comparison. The complete-game digest and exact value stay fixed.
         </p>
       </header>
 
@@ -848,7 +848,7 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
               <figure>
                 <figcaption><span>Stable reference</span><strong>23 arcs</strong></figcaption>
                 <FiberGraph item={reference.item} large />
-                <small>Lexicographically first quotient digest in the median arc-count column.</small>
+                <small>Lexicographically first quotient digest in the column containing the median form.</small>
               </figure>
               <figure>
                 <figcaption><span>Selected embodiment</span><strong>{selected.item.a} arcs</strong></figcaption>
@@ -1393,6 +1393,11 @@ function AtlasStage({
             study. The controls group forms by recursive complete game and then
             by exact combinatorial value.
           </p>
+          <p>
+            The three value panels have similar overall silhouettes under the
+            displayed arc-count and node-count descriptors. Exact equality is
+            established separately by the verifier.
+          </p>
           <aside className="corpus-summary-card" aria-label="Observed multiplicity summary">
             <div><strong>{numberFormat.format(multiFormGroups)}</strong><span>complete games with multiple observed graph forms</span></div>
             <div><strong>{largestClass}</strong><span>forms in the largest observed class</span></div>
@@ -1874,6 +1879,8 @@ export function PartizanExperience() {
   }, []);
 
   function findCrossing() {
+    const disclosure = document.getElementById("further-example");
+    if (disclosure instanceof HTMLDetailsElement) disclosure.open = true;
     const crossing = document.getElementById("crossing");
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     crossing?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
@@ -1888,16 +1895,23 @@ export function PartizanExperience() {
         <nav aria-label="Page links">
           <a href="#class">Class</a>
           <a href="#neighborhood">Neighborhood</a>
-          <a href="#atlas">Corpus</a>
-          <a href="#crossing">Case study</a>
           <a href="#evidence">Verification</a>
+          <a href="#atlas">Corpus</a>
+          <a href="#further-example">Further example</a>
         </nav>
       </header>
 
       <FiberClass atlas={atlas} error={atlasError} />
-      <AtlasStage atlas={atlas} error={atlasError} onFindCrossing={findCrossing} />
-      <CrossingJourney atlas={atlas} />
       <EvidenceLedger atlas={atlas} />
+      <AtlasStage atlas={atlas} error={atlasError} onFindCrossing={findCrossing} />
+      <details className="further-example" id="further-example">
+        <summary>
+          <span>Further example</span>
+          <strong>A → B → C at value 0</strong>
+          <small>Three graph forms cross two complete games while the exact value remains fixed.</small>
+        </summary>
+        <CrossingJourney atlas={atlas} />
+      </details>
 
       <footer className="footer">
         <span>Independent replay: passed</span>
