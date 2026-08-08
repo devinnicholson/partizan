@@ -134,7 +134,7 @@ test("the 193-form hero exposes evidence, columns, and reachable controls", asyn
   assert.match(experienceSource, /data-fiber-next/i);
   assert.match(experienceSource, /data-fiber-neighborhood=["']9["']/i);
   assert.match(experienceSource, /const neighborhoodSize = 9/);
-  assert.match(experienceSource, /Nine neighboring forms/);
+  assert.match(experienceSource, /Nine forms near the selection/);
   assert.match(experienceSource, /data-fiber-specimen/i);
   assert.match(experienceSource, /const rows = 11/);
   assert.match(experienceSource, /scroller\.scrollTo/);
@@ -156,7 +156,7 @@ test("the 193-form hero exposes evidence, columns, and reachable controls", asyn
   assert.match(experienceSource, /data-secondary-corpus-view/i);
   assert.match(experienceSource, /graph in\s+this class/i);
   assert.match(experienceSource, /column containing the median form/i);
-  assert.match(experienceSource, /similar overall silhouettes/i);
+  assert.match(experienceSource, /similar silhouettes/i);
   assert.match(experienceSource, /<details className="further-example"/i);
   assert.match(experienceSource, /log(?:arithmic)?/i);
   assert.match(experienceSource, /jitter/i);
@@ -165,6 +165,18 @@ test("the 193-form hero exposes evidence, columns, and reachable controls", asyn
   assert.match(globalCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)/i);
   assert.match(globalCss, /touch-action:\s*manipulation/i);
   assert.match(globalCss, /min-(?:height|block-size):\s*(?:44|46|48|52|56|58)px/i);
+  assert.match(
+    globalCss,
+    /\.fiber-intro h1\s*\{[\s\S]*?font-size:\s*clamp\(2\.15rem,\s*4\.4vw,\s*4\.25rem\)/i,
+  );
+  assert.match(
+    globalCss,
+    /\.atlas-intro h1\s*\{[^}]*font-size:\s*clamp\(1\.7rem,\s*2\.65vw,\s*2\.65rem\)/i,
+  );
+  assert.doesNotMatch(
+    experienceSource,
+    /—|\b(?:delve|tapestry|game-changer|seamless|remarkable|groundbreaking)\b/i,
+  );
 });
 
 test("the full-corpus fallback remains compressed and canvas-bounded", async () => {

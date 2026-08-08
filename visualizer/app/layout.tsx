@@ -4,7 +4,7 @@ import "./globals.css";
 
 const title = "Partizan | 193 Graph Forms, One Complete Game";
 const description =
-  "Inspect 193 certified order-7 Digraph Placement graphs that share one complete game and the exact value 1/2, then explore the larger fixed-value corpus.";
+  "An interactive atlas of 193 certified order-7 Digraph Placement graphs with one complete game and exact value 1/2, within a corpus of 21,697 forms.";
 
 function normalizedBasePath() {
   const value = process.env.NEXT_PUBLIC_PARTIZAN_BASE_PATH ?? "";

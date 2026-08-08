@@ -716,13 +716,13 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
     >
       <header className="fiber-intro">
         <div>
-          <p className="eyebrow">One certified equivalence class</p>
+          <p className="eyebrow">Certified equivalence class</p>
           <h1 id="fiber-title">193 graph forms. One complete game.</h1>
         </div>
         <p>
-          The class map shows every observed order-7 Digraph Placement graph in
-          this class. The neighborhood and specimen views support direct
-          comparison. The complete-game digest and exact value stay fixed.
+          The map contains every observed order-7 Digraph Placement graph in
+          this class. The neighborhood and specimen views compare their graph
+          structure. Every form has the same complete-game digest and exact value.
         </p>
       </header>
 
@@ -747,7 +747,7 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
         <div className="fiber-instrument-header">
           <div>
             <p className="eyebrow">01 · Complete class</p>
-            <p>All 193 forms, grouped by directed-arc count. This map establishes the size of the class.</p>
+            <p>All 193 forms grouped by directed-arc count. Column height records the observed count.</p>
           </div>
           <div className="fiber-keyboard-hint">
             <kbd>←</kbd><kbd>→</kbd> arc column
@@ -800,7 +800,7 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
             <header className="fiber-neighborhood-header">
               <div>
                 <p className="eyebrow">02 · Neighborhood</p>
-                <h2 id="fiber-neighborhood-title">Nine neighboring forms</h2>
+                <h2 id="fiber-neighborhood-title">Nine forms near the selection</h2>
                 <p>
                   Forms {neighborhoodStart + 1}–{neighborhoodStart + neighborhood.length} of 193.
                   Select one for an exact comparison below.
@@ -851,7 +851,7 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
                 <small>Lexicographically first quotient digest in the column containing the median form.</small>
               </figure>
               <figure>
-                <figcaption><span>Selected embodiment</span><strong>{selected.item.a} arcs</strong></figcaption>
+                <figcaption><span>Selected form</span><strong>{selected.item.a} arcs</strong></figcaption>
                 <FiberGraph item={selected.item} reference={reference.item} large />
                 <small>{shortHash(selected.item.q)} · birthday {selected.item.b} · {selected.item.n} complete-game nodes</small>
               </figure>
@@ -1384,19 +1384,18 @@ function AtlasStage({
     >
       <header className="atlas-intro">
         <div>
-          <p className="eyebrow">Secondary corpus overview</p>
-          <h1 id="atlas-title">21,697 certified graph forms across three exact values.</h1>
+          <p className="eyebrow">Corpus overview</p>
+          <h1 id="atlas-title">21,697 certified graph forms at three exact values.</h1>
         </div>
         <div className="atlas-context">
           <p>
-            Each mark is a quotient-distinct order-7 graph recovered in the
-            study. The controls group forms by recursive complete game and then
-            by exact combinatorial value.
+            Each mark denotes one quotient-distinct order-7 graph in the study.
+            The controls regroup the same observations by complete-game identity
+            and exact combinatorial value.
           </p>
           <p>
-            The three value panels have similar overall silhouettes under the
-            displayed arc-count and node-count descriptors. Exact equality is
-            established separately by the verifier.
+            The three panels have similar silhouettes for the displayed arc-count
+            and node-count descriptors. The verifier establishes exact equality.
           </p>
           <aside className="corpus-summary-card" aria-label="Observed multiplicity summary">
             <div><strong>{numberFormat.format(multiFormGroups)}</strong><span>complete games with multiple observed graph forms</span></div>
@@ -1684,8 +1683,8 @@ function CrossingJourney({ atlas }: { atlas: AtlasData | null }) {
     >
       <header className="crossing-header">
         <div>
-          <p className="eyebrow">Case study: value 0</p>
-          <h2 id="crossing-title">Three graph forms, two complete games, one value</h2>
+          <p className="eyebrow">Case study · value 0</p>
+          <h2 id="crossing-title">Three graph forms, two complete games, value 0</h2>
         </div>
         <div className="journey-progress" aria-label="Case-study steps">
           {Array.from({ length: 5 }, (_, index) => (
@@ -1807,7 +1806,7 @@ function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
     <section className="evidence-ledger" id="evidence" aria-labelledby="evidence-title">
       <header>
         <p className="eyebrow">Verification</p>
-        <h2 id="evidence-title">The atlas is derived from the independently replayed event ledger.</h2>
+        <h2 id="evidence-title">Independent replay verifies the atlas source.</h2>
       </header>
       <div className="ledger-grid">
         <div><strong>73,728</strong><span>source proposals</span></div>
@@ -1817,19 +1816,19 @@ function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
       </div>
       <div className="ledger-notes">
         <p>
-          Partizan proposes graph forms. The exact verifier computes the
-          combinatorial-game value of each proposal. This interface lets the
-          reader inspect the certified results at three levels of identity.
+          Partizan proposes graph forms. The exact verifier computes each
+          combinatorial-game value. The atlas exposes three identity levels:
+          graph quotient, complete game, and exact value.
         </p>
         <p>
-          Stiller used computation to locate an endgame kernel, and Elkies
-          recomposed it as a chess study. That history motivates the workflow
-          used here: machine search enumerates certified possibilities, and a
-          person selects the representation.
+          Stiller used computation to locate an endgame kernel. Elkies recomposed
+          it as a chess study. Partizan follows the same division of labor: the
+          machine enumerates certified forms, and a person chooses which
+          representation to pursue.
         </p>
         <p>
-          The reported results concern structural novelty and certified
-          equality. Aesthetic preference was not evaluated.
+          The evaluation covers structural novelty and certified equality.
+          Aesthetic preference remains outside its scope.
         </p>
       </div>
       <div className="ledger-actions">
@@ -1907,14 +1906,14 @@ export function PartizanExperience() {
       <details className="further-example" id="further-example">
         <summary>
           <span>Further example</span>
-          <strong>A → B → C at value 0</strong>
-          <small>Three graph forms cross two complete games while the exact value remains fixed.</small>
+          <strong>A → B → C, value 0</strong>
+          <small>Forms A, B, and C map to two complete games and one exact value.</small>
         </summary>
         <CrossingJourney atlas={atlas} />
       </details>
 
       <footer className="footer">
-        <span>Independent replay: passed</span>
+        <span>Independent replay passed</span>
         <span>completion {shortHash(motif.completion_sha256)}</span>
       </footer>
     </main>
