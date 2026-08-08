@@ -167,7 +167,11 @@ test("the 193-form hero exposes evidence, columns, and reachable controls", asyn
   assert.match(globalCss, /min-(?:height|block-size):\s*(?:44|46|48|52|56|58)px/i);
   assert.match(
     globalCss,
-    /\.fiber-intro h1\s*\{[\s\S]*?font-size:\s*clamp\(2\.15rem,\s*4\.4vw,\s*4\.25rem\)/i,
+    /\.fiber-intro h1\s*\{[\s\S]*?font-size:\s*clamp\(1\.85rem,\s*3vw,\s*2\.9rem\)/i,
+  );
+  assert.match(
+    globalCss,
+    /@media\s*\(max-width:\s*680px\)[\s\S]*?\.fiber-intro h1\s*\{\s*font-size:\s*clamp\(1\.8rem,\s*8\.5vw,\s*2\.35rem\)/i,
   );
   assert.match(
     globalCss,
