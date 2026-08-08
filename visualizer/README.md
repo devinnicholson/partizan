@@ -15,6 +15,9 @@ The displayed values come from checked evidence in `public/evidence/`:
 - `fixed-value-atlas.json.gz` is the complete browser atlas, stored with
   deterministic gzip encoding. `fixed-value-atlas.manifest.json` binds its
   compressed and decoded bytes to the public Pages artifact.
+- `fixed-value-fiber-193.json` is the compact first-load class: 193 actual
+  quotient-distinct digraphs with exact value `1/2` and one shared literal-game
+  digest. `fixed-value-fiber-193.manifest.json` binds its selection and bytes.
 - `fixed-value-motif.json` records the three forms and their exact relation.
 - `repertoire-browser.json` binds the motif to the completed held-out study.
 - `elkies-study.json` records the historical chess source cited on the page.

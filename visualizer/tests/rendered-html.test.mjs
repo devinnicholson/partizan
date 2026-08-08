@@ -33,8 +33,10 @@ test("server-renders the finished Partizan experience", async () => {
 
   const html = await response.text();
   const normalizedHtml = html.replaceAll("<!-- -->", "");
-  assert.match(html, /<title>Partizan \| A Fixed-Value Atlas<\/title>/i);
-  assert.match(html, /Observed dataset/);
+  assert.match(html, /<title>Partizan \| 193 Graph Forms, One Complete Game<\/title>/i);
+  assert.match(html, /One certified equivalence class/);
+  assert.match(normalizedHtml, /193 graph forms\. One complete game\./i);
+  assert.match(html, /Secondary corpus overview/);
   assert.match(normalizedHtml, /21,697 certified graph forms across three exact values\./);
   assert.match(html, /Graph form/);
   assert.match(html, /Complete game/);
