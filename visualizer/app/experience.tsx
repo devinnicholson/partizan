@@ -443,8 +443,8 @@ function FiberHeroCanvas({
 
         const centerX = cellX + cellWidth / 2;
         const centerY = cellY + cellHeight / 2;
-        const graphSize = Math.min(38, cellWidth - 7, cellHeight - 7);
-        const radius = 1.65;
+        const graphSize = Math.min(52, cellWidth - 8, cellHeight - 8);
+        const radius = 2.05;
         const nodePosition = (vertex: number) => ({
           x: centerX + ((graphCoordinates[vertex].x - 50) / 100) * graphSize,
           y: centerY + ((graphCoordinates[vertex].y - 50) / 100) * graphSize,
@@ -465,7 +465,7 @@ function FiberHeroCanvas({
 
         context.strokeStyle = "rgba(241,236,223,.42)";
         context.fillStyle = "rgba(241,236,223,.42)";
-        context.lineWidth = 0.75;
+        context.lineWidth = 0.9;
         for (const [from, to] of decodedArcs(member.item.g)) {
           const start = nodePosition(from);
           const end = nodePosition(to);
@@ -644,14 +644,25 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
     [members],
   );
 
+  const defaultSelected = members[Math.floor(members.length / 2)] ?? reference;
   const selected =
     members.find((member) => member.index === selectedIndex) ??
-    members.find(({ item }) => item.a === 27) ??
-    members.at(-1) ??
-    reference;
+    defaultSelected;
   const selectedPosition = selected
     ? members.findIndex((member) => member.index === selected.index)
     : -1;
+  const neighborhoodSize = 9;
+  const neighborhoodStart = Math.max(
+    0,
+    Math.min(
+      Math.max(0, members.length - neighborhoodSize),
+      selectedPosition - Math.floor(neighborhoodSize / 2),
+    ),
+  );
+  const neighborhood = members.slice(
+    neighborhoodStart,
+    neighborhoodStart + neighborhoodSize,
+  );
   const difference =
     reference && selected ? edgeDifference(reference.item, selected.item) : null;
   const largestGroup =
@@ -709,8 +720,8 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
           <h1 id="fiber-title">193 graph forms. One complete game.</h1>
         </div>
         <p>
-          Each miniature is an observed order-7 Digraph Placement graph. Move
-          through the forms with the arrow keys or choose one directly. The
+          The class map shows every observed order-7 Digraph Placement graph.
+          The neighborhood and specimen views support direct comparison. The
           complete-game digest and exact value stay fixed.
         </p>
       </header>
@@ -726,11 +737,17 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
         Shared complete-game identity <code>{FOCUS_LITERAL_DIGEST}</code>
       </p>
 
+      <div className="fiber-scale-guide" aria-label="Three levels of inspection">
+        <div><span>01</span><strong>Complete class</strong><small>193 forms in one map</small></div>
+        <div><span>02</span><strong>Neighborhood</strong><small>nine readable forms</small></div>
+        <div><span>03</span><strong>Specimen</strong><small>one exact comparison</small></div>
+      </div>
+
       <div className="fiber-instrument">
         <div className="fiber-instrument-header">
           <div>
-            <p className="eyebrow">All 193 certified forms</p>
-            <p>Columns report directed-arc count. Every graph uses the same fixed seven-vertex layout.</p>
+            <p className="eyebrow">01 · Complete class</p>
+            <p>All 193 forms, grouped by directed-arc count. This map establishes the size of the class.</p>
           </div>
           <div className="fiber-keyboard-hint">
             <kbd>←</kbd><kbd>→</kbd> arc column
@@ -773,16 +790,55 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
         )}
 
         {reference && selected && difference && largestGroup && (
-          <div className="fiber-inspector">
-            <header className="fiber-selection-bar">
+          <>
+          <section
+            className="fiber-neighborhood"
+            id="neighborhood"
+            aria-labelledby="fiber-neighborhood-title"
+            data-fiber-neighborhood="9"
+          >
+            <header className="fiber-neighborhood-header">
               <div>
-                <span>Selected form</span>
-                <strong>{selectedPosition + 1} / 193</strong>
-                <small>{selected.item.a} directed arcs · event {numberFormat.format(selected.item.i)}</small>
+                <p className="eyebrow">02 · Neighborhood</p>
+                <h2 id="fiber-neighborhood-title">Nine neighboring forms</h2>
+                <p>
+                  Forms {neighborhoodStart + 1}–{neighborhoodStart + neighborhood.length} of 193.
+                  Select one for an exact comparison below.
+                </p>
               </div>
-              <div className="fiber-step-buttons">
+              <div className="fiber-step-buttons fiber-neighborhood-nav">
                 <button data-fiber-previous type="button" onClick={() => moveSequentially(-1)} aria-label="Previous graph form">← Previous</button>
                 <button data-fiber-next type="button" onClick={() => moveSequentially(1)} aria-label="Next graph form">Next →</button>
+              </div>
+            </header>
+            <div className="fiber-neighborhood-grid" role="list" aria-label="Nine graph forms near the current selection">
+              {neighborhood.map((member) => {
+                const position = members.findIndex((candidate) => candidate.index === member.index);
+                const isCurrent = member.index === selected.index;
+                return (
+                  <div role="listitem" key={member.index}>
+                    <button
+                      type="button"
+                      className={`fiber-neighborhood-card${isCurrent ? " selected" : ""}`}
+                      aria-current={isCurrent ? "true" : undefined}
+                      aria-label={`Form ${position + 1} of 193, ${member.item.a} directed arcs`}
+                      onClick={() => focusMember(member)}
+                    >
+                      <FiberGraph item={member.item} />
+                      <span><strong>{String(position + 1).padStart(3, "0")}</strong><small>{member.item.a} arcs</small></span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <div className="fiber-inspector" data-fiber-specimen>
+            <header className="fiber-selection-bar">
+              <div>
+                <span>03 · Specimen</span>
+                <strong>{selectedPosition + 1} / 193</strong>
+                <small>{selected.item.a} directed arcs · event {numberFormat.format(selected.item.i)}</small>
               </div>
             </header>
             <p className="sr-only" aria-live="polite">
@@ -824,6 +880,7 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
               <code>complete game {largestGroup.d}</code>
             </div>
           </div>
+          </>
         )}
       </div>
     </section>
@@ -1829,7 +1886,8 @@ export function PartizanExperience() {
         <a className="wordmark" href="#top">Partizan</a>
         <span>One value, many forms</span>
         <nav aria-label="Page links">
-          <a href="#class">193 forms</a>
+          <a href="#class">Class</a>
+          <a href="#neighborhood">Neighborhood</a>
           <a href="#atlas">Corpus</a>
           <a href="#crossing">Case study</a>
           <a href="#evidence">Verification</a>
