@@ -33,9 +33,9 @@ test("server-renders the finished Partizan experience", async () => {
 
   const html = await response.text();
   const normalizedHtml = html.replaceAll("<!-- -->", "");
-  assert.match(html, /<title>Partizan \| 193 Graph Forms, One Complete Game<\/title>/i);
+  assert.match(html, /<title>Partizan \| 193 Graph Forms Sharing One Complete Game<\/title>/i);
   assert.match(html, /Certified equivalence class/);
-  assert.match(normalizedHtml, /193 graph forms\. One complete game\./i);
+  assert.match(normalizedHtml, /193 graph forms share one complete game\./i);
   assert.match(normalizedHtml, /graph in this class/i);
   assert.match(normalizedHtml, /column containing the median form/i);
   assert.match(html, /Corpus overview/);

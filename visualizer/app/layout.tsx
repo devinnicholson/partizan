@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 
-const title = "Partizan | 193 Graph Forms, One Complete Game";
+const title = "Partizan | 193 Graph Forms Sharing One Complete Game";
 const description =
   "An interactive atlas of 193 certified order-7 Digraph Placement graphs with one complete game and exact value 1/2, within a corpus of 21,697 forms.";
 

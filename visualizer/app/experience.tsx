@@ -717,7 +717,7 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
       <header className="fiber-intro">
         <div>
           <p className="eyebrow">Certified equivalence class</p>
-          <h1 id="fiber-title">193 graph forms. One complete game.</h1>
+          <h1 id="fiber-title">193 graph forms share one complete game.</h1>
         </div>
         <p>
           The map contains every observed order-7 Digraph Placement graph in
