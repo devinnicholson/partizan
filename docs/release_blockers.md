@@ -1,7 +1,7 @@
 # Partizan v0.1 release blockers
 
-The implementation is an alpha release candidate. Gates 1, 2, 4, and 5 have
-completed evidence. Open gates 3, 6, 7, and 8 must remain visible in any
+The implementation is an alpha release candidate. Gates 1, 2, 4, 5, and 7 have
+completed evidence. Open gates 3, 6, and 8 must remain visible in any
 handoff or release note:
 
 1. **Project license: resolved.** Partizan is licensed
@@ -38,8 +38,9 @@ handoff or release note:
 6. **Wave 47 immutable provenance:** its 13 rows still record
    `code_commit=workspace`. Their bytes and report linkage are frozen, but
    source regeneration equivalence is not claimed.
-7. **Release state:** no package was published and no tag, GitHub release, DOI,
-   or external service state was created.
+7. **Research snapshot: resolved.** `v0.1.0-alpha.1` provides an immutable
+   GitHub research snapshot. No crate, wheel, or stable `v0.1.0` package has
+   been published; those distribution claims remain blocked by gate 3.
 8. **Bounded short-game release evidence:** the independent Python comparison
    and canonicalization lanes have local source-only validation, including all
    65,536 ordered day-2 comparisons, 256 canonicalizations, and 22 semantic

@@ -54,9 +54,15 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(html, /Copy verification record/);
   assert.match(html, /og-progressive\.png/);
   assert.match(normalizedHtml, /73,728/);
+  assert.match(normalizedHtml, /historical source proposals/i);
   assert.match(normalizedHtml, /21,697/);
   assert.match(normalizedHtml, /16,120/);
-  assert.match(normalizedHtml, /corruption families rejected/);
+  assert.match(normalizedHtml, /15[\s\S]*?historical corruption families rejected/i);
+  assert.match(normalizedHtml, /separate 221,184-proposal experiment/i);
+  assert.match(normalizedHtml, /thirty corruption families/i);
+  assert.doesNotMatch(normalizedHtml, /pending[\s\S]*?corruption families rejected/i);
+  assert.match(html, /10\.5281\/zenodo\.21833142/);
+  assert.match(html, /FIGURE_4_PROVENANCE_AUTHORITY_V1\.json/);
   assert.match(html, /These counts describe the observed sample\./);
   assert.ok(
     normalizedHtml.indexOf('id="atlas"') < normalizedHtml.indexOf('id="evidence"'),

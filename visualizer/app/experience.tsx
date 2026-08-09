@@ -1807,15 +1807,21 @@ function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
     <section className="evidence-ledger" id="evidence" aria-labelledby="evidence-title">
       <header>
         <p className="eyebrow">Evidence trail</p>
-        <h2 id="evidence-title">Independent replay verifies the corpus behind the atlas.</h2>
+        <h2 id="evidence-title">Independent replay verifies the historical corpus behind the atlas.</h2>
       </header>
       <div className="ledger-grid">
-        <div><strong>73,728</strong><span>source proposals</span></div>
+        <div><strong>73,728</strong><span>historical source proposals</span></div>
         <div><strong>21,697</strong><span>quotient-unique forms</span></div>
         <div><strong>16,120</strong><span>complete-game identities</span></div>
-        <div><strong>{atlas?.source.negative_test_families_rejected ?? "pending"}</strong><span>corruption families rejected</span></div>
+        <div><strong>{atlas?.source.negative_test_families_rejected ?? 15}</strong><span>historical corruption families rejected</span></div>
       </div>
       <div className="ledger-notes">
+        <p>
+          These figures describe the independently replayed historical run used
+          to build this atlas. The paper's primary held-out comparison is a
+          separate 221,184-proposal experiment that rejected thirty corruption
+          families.
+        </p>
         <p>
           Partizan proposes graph forms. The exact verifier computes each
           combinatorial-game value. The atlas exposes three identity levels:
@@ -1843,6 +1849,9 @@ function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
         </button>
         <a href={elkies.source.url} target="_blank" rel="noreferrer">Historical source</a>
         <a href="https://github.com/devinnicholson/partizan" target="_blank" rel="noreferrer">Source code</a>
+        <a href="https://github.com/devinnicholson/partizan-reproducibility" target="_blank" rel="noreferrer">Reproducibility record</a>
+        <a href="https://doi.org/10.5281/zenodo.21833142" target="_blank" rel="noreferrer">Zenodo evidence</a>
+        <a href="https://github.com/devinnicholson/partizan-reproducibility/blob/main/output/research/fixed-value-atlas-figure-v1/FIGURE_4_PROVENANCE_AUTHORITY_V1.json" target="_blank" rel="noreferrer">Atlas authority</a>
       </div>
     </section>
   );
