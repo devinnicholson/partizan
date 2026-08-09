@@ -28,7 +28,7 @@ finite combinatorial-game experiments.
 | Package | `partizan-cgt` 0.1.0 release candidate |
 | Interface | Python 3.10+ exact short-game API with a Rust/PyO3 chess core |
 | Platforms tested locally | macOS arm64, Rust 1.92, Python 3.14 |
-| Cross-platform CI | Configured for Linux, macOS, and Windows; hardened candidate run pending |
+| Cross-platform CI | Hardened candidate run passing on Linux, macOS, and Windows |
 | License | [GPL-3.0-or-later](LICENSE) |
 | Stable API, registry package, or release tag | Pending |
 
