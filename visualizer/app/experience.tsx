@@ -1384,14 +1384,15 @@ function AtlasStage({
     >
       <header className="atlas-intro">
         <div>
-          <p className="eyebrow">Corpus overview</p>
-          <h1 id="atlas-title">21,697 certified graph forms at three exact values.</h1>
+          <p className="eyebrow">From one class to the full corpus</p>
+          <h1 id="atlas-title">The study contains 21,697 certified graph forms.</h1>
         </div>
         <div className="atlas-context">
           <p>
-            Each mark denotes one quotient-distinct order-7 graph in the study.
-            The controls regroup the same observations by complete-game identity
-            and exact combinatorial value.
+            The class above isolates 193 forms that share one complete game.
+            This view widens to every quotient-distinct order-7 graph in the
+            study, then regroups those forms by complete-game identity and exact
+            combinatorial value.
           </p>
           <p>
             The three panels have similar silhouettes for the displayed arc-count
@@ -1805,8 +1806,8 @@ function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
   return (
     <section className="evidence-ledger" id="evidence" aria-labelledby="evidence-title">
       <header>
-        <p className="eyebrow">Verification</p>
-        <h2 id="evidence-title">Independent replay verifies the atlas source.</h2>
+        <p className="eyebrow">Evidence trail</p>
+        <h2 id="evidence-title">Independent replay verifies the corpus behind the atlas.</h2>
       </header>
       <div className="ledger-grid">
         <div><strong>73,728</strong><span>source proposals</span></div>
@@ -1886,23 +1887,64 @@ export function PartizanExperience() {
     window.setTimeout(() => crossing?.focus(), reduceMotion ? 0 : 450);
   }
 
+  function navigateToSection(
+    event: MouseEvent<HTMLAnchorElement>,
+    targetId: string,
+  ) {
+    event.preventDefault();
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    if (target instanceof HTMLDetailsElement) target.open = true;
+    target.scrollIntoView({
+      behavior: "auto",
+      block: "start",
+    });
+    window.history.replaceState(null, "", `#${targetId}`);
+  }
+
   return (
     <main className="experience" id="top">
       <header className="masthead">
-        <a className="wordmark" href="#top">Partizan</a>
+        <a
+          className="wordmark"
+          href="#top"
+          onClick={(event) => navigateToSection(event, "top")}
+        >
+          Partizan
+        </a>
         <span>One value, many forms</span>
         <nav aria-label="Page links">
-          <a href="#class">Class</a>
-          <a href="#neighborhood">Neighborhood</a>
-          <a href="#evidence">Verification</a>
-          <a href="#atlas">Corpus</a>
-          <a href="#further-example">Further example</a>
+          <a
+            href="#class"
+            onClick={(event) => navigateToSection(event, "class")}
+          >
+            Class
+          </a>
+          <a
+            href="#atlas"
+            onClick={(event) => navigateToSection(event, "atlas")}
+          >
+            Corpus
+          </a>
+          <a
+            href="#evidence"
+            onClick={(event) => navigateToSection(event, "evidence")}
+          >
+            Verification
+          </a>
+          <a
+            href="#further-example"
+            onClick={(event) => navigateToSection(event, "further-example")}
+          >
+            Example
+          </a>
         </nav>
       </header>
 
       <FiberClass atlas={atlas} error={atlasError} />
-      <EvidenceLedger atlas={atlas} />
       <AtlasStage atlas={atlas} error={atlasError} onFindCrossing={findCrossing} />
+      <EvidenceLedger atlas={atlas} />
       <details className="further-example" id="further-example">
         <summary>
           <span>Further example</span>

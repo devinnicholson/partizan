@@ -158,11 +158,14 @@ test("the 193-form hero exposes evidence, columns, and reachable controls", asyn
   assert.match(experienceSource, /column containing the median form/i);
   assert.match(experienceSource, /similar silhouettes/i);
   assert.match(experienceSource, /<details className="further-example"/i);
+  assert.match(experienceSource, /navigateToSection/);
+  assert.match(experienceSource, /scrollIntoView/);
   assert.match(experienceSource, /log(?:arithmic)?/i);
   assert.match(experienceSource, /jitter/i);
 
   assert.match(globalCss, /@media\s*\(max-width:\s*680px\)/i);
   assert.match(globalCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)/i);
+  assert.doesNotMatch(globalCss, /scroll-behavior:\s*smooth/i);
   assert.match(globalCss, /touch-action:\s*manipulation/i);
   assert.match(globalCss, /min-(?:height|block-size):\s*(?:44|46|48|52|56|58)px/i);
   assert.match(

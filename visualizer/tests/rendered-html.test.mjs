@@ -38,9 +38,9 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(normalizedHtml, /193 graph forms share one complete game\./i);
   assert.match(normalizedHtml, /graph in this class/i);
   assert.match(normalizedHtml, /column containing the median form/i);
-  assert.match(html, /Corpus overview/);
+  assert.match(html, /From one class to the full corpus/);
   assert.match(normalizedHtml, /similar silhouettes/i);
-  assert.match(normalizedHtml, /21,697 certified graph forms at three exact values\./);
+  assert.match(normalizedHtml, /The study contains 21,697 certified graph forms\./);
   assert.match(html, /Graph form/);
   assert.match(html, /Complete game/);
   assert.match(html, /Exact value/);
@@ -58,6 +58,10 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(normalizedHtml, /16,120/);
   assert.match(normalizedHtml, /corruption families rejected/);
   assert.match(html, /These counts describe the observed sample\./);
+  assert.ok(
+    normalizedHtml.indexOf('id="atlas"') < normalizedHtml.indexOf('id="evidence"'),
+    "the corpus must appear before the evidence that verifies it",
+  );
   assert.match(html, /Stiller used computation to locate an endgame kernel/);
   assert.match(html, /Elkies recomposed it as a chess study/);
   assert.doesNotMatch(html, /linear-gradient|radial-gradient/i);

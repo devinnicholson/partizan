@@ -23,7 +23,7 @@
 * { box-sizing: border-box; }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   background: var(--paper);
 }
 
@@ -68,6 +68,13 @@ summary:focus-visible,
 }
 
 .experience { min-height: 100vh; }
+
+#class,
+#atlas,
+#evidence,
+#further-example {
+  scroll-margin-top: 20px;
+}
 
 .masthead,
 .fiber-class,
@@ -358,7 +365,10 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
 .fiber-legend .line-removed { height: 0; border-top: 1px dashed var(--coral); }
 .fiber-legend code { min-width: 0; margin-left: auto; overflow-wrap: anywhere; color: #7e7a71; font-size: .43rem; }
 
-.atlas-section { padding: 48px 0 84px; }
+.atlas-section {
+  padding: 48px 0 58px;
+  border-top: 1px solid var(--line);
+}
 
 .atlas-intro {
   display: grid;
@@ -891,7 +901,8 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   display: grid;
   grid-template-columns: .7fr 1.3fr;
   column-gap: clamp(46px, 8vw, 120px);
-  padding: 0 0 110px;
+  padding: 56px 0 110px;
+  border-top: 1px solid var(--line);
 }
 
 .evidence-ledger h2 { max-width: 520px; font-size: clamp(1.45rem, 2.15vw, 2.15rem); line-height: 1.05; }
