@@ -30,7 +30,7 @@ finite combinatorial-game experiments.
 | Platforms tested locally | macOS arm64, Rust 1.92, Python 3.14 |
 | Cross-platform CI | Hardened candidate run passing on Linux, macOS, and Windows |
 | License | [GPL-3.0-or-later](LICENSE) |
-| Research snapshot | [`v0.1.0-alpha.1`](https://github.com/devinnicholson/partizan/releases/tag/v0.1.0-alpha.1) |
+| Research snapshot | [`v0.1.0-alpha.2`](https://github.com/devinnicholson/partizan/releases/tag/v0.1.0-alpha.2) |
 | Stable API or registry package | Pending |
 
 The source code may be used, modified, and redistributed under the terms of
@@ -453,7 +453,7 @@ typed provenance to be checked against its declared scope.
 ## Citation
 
 Release metadata is provided in [`CITATION.cff`](CITATION.cff). Cite the
-`v0.1.0-alpha.1` research snapshot or the exact commit and artifact manifest
+`v0.1.0-alpha.2` research snapshot or the exact commit and artifact manifest
 used in your work. The snapshot is a reproducible research reference, not a
 stable API or registry package.
 

@@ -38,7 +38,7 @@ handoff or release note:
 6. **Wave 47 immutable provenance:** its 13 rows still record
    `code_commit=workspace`. Their bytes and report linkage are frozen, but
    source regeneration equivalence is not claimed.
-7. **Research snapshot: resolved.** `v0.1.0-alpha.1` provides an immutable
+7. **Research snapshot: resolved.** `v0.1.0-alpha.2` provides an immutable
    GitHub research snapshot. No crate, wheel, or stable `v0.1.0` package has
    been published; those distribution claims remain blocked by gate 3.
 8. **Bounded short-game release evidence:** the independent Python comparison
