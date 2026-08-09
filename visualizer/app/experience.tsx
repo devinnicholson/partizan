@@ -1818,7 +1818,7 @@ function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
       <div className="ledger-notes">
         <p>
           These figures describe the independently replayed historical run used
-          to build this atlas. The paper's primary held-out comparison is a
+          to build this atlas. The paper&apos;s primary held-out comparison is a
           separate 221,184-proposal experiment that rejected thirty corruption
           families.
         </p>
