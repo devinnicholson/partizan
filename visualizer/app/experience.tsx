@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import elkiesJson from "../public/evidence/elkies-study.json";
+import composerJson from "../public/evidence/composer-one-arc-demonstration.json";
 import fiberJson from "../public/evidence/fixed-value-fiber-193.json";
 import motifJson from "../public/evidence/fixed-value-motif.json";
 
@@ -127,9 +128,41 @@ type CompactFiber = {
   };
 };
 
+type ComposerEdit = {
+  a: number;
+  arc: [number, number];
+  c: string;
+  g: string;
+  m: number;
+  q: string;
+  retained: boolean;
+  state: "present" | "absent";
+};
+
+type ComposerDemonstrationData = {
+  artifact_sha256: string;
+  counts: {
+    edited_forms: number;
+    retained_exact_value: number;
+    retained_graph_quotients: number;
+  };
+  edits: ComposerEdit[];
+  parent: {
+    a: number;
+    c: string;
+    g: string;
+    m: number;
+    q: string;
+  };
+  protocol_artifact_sha256: string;
+  target: string;
+  verification_artifact_sha256: string;
+};
+
 const motif = motifJson as unknown as FixedValueMotif;
 const elkies = elkiesJson as HistoricalEvidence;
 const compactFiber = fiberJson as unknown as CompactFiber;
+const composerDemo = composerJson as unknown as ComposerDemonstrationData;
 const numberFormat = new Intl.NumberFormat("en-US");
 const layerNames = ["Graph form", "Complete game", "Exact value"] as const;
 const layerCounts = [21_697, 16_120, 3] as const;
@@ -270,6 +303,7 @@ function DirectedGraph({
 }
 
 type FiberMember = { index: number; item: AtlasItem };
+type GraphEncoding = Pick<AtlasItem, "g" | "m">;
 type FiberArcState = "shared" | "added" | "removed";
 
 function FiberEdge({
@@ -309,8 +343,8 @@ function FiberGraph({
   reference,
   large = false,
 }: {
-  item: AtlasItem;
-  reference?: AtlasItem;
+  item: GraphEncoding;
+  reference?: GraphEncoding;
   large?: boolean;
 }) {
   const arcs = decodedArcs(item.g);
@@ -351,7 +385,7 @@ function FiberGraph({
   );
 }
 
-function edgeDifference(reference: AtlasItem, selected: AtlasItem) {
+function edgeDifference(reference: GraphEncoding, selected: GraphEncoding) {
   const referenceSet = new Set(decodedArcs(reference.g).map(arcKey));
   const selectedSet = new Set(decodedArcs(selected.g).map(arcKey));
   return {
@@ -883,6 +917,110 @@ function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean 
           </>
         )}
       </div>
+    </section>
+  );
+}
+
+function ComposerDemonstration() {
+  const [selectedIndex, setSelectedIndex] = useState(() =>
+    Math.max(0, composerDemo.edits.findIndex((edit) => edit.retained)),
+  );
+  const selected = composerDemo.edits[selectedIndex];
+  const difference = edgeDifference(composerDemo.parent, selected);
+  const changedValue =
+    composerDemo.counts.edited_forms - composerDemo.counts.retained_exact_value;
+
+  return (
+    <section
+      className="composer-demonstration"
+      id="demonstration"
+      aria-labelledby="composer-title"
+      data-composer-edit-study="42"
+    >
+      <header className="composer-intro">
+        <div>
+          <p className="eyebrow">Performed edit study</p>
+          <h2 id="composer-title">One certified form, edited 42 ways.</h2>
+        </div>
+        <p>
+          The author selected the class&apos;s only 17-arc form, toggled every
+          possible loop-free directed arc once, and reverified every result.
+          Gold cells retain exact value 1/2.
+        </p>
+      </header>
+
+      <div className="composer-results" aria-label="Edit study results">
+        <div><strong>42</strong><span>one-arc edits</span></div>
+        <div><strong>33</strong><span>retain value 1/2</span></div>
+        <div><strong>33</strong><span>distinct graph quotients</span></div>
+        <div><strong>{changedValue}</strong><span>change exact value</span></div>
+      </div>
+
+      <div className="composer-workbench">
+        <figure className="composer-graph">
+          <figcaption>
+            <span>Starting form</span>
+            <strong>{composerDemo.parent.a} directed arcs</strong>
+          </figcaption>
+          <FiberGraph item={composerDemo.parent} large />
+          <small>quotient {shortHash(composerDemo.parent.q)}</small>
+        </figure>
+
+        <div className="composer-edit-board">
+          <div className="composer-edit-board-header">
+            <span>Toggle one directed arc</span>
+            <small>source → target</small>
+          </div>
+          <div className="composer-edit-grid" aria-label="All 42 one-arc edits">
+            {composerDemo.edits.map((edit, index) => {
+              const label = arcKey(edit.arc);
+              const operation = edit.state === "present" ? "added" : "removed";
+              return (
+                <button
+                  type="button"
+                  className={`${edit.retained ? "retained" : "changed"}${index === selectedIndex ? " selected" : ""}`}
+                  aria-pressed={index === selectedIndex}
+                  aria-label={`${label}, arc ${operation}, ${edit.retained ? "retains exact value one half" : "changes exact value"}`}
+                  key={label}
+                  onClick={() => setSelectedIndex(index)}
+                >
+                  <strong>{label}</strong>
+                  <span>{edit.retained ? "1/2" : "changed"}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <figure className="composer-graph composer-selected-graph">
+          <figcaption>
+            <span>Selected edit {arcKey(selected.arc)}</span>
+            <strong>{selected.a} directed arcs</strong>
+          </figcaption>
+          <FiberGraph item={selected} reference={composerDemo.parent} large />
+          <small>quotient {shortHash(selected.q)}</small>
+        </figure>
+
+        <aside className="composer-inspector" aria-live="polite">
+          <p className="eyebrow">Exact result</p>
+          <strong>{selected.retained ? "Value 1/2 retained" : "Exact value changed"}</strong>
+          <p>
+            Arc {arcKey(selected.arc)} was {selected.state === "present" ? "added" : "removed"}.
+            {selected.retained
+              ? " The resulting graph quotient is distinct from the starting form."
+              : " This edit leaves the fixed-value repertoire."}
+          </p>
+          <dl>
+            <div><dt>Added arcs</dt><dd>{difference.added.length ? difference.added.join(", ") : "none"}</dd></div>
+            <div><dt>Removed arcs</dt><dd>{difference.removed.length ? difference.removed.join(", ") : "none"}</dd></div>
+          </dl>
+        </aside>
+      </div>
+
+      <footer className="composer-authority">
+        <span>Protocol {shortHash(composerDemo.protocol_artifact_sha256)}</span>
+        <span>Independent verification {shortHash(composerDemo.verification_artifact_sha256)}</span>
+      </footer>
     </section>
   );
 }
@@ -1834,8 +1972,9 @@ function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
           representation to pursue.
         </p>
         <p>
-          The evaluation covers structural novelty and certified equality.
-          Aesthetic preference remains outside its scope.
+          The performed edit study begins with the unique 17-arc form and
+          reports all 42 possible one-arc edits. Exact replay retained 33
+          variants at value 1/2.
         </p>
       </div>
       <div className="ledger-actions">
@@ -1937,6 +2076,12 @@ export function PartizanExperience() {
             Corpus
           </a>
           <a
+            href="#demonstration"
+            onClick={(event) => navigateToSection(event, "demonstration")}
+          >
+            Edit study
+          </a>
+          <a
             href="#evidence"
             onClick={(event) => navigateToSection(event, "evidence")}
           >
@@ -1952,6 +2097,7 @@ export function PartizanExperience() {
       </header>
 
       <FiberClass atlas={atlas} error={atlasError} />
+      <ComposerDemonstration />
       <AtlasStage atlas={atlas} error={atlasError} onFindCrossing={findCrossing} />
       <EvidenceLedger atlas={atlas} />
       <details className="further-example" id="further-example">
