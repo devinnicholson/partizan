@@ -157,6 +157,10 @@ test("the 193-form hero exposes evidence, columns, and reachable controls", asyn
   assert.match(experienceSource, /graph in\s+this class/i);
   assert.match(experienceSource, /column containing the median form/i);
   assert.match(experienceSource, /similar silhouettes/i);
+  assert.match(experienceSource, /data-composer-edit-study=["']42["']/i);
+  assert.match(experienceSource, /composer-one-arc-demonstration\.json/i);
+  assert.match(experienceSource, /One certified form, edited 42 ways\./i);
+  assert.match(experienceSource, /aria-pressed=/i);
   assert.match(experienceSource, /<details className="further-example"/i);
   assert.match(experienceSource, /navigateToSection/);
   assert.match(experienceSource, /scrollIntoView/);

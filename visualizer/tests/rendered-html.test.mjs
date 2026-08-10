@@ -39,6 +39,10 @@ test("server-renders the finished Partizan experience", async () => {
   assert.match(normalizedHtml, /graph in this class/i);
   assert.match(normalizedHtml, /column containing the median form/i);
   assert.match(html, /From one class to the full corpus/);
+  assert.match(html, /Performed edit study/);
+  assert.match(normalizedHtml, /One certified form, edited 42 ways\./);
+  assert.match(normalizedHtml, /33[\s\S]*?retain value 1\/2/i);
+  assert.match(normalizedHtml, /33[\s\S]*?distinct graph quotients/i);
   assert.match(normalizedHtml, /similar silhouettes/i);
   assert.match(normalizedHtml, /The study contains 21,697 certified graph forms\./);
   assert.match(html, /Graph form/);
@@ -70,6 +74,7 @@ test("server-renders the finished Partizan experience", async () => {
   );
   assert.match(html, /Stiller used computation to locate an endgame kernel/);
   assert.match(html, /Elkies recomposed it as a chess study/);
+  assert.doesNotMatch(html, /Aesthetic preference remains outside its scope/i);
   assert.doesNotMatch(html, /linear-gradient|radial-gradient/i);
   assert.doesNotMatch(html, /Select form/i);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
@@ -84,6 +89,7 @@ test("ships checked evidence and removes the starter preview", async () => {
     atlasManifestEvidence,
     repertoireEvidence,
     policyResultEvidence,
+    composerEvidence,
     globalCss,
     packageJson,
   ] = await Promise.all([
@@ -111,6 +117,10 @@ test("ships checked evidence and removes the starter preview", async () => {
       new URL("../public/evidence/site-policy-result.json", import.meta.url),
       "utf8",
     ),
+    readFile(
+      new URL("../public/evidence/composer-one-arc-demonstration.json", import.meta.url),
+      "utf8",
+    ),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
@@ -121,6 +131,7 @@ test("ships checked evidence and removes the starter preview", async () => {
   const atlasManifest = JSON.parse(atlasManifestEvidence);
   const repertoire = JSON.parse(repertoireEvidence);
   const policyResult = JSON.parse(policyResultEvidence);
+  const composer = JSON.parse(composerEvidence);
 
   assert.equal(parsed.schema_version, "partizan.visual_crossing.v0.1");
   assert.deepEqual(
@@ -266,6 +277,29 @@ test("ships checked evidence and removes the starter preview", async () => {
   );
   assert.equal(policyResult.independent_replay, true);
   assert.equal(policyResult.corruption_families_rejected, 20);
+  assert.equal(
+    composer.schema_version,
+    "partizan.composer_one_arc_site_payload.v1",
+  );
+  assert.deepEqual(composer.counts, {
+    edited_forms: 42,
+    retained_exact_value: 33,
+    retained_graph_quotients: 33,
+  });
+  assert.equal(composer.edits.length, 42);
+  assert.equal(composer.edits.filter((edit) => edit.retained).length, 33);
+  assert.equal(
+    new Set(composer.edits.filter((edit) => edit.retained).map((edit) => edit.q)).size,
+    33,
+  );
+  assert.equal(
+    composer.protocol_artifact_sha256,
+    "c0d8f47996a705fa2047d68adf992cf8e75e7588c4dd2d15165d0f98573d2792",
+  );
+  assert.equal(
+    composer.verification_artifact_sha256,
+    "9a0f5d0a34039a0bd6e23d87088cb3a2e458c319c0f30edb1e011c64bed8bccc",
+  );
   assert.doesNotMatch(globalCss, /linear-gradient|radial-gradient/i);
   assert.match(globalCss, /--paper:\s*#090908/i);
   assert.match(globalCss, /--stage:\s*#090908/i);
