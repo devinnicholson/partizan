@@ -19,6 +19,58 @@ transition changes the representation while retaining the same literal game.
 A `literal_game_crossing` transition changes the option tree while retaining
 equality to the fixed target.
 
+## Composer walkthrough
+
+The explorer supports recomposition around a fixed mathematical kernel:
+
+1. Choose the target game whose value must remain invariant.
+2. Generate or supply candidate realizations and run `partizan explore`.
+3. Use `partizan inspect` to browse the certified repertoire by embodiment and
+   complete option structure.
+4. Use `partizan compare` to examine exactly what changes between any two
+   admitted forms.
+5. Select a form for further development or presentation.
+
+The roles remain separate throughout this process. Generation determines which
+candidates receive attention. Exact comparison controls admission to the
+repertoire. The composer retains the final choice among certified forms. A
+preference for economy, surprise, or another quality can guide that choice
+without entering the equality certificate.
+
+For example, begin with the bundled zero target and generate a small certified
+repertoire:
+
+```bash
+partizan explore \
+  --target tests/fixtures/fixed_value/target-zero.valid.json \
+  --seed 23 \
+  --count 8 \
+  --max-expansion-depth 3 \
+  --budget 8 \
+  --max-results 8 \
+  --output /tmp/generated-zero-repertoire.json
+```
+
+Inspect the alternatives and their transition witnesses:
+
+```bash
+partizan inspect /tmp/generated-zero-repertoire.json
+```
+
+The inspection output identifies each admitted candidate and distinguishes a
+change in embodiment from a change in the complete literal game. Copy two
+candidate identifiers from that output to compare them directly:
+
+```bash
+partizan compare /tmp/generated-zero-repertoire.json \
+  --left fixed-candidate-sha256:... \
+  --right fixed-candidate-sha256:...
+```
+
+The comparison reports the certified relation between the pair. The shared
+target value is fixed; the remaining structural differences are available for
+compositional selection.
+
 ## Input contract
 
 A literal game is recursive JSON:

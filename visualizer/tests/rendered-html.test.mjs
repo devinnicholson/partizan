@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { gunzipSync } from "node:zlib";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -32,49 +33,50 @@ test("server-renders the finished Partizan experience", async () => {
 
   const html = await response.text();
   const normalizedHtml = html.replaceAll("<!-- -->", "");
-  assert.match(html, /<title>Partizan — One Value, Three Forms<\/title>/i);
-  assert.match(html, /One value\./);
-  assert.match(html, /Three forms\./);
-  assert.match(html, /A machine found the kernel\./);
-  assert.match(html, /Elkies composed the encounter\./);
-  assert.match(html, /Play 13 plies/);
-  assert.match(html, /Qfg8/);
-  assert.match(html, /legal replay machine-verified/);
-  assert.match(html, /CGT value unasserted here/);
-  assert.match(html, /Correctness is the entrance\./);
-  assert.match(html, /The search continues inside\./);
-  assert.match(html, /og\.png/);
-  assert.match(html, /remove 2→3/i);
-  assert.match(html, /add 6→0/i);
-  assert.match(html, /literal-game crossing/);
-  assert.match(html, /embodiment only/);
-  assert.match(html, /21,697 certified forms/);
-  assert.match(html, /Enter the fiber/);
-  assert.match(html, /Certified repertoire browser/);
-  assert.match(html, /Official held-out comparison/);
-  assert.match(html, /More quotient discoveries\./);
-  assert.match(html, /Fewer literal games\./);
-  assert.match(normalizedHtml, /composite gate · 6\/7 checks/i);
-  assert.match(normalizedHtml, /\+57\.6%/);
-  assert.match(normalizedHtml, /68,232/);
-  assert.match(normalizedHtml, /43,301/);
-  assert.match(normalizedHtml, /11,083/);
-  assert.match(normalizedHtml, /27,990/);
-  assert.match(normalizedHtml, /observed 39\.6%/i);
-  assert.match(normalizedHtml, /gate 95%/i);
-  assert.match(html, /Model proposes/);
-  assert.match(html, /Exact verifier certifies/);
-  assert.match(html, /learned_advantage_claim/);
-  assert.match(normalizedHtml, />null</i);
-  assert.match(normalizedHtml, /20\/20/);
-  assert.match(html, /Choose the value\./);
-  assert.match(html, /Seeded unstructured repertoire/);
-  assert.match(normalizedHtml, /Composite result: NO_GO · independently replayed\./);
-  assert.match(html, /Replay A → B → C/);
-  assert.match(html, /Study provenance/);
-  assert.match(html, /Equality certificate/);
-  assert.match(html, /Derivation sidecar/);
-  assert.match(html, /Artifact sidecar/);
+  assert.match(html, /<title>Partizan \| 193 Graph Forms Sharing One Complete Game<\/title>/i);
+  assert.match(html, /Certified equivalence class/);
+  assert.match(normalizedHtml, /193 graph forms share one complete game\./i);
+  assert.match(normalizedHtml, /graph in this class/i);
+  assert.match(normalizedHtml, /column containing the median form/i);
+  assert.match(html, /From one class to the full corpus/);
+  assert.match(html, /Performed edit study/);
+  assert.match(normalizedHtml, /One certified form, edited 42 ways\./);
+  assert.match(normalizedHtml, /33[\s\S]*?retain value 1\/2/i);
+  assert.match(normalizedHtml, /33[\s\S]*?distinct graph quotients/i);
+  assert.match(normalizedHtml, /similar silhouettes/i);
+  assert.match(normalizedHtml, /The study contains 21,697 certified graph forms\./);
+  assert.match(html, /Graph form/);
+  assert.match(html, /Complete game/);
+  assert.match(html, /Exact value/);
+  assert.match(html, /Group by complete game/);
+  assert.match(normalizedHtml, /7,555[\s\S]*?graph forms/);
+  assert.match(normalizedHtml, /6,386[\s\S]*?complete games/);
+  assert.match(html, /Three graph forms, two complete games, value 0/);
+  assert.match(html, /<details[^>]*class="further-example"/i);
+  assert.doesNotMatch(html, /<details[^>]*class="further-example"[^>]*\sopen(?:\s|>)/i);
+  assert.match(html, /Show A, B, and C/);
+  assert.match(html, /Copy verification record/);
+  assert.match(html, /og-progressive\.png/);
+  assert.match(normalizedHtml, /73,728/);
+  assert.match(normalizedHtml, /historical source proposals/i);
+  assert.match(normalizedHtml, /21,697/);
+  assert.match(normalizedHtml, /16,120/);
+  assert.match(normalizedHtml, /15[\s\S]*?historical corruption families rejected/i);
+  assert.match(normalizedHtml, /separate 221,184-proposal experiment/i);
+  assert.match(normalizedHtml, /thirty corruption families/i);
+  assert.doesNotMatch(normalizedHtml, /pending[\s\S]*?corruption families rejected/i);
+  assert.match(html, /10\.5281\/zenodo\.21833142/);
+  assert.match(html, /FIGURE_4_PROVENANCE_AUTHORITY_V1\.json/);
+  assert.match(html, /These counts describe the observed sample\./);
+  assert.ok(
+    normalizedHtml.indexOf('id="atlas"') < normalizedHtml.indexOf('id="evidence"'),
+    "the corpus must appear before the evidence that verifies it",
+  );
+  assert.match(html, /Stiller used computation to locate an endgame kernel/);
+  assert.match(html, /Elkies recomposed it as a chess study/);
+  assert.doesNotMatch(html, /Aesthetic preference remains outside its scope/i);
+  assert.doesNotMatch(html, /linear-gradient|radial-gradient/i);
+  assert.doesNotMatch(html, /Select form/i);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
@@ -83,8 +85,12 @@ test("ships checked evidence and removes the starter preview", async () => {
     evidence,
     historicalEvidence,
     motifEvidence,
+    atlasEvidence,
+    atlasManifestEvidence,
     repertoireEvidence,
     policyResultEvidence,
+    composerEvidence,
+    globalCss,
     packageJson,
   ] = await Promise.all([
     readFile(new URL("../public/evidence/crossing.json", import.meta.url), "utf8"),
@@ -97,6 +103,13 @@ test("ships checked evidence and removes the starter preview", async () => {
       "utf8",
     ),
     readFile(
+      new URL("../public/evidence/fixed-value-atlas.json.gz", import.meta.url),
+    ),
+    readFile(
+      new URL("../public/evidence/fixed-value-atlas.manifest.json", import.meta.url),
+      "utf8",
+    ),
+    readFile(
       new URL("../public/evidence/repertoire-browser.json", import.meta.url),
       "utf8",
     ),
@@ -104,13 +117,21 @@ test("ships checked evidence and removes the starter preview", async () => {
       new URL("../public/evidence/site-policy-result.json", import.meta.url),
       "utf8",
     ),
+    readFile(
+      new URL("../public/evidence/composer-one-arc-demonstration.json", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
   const parsed = JSON.parse(evidence);
   const historical = JSON.parse(historicalEvidence);
   const motif = JSON.parse(motifEvidence);
+  const atlas = JSON.parse(gunzipSync(atlasEvidence).toString("utf8"));
+  const atlasManifest = JSON.parse(atlasManifestEvidence);
   const repertoire = JSON.parse(repertoireEvidence);
   const policyResult = JSON.parse(policyResultEvidence);
+  const composer = JSON.parse(composerEvidence);
 
   assert.equal(parsed.schema_version, "partizan.visual_crossing.v0.1");
   assert.deepEqual(
@@ -146,6 +167,43 @@ test("ships checked evidence and removes the starter preview", async () => {
     motif.positions[2].literal_game_sha256,
   );
   assert.equal(motif.atlas.quotient_unique_representatives, 21697);
+  assert.equal(atlas.schema_version, "partizan.fixed_value_atlas.v1");
+  assert.equal(
+    atlasManifest.schema_version,
+    "partizan.fixed_value_atlas.publication.v1",
+  );
+  assert.equal(atlasManifest.artifact.file, "fixed-value-atlas.json.gz");
+  assert.equal(atlasManifest.atlas_sha256, atlas.atlas_sha256);
+  assert.deepEqual(atlas.counts, {
+    exact_values: 3,
+    literal_games: 16120,
+    quotient_forms: 21697,
+  });
+  assert.equal(atlas.items.length, 21697);
+  assert.equal(atlas.groups.length, 16120);
+  assert.deepEqual(
+    atlas.targets.map((target) => target.quotient_forms),
+    [7555, 7132, 7010],
+  );
+  assert.deepEqual(
+    atlas.targets.map((target) => target.literal_games),
+    [6386, 5352, 4382],
+  );
+  assert.equal(
+    atlas.source.representative_set_sha256,
+    "54488c811edd8a09155864fd1af3c469c7daba334c62788a86882e0e9c404a02",
+  );
+  assert.equal(atlas.source.independent_replay, true);
+  assert.equal(atlas.source.proposal_count, 73728);
+  assert.equal(atlas.source.negative_test_families_rejected, 15);
+  assert.match(atlas.source.completion_file_sha256, /^[0-9a-f]{64}$/);
+  assert.match(atlas.source.negative_tests_file_sha256, /^[0-9a-f]{64}$/);
+  assert.equal(atlas.groups[atlas.items[atlas.motif.A].l].c, 32);
+  assert.equal(atlas.groups[atlas.items[atlas.motif.B].l].c, 54);
+  assert.equal(atlas.items[atlas.motif.B].l, atlas.items[atlas.motif.C].l);
+  assert.notEqual(atlas.items[atlas.motif.A].l, atlas.items[atlas.motif.B].l);
+  assert.ok(atlas.items.every((item) => item.p.length === 6));
+  assert.ok(atlas.groups.every((group) => group.p.length === 2));
   assert.equal(
     repertoire.schema_version,
     "partizan.repertoire_browser.v0.1",
@@ -219,6 +277,34 @@ test("ships checked evidence and removes the starter preview", async () => {
   );
   assert.equal(policyResult.independent_replay, true);
   assert.equal(policyResult.corruption_families_rejected, 20);
+  assert.equal(
+    composer.schema_version,
+    "partizan.composer_one_arc_site_payload.v1",
+  );
+  assert.deepEqual(composer.counts, {
+    edited_forms: 42,
+    retained_exact_value: 33,
+    retained_graph_quotients: 33,
+  });
+  assert.equal(composer.edits.length, 42);
+  assert.equal(composer.edits.filter((edit) => edit.retained).length, 33);
+  assert.equal(
+    new Set(composer.edits.filter((edit) => edit.retained).map((edit) => edit.q)).size,
+    33,
+  );
+  assert.equal(
+    composer.protocol_artifact_sha256,
+    "c0d8f47996a705fa2047d68adf992cf8e75e7588c4dd2d15165d0f98573d2792",
+  );
+  assert.equal(
+    composer.verification_artifact_sha256,
+    "9a0f5d0a34039a0bd6e23d87088cb3a2e458c319c0f30edb1e011c64bed8bccc",
+  );
+  assert.doesNotMatch(globalCss, /linear-gradient|radial-gradient/i);
+  assert.match(globalCss, /--paper:\s*#090908/i);
+  assert.match(globalCss, /--stage:\s*#090908/i);
+  assert.match(globalCss, /--paper-accent:\s*#e96f58/i);
+  assert.match(globalCss, /min-height:\s*44px/i);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await access(new URL("../public/og.png", import.meta.url));
   await assert.rejects(access(new URL("../app/_sites-preview", root)));

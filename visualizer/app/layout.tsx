@@ -2,9 +2,15 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 
-const title = "Partizan — One Value, Three Forms";
+const title = "Partizan | 193 Graph Forms Sharing One Complete Game";
 const description =
-  "Three certified realizations cross graph and game structure while exact combinatorial-game value remains fixed.";
+  "An interactive atlas of 193 certified order-7 Digraph Placement graphs with one complete game and exact value 1/2, within a corpus of 21,697 forms.";
+
+function normalizedBasePath() {
+  const value = process.env.NEXT_PUBLIC_PARTIZAN_BASE_PATH ?? "";
+  if (!value || value === "/") return "";
+  return `/${value.replace(/^\/+|\/+$/g, "")}`;
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -15,22 +21,32 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol =
     requestHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
-  const origin = new URL(`${protocol}://${host}`);
-  const socialImage = new URL("/og.png", origin).toString();
+  const configuredOrigin = process.env.PARTIZAN_PUBLIC_ORIGIN;
+  const origin = new URL(configuredOrigin ?? `${protocol}://${host}`);
+  const basePath = normalizedBasePath();
+  const socialImage = new URL(`${basePath}/og-progressive.png`, origin).toString();
+  const favicon = new URL(`${basePath}/favicon.png`, origin).toString();
 
   return {
     metadataBase: origin,
     title,
     description,
     icons: {
-      icon: "/favicon.png",
-      shortcut: "/favicon.png",
+      icon: favicon,
+      shortcut: favicon,
     },
     openGraph: {
       title,
       description,
       type: "website",
-      images: [{ url: socialImage, width: 1536, height: 1024, alt: title }],
+      images: [
+        {
+          url: socialImage,
+          width: 1536,
+          height: 1024,
+          alt: "A complete field of graph forms narrows to nine readable forms and one inspected seven-node graph on black.",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
@@ -43,7 +59,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = {
   colorScheme: "dark",
-  themeColor: "#070807",
+  themeColor: "#090908",
 };
 
 export default function RootLayout({

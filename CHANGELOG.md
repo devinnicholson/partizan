@@ -48,6 +48,8 @@ Semantic Versioning once an owner-approved release is published.
 
 ### Changed
 
+- Updated the visualizer build stack to current compatible releases and made
+  its Vite configuration compatible with the forthcoming native config loader.
 - Bounded-chess generation now emits
   `partizan.bounded_chess_adapter.v0.2` with native v0.2 provenance. Validation
   continues to accept the immutable v0.1 schema, source map, and golden record.

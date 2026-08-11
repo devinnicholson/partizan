@@ -1,121 +1,123 @@
-# Partizan visualizer
+# Partizan fixed-value atlas
 
-Status: executable historical witness followed by a checked fixed-value
-crossing.
-
-## Historical prelude
-
-The first instrument replays the thirteen-ply line published in Lewis Stiller's
-*Multilinear Algebra and Chess Endgames* (1996), pp. 176–177. Stiller describes
-the computer-found KQQKQQ mutual-zugzwang kernel and the eight-piece composition
-Noam Elkies built around it. The visualizer follows:
+The visualizer presents the observed fixed-value repertoire from the frozen
+order-7 Digraph Placement study. The opening canvas contains all 21,697
+quotient-distinct representatives admitted by the study's checked population
+predicate. Visitors can move the same population through three identity
+layers:
 
 ```text
-1. Qg7+ Kh2 2. f8=Q Qb5+ 3. Kh6 Qb6+
-4. Bc6 Qxc6+ 5. Kxh7 b1=Q+ 6. Kh8 Kh1! 7. Qfg8!!
+21,697 graph forms → 16,120 complete games → 3 exact values
 ```
 
-Partizan replays every UCI move from the preceding board state in the native
-Shakmaty engine. The generated artifact records canonical FEN, SAN, check
-state, legal-move count, captures, and promotions for the initial position and
-all thirteen plies.
+The canvas uses deterministic coordinates generated offline. The graph-form
+layer places representatives by directed-arc count and complete-game node
+count. The complete-game layer uses digest-ordered deterministic packing and
+draws group halos around complete games with multiple graph embodiments. The
+exact-value layer gathers every form tightly around the targets `0`, `*`, and
+`1/2`. Complete-game packing separates islands; distance between islands does
+not represent a similarity measurement.
 
-This witness has a narrow claim boundary. The artifact verifies legal replay
-and reproduces the published final position. The publication supplies the
-line's historical origin and analysis. The artifact does not independently
-prove forcedness, optimality, mutual zugzwang, or a CGT value.
+Every rendered mark maps to one retained event and carries its graph quotient,
+literal-game group, target, source event index, seven-node adjacency encoding,
+vertex colors, birthday, arc count, and complete-game node count. The display
+covers the observed repertoire and makes no estimate of the total mathematical
+fiber.
 
-Rebuild or check it with:
+## The guided crossing
 
-```bash
-PYTHONPATH=python python3 scripts/build_elkies_study_evidence.py
-PYTHONPATH=python python3 scripts/build_elkies_study_evidence.py --check
-```
-
-`tests/test_chess_witness.py` checks the native replay and its refusal of an
-illegal move. The visualizer's rendered-page test binds the 14-frame artifact,
-final FEN, final `Qfg8`, and visible scope labels.
-
-## Exact crossing
-
-The visualizer makes one certified comparison directly inspectable. It begins
-with two legal KQK positions:
+The five-step crossing follows forms A, B, and C inside value zero:
 
 ```text
-7k/8/5K2/8/8/8/8/6Q1 w - - 0 1
-7k/8/5KQ1/8/8/8/8/8 w - - 0 1
+v(A) = v(B) = v(C) = 0
+ℓ(A) ≠ ℓ(B) = ℓ(C)
+q(A), q(B), q(C) are pairwise distinct
 ```
 
-The native adapter expands each position through four plies with the same
-20,000-position-node budget. Partizan admits both results into one
-fixed-value repertoire. Conway's recursive order certifies each projected game
-equal to `{0|} = 1` and equal to the other.
+Removing `2→3` changes A into B and removes four complete-game nodes. Adding
+`6→0` changes B into C while preserving the complete-game digest. The interface
+then resolves B and C to their shared literal option DAG. A belongs to an
+observed 32-form complete-game island; B and C belong to an observed 54-form
+island.
 
-The exact crossing exposes four stages:
+## Evidence contract
 
-1. **Receive** — display the two source FENs.
-2. **Distinguish** — reveal their different literal trees and search measures.
-3. **Move** — animate the unique immediate mating witnesses `Qg1-g7` and
-   `Qg6-g7`.
-4. **Certify** — disclose the shared value and crossing relation.
+`visualizer/public/evidence/fixed-value-atlas.json.gz` is generated from the
+independently replayed frozen ledger. The generator:
 
-Both instruments support direct selection and timed replay. The historical
-line adds previous/next controls, a complete clickable score, six annotated
-landmarks, and scoped arrow-key navigation. Responsive layouts and
-reduced-motion preferences apply throughout.
+1. requires a passing independent verification and paper-evidence completion;
+2. applies the frozen held-out population predicate;
+3. keeps the first event for each `(target, graph quotient)` pair;
+4. reconstructs and checks the representative-set hash;
+5. checks the per-target quotient and literal-game counts;
+6. verifies the retained derivation sidecars for A and B;
+7. identifies the largest observed literal-game group by a declared mechanical
+   rule; and
+8. serializes the evidence and deterministic layouts with content hashes.
 
-## Crossing evidence contract
+The resulting authority binds 73,728 source proposals, 21,697 quotient forms,
+16,120 complete games, three exact values, the source ledger hash, the
+independent replay hash, and the representative-set hash
+`54488c811edd8a09155864fd1af3c469c7daba334c62788a86882e0e9c404a02`.
 
-`scripts/build_visualizer_evidence.py` produces
-`visualizer/public/evidence/crossing.json`. The bundle contains:
+The full 165 MB source ledger and its content-addressed sidecars are archived in
+the [Partizan reproducibility deposit](https://doi.org/10.5281/zenodo.21833142).
+Download and verify the files as described in the deposit's
+`FULL_EVIDENCE_ARCHIVE_AUTHORITY.json`, then extract the archive at the
+reproducibility-repository root. The generator expects the directory
+`output/research/digraph-order7-fixed-value-transitions-v1-00ac040294db` and
+binds its completion, event, manifest, negative-test, report, summary, and
+independent-verification file hashes.
 
-- the exact FEN and clock-free move-state key for each realization;
-- the content-addressed chess-adapter identity;
-- the unique immediate checkmating move;
-- projection statistics, including the 19-node and 11-node literal games;
-- separate literal-game and Thermograph structural identities;
-- the fixed-value repertoire identity;
-- exact equality results against `1` and between the realizations; and
-- a SHA-256 digest over the complete evidence payload.
+### First-load 193-form fiber
 
-The generator refuses to write a bundle unless both native records are
-accepted, both literal games compare equal to `1`, the games compare equal to
-one another, the repertoire replays cleanly, and the admitted relationship
-includes `literal_game_crossing`.
+`visualizer/public/evidence/fixed-value-fiber-193.json` is a 60 KB first-load
+asset containing 193 actual order-7 digraphs. It is generated from the same
+checked population as the full atlas. The selection rule chooses the observed
+literal-game group with the most quotient-distinct representatives, breaking
+ties by target order (`0`, `*`, `{0|1}`) and then literal-game digest. The
+largest group is unique in this population:
 
-Rebuild or check the committed artifact:
+```text
+target: {0|1} (1/2)
+literal game: 830ef59c3454d13324e6841d466a702ef3e168bab7615bb4043d6e6d58e8fd66
+observed quotient-distinct digraphs: 193
+directed-arc counts: 17 through 27
+```
+
+Each row binds its adjacency bits and color mask to candidate, event, and graph
+quotient hashes. The small payload also includes the shared literal option DAG
+and a layout in which the horizontal axis records directed-arc count. Vertical
+order is digest-based and does not measure graph similarity. The companion
+`fixed-value-fiber-193.manifest.json` binds the file bytes, selection, full-atlas
+authority, completion authority, and representative-set hash.
+
+This is the largest group in the frozen observed population. It does not
+estimate the size or prevalence of the mathematical fiber, and it does not
+measure aesthetic or human preference.
+
+Rebuild or check it from the main Partizan repository:
 
 ```bash
-PYTHONPATH=python python3 scripts/build_visualizer_evidence.py
-PYTHONPATH=python python3 scripts/build_visualizer_evidence.py --check
+python3 scripts/build_fixed_value_atlas_evidence.py \
+  --source /path/to/partizan-reproducibility/output/research/digraph-order7-fixed-value-transitions-v1-00ac040294db \
+  --check
 ```
 
-`tests/test_visualizer_evidence.py` independently rebuilds the bundle and
-requires byte equality with the committed artifact.
-
-## Visual boundary
-
-The animated moves are root-level terminal witnesses recorded by Astralbase's
-immediate-tactic analysis. The literal-tree constellations encode the certified
-node counts and distinct literal-game identities. Their layout is an
-explanatory rendering; the complete recursive game objects and comparisons
-remain in the adapter and repertoire records.
-
-The visualizer never assigns chess-engine evaluations or claims an unbounded
-solution value. Its equality statement remains scoped to the declared bounded
-normal-play projection.
+The interface also reads checked historical and motif evidence from
+`visualizer/public/evidence/`. Exact equality, graph quotient, and
+complete-game identity were measured. Aesthetic preference was not measured.
 
 ## Development
-
-The application lives in `visualizer/` and uses the repository's generated
-evidence as its only research input.
 
 ```bash
 cd visualizer
 npm ci
-npm run dev
 npm test
 npm run lint
 ```
 
-The production build targets the OpenAI Sites runtime through vinext.
+The production build uses vinext and targets OpenAI Sites. Canvas provides the
+dense atlas; every inspected specimen is rendered in the DOM. Keyboard arrows
+move through forms, Escape closes a specimen, touch targets remain at least 44
+pixels, and reduced-motion preferences disable animated identity transitions.

@@ -2,6 +2,8 @@
 
 import {
   type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -9,68 +11,15 @@ import {
   useState,
 } from "react";
 import elkiesJson from "../public/evidence/elkies-study.json";
+import composerJson from "../public/evidence/composer-one-arc-demonstration.json";
+import fiberJson from "../public/evidence/fixed-value-fiber-193.json";
 import motifJson from "../public/evidence/fixed-value-motif.json";
-import policyResultJson from "../public/evidence/site-policy-result.json";
-import repertoireJson from "../public/evidence/repertoire-browser.json";
 
-type Phase = 0 | 1 | 2 | 3;
-
-type WitnessFrame = {
-  capture: boolean;
-  checkmate: boolean;
-  fen: string;
-  in_check: boolean;
-  legal_move_count: number;
-  move_display: string | null;
-  move_san: string | null;
-  move_uci: string | null;
-  ply: number;
-  promotion: boolean;
-  stalemate: boolean;
-  turn: "white" | "black";
-};
-
-type HistoricalEvidence = {
-  schema_version: string;
-  evidence_sha256: string;
-  title: string;
-  claim: string;
-  source: {
-    author: string;
-    title: string;
-    venue: string;
-    year: number;
-    pages: string;
-    figure: string;
-    url: string;
-    historical_attribution: string;
-  };
-  scope: {
-    legal_replay: string;
-    line_origin: string;
-    line_optimality: string;
-    forcedness: string;
-    cgt_value: string;
-  };
-  position: {
-    name: string;
-    initial_piece_count: number;
-    final_piece_count: number;
-  };
-  witness: {
-    native_witness_version: string;
-    move_count: number;
-    frames: WitnessFrame[];
-  };
-  motifs: {
-    at_ply: number;
-    name: string;
-    move_san: string;
-  }[];
-};
+type Label = "A" | "B" | "C";
+type Layer = 0 | 1 | 2;
 
 type GraphPosition = {
-  label: "A" | "B" | "C";
+  label: Label;
   name: string;
   candidate_sha256: string;
   quotient_sha256: string;
@@ -84,20 +33,7 @@ type GraphPosition = {
   first_global_event_index: number;
 };
 
-type MotifTransition = {
-  from: "A" | "B";
-  to: "B" | "C";
-  operation: string;
-  arc: [number, number];
-  class: "literal_game_crossing" | "embodiment_only";
-  headline: string;
-  detail: string;
-  event_sha256: string;
-};
-
 type FixedValueMotif = {
-  schema_version: string;
-  claim: string;
   completion_sha256: string;
   run: {
     proposal_count: number;
@@ -105,243 +41,190 @@ type FixedValueMotif = {
     independent_replay: boolean;
     negative_test_families_rejected: number;
   };
-  comparison: {
-    exact_value: string;
-    relation: string;
-    statement: string;
-    literal_statement: string;
-    quotient_statement: string;
-  };
   positions: GraphPosition[];
-  transitions: MotifTransition[];
+  transitions: {
+    from: Label;
+    to: Label;
+    operation: string;
+    arc: [number, number];
+    headline: string;
+    detail: string;
+  }[];
   atlas: {
     quotient_unique_representatives: number;
-    targets: {
-      label: string;
-      quotients: number;
-      literal_games: number;
-    }[];
-  };
-  scope: {
-    domain: string;
-    claim_kind: string;
-    fiber_size: string;
-    aesthetic_ranking: string;
-    unrestricted_chess: string;
+    targets: { label: string; quotients: number; literal_games: number }[];
   };
 };
 
-type TargetLabel = "0" | "*" | "1/2";
-
-type PolicyResult = {
-  policy_id: string;
-  policy_label: string;
-  policy_family: "classical_search" | "learned_ranker";
-  target: TargetLabel;
-  formal_target: string;
-  budget: {
-    unit: "raw_proposal" | "exact_verifier_call";
-    count: number;
-  };
-  status: "verified" | "awaiting_certified_result" | "failed_integrity_gate";
-  completion_sha256: string;
-  independent_replay: boolean;
-  quotient_unique_representatives: number;
-  literal_game_digests: number;
-  representative_view: "linked_motif" | "aggregate_only";
-  representative_labels: ("A" | "B" | "C")[];
+type AtlasItem = {
+  a: number;
+  b: number;
+  g: string;
+  i: number;
+  l: number;
+  m: number;
+  n: number;
+  p: [number, number, number, number, number, number];
+  q: string;
+  t: number;
 };
 
-type RepresentativeProvenance = {
-  label: "A" | "B" | "C";
-  global_event_index: number;
-  event_sha256: string;
-  candidate_sha256: string;
-  equality_certificate_sha256: string;
-  equality_sidecar_sha256: string;
-  derivation_sidecar_sha256: string;
-  artifact_sidecar_sha256: string;
+type AtlasGroup = { c: number; d: string; p: [number, number]; t: number };
+type DagNode = { d: string; r: number; s: string; x: boolean };
+type DagEdge = { f: number; p: "L" | "R"; t: number };
+type LiteralDag = {
+  root: number;
+  state_count: number;
+  nodes: DagNode[];
+  edges: DagEdge[];
 };
 
-type RepertoireBrowserEvidence = {
-  schema_version: string;
-  study: {
-    domain: string;
-    status: "GO";
-    evidence_eligible: boolean;
-    policy: {
-      policy_id: string;
-      label: string;
-      family: "classical_search";
-      status: "verified";
-      streams_per_target: number;
-      proposals_per_stream: number;
-    };
-    result_contract: {
-      schema_version: string;
-      required_fields: string[];
-      allowed_statuses: string[];
-    };
+type AtlasData = {
+  atlas_sha256: string;
+  counts: {
+    exact_values: number;
+    literal_games: number;
+    quotient_forms: number;
   };
-  projection: {
-    symbol: "q(x)" | "ℓ(x)" | "v(x)";
-    label: string;
-    definition: string;
-  }[];
-  results: PolicyResult[];
-  representative_provenance: RepresentativeProvenance[];
-  bindings: {
+  groups: AtlasGroup[];
+  items: AtlasItem[];
+  motif: Record<Label, number>;
+  motif_dags: { A: LiteralDag; B: LiteralDag; C: "B" };
+  source: {
     completion_sha256: string;
-    run_complete_file_sha256: string;
-    manifest_file_sha256: string;
     events_file_sha256: string;
-    summary_file_sha256: string;
-    independent_verification_file_sha256: string;
-    negative_tests_file_sha256: string;
+    independent_replay: boolean;
+    negative_test_families_rejected: number;
+    proposal_count: number;
+    representative_set_sha256: string;
   };
-  claim_boundary: {
-    fiber_size: "not_estimated";
-    aesthetic_ranking: "not_measured";
-    human_preference: "not_measured";
-    policy_optimality: "not_tested";
+  targets: {
+    complete_game_node_range: [number, number];
+    formal: string;
+    graph_arc_range: [number, number];
+    label: string;
+    literal_games: number;
+    quotient_forms: number;
+  }[];
+};
+
+type HistoricalEvidence = { source: { title: string; url: string } };
+type CompactFiber = {
+  items: {
+    a: number;
+    b: number;
+    g: string;
+    i: number;
+    m: number;
+    n: number;
+    p: [number, number];
+    q: string;
+  }[];
+  selection: {
+    literal_game_sha256: string;
+    observed_quotient_forms: number;
+    target_formal: string;
+    target_label: string;
   };
 };
 
-type PolicyPromotionEvidence = {
-  schema_version: string;
-  site_result_sha256: string;
-  source_completion_sha256: string;
-  evidence_class: "VERIFIED_OFFICIAL_HELD_OUT";
-  result: "NO_GO";
-  policy_id: string;
-  policy_label: string;
-  policy_family: "learned_ranker";
-  comparison_policy_id: string;
-  learned_advantage_claim: null;
-  independent_replay: boolean;
-  corruption_families_rejected: number;
-  budget: {
-    arms: number;
-    candidate_pool_size: number;
-    total_calls: number;
-    unit: "exact_verifier_call";
-  };
-  observed_analysis: {
-    total_discoveries: Record<
-      "neural_toggle_one_ranker" | "structural_toggle_one_random",
-      number
-    >;
-    macro_paired_difference: number;
-    bootstrap_95_ci: [number, number];
-    relative_lift: number;
-    sign_flip_p_value: number;
-    paired_stream_count: number;
-  };
-  diversity: {
-    literal_game_digest_counts: Record<
-      "neural_toggle_one_ranker" | "structural_toggle_one_random",
-      number
-    >;
-    literal_game_digest_ratio_to_control: number;
-    descriptor_cell_counts: Record<
-      "neural_toggle_one_ranker" | "structural_toggle_one_random",
-      number
-    >;
-  };
-  scientific_gates: Record<string, boolean>;
+type ComposerEdit = {
+  a: number;
+  arc: [number, number];
+  c: string;
+  g: string;
+  m: number;
+  q: string;
+  retained: boolean;
+  state: "present" | "absent";
 };
 
-type Piece = {
-  id: string;
-  color: "white" | "black";
-  kind: string;
-  square: string;
+type ComposerDemonstrationData = {
+  artifact_sha256: string;
+  counts: {
+    edited_forms: number;
+    retained_exact_value: number;
+    retained_graph_quotients: number;
+  };
+  edits: ComposerEdit[];
+  parent: {
+    a: number;
+    c: string;
+    g: string;
+    m: number;
+    q: string;
+  };
+  protocol_artifact_sha256: string;
+  target: string;
+  verification_artifact_sha256: string;
 };
 
+const motif = motifJson as unknown as FixedValueMotif;
 const elkies = elkiesJson as HistoricalEvidence;
-const motif = motifJson as FixedValueMotif;
-const policyResult = policyResultJson as PolicyPromotionEvidence;
-const repertoire = repertoireJson as RepertoireBrowserEvidence;
-const files = "abcdefgh";
-const phaseLabels = ["Receive", "Cross literal game", "Change embodiment", "Certify"] as const;
-const witnessLandmarks = [0, 3, 7, 10, 12, 13] as const;
+const compactFiber = fiberJson as unknown as CompactFiber;
+const composerDemo = composerJson as unknown as ComposerDemonstrationData;
+const numberFormat = new Intl.NumberFormat("en-US");
+const layerNames = ["Graph form", "Complete game", "Exact value"] as const;
+const layerCounts = [21_697, 16_120, 3] as const;
+const nextLayerActions = [
+  "Group by complete game",
+  "Group by exact value",
+  "Show graph forms",
+] as const;
+const atlasColors = ["#d7b168", "#e8e1d4", "#9b968b"] as const;
+const FOCUS_LITERAL_DIGEST = compactFiber.selection.literal_game_sha256;
+
 const graphCoordinates = [
   { x: 50, y: 8 },
-  { x: 82, y: 25 },
-  { x: 88, y: 58 },
+  { x: 82, y: 26 },
+  { x: 88, y: 60 },
   { x: 65, y: 88 },
   { x: 35, y: 88 },
-  { x: 12, y: 58 },
-  { x: 18, y: 25 },
+  { x: 12, y: 60 },
+  { x: 18, y: 26 },
 ] as const;
 
-const glyphs: Record<string, string> = {
-  K: "♔",
-  Q: "♕",
-  R: "♖",
-  B: "♗",
-  N: "♘",
-  P: "♙",
-  k: "♚",
-  q: "♛",
-  r: "♜",
-  b: "♝",
-  n: "♞",
-  p: "♟",
-};
-
-function parseFen(fen: string): Piece[] {
-  const board = fen.split(" ")[0];
-  const counts: Record<string, number> = {};
-  const pieces: Piece[] = [];
-
-  board.split("/").forEach((rankText, row) => {
-    let file = 0;
-    for (const symbol of rankText) {
-      if (/\d/.test(symbol)) {
-        file += Number(symbol);
-        continue;
-      }
-      counts[symbol] = (counts[symbol] ?? 0) + 1;
-      pieces.push({
-        id: `${symbol}-${counts[symbol]}`,
-        color: symbol === symbol.toUpperCase() ? "white" : "black",
-        kind: symbol,
-        square: `${files[file]}${8 - row}`,
-      });
-      file += 1;
-    }
-  });
-
-  return pieces;
-}
-
-function uciSquares(move: string | null): { from: string; to: string } | null {
-  if (!move || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) return null;
-  return { from: move.slice(0, 2), to: move.slice(2, 4) };
-}
-
-function squarePosition(square: string) {
-  return { file: files.indexOf(square[0]), row: 8 - Number(square[1]) };
-}
-
 function shortHash(value: string) {
-  const digest = value.includes(":") ? value.split(":").at(-1) : value;
-  return digest?.slice(0, 10);
+  return value.slice(0, 12);
 }
 
-function percent(value: number, digits = 1) {
-  return `${(value * 100).toFixed(digits)}%`;
+function getPosition(label: Label) {
+  const position = motif.positions.find((item) => item.label === label);
+  if (!position) throw new Error(`Missing form ${label}`);
+  return position;
+}
+
+function arcKey([from, to]: [number, number]) {
+  return `${from}→${to}`;
+}
+
+function decodedArcs(code: string): [number, number][] {
+  const bits = BigInt(`0x${code}`);
+  const arcs: [number, number][] = [];
+  for (let source = 0; source < 7; source += 1) {
+    for (let target = 0; target < 7; target += 1) {
+      if ((bits & (1n << BigInt(source * 7 + target))) !== 0n) {
+        arcs.push([source, target]);
+      }
+    }
+  }
+  return arcs;
+}
+
+function decodedBlue(mask: number) {
+  return Array.from({ length: 7 }, (_, vertex) => vertex).filter(
+    (vertex) => (mask & (1 << vertex)) !== 0,
+  );
 }
 
 function GraphEdge({
   from,
   to,
-  emphasis,
+  highlighted,
 }: {
   from: number;
   to: number;
-  emphasis?: "removed" | "added";
+  highlighted?: boolean;
 }) {
   const start = graphCoordinates[from];
   const end = graphCoordinates[to];
@@ -349,1185 +232,1886 @@ function GraphEdge({
   const dy = end.y - start.y;
   const distance = Math.hypot(dx, dy);
   const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-  const reverseExists = motif.positions.some((position) =>
-    position.arcs.some(([candidateFrom, candidateTo]) =>
-      candidateFrom === to && candidateTo === from,
-    ),
-  );
-  const offset = reverseExists ? (from < to ? -1.5 : 1.5) : 0;
 
   return (
     <span
-      className={[
-        "graph-edge",
-        emphasis ? `graph-edge-${emphasis}` : "",
-      ].join(" ")}
-      style={{
-        "--edge-x": `${start.x}%`,
-        "--edge-y": `${start.y}%`,
-        "--edge-length": `${distance}%`,
-        "--edge-angle": `${angle}deg`,
-        "--edge-offset": `${offset}px`,
-      } as CSSProperties}
+      className={`graph-edge${highlighted ? " highlighted" : ""}`}
+      style={
+        {
+          "--edge-x": `${start.x}%`,
+          "--edge-y": `${start.y}%`,
+          "--edge-length": `${distance}%`,
+          "--edge-angle": `${angle}deg`,
+        } as CSSProperties
+      }
       aria-hidden="true"
     />
   );
 }
 
-function DigraphBoard({
-  position,
-  phase,
+function DirectedGraph({
+  label,
+  name,
+  arcs,
+  blueVertices,
+  highlightedArc,
+  compact = false,
 }: {
-  position: GraphPosition;
-  phase: Phase;
+  label: string;
+  name: string;
+  arcs: [number, number][];
+  blueVertices: number[];
+  highlightedArc?: [number, number];
+  compact?: boolean;
 }) {
-  const positionIndex = motif.positions.findIndex(
-    (candidate) => candidate.label === position.label,
-  );
-  const revealed = phase >= positionIndex || phase === 3;
-
+  const highlightedKey = highlightedArc ? arcKey(highlightedArc) : null;
   return (
-    <div
-      className={[
-        "digraph-board",
-        revealed ? "revealed" : "veiled",
-        `digraph-${position.label.toLowerCase()}`,
-      ].join(" ")}
-      aria-label={`${position.name}: seven-vertex Digraph Placement graph with exact value zero`}
-    >
-      <div className="graph-orbit" aria-hidden="true" />
-      {position.arcs.map(([from, to]) => {
-        const removed =
-          position.label === "A" && from === 2 && to === 3 && phase >= 1;
-        const added =
-          position.label === "C" && from === 6 && to === 0 && phase >= 2;
-        return (
+    <figure className={`directed-graph${compact ? " compact" : ""}`}>
+      <figcaption>
+        <span>{label}</span>
+        <strong>{name}</strong>
+      </figcaption>
+      <div className="graph-field">
+        {arcs.map(([from, to]) => (
           <GraphEdge
             from={from}
             to={to}
-            emphasis={removed ? "removed" : added ? "added" : undefined}
+            highlighted={arcKey([from, to]) === highlightedKey}
             key={`${from}-${to}`}
           />
-        );
-      })}
-      {graphCoordinates.map((coordinate, vertex) => {
-        const leftVertex = position.blue_vertices.includes(vertex);
-        return (
+        ))}
+        {graphCoordinates.map((coordinate, vertex) => (
           <span
-            className={`graph-node ${leftVertex ? "left-vertex" : "right-vertex"}`}
+            className={`graph-node ${
+              blueVertices.includes(vertex) ? "blue" : "red"
+            }`}
             key={vertex}
-            style={{
-              "--node-x": `${coordinate.x}%`,
-              "--node-y": `${coordinate.y}%`,
-            } as CSSProperties}
+            style={
+              {
+                "--node-x": `${coordinate.x}%`,
+                "--node-y": `${coordinate.y}%`,
+              } as CSSProperties
+            }
             aria-hidden="true"
           >
             {vertex}
           </span>
-        );
-      })}
-      <div className="graph-value-mark" aria-live="polite">
-        <span>{phase === 3 ? "exact value" : "target"}</span>
-        <strong>{phase === 3 ? "0" : "?"}</strong>
+        ))}
       </div>
+    </figure>
+  );
+}
+
+type FiberMember = { index: number; item: AtlasItem };
+type GraphEncoding = Pick<AtlasItem, "g" | "m">;
+type FiberArcState = "shared" | "added" | "removed";
+
+function FiberEdge({
+  from,
+  to,
+  state,
+}: {
+  from: number;
+  to: number;
+  state: FiberArcState;
+}) {
+  const start = graphCoordinates[from];
+  const end = graphCoordinates[to];
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const distance = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+  return (
+    <span
+      className={`fiber-edge ${state}`}
+      style={
+        {
+          "--edge-x": `${start.x}%`,
+          "--edge-y": `${start.y}%`,
+          "--edge-length": `${distance}%`,
+          "--edge-angle": `${angle}deg`,
+        } as CSSProperties
+      }
+      aria-hidden="true"
+    />
+  );
+}
+
+function FiberGraph({
+  item,
+  reference,
+  large = false,
+}: {
+  item: GraphEncoding;
+  reference?: GraphEncoding;
+  large?: boolean;
+}) {
+  const arcs = decodedArcs(item.g);
+  const referenceArcs = reference ? decodedArcs(reference.g) : arcs;
+  const arcSet = new Set(arcs.map(arcKey));
+  const referenceSet = new Set(referenceArcs.map(arcKey));
+  const union = new Map<string, [number, number]>();
+  for (const arc of [...referenceArcs, ...arcs]) union.set(arcKey(arc), arc);
+
+  return (
+    <div className={`fiber-graph${large ? " large" : ""}`} aria-hidden="true">
+      {Array.from(union.values()).map(([from, to]) => {
+        const key = arcKey([from, to]);
+        const state: FiberArcState = !referenceSet.has(key)
+          ? "added"
+          : !arcSet.has(key)
+            ? "removed"
+            : "shared";
+        return <FiberEdge from={from} to={to} state={state} key={key} />;
+      })}
+      {graphCoordinates.map((coordinate, vertex) => (
+        <span
+          className={`fiber-node ${
+            (item.m & (1 << vertex)) !== 0 ? "blue" : "red"
+          }`}
+          key={vertex}
+          style={
+            {
+              "--node-x": `${coordinate.x}%`,
+              "--node-y": `${coordinate.y}%`,
+            } as CSSProperties
+          }
+        >
+          {large ? vertex : ""}
+        </span>
+      ))}
     </div>
   );
 }
 
-function MotifCard({
-  position,
-  phase,
-  index,
+function edgeDifference(reference: GraphEncoding, selected: GraphEncoding) {
+  const referenceSet = new Set(decodedArcs(reference.g).map(arcKey));
+  const selectedSet = new Set(decodedArcs(selected.g).map(arcKey));
+  return {
+    added: Array.from(selectedSet).filter((arc) => !referenceSet.has(arc)),
+    removed: Array.from(referenceSet).filter((arc) => !selectedSet.has(arc)),
+  };
+}
+
+type FiberCanvasCell = {
+  member: FiberMember;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+function FiberHeroCanvas({
+  columns,
+  selected,
+  reference,
+  onSelect,
+  onNavigate,
 }: {
-  position: GraphPosition;
-  phase: Phase;
-  index: number;
+  columns: { arcCount: number; members: FiberMember[] }[];
+  selected: FiberMember | null;
+  reference: FiberMember | null;
+  onSelect: (member: FiberMember) => void;
+  onNavigate: (key: string) => void;
 }) {
-  const status =
-    phase === 3
-      ? "value 0 certified"
-      : phase >= index
-        ? index === 0
-          ? "held-out position"
-          : index === 1
-            ? "literal crossing"
-            : "embodiment change"
-        : "awaiting edit";
-  const provenance = repertoire.representative_provenance.find(
-    (record) => record.label === position.label,
-  );
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cellsRef = useRef<FiberCanvasCell[]>([]);
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const targetWidth = Math.max(1, Math.round(width * dpr));
+    const targetHeight = Math.max(1, Math.round(height * dpr));
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+    }
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    context.clearRect(0, 0, width, height);
+    context.fillStyle = "#090908";
+    context.fillRect(0, 0, width, height);
+
+    const rows = 11;
+    const top = 76;
+    const bottom = 18;
+    const outer = 18;
+    const gap = 12;
+    const usableWidth = width - outer * 2 - gap * (columns.length - 1);
+    const units = columns.map(({ members }) => Math.max(1, Math.ceil(members.length / rows)));
+    const totalUnits = units.reduce((sum, value) => sum + value, 0);
+    const unitWidth = usableWidth / totalUnits;
+    const rowHeight = (height - top - bottom) / rows;
+    const cells: FiberCanvasCell[] = [];
+    let columnX = outer;
+
+    context.textBaseline = "alphabetic";
+    columns.forEach(({ arcCount, members }, columnIndex) => {
+      const columnWidth = units[columnIndex] * unitWidth;
+      context.strokeStyle = "rgba(241,236,223,.17)";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(Math.round(columnX) + 0.5, 16);
+      context.lineTo(Math.round(columnX) + 0.5, height - 12);
+      context.stroke();
+      context.fillStyle = "#f1ecdf";
+      context.font = "22px Iowan Old Style, Baskerville, serif";
+      context.fillText(String(arcCount), columnX + 7, 34);
+      context.fillStyle = "#8f8b81";
+      context.font = "9px SFMono-Regular, Roboto Mono, monospace";
+      context.fillText(`${members.length} ${members.length === 1 ? "FORM" : "FORMS"}`, columnX + 7, 51);
+
+      members.forEach((member, memberIndex) => {
+        const subcolumn = Math.floor(memberIndex / rows);
+        const row = memberIndex % rows;
+        const cellX = columnX + subcolumn * unitWidth;
+        const cellY = top + row * rowHeight;
+        const cellWidth = unitWidth;
+        const cellHeight = rowHeight;
+        cells.push({ member, x: cellX, y: cellY, width: cellWidth, height: cellHeight });
+
+        const centerX = cellX + cellWidth / 2;
+        const centerY = cellY + cellHeight / 2;
+        const graphSize = Math.min(52, cellWidth - 8, cellHeight - 8);
+        const radius = 2.05;
+        const nodePosition = (vertex: number) => ({
+          x: centerX + ((graphCoordinates[vertex].x - 50) / 100) * graphSize,
+          y: centerY + ((graphCoordinates[vertex].y - 50) / 100) * graphSize,
+        });
+
+        const isSelected = member.index === selected?.index;
+        const isReference = member.index === reference?.index;
+        if (isSelected || isReference) {
+          context.strokeStyle = isSelected ? "#e96f58" : "#d7b168";
+          context.lineWidth = isSelected ? 1.5 : 1;
+          context.strokeRect(
+            Math.round(cellX + 2) + 0.5,
+            Math.round(cellY + 2) + 0.5,
+            Math.max(4, cellWidth - 5),
+            Math.max(4, cellHeight - 5),
+          );
+        }
+
+        context.strokeStyle = "rgba(241,236,223,.42)";
+        context.fillStyle = "rgba(241,236,223,.42)";
+        context.lineWidth = 0.9;
+        for (const [from, to] of decodedArcs(member.item.g)) {
+          const start = nodePosition(from);
+          const end = nodePosition(to);
+          if (from === to) {
+            context.beginPath();
+            context.arc(start.x + 2.4, start.y - 2.4, 3.2, 0.4, Math.PI * 2.05);
+            context.stroke();
+            context.beginPath();
+            context.moveTo(start.x + 4.8, start.y - 4.7);
+            context.lineTo(start.x + 2.7, start.y - 5.1);
+            context.lineTo(start.x + 4.2, start.y - 2.9);
+            context.fill();
+            continue;
+          }
+          const dx = end.x - start.x;
+          const dy = end.y - start.y;
+          const length = Math.hypot(dx, dy) || 1;
+          const ux = dx / length;
+          const uy = dy / length;
+          const startX = start.x + ux * (radius + 0.5);
+          const startY = start.y + uy * (radius + 0.5);
+          const endX = end.x - ux * (radius + 0.8);
+          const endY = end.y - uy * (radius + 0.8);
+          context.beginPath();
+          context.moveTo(startX, startY);
+          context.lineTo(endX, endY);
+          context.stroke();
+          const arrowX = startX + (endX - startX) * 0.73;
+          const arrowY = startY + (endY - startY) * 0.73;
+          context.beginPath();
+          context.moveTo(arrowX + ux * 2.2, arrowY + uy * 2.2);
+          context.lineTo(arrowX - uy * 1.6, arrowY + ux * 1.6);
+          context.lineTo(arrowX + uy * 1.6, arrowY - ux * 1.6);
+          context.closePath();
+          context.fill();
+        }
+
+        graphCoordinates.forEach((_, vertex) => {
+          const point = nodePosition(vertex);
+          context.beginPath();
+          context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+          context.fillStyle =
+            (member.item.m & (1 << vertex)) !== 0 ? "#73b8bc" : "#e96f58";
+          context.fill();
+        });
+      });
+      columnX += columnWidth + gap;
+    });
+
+    context.beginPath();
+    context.moveTo(Math.round(width - outer) + 0.5, 16);
+    context.lineTo(Math.round(width - outer) + 0.5, height - 12);
+    context.strokeStyle = "rgba(241,236,223,.17)";
+    context.stroke();
+    cellsRef.current = cells;
+  }, [columns, reference, selected]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const observer = new ResizeObserver(draw);
+    observer.observe(canvas);
+    draw();
+    return () => observer.disconnect();
+  }, [draw]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const scroller = canvas?.parentElement;
+    if (!canvas || !scroller || !selected) return;
+    const frame = requestAnimationFrame(() => {
+      const cell = cellsRef.current.find(
+        (candidate) => candidate.member.index === selected.index,
+      );
+      if (!cell) return;
+      const leftEdge = scroller.scrollLeft;
+      const rightEdge = leftEdge + scroller.clientWidth;
+      const cellLeft = cell.x;
+      const cellRight = cell.x + cell.width;
+      if (cellLeft < leftEdge || cellRight > rightEdge) {
+        scroller.scrollTo({
+          left: Math.max(0, cell.x + cell.width / 2 - scroller.clientWidth / 2),
+          behavior: "auto",
+        });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selected]);
+
+  function pick(clientX: number, clientY: number) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const bounds = canvas.getBoundingClientRect();
+    const x = clientX - bounds.left;
+    const y = clientY - bounds.top;
+    const cell = cellsRef.current.find(
+      (candidate) =>
+        x >= candidate.x &&
+        x <= candidate.x + candidate.width &&
+        y >= candidate.y &&
+        y <= candidate.y + candidate.height,
+    );
+    if (cell) onSelect(cell.member);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLCanvasElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      if (reference) onSelect(reference);
+      return;
+    }
+    if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    onNavigate(event.key);
+  }
+
+  function handleClick(event: MouseEvent<HTMLCanvasElement>) {
+    pick(event.clientX, event.clientY);
+  }
 
   return (
-    <article className={`motif-card motif-card-${position.label.toLowerCase()}`}>
-      <header className="card-heading">
-        <div>
-          <span className="roman">{position.label}</span>
-          <p>{position.name}</p>
-        </div>
-        <div className="status-readout" aria-live="polite">
-          <span className="status-light" />
-          {status}
-        </div>
-      </header>
-
-      <DigraphBoard position={position} phase={phase} />
-
-      <div className="motif-invariants">
-        <span>graph quotient</span>
-        <strong>{shortHash(position.quotient_sha256)}</strong>
-        <span>literal game</span>
-        <strong>{shortHash(position.literal_game_sha256)}</strong>
-      </div>
-
-      <dl className="measurements motif-measurements">
-        <div>
-          <dt>directed arcs</dt>
-          <dd>{position.graph_arc_count}</dd>
-        </div>
-        <div>
-          <dt>literal nodes</dt>
-          <dd>{position.literal_game_nodes}</dd>
-        </div>
-        <div>
-          <dt>literal edges</dt>
-          <dd>{position.literal_game_edges}</dd>
-        </div>
-      </dl>
-
-      <details className="certificate">
-        <summary>Admission record</summary>
-        <dl className="admission-record">
-          <div>
-            <dt>Candidate</dt>
-            <dd>
-              <code
-                title={position.candidate_sha256}
-                aria-label={position.candidate_sha256}
-              >
-                {shortHash(position.candidate_sha256)}
-              </code>
-            </dd>
-          </div>
-          <div>
-            <dt>Held-out event</dt>
-            <dd>{position.first_global_event_index}</dd>
-          </div>
-          <div>
-            <dt>Birthday</dt>
-            <dd>{position.birthday}</dd>
-          </div>
-          {provenance && (
-            <>
-              <div>
-                <dt>Event digest</dt>
-                <dd>
-                  <code
-                    title={provenance.event_sha256}
-                    aria-label={provenance.event_sha256}
-                  >
-                    {shortHash(provenance.event_sha256)}
-                  </code>
-                </dd>
-              </div>
-              <div>
-                <dt>Equality certificate</dt>
-                <dd>
-                  <code
-                    title={provenance.equality_certificate_sha256}
-                    aria-label={provenance.equality_certificate_sha256}
-                  >
-                    {shortHash(provenance.equality_certificate_sha256)}
-                  </code>
-                </dd>
-              </div>
-              <div>
-                <dt>Equality sidecar</dt>
-                <dd>
-                  <code
-                    title={provenance.equality_sidecar_sha256}
-                    aria-label={provenance.equality_sidecar_sha256}
-                  >
-                    {shortHash(provenance.equality_sidecar_sha256)}
-                  </code>
-                </dd>
-              </div>
-              <div>
-                <dt>Derivation sidecar</dt>
-                <dd>
-                  <code
-                    title={provenance.derivation_sidecar_sha256}
-                    aria-label={provenance.derivation_sidecar_sha256}
-                  >
-                    {shortHash(provenance.derivation_sidecar_sha256)}
-                  </code>
-                </dd>
-              </div>
-              <div>
-                <dt>Artifact sidecar</dt>
-                <dd>
-                  <code
-                    title={provenance.artifact_sidecar_sha256}
-                    aria-label={provenance.artifact_sidecar_sha256}
-                  >
-                    {shortHash(provenance.artifact_sidecar_sha256)}
-                  </code>
-                </dd>
-              </div>
-            </>
-          )}
-        </dl>
-      </details>
-    </article>
+    <canvas
+      data-fiber-hero-canvas
+      ref={canvasRef}
+      className="fiber-hero-canvas"
+      role="group"
+      tabIndex={0}
+      aria-describedby="fiber-keyboard-help"
+      aria-label="All 193 observed graph forms arranged in columns by directed-arc count from 17 through 27"
+      onKeyDown={handleKeyDown}
+      onClick={handleClick}
+    />
   );
 }
 
-function PolicyVerdict() {
-  const learnedDiscoveries =
-    policyResult.observed_analysis.total_discoveries.neural_toggle_one_ranker;
-  const controlDiscoveries =
-    policyResult.observed_analysis.total_discoveries.structural_toggle_one_random;
-  const learnedLiteralGames =
-    policyResult.diversity.literal_game_digest_counts.neural_toggle_one_ranker;
-  const controlLiteralGames =
-    policyResult.diversity.literal_game_digest_counts.structural_toggle_one_random;
-  const equalArmBudget = policyResult.budget.total_calls / policyResult.budget.arms;
-  const literalRatio = policyResult.diversity.literal_game_digest_ratio_to_control;
-  const requiredLiteralRatio = 0.95;
-  const gateEntries = Object.entries(policyResult.scientific_gates);
-  const passedGateCount = gateEntries.filter(([, passed]) => passed).length;
+function FiberClass({ atlas, error }: { atlas: AtlasData | null; error: boolean }) {
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const largestGroupIndex = useMemo(() => {
+    if (!atlas) return -1;
+    return atlas.groups.findIndex(
+      (group) => group.c === 193 && group.d === FOCUS_LITERAL_DIGEST,
+    );
+  }, [atlas]);
+
+  const members = useMemo<FiberMember[]>(() => {
+    const source =
+      atlas && largestGroupIndex >= 0
+        ? atlas.items
+            .map((item, index) => ({ item, index }))
+            .filter(({ item }) => item.l === largestGroupIndex)
+        : compactFiber.items.map((item, index) => ({
+            index,
+            item: {
+              ...item,
+              l: -1,
+              p: [item.p[0], item.p[1], 0, 0, 0, 0] as AtlasItem["p"],
+              t: 2,
+            },
+          }));
+    return source
+      .sort((left, right) => left.item.a - right.item.a || left.item.q.localeCompare(right.item.q));
+  }, [atlas, largestGroupIndex]);
+
+  const byArcCount = useMemo(
+    () =>
+      Array.from({ length: 11 }, (_, offset) => 17 + offset).map((arcCount) => ({
+        arcCount,
+        members: members.filter(({ item }) => item.a === arcCount),
+      })),
+    [members],
+  );
+
+  const reference = useMemo(
+    () => members.find(({ item }) => item.a === 23) ?? members[0] ?? null,
+    [members],
+  );
+
+  const defaultSelected = members[Math.floor(members.length / 2)] ?? reference;
+  const selected =
+    members.find((member) => member.index === selectedIndex) ??
+    defaultSelected;
+  const selectedPosition = selected
+    ? members.findIndex((member) => member.index === selected.index)
+    : -1;
+  const neighborhoodSize = 9;
+  const neighborhoodStart = Math.max(
+    0,
+    Math.min(
+      Math.max(0, members.length - neighborhoodSize),
+      selectedPosition - Math.floor(neighborhoodSize / 2),
+    ),
+  );
+  const neighborhood = members.slice(
+    neighborhoodStart,
+    neighborhoodStart + neighborhoodSize,
+  );
+  const difference =
+    reference && selected ? edgeDifference(reference.item, selected.item) : null;
+  const largestGroup =
+    atlas && largestGroupIndex >= 0
+      ? atlas.groups[largestGroupIndex]
+      : ({ c: 193, d: FOCUS_LITERAL_DIGEST, p: [0, 0], t: 2 } as AtlasGroup);
+
+  function focusMember(member: FiberMember) {
+    setSelectedIndex(member.index);
+  }
+
+  function moveWithinBoard(key: string) {
+    if (!selected) return;
+    const columnIndex = byArcCount.findIndex(
+      ({ arcCount }) => arcCount === selected.item.a,
+    );
+    const column = byArcCount[columnIndex];
+    const rowIndex = column.members.findIndex(
+      (member) => member.index === selected.index,
+    );
+    if (key === "ArrowUp" || key === "ArrowDown") {
+      const delta = key === "ArrowUp" ? -1 : 1;
+      const next = column.members[Math.max(0, Math.min(column.members.length - 1, rowIndex + delta))];
+      if (next) focusMember(next);
+      return;
+    }
+    if (key === "ArrowLeft" || key === "ArrowRight") {
+      const delta = key === "ArrowLeft" ? -1 : 1;
+      const nextColumn = byArcCount[Math.max(0, Math.min(byArcCount.length - 1, columnIndex + delta))];
+      const next = nextColumn.members[Math.min(rowIndex, nextColumn.members.length - 1)];
+      if (next) focusMember(next);
+      return;
+    }
+    if (key === "Home" && members[0]) focusMember(members[0]);
+    if (key === "End" && members.at(-1)) focusMember(members.at(-1)!);
+  }
+
+  function moveSequentially(delta: number) {
+    if (!members.length) return;
+    const nextPosition =
+      (Math.max(0, selectedPosition) + delta + members.length) % members.length;
+    focusMember(members[nextPosition]);
+  }
 
   return (
-    <section className="policy-verdict" aria-labelledby="policy-verdict-title">
-      <header className="policy-verdict-header">
-        <div className="verdict-index">
-          <span>Official held-out comparison</span>
-          <p>{policyResult.evidence_class.replaceAll("_", " ")}</p>
+    <section
+      className="fiber-class"
+      id="class"
+      aria-labelledby="fiber-title"
+      data-fixed-fiber-hero="193"
+    >
+      <header className="fiber-intro">
+        <div>
+          <p className="eyebrow">Certified equivalence class</p>
+          <h1 id="fiber-title">193 graph forms share one complete game.</h1>
         </div>
-        <div className="verdict-title-block">
-          <div className="verdict-status-line">
-            <span className="verdict-status">{policyResult.result}</span>
-            <span>composite gate · {passedGateCount}/{gateEntries.length} checks</span>
-          </div>
-          <h3 id="policy-verdict-title">
-            More quotient discoveries.
-            <em> Fewer literal games.</em>
-          </h3>
-          <p>
-            The frozen model ranks one-arc proposals. The exact combinatorial-game
-            verifier certifies target equality. Equal verifier budgets expose a
-            sharp tradeoff between certified quotient discovery and complete-literal-game
-            coverage.
-          </p>
-        </div>
+        <p>
+          The map contains every observed order-7 Digraph Placement graph in
+          this class. The neighborhood and specimen views compare their graph
+          structure. Every form has the same complete-game digest and exact value.
+        </p>
       </header>
 
-      <div className="authority-line" aria-label="System authority boundary">
-        <div>
-          <span>01</span>
-          <strong>Model proposes</strong>
-          <small>{policyResult.policy_label}</small>
-        </div>
-        <i aria-hidden="true">→</i>
-        <div>
-          <span>02</span>
-          <strong>Exact verifier certifies</strong>
-          <small>target equality decides admission</small>
-        </div>
+      <div className="identity-receipt" aria-label="Exact identity receipt">
+        <div><strong>193</strong><span>graph quotient digests</span></div>
+        <b aria-hidden="true">→</b>
+        <div><strong>1</strong><span>complete-game digest</span></div>
+        <b aria-hidden="true">→</b>
+        <div><strong>1/2</strong><span>exact value</span></div>
+      </div>
+      <p className="fiber-digest-receipt">
+        Shared complete-game identity <code>{FOCUS_LITERAL_DIGEST}</code>
+      </p>
+
+      <div className="fiber-scale-guide" aria-label="Three levels of inspection">
+        <div><span>01</span><strong>Complete class</strong><small>193 forms in one map</small></div>
+        <div><span>02</span><strong>Neighborhood</strong><small>nine readable forms</small></div>
+        <div><span>03</span><strong>Specimen</strong><small>one exact comparison</small></div>
       </div>
 
-      <div className="verdict-measures">
-        <article className="discovery-measure">
-          <div className="measure-heading">
-            <span>Certified quotient discovery</span>
-            <strong>+{percent(policyResult.observed_analysis.relative_lift)}</strong>
+      <div className="fiber-instrument">
+        <div className="fiber-instrument-header">
+          <div>
+            <p className="eyebrow">01 · Complete class</p>
+            <p>All 193 forms grouped by directed-arc count. Column height records the observed count.</p>
           </div>
+          <div className="fiber-keyboard-hint">
+            <kbd>←</kbd><kbd>→</kbd> arc column
+            <kbd>↑</kbd><kbd>↓</kbd> form
+          </div>
+        </div>
+
+        <div className="sr-only" aria-label="Arc-count distribution">
+          {byArcCount.map(({ arcCount, members: columnMembers }) => (
+            <div data-arc-column={arcCount} key={arcCount}>
+              <strong>{arcCount}</strong>
+              <span>
+                {columnMembers.length} {columnMembers.length === 1 ? "form" : "forms"}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <p className="sr-only" id="fiber-keyboard-help">
+          Use Left and Right Arrow keys to change arc-count columns, Up and Down
+          Arrow keys to move within a column, Home and End to reach the limits,
+          and Escape to return to the stable reference. Touch or click any graph
+          to compare it.
+        </p>
+
+        {largestGroup && members.length === 193 ? (
+          <div className="fiber-board-scroll">
+            <FiberHeroCanvas
+              columns={byArcCount}
+              selected={selected}
+              reference={reference}
+              onSelect={focusMember}
+              onNavigate={moveWithinBoard}
+            />
+          </div>
+        ) : (
+          <div className="fiber-loading" role="status">
+            {error ? "The checked equivalence class could not be loaded." : "Loading 193 certified graphs…"}
+          </div>
+        )}
+
+        {reference && selected && difference && largestGroup && (
+          <>
+          <section
+            className="fiber-neighborhood"
+            id="neighborhood"
+            aria-labelledby="fiber-neighborhood-title"
+            data-fiber-neighborhood="9"
+          >
+            <header className="fiber-neighborhood-header">
+              <div>
+                <p className="eyebrow">02 · Neighborhood</p>
+                <h2 id="fiber-neighborhood-title">Nine forms near the selection</h2>
+                <p>
+                  Forms {neighborhoodStart + 1}–{neighborhoodStart + neighborhood.length} of 193.
+                  Select one for an exact comparison below.
+                </p>
+              </div>
+              <div className="fiber-step-buttons fiber-neighborhood-nav">
+                <button data-fiber-previous type="button" onClick={() => moveSequentially(-1)} aria-label="Previous graph form">← Previous</button>
+                <button data-fiber-next type="button" onClick={() => moveSequentially(1)} aria-label="Next graph form">Next →</button>
+              </div>
+            </header>
+            <div className="fiber-neighborhood-grid" role="list" aria-label="Nine graph forms near the current selection">
+              {neighborhood.map((member) => {
+                const position = members.findIndex((candidate) => candidate.index === member.index);
+                const isCurrent = member.index === selected.index;
+                return (
+                  <div role="listitem" key={member.index}>
+                    <button
+                      type="button"
+                      className={`fiber-neighborhood-card${isCurrent ? " selected" : ""}`}
+                      aria-current={isCurrent ? "true" : undefined}
+                      aria-label={`Form ${position + 1} of 193, ${member.item.a} directed arcs`}
+                      onClick={() => focusMember(member)}
+                    >
+                      <FiberGraph item={member.item} />
+                      <span><strong>{String(position + 1).padStart(3, "0")}</strong><small>{member.item.a} arcs</small></span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <div className="fiber-inspector" data-fiber-specimen>
+            <header className="fiber-selection-bar">
+              <div>
+                <span>03 · Specimen</span>
+                <strong>{selectedPosition + 1} / 193</strong>
+                <small>{selected.item.a} directed arcs · event {numberFormat.format(selected.item.i)}</small>
+              </div>
+            </header>
+            <p className="sr-only" aria-live="polite">
+              Selected form {selectedPosition + 1} of 193 with {selected.item.a} directed arcs.
+            </p>
+            <div className="fiber-specimens">
+              <figure>
+                <figcaption><span>Stable reference</span><strong>23 arcs</strong></figcaption>
+                <FiberGraph item={reference.item} large />
+                <small>Lexicographically first quotient digest in the column containing the median form.</small>
+              </figure>
+              <figure>
+                <figcaption><span>Selected form</span><strong>{selected.item.a} arcs</strong></figcaption>
+                <FiberGraph item={selected.item} reference={reference.item} large />
+                <small>{shortHash(selected.item.q)} · birthday {selected.item.b} · {selected.item.n} complete-game nodes</small>
+              </figure>
+              <aside className="fiber-difference">
+                <p className="eyebrow">Against the reference</p>
+                <div><strong>+{difference.added.length}</strong><span>added arcs</span></div>
+                <p>{difference.added.length ? difference.added.join(", ") : "None"}</p>
+                <div><strong>−{difference.removed.length}</strong><span>removed arcs</span></div>
+                <p>{difference.removed.length ? difference.removed.join(", ") : "None"}</p>
+                <dl>
+                  <div>
+                    <dt>Graph quotient</dt>
+                    <dd>{selected.item.q === reference.item.q ? "same" : "different"}</dd>
+                  </div>
+                  <div><dt>Complete game</dt><dd>same</dd></div>
+                  <div><dt>Exact value</dt><dd>1/2</dd></div>
+                </dl>
+              </aside>
+            </div>
+            <div className="fiber-legend" aria-label="Graph legend">
+              <span><i className="node-blue" /> Blue vertex: Left</span>
+              <span><i className="node-red" /> Red vertex: Right</span>
+              <span><i className="line-shared" /> shared arc</span>
+              <span><i className="line-added" /> added arc</span>
+              <span><i className="line-removed" /> removed arc</span>
+              <code>complete game {largestGroup.d}</code>
+            </div>
+          </div>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ComposerDemonstration() {
+  const [selectedIndex, setSelectedIndex] = useState(() =>
+    Math.max(0, composerDemo.edits.findIndex((edit) => edit.retained)),
+  );
+  const selected = composerDemo.edits[selectedIndex];
+  const difference = edgeDifference(composerDemo.parent, selected);
+  const changedValue =
+    composerDemo.counts.edited_forms - composerDemo.counts.retained_exact_value;
+
+  return (
+    <section
+      className="composer-demonstration"
+      id="demonstration"
+      aria-labelledby="composer-title"
+      data-composer-edit-study="42"
+    >
+      <header className="composer-intro">
+        <div>
+          <p className="eyebrow">Performed edit study</p>
+          <h2 id="composer-title">One certified form, edited 42 ways.</h2>
+        </div>
+        <p>
+          The author selected the class&apos;s only 17-arc form, toggled every
+          possible loop-free directed arc once, and reverified every result.
+          Gold cells retain exact value 1/2.
+        </p>
+      </header>
+
+      <div className="composer-results" aria-label="Edit study results">
+        <div><strong>42</strong><span>one-arc edits</span></div>
+        <div><strong>33</strong><span>retain value 1/2</span></div>
+        <div><strong>33</strong><span>distinct graph quotients</span></div>
+        <div><strong>{changedValue}</strong><span>change exact value</span></div>
+      </div>
+
+      <div className="composer-workbench">
+        <figure className="composer-graph">
+          <figcaption>
+            <span>Starting form</span>
+            <strong>{composerDemo.parent.a} directed arcs</strong>
+          </figcaption>
+          <FiberGraph item={composerDemo.parent} large />
+          <small>quotient {shortHash(composerDemo.parent.q)}</small>
+        </figure>
+
+        <div className="composer-edit-board">
+          <div className="composer-edit-board-header">
+            <span>Toggle one directed arc</span>
+            <small>source → target</small>
+          </div>
+          <div className="composer-edit-grid" aria-label="All 42 one-arc edits">
+            {composerDemo.edits.map((edit, index) => {
+              const label = arcKey(edit.arc);
+              const operation = edit.state === "present" ? "added" : "removed";
+              return (
+                <button
+                  type="button"
+                  className={`${edit.retained ? "retained" : "changed"}${index === selectedIndex ? " selected" : ""}`}
+                  aria-pressed={index === selectedIndex}
+                  aria-label={`${label}, arc ${operation}, ${edit.retained ? "retains exact value one half" : "changes exact value"}`}
+                  key={label}
+                  onClick={() => setSelectedIndex(index)}
+                >
+                  <strong>{label}</strong>
+                  <span>{edit.retained ? "1/2" : "changed"}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <figure className="composer-graph composer-selected-graph">
+          <figcaption>
+            <span>Selected edit {arcKey(selected.arc)}</span>
+            <strong>{selected.a} directed arcs</strong>
+          </figcaption>
+          <FiberGraph item={selected} reference={composerDemo.parent} large />
+          <small>quotient {shortHash(selected.q)}</small>
+        </figure>
+
+        <aside className="composer-inspector" aria-live="polite">
+          <p className="eyebrow">Exact result</p>
+          <strong>{selected.retained ? "Value 1/2 retained" : "Exact value changed"}</strong>
           <p>
-            {equalArmBudget.toLocaleString("en-US")} exact verifier calls per arm · {policyResult.observed_analysis.paired_stream_count} paired streams
+            Arc {arcKey(selected.arc)} was {selected.state === "present" ? "added" : "removed"}.
+            {selected.retained
+              ? " The resulting graph quotient is distinct from the starting form."
+              : " This edit leaves the fixed-value repertoire."}
           </p>
-          <div className="comparison-bars" aria-label="Quotient-unique discoveries by arm">
-            <div>
-              <span>neural ranker</span>
-              <i style={{ "--measure": "100%" } as CSSProperties} />
-              <strong>{learnedDiscoveries.toLocaleString("en-US")}</strong>
-            </div>
-            <div>
-              <span>random control</span>
-              <i
-                style={{
-                  "--measure": `${(controlDiscoveries / learnedDiscoveries) * 100}%`,
-                } as CSSProperties}
-              />
-              <strong>{controlDiscoveries.toLocaleString("en-US")}</strong>
-            </div>
-          </div>
-          <dl className="measure-footnotes">
-            <div>
-              <dt>paired difference</dt>
-              <dd>+{policyResult.observed_analysis.macro_paired_difference.toFixed(1)}</dd>
-            </div>
-            <div>
-              <dt>95% interval</dt>
-              <dd>
-                {policyResult.observed_analysis.bootstrap_95_ci[0].toFixed(1)}–
-                {policyResult.observed_analysis.bootstrap_95_ci[1].toFixed(1)}
-              </dd>
-            </div>
+          <dl>
+            <div><dt>Added arcs</dt><dd>{difference.added.length ? difference.added.join(", ") : "none"}</dd></div>
+            <div><dt>Removed arcs</dt><dd>{difference.removed.length ? difference.removed.join(", ") : "none"}</dd></div>
           </dl>
-        </article>
-
-        <article className="diversity-measure">
-          <div className="measure-heading">
-            <span>Complete literal-game coverage</span>
-            <strong>{percent(literalRatio)}</strong>
-          </div>
-          <p>Control-relative diversity · preregistered minimum {percent(requiredLiteralRatio, 0)}</p>
-          <div className="threshold-track" aria-label="Literal-game diversity ratio and preregistered threshold">
-            <span style={{ "--ratio": `${literalRatio * 100}%` } as CSSProperties} />
-            <i style={{ "--threshold": `${requiredLiteralRatio * 100}%` } as CSSProperties} />
-            <small className="observed-label">observed {percent(literalRatio)}</small>
-            <small className="threshold-label">gate {percent(requiredLiteralRatio, 0)}</small>
-          </div>
-          <div className="literal-counts">
-            <div>
-              <span>neural ranker</span>
-              <strong>{learnedLiteralGames.toLocaleString("en-US")}</strong>
-            </div>
-            <div>
-              <span>random control</span>
-              <strong>{controlLiteralGames.toLocaleString("en-US")}</strong>
-            </div>
-          </div>
-          <p className="gate-reading">
-            The literal-diversity gate failed. Descriptor coverage remained equal at {policyResult.diversity.descriptor_cell_counts.neural_toggle_one_ranker} cells per arm.
-          </p>
-        </article>
+        </aside>
       </div>
 
-      <footer className="verdict-proof-strip">
-        <div>
-          <span className="verified-dot" />
-          <strong>independent replay</strong>
-          <small>{policyResult.independent_replay ? "PASS" : "FAILED"}</small>
-        </div>
-        <div>
-          <strong>{policyResult.corruption_families_rejected}/20</strong>
-          <small>corruption families rejected</small>
-        </div>
-        <div>
-          <strong>learned_advantage_claim</strong>
-          <small>{String(policyResult.learned_advantage_claim)}</small>
-        </div>
-        <div title={policyResult.source_completion_sha256}>
-          <strong>completion</strong>
-          <small>{shortHash(policyResult.source_completion_sha256)}</small>
-        </div>
+      <footer className="composer-authority">
+        <span>Protocol {shortHash(composerDemo.protocol_artifact_sha256)}</span>
+        <span>Independent verification {shortHash(composerDemo.verification_artifact_sha256)}</span>
       </footer>
     </section>
   );
 }
 
-function RepertoireBrowser() {
-  const [selectedTarget, setSelectedTarget] = useState<TargetLabel>("0");
-  const result =
-    repertoire.results.find((item) => item.target === selectedTarget) ??
-    repertoire.results[0];
-  const hasLinkedMotif = result.representative_view === "linked_motif";
-  const bindingRows = [
-    ["run completion", repertoire.bindings.run_complete_file_sha256],
-    ["study manifest", repertoire.bindings.manifest_file_sha256],
-    ["event ledger", repertoire.bindings.events_file_sha256],
-    ["study summary", repertoire.bindings.summary_file_sha256],
-    [
-      "independent replay",
-      repertoire.bindings.independent_verification_file_sha256,
-    ],
-    ["negative tests", repertoire.bindings.negative_tests_file_sha256],
-  ] as const;
+function AtlasCanvas({
+  atlas,
+  layer,
+  selectedIndex,
+  onSelect,
+  highlightMotif,
+}: {
+  atlas: AtlasData;
+  layer: Layer;
+  selectedIndex: number | null;
+  onSelect: (index: number | null) => void;
+  highlightMotif: boolean;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const layerValueRef = useRef<number>(layer);
+  const animationRef = useRef<number | null>(null);
+  const selectedRef = useRef(selectedIndex);
+  const motifRef = useRef(highlightMotif);
+  const groupFirstItem = useMemo(() => {
+    const first = Array.from({ length: atlas.groups.length }, () => -1);
+    for (let index = 0; index < atlas.items.length; index += 1) {
+      const group = atlas.items[index].l;
+      if (first[group] === -1) first[group] = index;
+    }
+    return first;
+  }, [atlas]);
+
+  const draw = useCallback((layerValue: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const targetWidth = Math.max(1, Math.round(width * dpr));
+    const targetHeight = Math.max(1, Math.round(height * dpr));
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+    }
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    context.clearRect(0, 0, width, height);
+
+    const lower = Math.min(1, Math.floor(layerValue));
+    const upper = Math.min(2, lower + 1);
+    const mix = layerValue - lower;
+    const lowerOffset = lower * 2;
+    const upperOffset = upper * 2;
+    const pointSize = layerValue > 1.65 ? 1.1 : layerValue > 0.65 ? 1.35 : 1.55;
+
+    context.save();
+    context.strokeStyle = "rgba(245,240,228,.12)";
+    context.lineWidth = 1;
+    for (const split of [1 / 3, 2 / 3]) {
+      context.beginPath();
+      context.moveTo(Math.round(width * split) + 0.5, 22);
+      context.lineTo(Math.round(width * split) + 0.5, height - 22);
+      context.stroke();
+    }
+    context.restore();
+
+    const islandOpacity = Math.max(0, 1 - Math.abs(layerValue - 1) / 0.48);
+    if (islandOpacity > 0) {
+      context.save();
+      context.lineWidth = 1;
+      for (let index = 0; index < atlas.groups.length; index += 1) {
+        const group = atlas.groups[index];
+        if (group.c <= 1) continue;
+        const radius = Math.min(17, 2.5 + Math.sqrt(group.c) * 0.88);
+        context.beginPath();
+        context.arc(
+          (group.p[0] / 10_000) * width,
+          (group.p[1] / 10_000) * height,
+          radius,
+          0,
+          Math.PI * 2,
+        );
+        context.globalAlpha = islandOpacity * Math.min(0.42, 0.12 + group.c / 300);
+        context.strokeStyle = "#f5f0e4";
+        context.stroke();
+      }
+      context.restore();
+    }
+
+    for (let target = 0; target < 3; target += 1) {
+      context.beginPath();
+      for (let index = 0; index < atlas.items.length; index += 1) {
+        const item = atlas.items[index];
+        if (item.t !== target) continue;
+        const x =
+          item.p[lowerOffset] +
+          (item.p[upperOffset] - item.p[lowerOffset]) * mix;
+        const y =
+          item.p[lowerOffset + 1] +
+          (item.p[upperOffset + 1] - item.p[lowerOffset + 1]) * mix;
+        const screenX = (x / 10_000) * width;
+        const screenY = (y / 10_000) * height;
+        context.rect(screenX, screenY, pointSize, pointSize);
+      }
+      context.globalAlpha = layerValue > 1.65 ? 0.36 : 0.64;
+      context.fillStyle = atlasColors[target];
+      context.fill();
+    }
+    context.globalAlpha = 1;
+
+    const valueOpacity = Math.max(0, (layerValue - 1.55) / 0.45);
+    if (valueOpacity > 0) {
+      context.save();
+      context.globalAlpha = valueOpacity;
+      context.lineWidth = 1.5;
+      context.strokeStyle = "rgba(245,240,228,.62)";
+      for (const center of [1_700, 5_000, 8_300]) {
+        context.beginPath();
+        context.arc((center / 10_000) * width, height * 0.5, 34, 0, Math.PI * 2);
+        context.stroke();
+      }
+      context.restore();
+    }
+
+    const emphasized = new Set<number>();
+    if (motifRef.current) {
+      emphasized.add(atlas.motif.A);
+      emphasized.add(atlas.motif.B);
+      emphasized.add(atlas.motif.C);
+    }
+    if (selectedRef.current !== null) emphasized.add(selectedRef.current);
+
+    for (const index of emphasized) {
+      const item = atlas.items[index];
+      const x =
+        item.p[lowerOffset] +
+        (item.p[upperOffset] - item.p[lowerOffset]) * mix;
+      const y =
+        item.p[lowerOffset + 1] +
+        (item.p[upperOffset + 1] - item.p[lowerOffset + 1]) * mix;
+      const screenX = (x / 10_000) * width;
+      const screenY = (y / 10_000) * height;
+      context.beginPath();
+      context.arc(screenX, screenY, 6, 0, Math.PI * 2);
+      context.strokeStyle = index === selectedRef.current ? "#ffffff" : "#e96f58";
+      context.lineWidth = 1.5;
+      context.stroke();
+    }
+
+    if (motifRef.current) {
+      context.save();
+      context.fillStyle = "#e96f58";
+      context.font = "11px SFMono-Regular, Roboto Mono, monospace";
+      context.textBaseline = "bottom";
+      for (const [label, index] of Object.entries(atlas.motif) as [Label, number][]) {
+        const item = atlas.items[index];
+        const x =
+          item.p[lowerOffset] +
+          (item.p[upperOffset] - item.p[lowerOffset]) * mix;
+        const y =
+          item.p[lowerOffset + 1] +
+          (item.p[upperOffset + 1] - item.p[lowerOffset + 1]) * mix;
+        context.fillText(label, (x / 10_000) * width + 9, (y / 10_000) * height - 7);
+      }
+      context.restore();
+
+      const focusX = Math.max(26, width * 0.07);
+      const focusY = Math.max(72, height * 0.15);
+      const focusWidth = Math.min(width * 0.72, 850);
+      const focusHeight = Math.min(height * 0.62, 470);
+      const aX = focusX + focusWidth * 0.28;
+      const bcX = focusX + focusWidth * 0.72;
+      const centerY = focusY + focusHeight * 0.55;
+      context.save();
+      context.globalAlpha = 0.98;
+      context.fillStyle = "#10100e";
+      context.fillRect(focusX, focusY, focusWidth, focusHeight);
+      context.globalAlpha = 1;
+      context.strokeStyle = "#5a574f";
+      context.lineWidth = 1;
+      context.strokeRect(focusX + 0.5, focusY + 0.5, focusWidth - 1, focusHeight - 1);
+      context.fillStyle = "#e96f58";
+      context.font = "10px SFMono-Regular, Roboto Mono, monospace";
+      context.fillText("VALUE 0 CASE STUDY", focusX + 20, focusY + 26);
+
+      for (const [x, radius] of [[aX, 66], [bcX, 80]] as const) {
+        context.beginPath();
+        context.arc(x, centerY, radius, 0, Math.PI * 2);
+        context.strokeStyle = "rgba(245,240,228,.38)";
+        context.stroke();
+      }
+      context.fillStyle = "#aaa69a";
+      context.textAlign = "center";
+      context.font = "11px SFMono-Regular, Roboto Mono, monospace";
+      context.fillText("32 observed forms", aX, centerY + 94);
+      context.fillText("54 observed forms", bcX, centerY + 108);
+
+      const focusPoints = [
+        { label: "A", x: aX, y: centerY },
+        { label: "B", x: bcX - 18, y: centerY - 18 },
+        { label: "C", x: bcX + 22, y: centerY + 20 },
+      ];
+      for (const point of focusPoints) {
+        context.beginPath();
+        context.arc(point.x, point.y, 6, 0, Math.PI * 2);
+        context.fillStyle = point.label === "C" ? "#73b8bc" : "#d7b168";
+        context.fill();
+        context.fillStyle = "#f5f0e4";
+        context.font = "12px SFMono-Regular, Roboto Mono, monospace";
+        context.fillText(point.label, point.x, point.y - 13);
+      }
+
+      const arrow = (fromX: number, fromY: number, toX: number, toY: number) => {
+        context.beginPath();
+        context.moveTo(fromX, fromY);
+        context.lineTo(toX, toY);
+        context.strokeStyle = "#e96f58";
+        context.stroke();
+      };
+      arrow(aX + 72, centerY, bcX - 32, centerY - 18);
+      arrow(bcX - 11, centerY - 12, bcX + 14, centerY + 12);
+      context.fillStyle = "#aaa69a";
+      context.font = "9px SFMono-Regular, Roboto Mono, monospace";
+      context.fillText("remove 2→3", (aX + bcX) / 2, centerY - 15);
+      context.fillText("add 6→0", bcX + 54, centerY - 1);
+      context.fillStyle = "#f5f0e4";
+      context.font = "16px Iowan Old Style, Baskerville, serif";
+      context.fillText("A: distinct complete game", aX, focusY + focusHeight - 22);
+      context.fillText("B and C: same complete game", bcX, focusY + focusHeight - 22);
+      context.restore();
+    }
+
+    if (layerValue > 1.58) {
+      context.save();
+      context.globalAlpha = Math.min(0.17, (layerValue - 1.58) * 0.42);
+      context.fillStyle = "#f5f0e4";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.font = `${Math.min(190, width * 0.14)}px Iowan Old Style, Baskerville, serif`;
+      for (let target = 0; target < 3; target += 1) {
+        context.fillText(atlas.targets[target].label, width * ((target * 2 + 1) / 6), height * 0.5);
+      }
+      context.restore();
+    }
+  }, [atlas]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const observer = new ResizeObserver(() => draw(layerValueRef.current));
+    observer.observe(canvas);
+    draw(layerValueRef.current);
+    return () => observer.disconnect();
+  }, [draw]);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
+    const startValue = layerValueRef.current;
+    if (reduceMotion) {
+      layerValueRef.current = layer;
+      draw(layer);
+      return;
+    }
+    const start = performance.now();
+    const duration = 900;
+    const frame = (time: number) => {
+      const progress = Math.min(1, (time - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      layerValueRef.current = startValue + (layer - startValue) * eased;
+      draw(layerValueRef.current);
+      if (progress < 1) animationRef.current = requestAnimationFrame(frame);
+    };
+    animationRef.current = requestAnimationFrame(frame);
+    return () => {
+      if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
+    };
+  }, [layer, draw]);
+
+  useEffect(() => {
+    selectedRef.current = selectedIndex;
+    motifRef.current = highlightMotif;
+    draw(layerValueRef.current);
+  }, [selectedIndex, highlightMotif, draw]);
+
+  function pick(clientX: number, clientY: number) {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const pointerX = clientX - rect.left;
+    const pointerY = clientY - rect.top;
+    const layerValue = layerValueRef.current;
+    if (Math.abs(layerValue - 1) < 0.34) {
+      let nearestGroup: number | null = null;
+      let nearestGroupDistance = 24 * 24;
+      for (let index = 0; index < atlas.groups.length; index += 1) {
+        const group = atlas.groups[index];
+        const dx = (group.p[0] / 10_000) * rect.width - pointerX;
+        const dy = (group.p[1] / 10_000) * rect.height - pointerY;
+        const distance = dx * dx + dy * dy;
+        const radius = Math.max(14, Math.min(24, 5 + Math.sqrt(group.c) * 1.15));
+        if (distance <= radius * radius && distance < nearestGroupDistance) {
+          nearestGroupDistance = distance;
+          nearestGroup = index;
+        }
+      }
+      if (nearestGroup !== null) return groupFirstItem[nearestGroup];
+    }
+    const lower = Math.min(1, Math.floor(layerValue));
+    const upper = Math.min(2, lower + 1);
+    const mix = layerValue - lower;
+    let nearest: number | null = null;
+    let nearestDistance = 15 * 15;
+    for (let index = 0; index < atlas.items.length; index += 1) {
+      const item = atlas.items[index];
+      const x = item.p[lower * 2] + (item.p[upper * 2] - item.p[lower * 2]) * mix;
+      const y =
+        item.p[lower * 2 + 1] +
+        (item.p[upper * 2 + 1] - item.p[lower * 2 + 1]) * mix;
+      const dx = (x / 10_000) * rect.width - pointerX;
+      const dy = (y / 10_000) * rect.height - pointerY;
+      const distance = dx * dx + dy * dy;
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = index;
+      }
+    }
+    return nearest;
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLCanvasElement>) {
+    if (event.key === "Escape") {
+      onSelect(null);
+      return;
+    }
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const current = selectedIndex ?? (direction === 1 ? -1 : 0);
+    onSelect((current + direction + atlas.items.length) % atlas.items.length);
+  }
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="atlas-canvas"
+      role="img"
+      tabIndex={0}
+      aria-describedby="atlas-keyboard-help"
+      aria-label={`${numberFormat.format(layerCounts[layer])} ${layerNames[layer].toLowerCase()} identities across the three target values. Select a mark to inspect a certified graph form.`}
+      onClick={(event) => onSelect(pick(event.clientX, event.clientY))}
+      onKeyDown={handleKeyDown}
+    />
+  );
+}
+
+function SpecimenPanel({
+  atlas,
+  selectedIndex,
+  onSelect,
+}: {
+  atlas: AtlasData;
+  selectedIndex: number | null;
+  onSelect: (index: number | null) => void;
+}) {
+  const [compareGroup, setCompareGroup] = useState<number | null>(null);
+  const selectedGroupIndex =
+    selectedIndex === null ? -1 : atlas.items[selectedIndex].l;
+  const groupMembers = useMemo(
+    () =>
+      selectedGroupIndex < 0
+        ? []
+        : atlas.items
+            .map((item, index) => ({ item, index }))
+            .filter(({ item }) => item.l === selectedGroupIndex)
+            .map(({ index }) => index),
+    [atlas, selectedGroupIndex],
+  );
+
+  if (selectedIndex === null) {
+    const multiFormGroups = atlas.groups.filter((group) => group.c > 1);
+    const largest = Math.max(...atlas.groups.map((group) => group.c));
+    return (
+      <aside className="specimen-panel empty" aria-label="Atlas guide">
+        <p className="eyebrow">Observed multiplicity</p>
+        <strong>{numberFormat.format(multiFormGroups.length)}</strong>
+        <p>complete-game identities contain multiple graph quotients.</p>
+        <div>
+          <span>Largest equivalence class</span>
+          <b>{largest} forms</b>
+        </div>
+        <p className="panel-hint">Select a mark. Arrow keys move between forms.</p>
+      </aside>
+    );
+  }
+
+  const item = atlas.items[selectedIndex];
+  const group = atlas.groups[item.l];
+  const currentMember = Math.max(0, groupMembers.indexOf(selectedIndex));
+  const nextIndex = groupMembers[(currentMember + 1) % groupMembers.length];
+  const comparisonItem = atlas.items[nextIndex];
+  const compareOpen = compareGroup === selectedGroupIndex;
+  return (
+    <aside className="specimen-panel">
+      <button className="panel-close" type="button" onClick={() => onSelect(null)}>
+        Close
+      </button>
+      <p className="eyebrow">Certified form {selectedIndex + 1}</p>
+      <DirectedGraph
+        compact
+        label={`value ${atlas.targets[item.t].label}`}
+        name={`${item.a} directed arcs`}
+        arcs={decodedArcs(item.g)}
+        blueVertices={decodedBlue(item.m)}
+      />
+      <dl className="specimen-facts">
+        <div><dt>Complete-game class</dt><dd>{numberFormat.format(group.c)} graph {group.c === 1 ? "form" : "forms"}</dd></div>
+        <div><dt>Complete-game nodes</dt><dd>{item.n}</dd></div>
+        <div><dt>Birthday</dt><dd>{item.b}</dd></div>
+        <div><dt>Source event</dt><dd>{numberFormat.format(item.i)}</dd></div>
+      </dl>
+      <details className="hash-details">
+        <summary>Technical identity</summary>
+        <span>Graph quotient</span><code>{item.q}</code>
+        <span>Complete game</span><code>{group.d}</code>
+      </details>
+      {groupMembers.length > 1 && (
+        <div className="specimen-actions">
+          <button type="button" onClick={() => onSelect(nextIndex)}>
+            Next graph form
+          </button>
+          <button
+            type="button"
+            onClick={() => setCompareGroup(compareOpen ? null : selectedGroupIndex)}
+          >
+            {compareOpen ? "Close comparison" : "Compare graph forms"}
+          </button>
+        </div>
+      )}
+      {compareOpen && comparisonItem && (
+        <div className="specimen-compare">
+          <p>Both graph quotients map to the same complete game.</p>
+          <DirectedGraph
+            compact
+            label={`form ${nextIndex + 1}`}
+            name={`${comparisonItem.a} directed arcs`}
+            arcs={decodedArcs(comparisonItem.g)}
+            blueVertices={decodedBlue(comparisonItem.m)}
+          />
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function AtlasStage({
+  atlas,
+  error,
+  onFindCrossing,
+}: {
+  atlas: AtlasData | null;
+  error: boolean;
+  onFindCrossing: () => void;
+}) {
+  const [layer, setLayer] = useState<Layer>(0);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [highlightMotif, setHighlightMotif] = useState(false);
+
+  const currentCount = layerCounts[layer];
+  const nextLayer = layer === 2 ? 0 : ((layer + 1) as Layer);
+  const targetSummaries = atlas
+    ? atlas.targets.map((target) => ({
+        label: target.label,
+        quotients: target.quotient_forms,
+        literalGames: target.literal_games,
+        graphArcRange: target.graph_arc_range,
+        nodeRange: target.complete_game_node_range,
+      }))
+    : motif.atlas.targets.map((target) => ({
+        label: target.label,
+        quotients: target.quotients,
+        literalGames: target.literal_games,
+        graphArcRange: null,
+        nodeRange: null,
+      }));
+  const multiFormGroups = atlas
+    ? atlas.groups.filter((group) => group.c > 1).length
+    : 2_402;
+  const largestClass = atlas
+    ? Math.max(...atlas.groups.map((group) => group.c))
+    : 193;
 
   return (
     <section
-      className="repertoire-browser"
-      aria-labelledby="repertoire-browser-title"
+      className="atlas-section"
+      id="atlas"
+      aria-labelledby="atlas-title"
+      data-secondary-corpus-view
     >
-      <header className="repertoire-heading">
+      <header className="atlas-intro">
         <div>
-          <span>Certified repertoire browser</span>
-          <p>{repertoire.study.domain}</p>
+          <p className="eyebrow">From one class to the full corpus</p>
+          <h1 id="atlas-title">The study contains 21,697 certified graph forms.</h1>
         </div>
-        <h2 id="repertoire-browser-title">
-          Choose the value.
-          <em> Keep the proof in view.</em>
-        </h2>
-        <p>
-          Each target opens a result from the same frozen study. Counts describe
-          observed sampled trajectories. Representative comparison appears only
-          where the checked browser evidence contains the underlying records.
-        </p>
+        <div className="atlas-context">
+          <p>
+            The class above isolates 193 forms that share one complete game.
+            This view widens to every quotient-distinct order-7 graph in the
+            study, then regroups those forms by complete-game identity and exact
+            combinatorial value.
+          </p>
+          <p>
+            The three panels have similar silhouettes for the displayed arc-count
+            and node-count descriptors. The verifier establishes exact equality.
+          </p>
+          <aside className="corpus-summary-card" aria-label="Observed multiplicity summary">
+            <div><strong>{numberFormat.format(multiFormGroups)}</strong><span>complete games with multiple observed graph forms</span></div>
+            <div><strong>{largestClass}</strong><span>forms in the largest observed class</span></div>
+          </aside>
+          <div className="corpus-color-key" aria-label="Exact-value color key">
+            <span><i style={{ background: atlasColors[0] }} /> value 0</span>
+            <span><i style={{ background: atlasColors[1] }} /> value ∗</span>
+            <span><i style={{ background: atlasColors[2] }} /> value 1/2</span>
+          </div>
+        </div>
       </header>
 
-      <PolicyVerdict />
-
-      <div
-        className="target-selector"
-        role="tablist"
-        aria-label="Select an exact target value"
-      >
-        {repertoire.results.map((item) => (
+      <div className="atlas-shell">
+        <div className="atlas-toolbar">
+          <div className="layer-tabs" aria-label="Identity layer">
+            {([0, 1, 2] as Layer[]).map((item) => (
+              <button
+                type="button"
+                key={item}
+                className={layer === item ? "active" : ""}
+                aria-pressed={layer === item}
+                onClick={() => {
+                  setLayer(item);
+                  setSelectedIndex(null);
+                  setHighlightMotif(false);
+                }}
+              >
+                <span>{layerNames[item]}</span>
+                <strong>{numberFormat.format(layerCounts[item])}</strong>
+              </button>
+            ))}
+          </div>
           <button
             type="button"
-            role="tab"
-            id={`target-tab-${item.target === "*" ? "star" : item.target === "1/2" ? "half" : "zero"}`}
-            aria-controls="selected-repertoire-panel"
-            aria-selected={item.target === selectedTarget}
-            tabIndex={item.target === selectedTarget ? 0 : -1}
-            className={item.target === selectedTarget ? "active" : ""}
-            key={item.target}
-            onClick={() => setSelectedTarget(item.target)}
-            onKeyDown={(event) => {
-              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
-                return;
-              }
-              event.preventDefault();
-              const tabs = Array.from(
-                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
-                  '[role="tab"]',
-                ) ?? [],
-              );
-              const currentIndex = tabs.indexOf(event.currentTarget);
-              const nextIndex =
-                event.key === "Home"
-                  ? 0
-                  : event.key === "End"
-                    ? tabs.length - 1
-                    : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
-                      tabs.length;
-              tabs[nextIndex]?.focus();
-              tabs[nextIndex]?.click();
+            className="compress-action"
+            onClick={() => {
+              setLayer(nextLayer);
+              setSelectedIndex(null);
+              setHighlightMotif(false);
             }}
           >
-            <span>target</span>
-            <strong>{item.target}</strong>
-            <small>{item.quotient_unique_representatives.toLocaleString("en-US")} q</small>
+            {nextLayerActions[layer]}
+            <span aria-hidden="true">→</span>
           </button>
-        ))}
-      </div>
+        </div>
 
-      <div className="repertoire-dashboard">
-        <article
-          className="selected-repertoire"
-          role="tabpanel"
-          id="selected-repertoire-panel"
-          aria-labelledby={`target-tab-${result.target === "*" ? "star" : result.target === "1/2" ? "half" : "zero"}`}
-          tabIndex={0}
-        >
-          <div className="result-status">
-            <span className="verified-dot" />
-            independently replayed
-          </div>
-          <span className="result-kicker">exact target</span>
-          <h3>{result.target}</h3>
-          <p className="formal-target">
-            formal game <code>{result.formal_target}</code>
-          </p>
-          <dl>
-            <div>
-              <dt>q(x)</dt>
-              <dd>{result.quotient_unique_representatives.toLocaleString("en-US")}</dd>
-              <span>quotient-unique representatives</span>
-            </div>
-            <div>
-              <dt>ℓ(x)</dt>
-              <dd>{result.literal_game_digests.toLocaleString("en-US")}</dd>
-              <span>complete literal-game digests</span>
-            </div>
-            <div>
-              <dt>{result.budget.unit.replaceAll("_", " ")}</dt>
-              <dd>{result.budget.count.toLocaleString("en-US")}</dd>
-              <span>twelve fixed streams</span>
-            </div>
-          </dl>
-          {hasLinkedMotif ? (
-            <a className="repertoire-action" href="#motif-replay">
-              Replay A → B → C
-              <span aria-hidden="true">↓</span>
-            </a>
-          ) : (
-            <p className="aggregate-boundary">
-              Aggregate evidence is loaded for this target. Representative
-              panel status: awaiting checked records.
-            </p>
-          )}
-        </article>
-
-        <div className="projection-ledger" aria-label="Representation projections">
-          <span className="result-kicker">What each digest fixes</span>
-          {repertoire.projection.map((projection, index) => (
-            <div className="projection-row" key={projection.symbol}>
-              <strong>{projection.symbol}</strong>
-              <div>
-                <h3>{projection.label}</h3>
-                <p>{projection.definition}</p>
+        <div className="atlas-view">
+          <div className="target-labels" aria-hidden="true">
+            {targetSummaries.map((target) => (
+              <div key={target.label}>
+                <strong>{target.label}</strong>
+                <span>
+                  {layer === 0
+                    ? `${numberFormat.format(target.quotients)} forms`
+                    : layer === 1
+                      ? `${numberFormat.format(target.literalGames)} games`
+                      : `one value · ${numberFormat.format(target.quotients)} forms`}
+                </span>
+                {layer === 0 && target.graphArcRange && target.nodeRange && (
+                  <small>
+                    {target.graphArcRange.join("–")} arcs · {target.nodeRange.join("–")} nodes
+                  </small>
+                )}
               </div>
-              {index < repertoire.projection.length - 1 && (
-                <span className="projection-arrow" aria-hidden="true">↓</span>
+            ))}
+          </div>
+
+          <p className="sr-only" id="atlas-keyboard-help">
+            Select a mark to inspect it. With the canvas focused, use the Left
+            and Right Arrow keys to move between forms and Escape to close the
+            specimen. The layer controls and A, B, C case study provide shorter
+            keyboard paths through the dataset.
+          </p>
+
+          {layer === 0 && (
+            <>
+              <div className="corpus-axis-y" aria-hidden="true">
+                complete-game nodes · logarithmic scale
+              </div>
+              <div className="corpus-axis-x" aria-hidden="true">
+                directed arcs →
+              </div>
+            </>
+          )}
+
+          {atlas ? (
+            <>
+              <AtlasCanvas
+                atlas={atlas}
+                layer={layer}
+                selectedIndex={selectedIndex}
+                onSelect={setSelectedIndex}
+                highlightMotif={highlightMotif}
+              />
+              {selectedIndex !== null && (
+                <SpecimenPanel
+                  atlas={atlas}
+                  selectedIndex={selectedIndex}
+                  onSelect={setSelectedIndex}
+                />
+              )}
+              <p className="sr-only" aria-live="polite">
+                {selectedIndex === null
+                  ? highlightMotif
+                    ? "A is in a 32-form complete game. B and C are in one 54-form complete game. A to B removes arc 2 to 3. B to C adds arc 6 to 0."
+                    : "No atlas specimen selected."
+                  : `Selected certified form ${selectedIndex + 1}.`}
+              </p>
+            </>
+          ) : (
+            <div className="atlas-loading" role="status">
+              {error ? (
+                <p>The checked atlas could not be loaded.</p>
+              ) : (
+                <div className="loading-receipt">
+                  <p>Loading the checked atlas</p>
+                  <div aria-hidden="true">
+                    <span><strong>21,697</strong><small>graph forms</small></span>
+                    <b>→</b>
+                    <span><strong>16,120</strong><small>complete games</small></span>
+                    <b>→</b>
+                    <span><strong>3</strong><small>exact values</small></span>
+                  </div>
+                  <small>Coordinates derived from the verified dataset · 5.3 MB</small>
+                </div>
               )}
             </div>
-          ))}
-        </div>
+          )}
 
-        <aside className="policy-record" aria-label="Search policy record">
-          <span className="result-kicker">Proposal policy</span>
-          <h3>{repertoire.study.policy.label}</h3>
-          <p>
-            One frozen classical search policy generated every result currently
-            shown in this browser.
-          </p>
-          <dl>
-            <div>
-              <dt>policy id</dt>
-              <dd>{repertoire.study.policy.policy_id}</dd>
-            </div>
-            <div>
-              <dt>family</dt>
-              <dd>{repertoire.study.policy.family.replace("_", " ")}</dd>
-            </div>
-            <div>
-              <dt>result status</dt>
-              <dd>{result.status}</dd>
-            </div>
-          </dl>
-          <div className="policy-result-slot">
-            <span>{repertoire.study.result_contract.schema_version}</span>
-            <strong>Official neural comparison</strong>
-            <p>Composite result: {policyResult.result} · independently replayed.</p>
+          <div className="atlas-actions">
+            <button
+              type="button"
+              onClick={() => {
+                setLayer(1);
+                setHighlightMotif((visible) => !visible);
+                setSelectedIndex(null);
+              }}
+              disabled={!atlas}
+            >
+              {highlightMotif ? "Close case study" : "Show A, B, and C"}
+            </button>
+            <button type="button" onClick={onFindCrossing}>
+              Open the case study <span aria-hidden="true">↓</span>
+            </button>
           </div>
-        </aside>
-      </div>
-
-      <details className="study-provenance">
-        <summary>
-          <span>Study provenance</span>
-          completion {shortHash(repertoire.bindings.completion_sha256)}
-        </summary>
-        <div className="provenance-chain">
-          {bindingRows.map(([label, digest]) => (
-            <div key={label}>
-              <span>{label}</span>
-              <code title={digest}>{digest}</code>
-            </div>
-          ))}
         </div>
-        <p>
-          Current evidence scope: observed sampled trajectories, exact-value
-          certification, and independent replay. Fiber size, aesthetic ranking,
-          human preference, and policy optimality remain unmeasured.
-        </p>
-      </details>
+
+        <footer className="atlas-legend">
+          <p aria-live="polite">
+            <strong>{numberFormat.format(currentCount)}</strong>{" "}
+            {layer === 2
+              ? "exact values · 21,697 forms represented"
+              : `${layerNames[layer].toLowerCase()} identities shown`}
+          </p>
+          <p>
+            {layer === 0
+              ? "Horizontal position is directed-arc count. Vertical position is complete-game node count on a logarithmic scale. A small deterministic digest jitter separates coincident marks and has no semantic meaning."
+              : layer === 1
+                ? "Each outlined class is one complete game. Packing separates classes; distance does not encode similarity."
+                : "The study examined three target values. Each mark still denotes one observed graph form."}
+          </p>
+        </footer>
+      </div>
+      <p className="claim-boundary">
+        These counts describe the observed sample. The total number of representations for each value is unknown.
+      </p>
     </section>
   );
 }
 
-function WitnessBoard({ frame }: { frame: WitnessFrame }) {
-  const pieces = useMemo(() => parseFen(frame.fen), [frame.fen]);
-  const move = uciSquares(frame.move_uci);
-  const from = move ? squarePosition(move.from) : null;
-  const to = move ? squarePosition(move.to) : null;
-  const vectorStyle =
-    from && to
-      ? ({
-          "--vector-x": `${(from.file + 0.5) * 12.5}%`,
-          "--vector-y": `${(from.row + 0.5) * 12.5}%`,
-          "--vector-length": `${Math.hypot(
-            (to.file - from.file) * 12.5,
-            (to.row - from.row) * 12.5,
-          )}%`,
-          "--vector-angle": `${Math.atan2(
-            (to.row - from.row) * 12.5,
-            (to.file - from.file) * 12.5,
-          ) * (180 / Math.PI)}deg`,
-        } as CSSProperties)
-      : undefined;
-
+function DagEdgeLine({
+  from,
+  to,
+  player,
+  coordinates,
+}: {
+  from: number;
+  to: number;
+  player: "L" | "R";
+  coordinates: { x: number; y: number }[];
+}) {
+  const start = coordinates[from];
+  const end = coordinates[to];
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const distance = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
   return (
-    <div
-      className={`chessboard witness-board ${
-        frame.in_check ? "witness-check" : ""
-      }`}
-      aria-label={`Elkies historical witness at ply ${frame.ply}: ${frame.fen}`}
-    >
-      <div className="squares" aria-hidden="true">
-        {Array.from({ length: 64 }, (_, index) => {
-          const row = Math.floor(index / 8);
-          const file = index % 8;
-          const square = `${files[file]}${8 - row}`;
-          return (
-            <div
-              className={[
-                "square",
-                (row + file) % 2 === 0 ? "light" : "dark",
-                move?.from === square ? "witness-from" : "",
-                move?.to === square ? "witness-to" : "",
-              ].join(" ")}
-              key={square}
-            >
-              {file === 0 && <span className="rank-label">{8 - row}</span>}
-              {row === 7 && <span className="file-label">{files[file]}</span>}
-            </div>
-          );
-        })}
-      </div>
-      {vectorStyle && (
-        <div className="witness-vector" style={vectorStyle} aria-hidden="true" />
-      )}
-      {pieces.map((piece) => {
-        const position = squarePosition(piece.square);
-        return (
-          <span
-            className={`piece ${piece.color}`}
-            key={`${frame.ply}-${piece.id}-${piece.square}`}
-            style={{
-              "--file": position.file,
-              "--row": position.row,
-            } as CSSProperties}
-            aria-hidden="true"
-          >
-            {glyphs[piece.kind]}
-          </span>
-        );
-      })}
-      <div className="board-vignette" aria-hidden="true" />
-      <div className="witness-board-readout" aria-live="polite">
-        <span>{frame.ply === 0 ? "opening form" : `ply ${frame.ply} / 13`}</span>
-        <strong>{frame.move_san ?? "position"}</strong>
-      </div>
-      {frame.ply === 13 && (
-        <div className="kernel-mark" aria-live="polite">
-          kernel reached
-        </div>
-      )}
-    </div>
+    <span
+      className={`dag-edge ${player === "L" ? "left" : "right"}`}
+      style={
+        {
+          "--edge-x": `${start.x}%`,
+          "--edge-y": `${start.y}%`,
+          "--edge-length": `${distance}%`,
+          "--edge-angle": `${angle}deg`,
+        } as CSSProperties
+      }
+      aria-hidden="true"
+    />
   );
 }
 
-function historicalNote(ply: number) {
-  if (ply === 0) {
-    return {
-      eyebrow: "The composed entrance",
-      title: "The kernel is hidden.",
-      body: "Eight pieces, two pawns on the edge of promotion, and no visible resemblance to the six-piece ending ahead.",
-    };
-  }
-  const motif = elkies.motifs.find((item) => item.at_ply === ply);
-  if (motif) {
-    const notes: Record<number, { title: string; body: string }> = {
-      3: {
-        title: "The first queen arrives.",
-        body: "White promotes without check. The board grows more complicated before it becomes spare.",
-      },
-      7: {
-        title: "The bishop enters the line.",
-        body: "Bc6 invites its own removal. The sacrifice clears the geometry that the final position requires.",
-      },
-      10: {
-        title: "A second promotion answers.",
-        body: "Black’s pawn becomes a queen with check. Material symmetry appears through opposite journeys.",
-      },
-      12: {
-        title: "The smallest move turns the key.",
-        body: "Kh1 carries no capture or promotion. It prepares the exact burden of the position to come.",
-      },
-      13: {
-        title: "Qfg8. The kernel appears.",
-        body: "Queens and kings remain. The published line has reached Stiller’s computer-found mutual-zugzwang form, rotated on the board.",
-      },
-    };
-    return {
-      eyebrow: motif.name,
-      title: notes[ply].title,
-      body: notes[ply].body,
-    };
-  }
-  return {
-    eyebrow: "Published continuation",
-    title: elkies.witness.frames[ply].move_san ?? `Ply ${ply}`,
-    body: "Each move is checked against the legal moves of the preceding position before the next frame is admitted.",
-  };
+function LiteralDagFigure({ dag }: { dag: LiteralDag }) {
+  const coordinates = useMemo(() => {
+    const maxRank = Math.max(...dag.nodes.map((node) => node.r));
+    return dag.nodes.map((node, index) => {
+      const peers = dag.nodes
+        .map((peer, peerIndex) => ({ peer, peerIndex }))
+        .filter(({ peer }) => peer.r === node.r);
+      const position = peers.findIndex(({ peerIndex }) => peerIndex === index);
+      return {
+        x: ((position + 1) / (peers.length + 1)) * 100,
+        y: 10 + (node.r / Math.max(1, maxRank)) * 78,
+      };
+    });
+  }, [dag]);
+
+  return (
+    <figure className="literal-dag">
+      <figcaption>
+        <span>One complete game</span>
+        <strong>{dag.nodes.length} distinct option identities</strong>
+      </figcaption>
+      <div className="dag-field">
+        {dag.edges.map((edge, index) => (
+          <DagEdgeLine
+            key={`${edge.f}-${edge.t}-${edge.p}-${index}`}
+            from={edge.f}
+            to={edge.t}
+            player={edge.p}
+            coordinates={coordinates}
+          />
+        ))}
+        {dag.nodes.map((node, index) => (
+          <span
+            className={`dag-node${index === dag.root ? " root" : ""}`}
+            key={node.d}
+            style={
+              {
+                "--node-x": `${coordinates[index].x}%`,
+                "--node-y": `${coordinates[index].y}%`,
+              } as CSSProperties
+            }
+            title={node.s}
+          >
+            {index === dag.root ? "root" : `g${index}`}
+          </span>
+        ))}
+      </div>
+      <footer><span>Blue edge: Left option</span><span>Red edge: Right option</span></footer>
+    </figure>
+  );
 }
 
-function HistoricalPrelude() {
-  const [ply, setPly] = useState(0);
-  const [playing, setPlaying] = useState(false);
+function CrossingJourney({ atlas }: { atlas: AtlasData | null }) {
+  const [step, setStep] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
-  const frame = elkies.witness.frames[ply];
-  const note = historicalNote(ply);
+  const A = getPosition("A");
+  const B = getPosition("B");
+  const C = getPosition("C");
+  const bGroupCount = atlas ? atlas.groups[atlas.items[atlas.motif.B].l].c : 54;
+  const aGroupCount = atlas ? atlas.groups[atlas.items[atlas.motif.A].l].c : 32;
 
-  const selectPly = useCallback((nextPly: number) => {
-    setPlaying(false);
-    setPly(Math.max(0, Math.min(elkies.witness.move_count, nextPly)));
-  }, []);
-
-  const togglePlayback = useCallback(() => {
-    if (playing) {
-      setPlaying(false);
-      return;
+  function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      setStep((current) => Math.min(4, current + 1));
     }
-    if (ply === elkies.witness.move_count) setPly(0);
-    setPlaying(true);
-  }, [playing, ply]);
-
-  useEffect(() => {
-    if (!playing || ply >= elkies.witness.move_count) return;
-    const timer = window.setTimeout(() => {
-      const nextPly = Math.min(elkies.witness.move_count, ply + 1);
-      setPly(nextPly);
-      if (nextPly === elkies.witness.move_count) setPlaying(false);
-    }, 1_050);
-    return () => window.clearTimeout(timer);
-  }, [playing, ply]);
-
-  useEffect(() => {
-    const node = sectionRef.current;
-    if (!node) return;
-    const handleKey = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest("button, a")) return;
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        selectPly(ply + 1);
-      }
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        selectPly(ply - 1);
-      }
-    };
-    node.addEventListener("keydown", handleKey);
-    return () => node.removeEventListener("keydown", handleKey);
-  }, [ply, selectPly]);
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      setStep((current) => Math.max(0, current - 1));
+    }
+  }
 
   return (
     <section
-      className="historical-prelude"
-      aria-labelledby="prelude-title"
+      className="crossing-journey"
+      id="crossing"
       ref={sectionRef}
       tabIndex={0}
+      onKeyDown={handleKeyDown}
+      aria-labelledby="crossing-title"
     >
-      <header className="prelude-heading">
+      <header className="crossing-header">
         <div>
-          <span>Historical prelude · 1996</span>
-          <p>Stiller / Elkies</p>
+          <p className="eyebrow">Case study · value 0</p>
+          <h2 id="crossing-title">Three graph forms, two complete games, value 0</h2>
         </div>
-        <h2 id="prelude-title">
-          A machine found the kernel.
-          <em> Elkies composed the encounter.</em>
-        </h2>
-        <p>
-          The six-piece mutual zugzwang came first. Noam Elkies placed it at the
-          end of a thirteen-ply approach whose opening position seems to belong
-          to another problem entirely.
-        </p>
+        <div className="journey-progress" aria-label="Case-study steps">
+          {Array.from({ length: 5 }, (_, index) => (
+            <button
+              type="button"
+              className={step === index ? "active" : ""}
+              aria-current={step === index ? "step" : undefined}
+              onClick={() => setStep(index)}
+              key={index}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
       </header>
 
-      <div className="prelude-instrument">
-        <div className="witness-stage">
-          <div
-            className="witness-stage-index"
-            style={
-              {
-                "--witness-progress": (ply / elkies.witness.move_count) * 100,
-              } as CSSProperties
-            }
-            aria-hidden="true"
-          >
-            <span>{String(ply).padStart(2, "0")}</span>
-            <i />
-            <span>13</span>
+      <div className="journey-stage" aria-live="polite">
+        {step === 0 && (
+          <div className="inside-zero">
+            <div><strong>7,555</strong><span>graph forms</span></div>
+            <span aria-hidden="true">→</span>
+            <div><strong>6,386</strong><span>complete games</span></div>
+            <span aria-hidden="true">→</span>
+            <div><strong>0</strong><span>exact value</span></div>
           </div>
-          <WitnessBoard frame={frame} />
-          <div className="witness-controls">
-            <button
-              type="button"
-              onClick={() => selectPly(ply - 1)}
-              disabled={ply === 0}
-              aria-label="Previous move"
-            >
-              ←
-            </button>
-            <button
-              className="witness-play"
-              type="button"
-              onClick={togglePlayback}
-              aria-label={playing ? "Pause historical line" : "Play historical line"}
-            >
-              <span
-                className={playing ? "pause-mark" : "play-mark"}
-                aria-hidden="true"
-              />
-              {playing ? "Pause" : ply === 13 ? "Replay line" : "Play 13 plies"}
-            </button>
-            <button
-              type="button"
-              onClick={() => selectPly(ply + 1)}
-              disabled={ply === elkies.witness.move_count}
-              aria-label="Next move"
-            >
-              →
-            </button>
+        )}
+
+        {step === 1 && (
+          <div className="graph-comparison">
+            <DirectedGraph label="Form A" name={A.name} arcs={A.arcs} blueVertices={A.blue_vertices} highlightedArc={[2, 3]} />
+            <div className="change-column"><strong>remove</strong><code>2→3</code><span>the complete-game graph loses four nodes</span></div>
+            <DirectedGraph label="Form B" name={B.name} arcs={B.arcs} blueVertices={B.blue_vertices} />
           </div>
-        </div>
+        )}
 
-        <div className="witness-reading">
-          <div className="witness-note" key={`${ply}-${note.title}`}>
-            <span>{note.eyebrow}</span>
-            <h3>{note.title}</h3>
-            <p>{note.body}</p>
+        {step === 2 && (
+          <div className="graph-comparison">
+            <DirectedGraph label="Form B" name={B.name} arcs={B.arcs} blueVertices={B.blue_vertices} />
+            <div className="change-column"><strong>add</strong><code>6→0</code><span>the complete-game digest is unchanged</span></div>
+            <DirectedGraph label="Form C" name={C.name} arcs={C.arcs} blueVertices={C.blue_vertices} highlightedArc={[6, 0]} />
           </div>
+        )}
 
-          <ol className="witness-score" aria-label="Published thirteen-ply line">
-            {elkies.witness.frames.slice(1).map((item) => (
-              <li key={item.ply}>
-                <button
-                  type="button"
-                  className={[
-                    item.ply === ply ? "current" : "",
-                    item.ply < ply ? "passed" : "",
-                    witnessLandmarks.includes(
-                      item.ply as (typeof witnessLandmarks)[number],
-                    )
-                      ? "landmark"
-                      : "",
-                  ].join(" ")}
-                  onClick={() => selectPly(item.ply)}
-                  aria-current={item.ply === ply ? "step" : undefined}
-                  title={`Ply ${item.ply}: ${item.move_san}`}
-                >
-                  <span>{String(item.ply).padStart(2, "0")}</span>
-                  <strong>{item.move_san}</strong>
-                </button>
-              </li>
-            ))}
-          </ol>
-
-          <div className="witness-boundary">
-            <div>
-              <span className="verified-dot" />
-              legal replay machine-verified
+        {step === 3 && (
+          <div className="dag-collapse">
+            <div className="surface-pair">
+              <DirectedGraph compact label="B" name="21 arcs" arcs={B.arcs} blueVertices={B.blue_vertices} />
+              <DirectedGraph compact label="C" name="22 arcs" arcs={C.arcs} blueVertices={C.blue_vertices} highlightedArc={[6, 0]} />
             </div>
-            <div>line from published analysis</div>
-            <div>CGT value unasserted here</div>
+            <div className="collapse-arrow"><span>identical complete-game digest</span><b aria-hidden="true">↓</b></div>
+            {atlas && <LiteralDagFigure dag={atlas.motif_dags.B} />}
           </div>
+        )}
 
-          <a
-            className="primary-source"
-            href={elkies.source.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <span>Primary source</span>
-            {elkies.source.title}, pp. {elkies.source.pages} ↗
-          </a>
-        </div>
+        {step === 4 && (
+          <div className="identity-result">
+            <p>
+              A, B, and C have the same exact value. Their graph quotients are
+              pairwise distinct, and A maps to a different complete game from B and C.
+            </p>
+            <div className="island-result">
+              <div><span>A’s complete game</span><strong>{aGroupCount} forms</strong></div>
+              <div><span>B/C complete game</span><strong>{bGroupCount} forms</strong></div>
+            </div>
+            <div className="identity-equations">
+              <code>q(A), q(B), q(C): pairwise distinct graph quotients</code>
+              <code>ℓ(A) ≠ ℓ(B) = ℓ(C): two complete games</code>
+              <code>v(A) = v(B) = v(C) = 0: one exact value</code>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="prelude-thesis">
-        <span>The transformation</span>
+      <footer className="journey-controls">
+        <div>
+          <span>0{step + 1}</span>
+          <p>
+            {[
+              "Value 0 contains 7,555 observed graph quotients and 6,386 complete games.",
+              "Removing arc 2→3 maps A to a different complete game, B.",
+              "Adding arc 6→0 maps B to graph form C without changing the complete game.",
+              "B and C have the same complete-game directed acyclic graph.",
+              "A, B, and C are distinct graph quotients with exact value 0.",
+            ][step]}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setStep((current) => (current === 4 ? 0 : current + 1))}
+        >
+          {step === 4 ? "Restart" : "Next"} <span aria-hidden="true">→</span>
+        </button>
+      </footer>
+    </section>
+  );
+}
+
+function EvidenceLedger({ atlas }: { atlas: AtlasData | null }) {
+  const [copyState, setCopyState] = useState("Copy verification record");
+
+  async function copyAuthority() {
+    if (!atlas) return;
+    const record = {
+      schema_version: "partizan.fixed_value_atlas.authority.v1",
+      atlas_sha256: atlas.atlas_sha256,
+      source: atlas.source,
+      counts: atlas.counts,
+      targets: atlas.targets,
+    };
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(record, null, 2));
+      setCopyState("Copied");
+    } catch {
+      setCopyState("Copy failed");
+    }
+  }
+
+  return (
+    <section className="evidence-ledger" id="evidence" aria-labelledby="evidence-title">
+      <header>
+        <p className="eyebrow">Evidence trail</p>
+        <h2 id="evidence-title">Independent replay verifies the historical corpus behind the atlas.</h2>
+      </header>
+      <div className="ledger-grid">
+        <div><strong>73,728</strong><span>historical source proposals</span></div>
+        <div><strong>21,697</strong><span>quotient-unique forms</span></div>
+        <div><strong>16,120</strong><span>complete-game identities</span></div>
+        <div><strong>{atlas?.source.negative_test_families_rejected ?? 15}</strong><span>historical corruption families rejected</span></div>
+      </div>
+      <div className="ledger-notes">
         <p>
-          The final position is compact enough to name. The route gives that
-          position tension, delay, sacrifice, and surprise.
+          These figures describe the independently replayed historical run used
+          to build this atlas. The paper&apos;s primary held-out comparison is a
+          separate 221,184-proposal experiment that rejected thirty corruption
+          families.
         </p>
+        <p>
+          Partizan proposes graph forms. The exact verifier computes each
+          combinatorial-game value. The atlas exposes three identity levels:
+          graph quotient, complete game, and exact value.
+        </p>
+        <p>
+          Stiller used computation to locate an endgame kernel. Elkies recomposed
+          it as a chess study. Partizan follows the same division of labor: the
+          machine enumerates certified forms, and a person chooses which
+          representation to pursue.
+        </p>
+        <p>
+          The performed edit study begins with the unique 17-arc form and
+          reports all 42 possible one-arc edits. Exact replay retained 33
+          variants at value 1/2.
+        </p>
+      </div>
+      <div className="ledger-actions">
+        <button
+          type="button"
+          onClick={copyAuthority}
+          disabled={!atlas}
+          title="Copies the atlas hash, source hashes, counts, and target definitions."
+        >
+          {copyState}
+        </button>
+        <a href={elkies.source.url} target="_blank" rel="noreferrer">Historical source</a>
+        <a href="https://github.com/devinnicholson/partizan" target="_blank" rel="noreferrer">Source code</a>
+        <a href="https://github.com/devinnicholson/partizan-reproducibility" target="_blank" rel="noreferrer">Reproducibility record</a>
+        <a href="https://doi.org/10.5281/zenodo.21833142" target="_blank" rel="noreferrer">Zenodo evidence</a>
+        <a href="https://github.com/devinnicholson/partizan-reproducibility/blob/main/output/research/fixed-value-atlas-figure-v1/FIGURE_4_PROVENANCE_AUTHORITY_V1.json" target="_blank" rel="noreferrer">Atlas authority</a>
       </div>
     </section>
   );
 }
 
 export function PartizanExperience() {
-  const [phase, setPhase] = useState<Phase>(0);
-  const [playing, setPlaying] = useState(false);
-  const [run, setRun] = useState(0);
-
-  const begin = useCallback(() => {
-    setPhase(0);
-    setPlaying(true);
-    setRun((current) => current + 1);
-  }, []);
+  const [atlas, setAtlas] = useState<AtlasData | null>(null);
+  const [atlasError, setAtlasError] = useState(false);
 
   useEffect(() => {
-    if (!playing) return;
-    const timers = [
-      window.setTimeout(() => setPhase(1), 850),
-      window.setTimeout(() => setPhase(2), 2_350),
-      window.setTimeout(() => setPhase(3), 4_650),
-      window.setTimeout(() => setPlaying(false), 7_100),
-    ];
-    return () => timers.forEach(window.clearTimeout);
-  }, [playing, run]);
-
-  const selectPhase = useCallback((next: Phase) => {
-    setPlaying(false);
-    setPhase(next);
+    const basePath = process.env.NEXT_PUBLIC_PARTIZAN_BASE_PATH ?? "";
+    fetch(`${basePath}/evidence/fixed-value-atlas.json.gz`)
+      .then((response) => {
+        if (!response.ok) throw new Error("atlas request failed");
+        if (!response.body || typeof DecompressionStream === "undefined") {
+          throw new Error("gzip decoding is unavailable");
+        }
+        const decoded = response.body.pipeThrough(
+          new DecompressionStream("gzip"),
+        );
+        return new Response(decoded).json() as Promise<AtlasData>;
+      })
+      .then((data) => {
+        if (
+          data.counts.quotient_forms !== 21_697 ||
+          data.counts.literal_games !== 16_120 ||
+          data.counts.exact_values !== 3
+        ) {
+          throw new Error("atlas evidence count mismatch");
+        }
+        setAtlas(data);
+      })
+      .catch(() => setAtlasError(true));
   }, []);
 
-  useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (
-        target?.closest(
-          "button, a, summary, input, textarea, select, .historical-prelude",
-        )
-      )
-        return;
-      if (event.key === " ") {
-        event.preventDefault();
-        begin();
-      }
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        selectPhase(Math.min(3, phase + 1) as Phase);
-      }
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        selectPhase(Math.max(0, phase - 1) as Phase);
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [begin, phase, selectPhase]);
+  function findCrossing() {
+    const disclosure = document.getElementById("further-example");
+    if (disclosure instanceof HTMLDetailsElement) disclosure.open = true;
+    const crossing = document.getElementById("crossing");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    crossing?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+    window.setTimeout(() => crossing?.focus(), reduceMotion ? 0 : 450);
+  }
+
+  function navigateToSection(
+    event: MouseEvent<HTMLAnchorElement>,
+    targetId: string,
+  ) {
+    event.preventDefault();
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    if (target instanceof HTMLDetailsElement) target.open = true;
+    target.scrollIntoView({
+      behavior: "auto",
+      block: "start",
+    });
+    window.history.replaceState(null, "", `#${targetId}`);
+  }
 
   return (
-    <main className={`experience phase-${phase}`}>
-      <div className="ambient ambient-one" aria-hidden="true" />
-      <div className="ambient ambient-two" aria-hidden="true" />
+    <main className="experience" id="top">
       <header className="masthead">
-        <a className="wordmark" href="#top" aria-label="Partizan home">
-          <span className="wordmark-glyph">P</span>
-          <span>PARTIZAN</span>
+        <a
+          className="wordmark"
+          href="#top"
+          onClick={(event) => navigateToSection(event, "top")}
+        >
+          Partizan
         </a>
-        <div className="live-certificate">
-          <span />
-          exact-value instrument
-        </div>
+        <span>One value, many forms</span>
+        <nav aria-label="Page links">
+          <a
+            href="#class"
+            onClick={(event) => navigateToSection(event, "class")}
+          >
+            Class
+          </a>
+          <a
+            href="#atlas"
+            onClick={(event) => navigateToSection(event, "atlas")}
+          >
+            Corpus
+          </a>
+          <a
+            href="#demonstration"
+            onClick={(event) => navigateToSection(event, "demonstration")}
+          >
+            Edit study
+          </a>
+          <a
+            href="#evidence"
+            onClick={(event) => navigateToSection(event, "evidence")}
+          >
+            Verification
+          </a>
+          <a
+            href="#further-example"
+            onClick={(event) => navigateToSection(event, "further-example")}
+          >
+            Example
+          </a>
+        </nav>
       </header>
 
-      <section className="hero" id="top">
-        <div className="hero-kicker">
-          <span>Partizan · search within correctness</span>
-          <span>73,728 proposals · independently replayed</span>
-        </div>
-        <h1>
-          <span>One value.</span>
-          <em>Three forms.</em>
-        </h1>
-        <p className="hero-claim">{motif.claim}</p>
-        <div className="hero-controls">
-          <button className="begin-button" type="button" onClick={begin}>
-            <span className={playing ? "pause-mark" : "play-mark"} aria-hidden="true" />
-            {playing
-              ? "Crossing the fiber"
-              : phase === 3
-                ? "Traverse again"
-                : "Enter the fiber"}
-          </button>
-          <p>
-            Space to replay
-            <span aria-hidden="true"> · </span>
-            arrows to examine
-          </p>
-        </div>
-      </section>
+      <FiberClass atlas={atlas} error={atlasError} />
+      <ComposerDemonstration />
+      <AtlasStage atlas={atlas} error={atlasError} onFindCrossing={findCrossing} />
+      <EvidenceLedger atlas={atlas} />
+      <details className="further-example" id="further-example">
+        <summary>
+          <span>Further example</span>
+          <strong>A → B → C, value 0</strong>
+          <small>Forms A, B, and C map to two complete games and one exact value.</small>
+        </summary>
+        <CrossingJourney atlas={atlas} />
+      </details>
 
-      <HistoricalPrelude />
-
-      <div className="crossing-intro">
-        <div>
-          <span>Partizan motif 01</span>
-          <p>Order-7 Digraph Placement · exact value 0</p>
-        </div>
-        <h2>
-          Correctness is the entrance.
-          <em> The search continues inside.</em>
-        </h2>
-        <p>
-          Two single-arc edits cross different layers of representation. The
-          first changes the complete game. The second changes only its
-          embodiment. Exact value remains zero throughout.
-        </p>
-      </div>
-
-      <RepertoireBrowser />
-
-      <nav className="phase-line" aria-label="Proof stages">
-        {phaseLabels.map((label, index) => (
-          <button
-            type="button"
-            className={phase >= index ? "active" : ""}
-            key={label}
-            onClick={() => selectPhase(index as Phase)}
-            aria-current={phase === index ? "step" : undefined}
-          >
-            <span>0{index + 1}</span>
-            {label}
-          </button>
-        ))}
-        <div className="phase-progress" style={{ width: `${(phase / 3) * 100}%` }} />
-      </nav>
-
-      <section
-        className="motif-crossing"
-        id="motif-replay"
-        aria-label="Certified fixed-value motif"
-      >
-        <div className="motif-route" aria-label="Two single-arc transitions">
-          <span className="route-position">A</span>
-          {motif.transitions.map((transition, index) => (
-            <div
-              className={[
-                "route-transition",
-                phase >= index + 1 ? "active" : "",
-                `route-${transition.class.replaceAll("_", "-")}`,
-              ].join(" ")}
-              key={transition.event_sha256}
-            >
-              <i aria-hidden="true" />
-              <strong>{transition.operation.replace("->", "→")}</strong>
-              <span>{transition.headline}</span>
-              <small
-                title={transition.event_sha256}
-                aria-label={`Event SHA-256 ${transition.event_sha256}`}
-              >
-                event {shortHash(transition.event_sha256)}
-              </small>
-            </div>
-          ))}
-          <span className="route-position route-position-b">B</span>
-          <span className="route-position route-position-c">C</span>
-        </div>
-
-        <div className="motif-grid">
-          {motif.positions.map((position, index) => (
-            <MotifCard
-              position={position}
-              index={index}
-              phase={phase}
-              key={position.candidate_sha256}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="residual-field" aria-label="Two layers of residual structure">
-        <div className={`residual-panel ${phase >= 1 ? "active" : ""}`}>
-          <span>A → B · literal-game crossing</span>
-          <h3>{motif.transitions[0].headline}</h3>
-          <p>{motif.transitions[0].detail}</p>
-          <div className="residual-equation">
-            <strong>ℓ(A) ≠ ℓ(B)</strong>
-            <small>19/18 → 15/14 nodes/edges</small>
-          </div>
-        </div>
-
-        <div className="equality-axis motif-equality-axis">
-          <span className="axis-rule" aria-hidden="true" />
-          <p>Conway comparison</p>
-          <div className="value-seal" aria-live="polite">
-            <span>certified value</span>
-            <strong>{phase === 3 ? "0 = 0 = 0" : "?"}</strong>
-            <small>{motif.comparison.statement}</small>
-          </div>
-          <p>{phase === 3 ? "identical in value" : "comparison pending"}</p>
-          <span className="axis-rule" aria-hidden="true" />
-        </div>
-
-        <div className={`residual-panel ${phase >= 2 ? "active" : ""}`}>
-          <span>B → C · embodiment only</span>
-          <h3>{motif.transitions[1].headline}</h3>
-          <p>{motif.transitions[1].detail}</p>
-          <div className="residual-equation">
-            <strong>ℓ(B) = ℓ(C)</strong>
-            <small>byte-identical complete game</small>
-          </div>
-        </div>
-      </section>
-
-      <section className="atlas-field" aria-labelledby="atlas-title">
-        <div>
-          <span>Frozen structural atlas</span>
-          <h2 id="atlas-title">
-            One motif inside
-            <em> 21,697 certified forms.</em>
-          </h2>
-          <p>
-            The held-out study found both transition classes for every target.
-            These are observed unions from dependent sampled trajectories.
-          </p>
-        </div>
-        <dl>
-          {motif.atlas.targets.map((target) => (
-            <div key={target.label}>
-              <dt>value {target.label}</dt>
-              <dd>{target.quotients.toLocaleString("en-US")}</dd>
-              <span>
-                graph quotients · {target.literal_games.toLocaleString("en-US")} literal games
-              </span>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      <section className="conclusion" aria-live="polite">
-        <p>Mathematical identity</p>
-        <h2>
-          {phase === 3 ? (
-            <>
-              The value is settled.
-              <br />
-              <em>The encounter remains open.</em>
-            </>
-          ) : (
-            <>
-              Three forms wait
-              <br />
-              <em>inside one value.</em>
-            </>
-          )}
-        </h2>
-        <div className="conclusion-metrics">
-          <span>
-            <b>3</b> certified forms
-          </span>
-          <span>
-            <b>2</b> single-arc edits
-          </span>
-          <span>
-            <b>1</b> exact value
-          </span>
-        </div>
-      </section>
-
-      <footer className="provenance">
-        <div>
-          <span>Partizan</span>
-          <p>Search within correctness.</p>
-        </div>
-        <dl>
-          <div>
-            <dt>Completion</dt>
-            <dd>{motif.completion_sha256.slice(0, 12)}</dd>
-          </div>
-          <div>
-            <dt>Replay</dt>
-            <dd>{motif.run.proposal_count.toLocaleString("en-US")} events</dd>
-          </div>
-          <div>
-            <dt>Relation</dt>
-            <dd>fixed-value motif</dd>
-          </div>
-        </dl>
-        <a
-          href="https://github.com/devinnicholson/partizan"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Source ↗
-        </a>
+      <footer className="footer">
+        <span>Independent replay passed</span>
+        <span>completion {shortHash(motif.completion_sha256)}</span>
       </footer>
     </main>
   );

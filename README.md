@@ -28,9 +28,10 @@ finite combinatorial-game experiments.
 | Package | `partizan-cgt` 0.1.0 release candidate |
 | Interface | Python 3.10+ exact short-game API with a Rust/PyO3 chess core |
 | Platforms tested locally | macOS arm64, Rust 1.92, Python 3.14 |
-| Cross-platform CI | Configured for Linux, macOS, and Windows; hardened candidate run pending |
+| Cross-platform CI | Hardened candidate run passing on Linux, macOS, and Windows |
 | License | [GPL-3.0-or-later](LICENSE) |
-| Stable API, registry package, or release tag | Pending |
+| Research snapshot | [`v0.1.0-alpha.2`](https://github.com/devinnicholson/partizan/releases/tag/v0.1.0-alpha.2) |
+| Stable API or registry package | Pending |
 
 The source code may be used, modified, and redistributed under the terms of
 GPL-3.0-or-later. See
@@ -38,6 +39,17 @@ GPL-3.0-or-later. See
 package and release requirements.
 The installed-package and source-checkout research surfaces are separated in
 [`docs/package_boundary.md`](docs/package_boundary.md).
+
+## Explore the evidence
+
+- [Interactive fixed-value atlas](https://devinnicholson.github.io/partizan-reproducibility/)
+- [Reproducibility repository](https://github.com/devinnicholson/partizan-reproducibility)
+- [Versioned evidence deposit](https://doi.org/10.5281/zenodo.21833142)
+
+The atlas opens a 193-form class whose graph embodiments differ while its
+complete game and exact value remain fixed. The reproducibility repository
+contains the frozen protocols, replay tools, compact authorities, and links to
+the complete event and certificate archive.
 
 ## Start in five minutes
 
@@ -268,13 +280,13 @@ available for historical replay.
 
 ## Live visualizer
 
-The live, evidence-backed instrument in [`visualizer/`](visualizer/) opens with
-a machine-verified replay of the thirteen-ply Elkies composition published by
-Lewis Stiller. It then synchronizes two KQK boards, animates each immediate
-mating witness, reveals the 19-node and 11-node literal games, and presents
-Partizan's exact equality certificate.
+The site in [`visualizer/`](visualizer/) presents three order-7 Digraph
+Placement positions with exact value 0 as a three-stage visual crossing. It
+first places two forms side by side, then isolates their changed arcs, and
+finally exposes the graph-quotient, complete-game, and exact-value relations.
+Machine-readable evidence remains available in a secondary technical drawer.
 
-Both displayed artifacts are generated from native records:
+The displayed evidence is generated from native records:
 
 ```bash
 PYTHONPATH=python python3 scripts/build_elkies_study_evidence.py --check
@@ -440,9 +452,10 @@ typed provenance to be checked against its declared scope.
 
 ## Citation
 
-Release metadata is provided in [`CITATION.cff`](CITATION.cff). Until an
-immutable release is published, cite the repository URL together with the exact
-commit and artifact manifest used in your work.
+Release metadata is provided in [`CITATION.cff`](CITATION.cff). Cite the
+`v0.1.0-alpha.2` research snapshot or the exact commit and artifact manifest
+used in your work. The snapshot is a reproducible research reference, not a
+stable API or registry package.
 
 ## License and contributions
 
@@ -450,9 +463,9 @@ Partizan is licensed under the [GNU General Public License v3.0 or later](LICENS
 (GPL-3.0-or-later). This choice follows directly from the native engine's
 dependency on [Shakmaty](https://github.com/niklasf/shakmaty) (GPL-3.0): the
 compiled `partizan._native` extension is a combined work, so the whole project
-is distributed under compatible copyleft terms. Remaining release gates
-(upstream registry publication, immutable tags, public release publication)
-are tracked in [`docs/release_blockers.md`](docs/release_blockers.md).
+is distributed under compatible copyleft terms. Remaining stable-package gates,
+including upstream registry publication, are tracked in
+[`docs/release_blockers.md`](docs/release_blockers.md).
 
 Issues and research discussion are welcome. Contributions use the
 [`DCO.md`](DCO.md) sign-off described in [`CONTRIBUTING.md`](CONTRIBUTING.md).
