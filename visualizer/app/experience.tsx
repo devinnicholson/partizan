@@ -1659,7 +1659,7 @@ function AtlasStage({
                     <b>→</b>
                     <span><strong>3</strong><small>exact values</small></span>
                   </div>
-                  <small>Coordinates derived from the verified dataset · 5.3 MB</small>
+                  <small>Coordinates derived from the verified dataset · 2.3 MB</small>
                 </div>
               )}
             </div>
