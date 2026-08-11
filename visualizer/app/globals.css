@@ -23,7 +23,7 @@
 * { box-sizing: border-box; }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   background: var(--paper);
 }
 
@@ -69,8 +69,17 @@ summary:focus-visible,
 
 .experience { min-height: 100vh; }
 
+#class,
+#demonstration,
+#atlas,
+#evidence,
+#further-example {
+  scroll-margin-top: 20px;
+}
+
 .masthead,
 .fiber-class,
+.composer-demonstration,
 .atlas-section,
 .crossing-journey,
 .evidence-ledger,
@@ -358,7 +367,175 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
 .fiber-legend .line-removed { height: 0; border-top: 1px dashed var(--coral); }
 .fiber-legend code { min-width: 0; margin-left: auto; overflow-wrap: anywhere; color: #7e7a71; font-size: .43rem; }
 
-.atlas-section { padding: 48px 0 84px; }
+.composer-demonstration {
+  padding: 68px 0 92px;
+  border-top: 1px solid var(--line);
+}
+
+.composer-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, .72fr);
+  gap: clamp(34px, 7vw, 110px);
+  align-items: end;
+}
+
+.composer-intro h2 {
+  max-width: 760px;
+  margin: 10px 0 0;
+  font-family: var(--serif);
+  font-size: clamp(1.7rem, 2.7vw, 2.7rem);
+  font-weight: 400;
+  letter-spacing: -.04em;
+  line-height: 1;
+}
+
+.composer-intro > p {
+  max-width: 540px;
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.58;
+}
+
+.composer-results {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 36px;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.composer-results > div {
+  display: grid;
+  min-height: 104px;
+  align-content: space-between;
+  padding: 15px 17px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.composer-results strong {
+  color: var(--gold);
+  font-family: var(--serif);
+  font-size: clamp(1.7rem, 2.5vw, 2.45rem);
+  font-weight: 400;
+}
+
+.composer-results span,
+.composer-edit-board-header,
+.composer-graph figcaption span,
+.composer-authority {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: .52rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.composer-workbench {
+  display: grid;
+  grid-template-columns: minmax(210px, .8fr) minmax(390px, 1.35fr) minmax(210px, .8fr) minmax(220px, .7fr);
+  margin-top: 30px;
+  border: 1px solid var(--stage-line);
+  background: var(--stage);
+}
+
+.composer-graph {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 18px;
+  align-content: start;
+  border-right: 1px solid var(--stage-line);
+}
+
+.composer-graph figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: baseline;
+}
+
+.composer-graph figcaption strong {
+  font-family: var(--serif);
+  font-size: .9rem;
+  font-weight: 400;
+}
+
+.composer-graph .fiber-graph.large { width: min(250px, 92%); margin-block: 28px 20px; }
+.composer-graph small { overflow-wrap: anywhere; color: var(--muted); font-family: var(--mono); font-size: .48rem; }
+
+.composer-edit-board {
+  min-width: 0;
+  border-right: 1px solid var(--stage-line);
+}
+
+.composer-edit-board-header {
+  display: flex;
+  min-height: 54px;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--stage-line);
+}
+
+.composer-edit-board-header small { color: #77736a; font-size: .47rem; }
+
+.composer-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(54px, 1fr));
+}
+
+.composer-edit-grid button {
+  display: grid;
+  min-height: 58px;
+  place-content: center;
+  gap: 3px;
+  border: 0;
+  border-right: 1px solid var(--stage-line);
+  border-bottom: 1px solid var(--stage-line);
+  background: transparent;
+  cursor: pointer;
+}
+
+.composer-edit-grid button:nth-child(6n) { border-right: 0; }
+.composer-edit-grid button:nth-last-child(-n + 6) { border-bottom: 0; }
+.composer-edit-grid button strong { font-family: var(--mono); font-size: .56rem; font-weight: 500; }
+.composer-edit-grid button span { color: var(--muted); font-family: var(--mono); font-size: .43rem; text-transform: uppercase; }
+.composer-edit-grid button.retained { color: var(--gold); background: rgba(215, 177, 104, .08); }
+.composer-edit-grid button.changed { color: #87837a; }
+.composer-edit-grid button:hover { background: var(--stage-soft); }
+.composer-edit-grid button.selected { box-shadow: inset 0 0 0 2px var(--coral); }
+
+.composer-inspector {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 13px;
+  padding: 18px;
+}
+
+.composer-inspector > strong { font-family: var(--serif); font-size: 1.15rem; font-weight: 400; }
+.composer-inspector > p:not(.eyebrow) { margin: 0; color: var(--muted); font-family: var(--serif); font-size: .86rem; line-height: 1.5; }
+.composer-inspector dl { display: grid; gap: 9px; margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--stage-line); }
+.composer-inspector dl > div { display: grid; gap: 3px; }
+.composer-inspector dt { color: var(--muted); font-family: var(--mono); font-size: .46rem; text-transform: uppercase; }
+.composer-inspector dd { margin: 0; overflow-wrap: anywhere; font-family: var(--mono); font-size: .55rem; }
+
+.composer-authority {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 11px 0 0;
+  text-transform: none;
+}
+
+.atlas-section {
+  padding: 48px 0 58px;
+  border-top: 1px solid var(--line);
+}
 
 .atlas-intro {
   display: grid;
@@ -891,7 +1068,8 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   display: grid;
   grid-template-columns: .7fr 1.3fr;
   column-gap: clamp(46px, 8vw, 120px);
-  padding: 0 0 110px;
+  padding: 56px 0 110px;
+  border-top: 1px solid var(--line);
 }
 
 .evidence-ledger h2 { max-width: 520px; font-size: clamp(1.45rem, 2.15vw, 2.15rem); line-height: 1.05; }
@@ -926,6 +1104,10 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   .fiber-specimens { grid-template-columns: 1fr 1fr; }
   .fiber-difference { grid-column: 1 / -1; border-top: 1px solid var(--stage-line); }
   .fiber-specimens > figure:nth-child(2) { border-right: 0; }
+  .composer-intro { grid-template-columns: 1fr; gap: 24px; }
+  .composer-workbench { grid-template-columns: 1fr 1.4fr; }
+  .composer-selected-graph { border-top: 1px solid var(--stage-line); }
+  .composer-inspector { border-top: 1px solid var(--stage-line); }
   .atlas-intro { grid-template-columns: 1fr; gap: 24px; }
   .atlas-context > p { max-width: 720px; }
   .atlas-toolbar { grid-template-columns: 1fr; }
@@ -942,6 +1124,7 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
 @media (max-width: 680px) {
   .masthead,
   .fiber-class,
+  .composer-demonstration,
   .atlas-section,
   .crossing-journey,
   .evidence-ledger,
@@ -975,6 +1158,20 @@ kbd { display: grid; min-width: 24px; height: 24px; place-items: center; border:
   .fiber-difference { grid-column: auto; }
   .fiber-legend { gap: 11px; }
   .fiber-legend code { width: 100%; margin-left: 0; }
+  .composer-demonstration { padding: 52px 0 72px; }
+  .composer-intro h2 { font-size: clamp(1.65rem, 7vw, 2.2rem); }
+  .composer-results { grid-template-columns: 1fr 1fr; }
+  .composer-workbench { grid-template-columns: 1fr; }
+  .composer-graph,
+  .composer-edit-board { border-right: 0; border-bottom: 1px solid var(--stage-line); }
+  .composer-selected-graph { border-top: 0; }
+  .composer-inspector { border-top: 0; }
+  .composer-edit-grid { grid-template-columns: repeat(3, 1fr); }
+  .composer-edit-grid button:nth-child(6n) { border-right: 1px solid var(--stage-line); }
+  .composer-edit-grid button:nth-child(3n) { border-right: 0; }
+  .composer-edit-grid button:nth-last-child(-n + 6) { border-bottom: 1px solid var(--stage-line); }
+  .composer-edit-grid button:nth-last-child(-n + 3) { border-bottom: 0; }
+  .composer-authority { display: grid; }
   .atlas-section { padding: 44px 0 72px; }
   .atlas-intro h1 { font-size: clamp(1.7rem, 7vw, 2.35rem); }
   .layer-tabs { grid-template-columns: 1fr; }
